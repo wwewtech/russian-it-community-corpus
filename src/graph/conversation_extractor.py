@@ -5,7 +5,7 @@ Conversation Extractor for SFT, DPO, and RAG knowledge datasets.
 import logging
 import re
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from src.config import DOMAIN_TAXONOMY, MIN_ANSWER_WORDS, MIN_QUESTION_WORDS
 from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
@@ -14,17 +14,77 @@ logger = logging.getLogger(__name__)
 
 # Noise / trivial reaction phrases to filter out from high-quality SFT answers
 TRIVIAL_REACTIONS = {
-    "+", "-", "++", "+++", "да", "нет", "ок", "ладно", "понял", "спасибо", "спс",
-    "пасиб", "сяб", "благодарю", "норм", "ага", "угу", "лол", "кек", "хаха",
-    "ахах", "пхах", "хз", "не знаю", "жиза", "база", "согласен", "точно",
-    "up", "ап", "топ", "класс", "огонь", "лайк", "рил", "хмм", "мда", "хм"
+    "+",
+    "-",
+    "++",
+    "+++",
+    "да",
+    "нет",
+    "ок",
+    "ладно",
+    "понял",
+    "спасибо",
+    "спс",
+    "пасиб",
+    "сяб",
+    "благодарю",
+    "норм",
+    "ага",
+    "угу",
+    "лол",
+    "кек",
+    "хаха",
+    "ахах",
+    "пхах",
+    "хз",
+    "не знаю",
+    "жиза",
+    "база",
+    "согласен",
+    "точно",
+    "up",
+    "ап",
+    "топ",
+    "класс",
+    "огонь",
+    "лайк",
+    "рил",
+    "хмм",
+    "мда",
+    "хм",
 }
 
 CODE_INDICATORS = [
-    "def ", "class ", "import ", "from ", "return ", "async ", "await ",
-    "SELECT ", "FROM ", "WHERE ", "docker run", "kubectl", "curl ", "npm ",
-    "git ", "pip install", "func ", "package ", "const ", "let ", "var ",
-    "```", "{", "}", "->", "=>", "==", "!=", "http://", "https://"
+    "def ",
+    "class ",
+    "import ",
+    "from ",
+    "return ",
+    "async ",
+    "await ",
+    "SELECT ",
+    "FROM ",
+    "WHERE ",
+    "docker run",
+    "kubectl",
+    "curl ",
+    "npm ",
+    "git ",
+    "pip install",
+    "func ",
+    "package ",
+    "const ",
+    "let ",
+    "var ",
+    "```",
+    "{",
+    "}",
+    "->",
+    "=>",
+    "==",
+    "!=",
+    "http://",
+    "https://",
 ]
 
 
@@ -66,25 +126,23 @@ class ConversationExtractor:
         # Technical keyword density bonus
         tech_words_count = 0
         text_lower = text.lower()
-        for domain, info in DOMAIN_TAXONOMY.items():
+        for _domain, info in DOMAIN_TAXONOMY.items():
             for kw in info["keywords"]:
                 if kw in text_lower:
                     tech_words_count += 1
         score += min(3.0, tech_words_count * 0.6)
 
         # Punctuation & sentence structure bonus
-        if len(re.findall(r'[.!?]', text)) >= 2:
+        if len(re.findall(r"[.!?]", text)) >= 2:
             score += 0.5
 
         return round(score, 2)
 
-    def extract_sft_dialogues(
-        self, threads: Dict[int, List[CleanedMessage]]
-    ) -> List[SFTDialogue]:
+    def extract_sft_dialogues(self, threads: dict[int, list[CleanedMessage]]) -> list[SFTDialogue]:
         """
         Extract multi-turn SFT dialogues from reconstructed threads.
         """
-        sft_dialogues: List[SFTDialogue] = []
+        sft_dialogues: list[SFTDialogue] = []
 
         for thread_id, msgs in threads.items():
             # Need at least 2 messages for a dialogue
@@ -97,7 +155,7 @@ class ConversationExtractor:
                 continue
 
             # Group consecutive messages from the same author
-            merged_turns: List[Tuple[str, str, str, CleanedMessage]] = [] # (author_id, author_name, text, orig_msg)
+            merged_turns: list[tuple[str, str, str, CleanedMessage]] = []  # (author_id, author_name, text, orig_msg)
             for m in msgs:
                 if not m.text_clean or len(m.text_clean.strip()) < 3:
                     continue
@@ -112,19 +170,16 @@ class ConversationExtractor:
                 continue
 
             # Convert merged turns into alternating User / Assistant turns
-            sft_turns: List[SFTTurn] = []
+            sft_turns: list[SFTTurn] = []
             total_tokens = 0
             dialogue_quality = 0.0
 
             first_author_id = merged_turns[0][0]
-            
-            for idx, (author_id, author_name, turn_text, orig_msg) in enumerate(merged_turns):
+
+            for _idx, (author_id, author_name, turn_text, orig_msg) in enumerate(merged_turns):
                 # Role assignment: Initial author is 'user', responders are 'assistant'
                 # If subsequent questions from initial author, mark 'user', replies mark 'assistant'
-                if author_id == first_author_id:
-                    role = "user"
-                else:
-                    role = "assistant"
+                role = "user" if author_id == first_author_id else "assistant"
 
                 # Ensure strict alternating roles if required by downstream LLMs
                 if sft_turns and sft_turns[-1].role == role:
@@ -151,14 +206,16 @@ class ConversationExtractor:
 
             if len(sft_turns) >= 2:
                 # Determine primary topic and tags across messages in this thread
-                domain_counter: Dict[str, int] = defaultdict(int)
-                tags_collected: Set[str] = set()
+                domain_counter: dict[str, int] = defaultdict(int)
+                tags_collected: set[str] = set()
 
                 for m in msgs:
                     domain_counter[m.domain] += 1
                     tags_collected.update(m.tags)
 
-                primary_domain = max(domain_counter.items(), key=lambda x: x[1])[0] if domain_counter else "general_tech_chat"
+                primary_domain = (
+                    max(domain_counter.items(), key=lambda x: x[1])[0] if domain_counter else "general_tech_chat"
+                )
                 avg_quality = round(dialogue_quality / len(sft_turns), 2)
 
                 if avg_quality >= self.min_quality_score or len(sft_turns) >= 4:
@@ -180,14 +237,12 @@ class ConversationExtractor:
         logger.info(f"Extracted {len(sft_dialogues)} curated high-quality SFT dialogues.")
         return sft_dialogues
 
-    def extract_dpo_pairs(
-        self, threads: Dict[int, List[CleanedMessage]]
-    ) -> List[Dict[str, Any]]:
+    def extract_dpo_pairs(self, threads: dict[int, list[CleanedMessage]]) -> list[dict[str, Any]]:
         """
         Extract Direct Preference Optimization (DPO) pairs (prompt, chosen, rejected)
         when multiple responses exist for the same query.
         """
-        dpo_pairs: List[Dict[str, Any]] = []
+        dpo_pairs: list[dict[str, Any]] = []
 
         for thread_id, msgs in threads.items():
             if len(msgs) < 3:
@@ -198,7 +253,9 @@ class ConversationExtractor:
                 continue
 
             # Candidate replies from distinct authors
-            replies = [m for m in msgs[1:] if m.author_id_anon != root_msg.author_id_anon and len(m.text_clean.strip()) > 3]
+            replies = [
+                m for m in msgs[1:] if m.author_id_anon != root_msg.author_id_anon and len(m.text_clean.strip()) > 3
+            ]
             if len(replies) < 2:
                 continue
 
@@ -211,26 +268,28 @@ class ConversationExtractor:
 
             # We need a significant quality margin to create a valid preference pair
             if (best_score - worst_score) >= 1.5 and best_score >= 3.0:
-                dpo_pairs.append({
-                    "thread_id": thread_id,
-                    "prompt": root_msg.text_clean,
-                    "chosen": best_reply.text_clean,
-                    "rejected": worst_reply.text_clean,
-                    "domain": root_msg.domain,
-                    "chosen_quality": best_score,
-                    "rejected_quality": worst_score,
-                })
+                dpo_pairs.append(
+                    {
+                        "thread_id": thread_id,
+                        "prompt": root_msg.text_clean,
+                        "chosen": best_reply.text_clean,
+                        "rejected": worst_reply.text_clean,
+                        "domain": root_msg.domain,
+                        "chosen_quality": best_score,
+                        "rejected_quality": worst_score,
+                    }
+                )
 
         logger.info(f"Extracted {len(dpo_pairs)} valid DPO preference pairs.")
         return dpo_pairs
 
     def extract_rag_chunks(
-        self, threads: Dict[int, List[CleanedMessage]], max_tokens_per_chunk: int = 800
-    ) -> List[RAGChunk]:
+        self, threads: dict[int, list[CleanedMessage]], max_tokens_per_chunk: int = 800
+    ) -> list[RAGChunk]:
         """
         Segment threads into structured RAG knowledge base chunks with rich metadata.
         """
-        rag_chunks: List[RAGChunk] = []
+        rag_chunks: list[RAGChunk] = []
 
         for thread_id, msgs in threads.items():
             if not msgs:
@@ -239,13 +298,15 @@ class ConversationExtractor:
             # Determine thread metadata
             chat_name = msgs[0].chat_name
             authors = set(m.author_anon for m in msgs)
-            domain_counter: Dict[str, int] = defaultdict(int)
-            all_tags: Set[str] = set()
+            domain_counter: dict[str, int] = defaultdict(int)
+            all_tags: set[str] = set()
             for m in msgs:
                 domain_counter[m.domain] += 1
                 all_tags.update(m.tags)
 
-            primary_domain = max(domain_counter.items(), key=lambda x: x[1])[0] if domain_counter else "general_tech_chat"
+            primary_domain = (
+                max(domain_counter.items(), key=lambda x: x[1])[0] if domain_counter else "general_tech_chat"
+            )
             date_start = msgs[0].timestamp[:10]
             date_end = msgs[-1].timestamp[:10]
             date_range = f"{date_start} — {date_end}" if date_start != date_end else date_start

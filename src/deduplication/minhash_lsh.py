@@ -5,8 +5,6 @@ MinHash LSH (Locality-Sensitive Hashing) for fuzzy deduplication of chat message
 import hashlib
 import logging
 import re
-import struct
-from typing import Dict, List, Optional, Set, Tuple
 
 from src.config import MINHASH_NUM_PERM, MINHASH_SHINGLE_SIZE, MINHASH_THRESHOLD
 from src.ingestion.schema import CleanedMessage
@@ -14,12 +12,8 @@ from src.ingestion.schema import CleanedMessage
 logger = logging.getLogger(__name__)
 
 # Precomputed deterministic random seeds for 128 hash permutations
-_PERM_A = [
-    (i * 10007 + 34229) & 0xFFFFFFFF for i in range(MINHASH_NUM_PERM)
-]
-_PERM_B = [
-    (i * 49999 + 88123) & 0xFFFFFFFF for i in range(MINHASH_NUM_PERM)
-]
+_PERM_A = [(i * 10007 + 34229) & 0xFFFFFFFF for i in range(MINHASH_NUM_PERM)]
+_PERM_B = [(i * 49999 + 88123) & 0xFFFFFFFF for i in range(MINHASH_NUM_PERM)]
 _PRIME = 4294967311  # 2^32 + 15 (large 32-bit prime)
 
 
@@ -37,18 +31,18 @@ class MinHashLSH:
         self.num_perm = num_perm
         self.threshold = threshold
         self.shingle_size = shingle_size
-        
+
         # Calculate optimal number of bands and rows for high recall at threshold ~0.70-0.80
         self.b = 32
         self.r = num_perm // self.b
-        
-        # LSH buckets: band_idx -> bucket_hash -> list of item_ids
-        self.buckets: List[Dict[int, List[int]]] = [dict() for _ in range(self.b)]
-        self.signatures: Dict[int, List[int]] = {}
 
-    def _get_shingles(self, text: str) -> Set[str]:
+        # LSH buckets: band_idx -> bucket_hash -> list of item_ids
+        self.buckets: list[dict[int, list[int]]] = [dict() for _ in range(self.b)]
+        self.signatures: dict[int, list[int]] = {}
+
+    def _get_shingles(self, text: str) -> set[str]:
         """Extract word shingles of length k."""
-        words = re.findall(r'\w+', text.lower())
+        words = re.findall(r"\w+", text.lower())
         if len(words) < self.shingle_size:
             return {" ".join(words)} if words else set()
         shingles = set()
@@ -56,7 +50,7 @@ class MinHashLSH:
             shingles.add(" ".join(words[i : i + self.shingle_size]))
         return shingles
 
-    def compute_minhash(self, text: str) -> List[int]:
+    def compute_minhash(self, text: str) -> list[int]:
         """Compute MinHash signature vector of length num_perm."""
         shingles = self._get_shingles(text)
         if not shingles:
@@ -77,14 +71,14 @@ class MinHashLSH:
 
         return sig
 
-    def jaccard_similarity(self, sig1: List[int], sig2: List[int]) -> float:
+    def jaccard_similarity(self, sig1: list[int], sig2: list[int]) -> float:
         """Estimate Jaccard similarity between two MinHash signatures."""
         if not sig1 or not sig2:
             return 0.0
-        matches = sum(1 for a, b in zip(sig1, sig2) if a == b)
+        matches = sum(1 for a, b in zip(sig1, sig2, strict=False) if a == b)
         return matches / float(self.num_perm)
 
-    def insert(self, item_id: int, text: str) -> Tuple[bool, Optional[int], float]:
+    def insert(self, item_id: int, text: str) -> tuple[bool, int | None, float]:
         """
         Check if text is a near-duplicate of an already indexed item.
         If duplicate found (Jaccard >= threshold), returns (True, duplicate_of_item_id, similarity).
@@ -94,7 +88,7 @@ class MinHashLSH:
             return False, None, 0.0
 
         sig = self.compute_minhash(text)
-        candidates: Set[int] = set()
+        candidates: set[int] = set()
 
         # Query buckets for each band
         for band_idx in range(self.b):
@@ -124,14 +118,12 @@ class MinHashLSH:
 
         return False, None, 0.0
 
-    def deduplicate_messages(
-        self, messages: List[CleanedMessage]
-    ) -> Tuple[List[CleanedMessage], int]:
+    def deduplicate_messages(self, messages: list[CleanedMessage]) -> tuple[list[CleanedMessage], int]:
         """
         Deduplicate a list of messages in place.
         Returns list of unique messages and number of removed duplicates.
         """
-        unique_msgs: List[CleanedMessage] = []
+        unique_msgs: list[CleanedMessage] = []
         dupes_count = 0
 
         for m in messages:

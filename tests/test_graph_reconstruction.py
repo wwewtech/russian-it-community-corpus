@@ -4,13 +4,13 @@ Unit tests for Thread DAG reconstruction and Conversation Extraction.
 
 import unittest
 from datetime import datetime
-from src.graph.thread_builder import ThreadDAGBuilder
+
 from src.graph.conversation_extractor import ConversationExtractor
+from src.graph.thread_builder import ThreadDAGBuilder
 from src.ingestion.schema import CleanedMessage
 
 
 class TestGraphReconstruction(unittest.TestCase):
-
     def setUp(self):
         self.builder = ThreadDAGBuilder()
         self.extractor = ConversationExtractor()

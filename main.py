@@ -3,6 +3,7 @@ Master entrypoint to execute the complete pipeline.
 """
 
 import sys
+
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 

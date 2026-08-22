@@ -6,15 +6,14 @@ Evaluates and benchmarks:
   [Setup C] Domain LoRA Fine-Tuned LLM (40k SFT Russian IT dataset)
 """
 
-import json
 import logging
-from pathlib import Path
 import time
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
+
 import torch
 
 from src.rag.rag_pipeline import LocalRAGPipeline
-from src.validation.benchmark import BENCHMARK_SUITE_100
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,16 @@ BENCHMARK_SAMPLE = [
         "id": "biz_01",
         "domain": "business_legal_fintech",
         "query": "Как фаундеру из РФ организовать прием платежей от зарубежных клиентов для B2B SaaS сервиса в 2026 году?",
-        "expected_terms": ["Paddle", "LemonSqueezy", "Merchant of Record", "Stripe", "Кипр", "ОАЭ", "USDT", "эквайринг"],
+        "expected_terms": [
+            "Paddle",
+            "LemonSqueezy",
+            "Merchant of Record",
+            "Stripe",
+            "Кипр",
+            "ОАЭ",
+            "USDT",
+            "эквайринг",
+        ],
     },
     {
         "id": "be_01",
@@ -61,11 +69,11 @@ class BenchmarkComparator:
     def __init__(self, kb_path: Path = Path("dataset_output/parquet/rag_knowledge_base.parquet")):
         self.rag = LocalRAGPipeline(kb_path)
 
-    def run_simulated_and_live_benchmark(self) -> Dict[str, Any]:
+    def run_simulated_and_live_benchmark(self) -> dict[str, Any]:
         """
         Execute benchmark evaluation across setups.
         """
-        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        "cuda:0" if torch.cuda.is_available() else "cpu"
         device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
         vram_mb = torch.cuda.get_device_properties(0).total_memory / (1024 * 1024) if torch.cuda.is_available() else 0
 
@@ -110,31 +118,39 @@ class BenchmarkComparator:
         for tc in BENCHMARK_SAMPLE:
             # Check RAG context retrieval
             rag_hits = self.rag.search(tc["query"], top_k=2, domain_filter=tc["domain"])
-            rag_prompt = self.rag.format_rag_prompt(tc["query"], rag_hits)
+            self.rag.format_rag_prompt(tc["query"], rag_hits)
 
-            results["test_cases"].append({
-                "id": tc["id"],
-                "domain": tc["domain"],
-                "query": tc["query"],
-                "expected_keywords": tc["expected_terms"],
-                "rag_retrieved_chunks_count": len(rag_hits),
-                "rag_top_chunk_title": rag_hits[0]["title"] if rag_hits else "N/A",
-                "scores": {
-                    "base_model": {"precision": 3.0, "hallucination": "Средняя (устаревшие или абстрактные советы)"},
-                    "base_with_rag": {"precision": 4.8, "hallucination": "Минимальная (подкреплено кейсами)"},
-                    "lora_finetuned": {"precision": 4.9, "hallucination": "Минимальная (экспертный стиль сообщества)"},
-                },
-            })
+            results["test_cases"].append(
+                {
+                    "id": tc["id"],
+                    "domain": tc["domain"],
+                    "query": tc["query"],
+                    "expected_keywords": tc["expected_terms"],
+                    "rag_retrieved_chunks_count": len(rag_hits),
+                    "rag_top_chunk_title": rag_hits[0]["title"] if rag_hits else "N/A",
+                    "scores": {
+                        "base_model": {
+                            "precision": 3.0,
+                            "hallucination": "Средняя (устаревшие или абстрактные советы)",
+                        },
+                        "base_with_rag": {"precision": 4.8, "hallucination": "Минимальная (подкреплено кейсами)"},
+                        "lora_finetuned": {
+                            "precision": 4.9,
+                            "hallucination": "Минимальная (экспертный стиль сообщества)",
+                        },
+                    },
+                }
+            )
 
         return results
 
-    def generate_markdown_report(self, results: Dict[str, Any], output_path: Path) -> Path:
+    def generate_markdown_report(self, results: dict[str, Any], output_path: Path) -> Path:
         """Export comprehensive benchmark comparison report in Markdown."""
         agg = results["aggregate_scores"]
         hw = results["hardware"]
 
         md = f"""# 🏎️ LLM Domain Benchmark & Hardware Comparison Report
-## Сравнительный тест: «Голая» модель vs Base + RAG vs Domain LoRA на {hw['gpu']} (VRAM: {hw['vram_total_mb']:.0f} MB)
+## Сравнительный тест: «Голая» модель vs Base + RAG vs Domain LoRA на {hw["gpu"]} (VRAM: {hw["vram_total_mb"]:.0f} MB)
 
 ---
 
@@ -142,9 +158,9 @@ class BenchmarkComparator:
 
 | Конфигурация модели | Точность доменных ответов (%) | Полнота IT-терминологии (%) | Риск галлюцинаций (%) | Задержка инференса (мс) | VRAM на RTX 3060 (МБ) | Экспертная оценка |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. Base Model («Голая модель»)** | **{agg['base_model']['domain_accuracy_pct']}%** | **{agg['base_model']['ru_it_terminology_recall_pct']}%** | **{agg['base_model']['hallucination_risk_pct']}%** | ~{agg['base_model']['avg_latency_ms']} ms | ~{agg['base_model']['vram_usage_mb']:.0f} MB | ⭐⭐⭐ (3.1/5) |
-| **2. Base Model + RAG (71k чанков)** | **{agg['base_with_rag']['domain_accuracy_pct']}%** | **{agg['base_with_rag']['ru_it_terminology_recall_pct']}%** | **{agg['base_with_rag']['hallucination_risk_pct']}%** | ~{agg['base_with_rag']['avg_latency_ms']} ms | ~{agg['base_with_rag']['vram_usage_mb']:.0f} MB | ⭐⭐⭐⭐✨ (4.7/5) |
-| **3. Domain LoRA (40k SFT диалогов)** | **{agg['lora_finetuned']['domain_accuracy_pct']}%** | **{agg['lora_finetuned']['ru_it_terminology_recall_pct']}%** | **{agg['lora_finetuned']['hallucination_risk_pct']}%** | ~{agg['lora_finetuned']['avg_latency_ms']} ms | ~{agg['lora_finetuned']['vram_usage_mb']:.0f} MB | ⭐⭐⭐⭐⭐ (4.9/5) |
+| **1. Base Model («Голая модель»)** | **{agg["base_model"]["domain_accuracy_pct"]}%** | **{agg["base_model"]["ru_it_terminology_recall_pct"]}%** | **{agg["base_model"]["hallucination_risk_pct"]}%** | ~{agg["base_model"]["avg_latency_ms"]} ms | ~{agg["base_model"]["vram_usage_mb"]:.0f} MB | ⭐⭐⭐ (3.1/5) |
+| **2. Base Model + RAG (71k чанков)** | **{agg["base_with_rag"]["domain_accuracy_pct"]}%** | **{agg["base_with_rag"]["ru_it_terminology_recall_pct"]}%** | **{agg["base_with_rag"]["hallucination_risk_pct"]}%** | ~{agg["base_with_rag"]["avg_latency_ms"]} ms | ~{agg["base_with_rag"]["vram_usage_mb"]:.0f} MB | ⭐⭐⭐⭐✨ (4.7/5) |
+| **3. Domain LoRA (40k SFT диалогов)** | **{agg["lora_finetuned"]["domain_accuracy_pct"]}%** | **{agg["lora_finetuned"]["ru_it_terminology_recall_pct"]}%** | **{agg["lora_finetuned"]["hallucination_risk_pct"]}%** | ~{agg["lora_finetuned"]["avg_latency_ms"]} ms | ~{agg["lora_finetuned"]["vram_usage_mb"]:.0f} MB | ⭐⭐⭐⭐⭐ (4.9/5) |
 
 ---
 

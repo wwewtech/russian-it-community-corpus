@@ -3,8 +3,8 @@ Social Network Analysis & Interaction Graph for Telegram Community Dialogues.
 """
 
 import logging
-from collections import Counter, defaultdict
-from typing import Any, Dict, List, Set, Tuple
+from collections import defaultdict
+from typing import Any
 
 from src.ingestion.schema import CleanedMessage
 
@@ -20,15 +20,15 @@ class SocialNetworkAnalyzer:
         self.reply_window_minutes = reply_window_minutes
 
     def build_network(
-        self, messages: List[CleanedMessage]
-    ) -> Tuple[Dict[str, Dict[str, int]], Dict[str, int], Dict[str, int]]:
+        self, messages: list[CleanedMessage]
+    ) -> tuple[dict[str, dict[str, int]], dict[str, int], dict[str, int]]:
         """
         Build directed interaction graph: sender -> recipient -> reply_count.
         Returns (adjacency_dict, in_degree_dict, out_degree_dict).
         """
-        adjacency: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
-        in_degree: Dict[str, int] = defaultdict(int)
-        out_degree: Dict[str, int] = defaultdict(int)
+        adjacency: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        in_degree: dict[str, int] = defaultdict(int)
+        out_degree: dict[str, int] = defaultdict(int)
 
         msg_map = {m.msg_id: m for m in messages}
         sorted_msgs = sorted(messages, key=lambda m: m.unixtime)
@@ -60,28 +60,28 @@ class SocialNetworkAnalyzer:
 
         return adjacency, in_degree, out_degree
 
-    def analyze(self, messages: List[CleanedMessage]) -> Dict[str, Any]:
+    def analyze(self, messages: list[CleanedMessage]) -> dict[str, Any]:
         """
         Run comprehensive network graph analytics.
         """
         adjacency, in_degree, out_degree = self.build_network(messages)
-        
+
         all_nodes = set(adjacency.keys()) | set(in_degree.keys()) | set(out_degree.keys())
         total_nodes = len(all_nodes)
-        
+
         total_edges = sum(len(targets) for targets in adjacency.values())
         total_interactions = sum(sum(targets.values()) for targets in adjacency.values())
 
         # Top influencers (users who receive the most questions/answers)
         top_influencers = sorted(in_degree.items(), key=lambda x: x[1], reverse=True)[:15]
-        
+
         # Top active conversationalists (users who reply the most)
         top_responders = sorted(out_degree.items(), key=lambda x: x[1], reverse=True)[:15]
 
         # Calculate reciprocity (mutual interactions)
         reciprocal_pairs = 0
-        strong_pairs: List[Tuple[str, str, int]] = []
-        seen_pairs: Set[Tuple[str, str]] = set()
+        strong_pairs: list[tuple[str, str, int]] = []
+        seen_pairs: set[tuple[str, str]] = set()
 
         adj_dict = {u: dict(targets) for u, targets in adjacency.items()}
 

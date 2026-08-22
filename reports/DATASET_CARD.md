@@ -131,7 +131,7 @@ from datasets import load_dataset
 # Загрузка SFT диалогов из Parquet
 dataset = load_dataset("parquet", data_files="dataset_output/parquet/sft_dialogues.parquet")
 print(f"Загружено диалогов: {len(dataset['train'])}")
-print("Пример диалога:", dataset['train'][0])
+print("Пример диалога:", dataset["train"][0])
 ```
 
 ### Дообучение модели (LoRA / SFT) с помощью `unsloth`

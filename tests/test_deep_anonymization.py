@@ -3,21 +3,23 @@ Unit tests for Deep Case-Aware Morphological PII Anonymization.
 """
 
 import unittest
+
 from src.pii.deep_anonymizer import DeepPIIAnonymizer
 
 
 class TestDeepAnonymization(unittest.TestCase):
-
     def setUp(self):
         self.anonymizer = DeepPIIAnonymizer(enable_ner=True)
         # Register test authors
-        self.anonymizer.register_authors([
-            ("101", "Максим Кульгин"),
-            ("102", "Денис"),
-            ("103", "Александр"),
-            ("104", "Илья Бугаев"),
-            ("105", "Екатерина"),
-        ])
+        self.anonymizer.register_authors(
+            [
+                ("101", "Максим Кульгин"),
+                ("102", "Денис"),
+                ("103", "Александр"),
+                ("104", "Илья Бугаев"),
+                ("105", "Екатерина"),
+            ]
+        )
 
     def test_russian_name_declensions_masking(self):
         cases = [

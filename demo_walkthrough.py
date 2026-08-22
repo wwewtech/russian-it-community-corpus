@@ -3,9 +3,9 @@ Interactive Demonstration & Tutorial Walkthrough for Russian IT Community Data P
 Run: python demo_walkthrough.py
 """
 
-import json
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import pandas as pd
 
 if sys.platform == "win32":
@@ -56,7 +56,7 @@ def demo_rag_search():
     query = "FastAPI"
     matches = df[df["content"].str.contains(query, case=False, na=False)].head(2)
     print(f"\nПоисковый запрос: '{query}' -> Найдено {len(matches)} релевантных кейсов:")
-    for idx, row in matches.iterrows():
+    for _idx, row in matches.iterrows():
         print(f"\n[Чанк {row['chunk_id']}] {row['title']} ({row['date_range']})")
         print(row["content"][:300] + "...\n")
 
@@ -64,7 +64,9 @@ def demo_rag_search():
 def demo_deep_pii():
     print_section("3. ДЕМОНСТРАЦИЯ ГЛУБОКОЙ ZERO-PII ДЕИДЕНТИФИКАЦИИ")
     anonymizer = DeepPIIAnonymizer(enable_ner=True)
-    anonymizer.name_forms_to_mask.update(["максим", "максиму", "максима", "денис", "денису", "алексей", "алексею", "смирнов", "смирнову"])
+    anonymizer.name_forms_to_mask.update(
+        ["максим", "максиму", "максима", "денис", "денису", "алексей", "алексею", "смирнов", "смирнову"]
+    )
     anonymizer._recompile_name_patterns()
 
     raw_sample = (

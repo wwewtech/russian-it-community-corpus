@@ -3,9 +3,8 @@ Streamlit Web Data Studio & Analytics Dashboard for Russian IT Community Corpus.
 """
 
 import json
-import logging
 from pathlib import Path
-import re
+
 import pandas as pd
 import streamlit as st
 
@@ -39,7 +38,7 @@ def load_json_file(file_path: Path) -> dict:
     """Load and cache JSON file."""
     if not file_path.exists():
         return {}
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -48,7 +47,7 @@ def load_markdown_file(file_path: Path) -> str:
     """Load markdown report file."""
     if not file_path.exists():
         return "Файл отчёта не найден."
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return f.read()
 
 
@@ -125,20 +124,20 @@ if nav == "📊 Главная и метрики":
         pii_leak = val_data.get("pii_leakage_audit", {})
         st.success("✅ **Zero-PII Verification Status: PASSED**")
         st.write(f"- Проверено случайных строк: **{pii_leak.get('sample_lines_checked', 10000):,}**")
-        st.write(f"- Утечек телефонов: **0**")
-        st.write(f"- Утечек email: **0**")
-        st.write(f"- Утечек API-токенов/ключей: **0**")
-        st.write(f"- Утечек криптокошельков: **0**")
-        st.write(f"- Соответствие SFT ролей: **100%**")
+        st.write("- Утечек телефонов: **0**")
+        st.write("- Утечек email: **0**")
+        st.write("- Утечек API-токенов/ключей: **0**")
+        st.write("- Утечек криптокошельков: **0**")
+        st.write("- Соответствие SFT ролей: **100%**")
 
 # =============================================================================
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)
 # =============================================================================
 elif nav == "🔍 Исследователь датасета (Explorer)":
     st.title("🔍 Исследователь корпуса сообщений (525k+ Messages)")
-    
+
     df = load_parquet_sample("full_clean_messages.parquet", max_rows=10000)
-    
+
     if df.empty:
         st.warning("Датасет Parquet не найден. Запустите `python main.py` для генерации.")
     else:
@@ -155,11 +154,13 @@ elif nav == "🔍 Исследователь датасета (Explorer)":
         if selected_domain != "Все домены":
             filtered_df = filtered_df[filtered_df["domain"] == selected_domain]
         if is_q_only:
-            filtered_df = filtered_df[filtered_df["is_question"] == True]
+            filtered_df = filtered_df[filtered_df["is_question"]]
 
         st.caption(f"Найдено записей в выборке: **{len(filtered_df):,}**")
         st.dataframe(
-            filtered_df[["msg_id", "timestamp", "author_anon", "domain", "text_clean", "token_count_approx", "sentiment_score"]],
+            filtered_df[
+                ["msg_id", "timestamp", "author_anon", "domain", "text_clean", "token_count_approx", "sentiment_score"]
+            ],
             use_container_width=True,
             height=500,
         )
@@ -169,9 +170,9 @@ elif nav == "🔍 Исследователь датасета (Explorer)":
 # =============================================================================
 elif nav == "💬 SFT & DPO диалоговая студия":
     st.title("💬 SFT & DPO Диалоговая Студия")
-    
+
     tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (40,042)", "⚖️ DPO Пары Предпочтений (18,494)"])
-    
+
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)
         if sft_df.empty:
@@ -188,17 +189,21 @@ elif nav == "💬 SFT & DPO диалоговая студия":
                 selected_idx = st.selectbox(
                     "Выберите диалог для просмотра:",
                     range(len(filtered_sft)),
-                    format_func=lambda i: f"Диалог #{filtered_sft.iloc[i]['thread_id']} | Домен: {filtered_sft.iloc[i]['topic_domain']} | Качество: {filtered_sft.iloc[i]['quality_score']}★ | Ходов: {filtered_sft.iloc[i]['turn_count']}",
+                    format_func=lambda i: (
+                        f"Диалог #{filtered_sft.iloc[i]['thread_id']} | Домен: {filtered_sft.iloc[i]['topic_domain']} | Качество: {filtered_sft.iloc[i]['quality_score']}★ | Ходов: {filtered_sft.iloc[i]['turn_count']}"
+                    ),
                 )
-                
+
                 selected_dialogue = filtered_sft.iloc[selected_idx]
-                st.markdown(f"### 🧵 Ветка диалога #{selected_dialogue['thread_id']} (Теги: `{', '.join(selected_dialogue['topic_tags'])}`)")
-                
+                st.markdown(
+                    f"### 🧵 Ветка диалога #{selected_dialogue['thread_id']} (Теги: `{', '.join(selected_dialogue['topic_tags'])}`)"
+                )
+
                 for turn in selected_dialogue["messages"]:
                     role = turn.get("role", "user")
                     author = turn.get("author", "Developer")
                     content = turn.get("content", "")
-                    
+
                     if role == "user":
                         with st.chat_message("user", avatar="👤"):
                             st.markdown(f"**{author} (User):**")
@@ -214,18 +219,22 @@ elif nav == "💬 SFT & DPO диалоговая студия":
             st.warning("DPO датасет не найден.")
         else:
             dpo_samples = []
-            with open(dpo_path, "r", encoding="utf-8") as f:
+            with open(dpo_path, encoding="utf-8") as f:
                 for idx, line in enumerate(f):
                     if idx >= 200:
                         break
                     dpo_samples.append(json.loads(line))
 
             st.caption(f"Загружено DPO пар: **{len(dpo_samples):,}**")
-            dpo_idx = st.selectbox("Выберите пару предпочтений:", range(len(dpo_samples)), format_func=lambda i: f"Промпт #{i+1}: {dpo_samples[i]['prompt'][:60]}...")
-            
+            dpo_idx = st.selectbox(
+                "Выберите пару предпочтений:",
+                range(len(dpo_samples)),
+                format_func=lambda i: f"Промпт #{i + 1}: {dpo_samples[i]['prompt'][:60]}...",
+            )
+
             pair = dpo_samples[dpo_idx]
             st.markdown(f"#### ❓ Промпт / Вопрос пользователя:\n> {pair['prompt']}")
-            
+
             col_chosen, col_rejected = st.columns(2)
             with col_chosen:
                 st.success(f"🟢 **CHOSEN (Выбранный ответ, Скор: {pair.get('chosen_quality', 'N/A')})**")
@@ -240,21 +249,28 @@ elif nav == "💬 SFT & DPO диалоговая студия":
 elif nav == "🧠 База знаний RAG и поиск":
     st.title("🧠 Корпоративная база знаний RAG (71,436 Чанков)")
     st.markdown("Структурированный архив практического опыта IT-сообщества с поддержкой семантического поиска.")
-    
+
     rag_df = load_parquet_sample("rag_knowledge_base.parquet", max_rows=5000)
-    
+
     if rag_df.empty:
         st.warning("RAG Parquet не найден.")
     else:
-        search_kw = st.text_input("Введите запрос для поиска по базе знаний (напр. 'FastAPI vs Django', 'Stripe платежи', 'DeepSeek VRAM'):", "FastAPI")
-        
+        search_kw = st.text_input(
+            "Введите запрос для поиска по базе знаний (напр. 'FastAPI vs Django', 'Stripe платежи', 'DeepSeek VRAM'):",
+            "FastAPI",
+        )
+
         if search_kw:
             matches = rag_df[rag_df["content"].str.contains(search_kw, case=False, na=False)]
             st.caption(f"Найдено релевантных чанков: **{len(matches):,}**")
-            
-            for idx, row in matches.head(5).iterrows():
-                with st.expander(f"📄 {row['title']} | Домен: {row['topic_domain']} | Дата: {row['date_range']}", expanded=True):
-                    st.markdown(f"**ID чанка:** `{row['chunk_id']}` | **Токенов:** `{row['token_count']}` | **Участников:** `{row['participants_count']}`")
+
+            for _idx, row in matches.head(5).iterrows():
+                with st.expander(
+                    f"📄 {row['title']} | Домен: {row['topic_domain']} | Дата: {row['date_range']}", expanded=True
+                ):
+                    st.markdown(
+                        f"**ID чанка:** `{row['chunk_id']}` | **Токенов:** `{row['token_count']}` | **Участников:** `{row['participants_count']}`"
+                    )
                     st.text(row["content"])
 
 # =============================================================================
@@ -262,7 +278,9 @@ elif nav == "🧠 База знаний RAG и поиск":
 # =============================================================================
 elif nav == "🛡️ Zero-PII Песочница деидентификации":
     st.title("🛡️ Zero-PII Песочница деидентификации в реальном времени")
-    st.markdown("Протестируйте двухконтурный движок деидентификации (RegEx + Natasha NER + Морфологические склонения имен).")
+    st.markdown(
+        "Протестируйте двухконтурный движок деидентификации (RegEx + Natasha NER + Морфологические склонения имен)."
+    )
 
     default_test_text = (
         "Привет, Максим! Меня зовут Денис. Мой номер телефона +7 (999) 123-45-67, "
@@ -271,16 +289,21 @@ elif nav == "🛡️ Zero-PII Песочница деидентификации"
         "Вот ключ от OpenAI: sk-proj-1234567890abcdef1234567890abcdef. Спроси у Алексея Смирнова про PostgreSQL и Docker."
     )
 
-    user_input = st.text_area("Введите текст, содержащий персональные данные, телефоны, ключи или имена:", default_test_text, height=150)
+    user_input = st.text_area(
+        "Введите текст, содержащий персональные данные, телефоны, ключи или имена:", default_test_text, height=150
+    )
 
     if st.button("🚀 Выполнить Zero-PII Очистку", type="primary"):
         from src.pii.deep_anonymizer import DeepPIIAnonymizer
+
         anonymizer = DeepPIIAnonymizer(enable_ner=True)
-        anonymizer.name_forms_to_mask.update(["максим", "максима", "максиму", "денис", "дениса", "денису", "алексей", "алексея", "смирнов", "смирнова"])
+        anonymizer.name_forms_to_mask.update(
+            ["максим", "максима", "максиму", "денис", "дениса", "денису", "алексей", "алексея", "смирнов", "смирнова"]
+        )
         anonymizer._recompile_name_patterns()
-        
+
         cleaned_res = anonymizer.scrub_text(user_input)
-        
+
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 📥 Исходный текст:")
@@ -297,7 +320,7 @@ elif nav == "🛡️ Zero-PII Песочница деидентификации"
 # =============================================================================
 elif nav == "📡 Технологический радар и тренды":
     st.title("📡 Технологический радар и 8-летние тренды (2018–2026)")
-    
+
     analytics = load_json_file(REPORTS_DIR / "analytics_summary.json")
     if not analytics:
         st.warning("Аналитический отчет не найден. Запустите `python cli.py analyze`.")
@@ -331,15 +354,17 @@ elif nav == "📡 Технологический радар и тренды":
 # =============================================================================
 elif nav == "🎯 Доменный бенчмарк (100 вопросов)":
     st.title("🎯 Доменный бенчмарк оценки моделей (100 контрольных вопросов)")
-    st.markdown("Специализированный бенчмарк по Backend, AI/ML, DevOps, Fintech и Frontend для сравнительного тестирования LLM.")
-    
+    st.markdown(
+        "Специализированный бенчмарк по Backend, AI/ML, DevOps, Fintech и Frontend для сравнительного тестирования LLM."
+    )
+
     bench_data = load_json_file(REPORTS_DIR / "domain_benchmark_100.json")
     if not bench_data:
         st.warning("Файл бенчмарка не найден. Запустите `python cli.py benchmark`.")
     else:
         df_bench = pd.DataFrame(bench_data)
         dom_filter = st.selectbox("Фильтр по категории:", ["Все категории"] + sorted(list(df_bench["domain"].unique())))
-        
+
         if dom_filter != "Все категории":
             df_bench = df_bench[df_bench["domain"] == dom_filter]
 
@@ -350,7 +375,7 @@ elif nav == "🎯 Доменный бенчмарк (100 вопросов)":
 # =============================================================================
 elif nav == "📄 Белые книги и Dataset Card":
     st.title("📄 Документация, Белые книги и Dataset Card")
-    
+
     report_type = st.radio(
         "Выберите документ для просмотра:",
         [

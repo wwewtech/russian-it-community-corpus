@@ -5,10 +5,8 @@ Dataset Validation Suite for verifying data integrity, schema conformance, and z
 import json
 import logging
 from pathlib import Path
-import re
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
-import pandas as pd
 import pyarrow.parquet as pq
 
 from src.pii.regex_scrubber import RegexPIIScrubber
@@ -25,7 +23,7 @@ class DatasetValidator:
         self.dataset_dir = Path(dataset_dir)
         self.regex_scrubber = RegexPIIScrubber()
 
-    def validate_all(self) -> Dict[str, Any]:
+    def validate_all(self) -> dict[str, Any]:
         """Run all validation checks and return test results dictionary."""
         results = {
             "parquet_files": self.validate_parquet_files(),
@@ -44,7 +42,7 @@ class DatasetValidator:
         logger.info(f"Dataset validation completed. Status: {'PASSED' if all_passed else 'FAILED'}")
         return results
 
-    def validate_parquet_files(self) -> Dict[str, Any]:
+    def validate_parquet_files(self) -> dict[str, Any]:
         """Check all Parquet files for existence, valid schema, and row counts."""
         parquet_dir = self.dataset_dir / "parquet"
         files_to_check = [
@@ -83,7 +81,7 @@ class DatasetValidator:
 
         return {"passed": all_ok, "details": details}
 
-    def validate_jsonl_files(self) -> Dict[str, Any]:
+    def validate_jsonl_files(self) -> dict[str, Any]:
         """Check JSONL files for line-by-line JSON validity."""
         jsonl_dir = self.dataset_dir / "jsonl"
         files_to_check = [
@@ -107,13 +105,13 @@ class DatasetValidator:
             try:
                 valid_lines = 0
                 corrupt_lines = 0
-                with open(fpath, "r", encoding="utf-8") as f:
+                with open(fpath, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if not line:
                             continue
                         try:
-                            obj = json.loads(line)
+                            json.loads(line)
                             valid_lines += 1
                         except json.JSONDecodeError:
                             corrupt_lines += 1
@@ -135,7 +133,7 @@ class DatasetValidator:
 
         return {"passed": all_ok, "details": details}
 
-    def audit_pii_leakage(self, sample_lines: int = 10000) -> Dict[str, Any]:
+    def audit_pii_leakage(self, sample_lines: int = 10000) -> dict[str, Any]:
         """Sample exported datasets and audit for unmasked PII."""
         jsonl_path = self.dataset_dir / "jsonl" / "sft_openai_messages.jsonl"
         if not jsonl_path.exists():
@@ -149,7 +147,7 @@ class DatasetValidator:
         }
 
         checked_lines = 0
-        with open(jsonl_path, "r", encoding="utf-8") as f:
+        with open(jsonl_path, encoding="utf-8") as f:
             for line in f:
                 if checked_lines >= sample_lines:
                     break
@@ -157,7 +155,7 @@ class DatasetValidator:
                 try:
                     data = json.loads(line)
                     text_blob = " ".join(m.get("content", "") for m in data.get("messages", []))
-                    
+
                     # Audit regexes
                     clean_res, reg_stats = self.regex_scrubber.scrub(text_blob)
                     leaks["unmasked_phones"] += reg_stats.get("phones", 0)
@@ -175,7 +173,7 @@ class DatasetValidator:
             "total_leak_count": total_leaks,
         }
 
-    def validate_sft_turn_structures(self) -> Dict[str, Any]:
+    def validate_sft_turn_structures(self) -> dict[str, Any]:
         """Validate that SFT dialogues follow alternating user/assistant turns."""
         jsonl_path = self.dataset_dir / "jsonl" / "sft_openai_messages.jsonl"
         if not jsonl_path.exists():
@@ -184,19 +182,19 @@ class DatasetValidator:
         conforming_dialogues = 0
         non_conforming = 0
 
-        with open(jsonl_path, "r", encoding="utf-8") as f:
+        with open(jsonl_path, encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line)
                     msgs = data.get("messages", [])
                     # Skip system prompt
                     dialogue_msgs = [m for m in msgs if m.get("role") != "system"]
-                    
+
                     # Check alternation: user -> assistant -> user -> assistant...
                     roles = [m.get("role") for m in dialogue_msgs]
                     valid_roles = True
                     for i in range(len(roles) - 1):
-                        if roles[i] == roles[i+1]:
+                        if roles[i] == roles[i + 1]:
                             valid_roles = False
                             break
                     if roles and roles[0] != "user":

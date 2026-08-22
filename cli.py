@@ -3,7 +3,6 @@ Command-Line Interface (CLI) for Russian IT Community Data Engineering Pipeline.
 """
 
 import argparse
-import logging
 import sys
 from pathlib import Path
 
@@ -21,9 +20,7 @@ from src.validation.validator import DatasetValidator
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Russian IT Community Data Engineering & Curation CLI"
-    )
+    parser = argparse.ArgumentParser(description="Russian IT Community Data Engineering & Curation CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
     # Command: run (all)
@@ -35,10 +32,10 @@ def main():
     parser_analyze.add_argument("--limit", type=int, default=100000, help="Sample limit for NLP lemmatization")
 
     # Command: validate
-    parser_validate = subparsers.add_parser("validate", help="Run dataset validation and zero-PII audit")
+    subparsers.add_parser("validate", help="Run dataset validation and zero-PII audit")
 
     # Command: benchmark
-    parser_benchmark = subparsers.add_parser("benchmark", help="Export and display benchmark questions")
+    subparsers.add_parser("benchmark", help="Export and display benchmark questions")
 
     args = parser.parse_args()
 
@@ -56,6 +53,7 @@ def main():
 
         if clean_parquet_path.exists():
             import pandas as pd
+
             print(f"📂 Loading pre-cleaned dataset from {clean_parquet_path}...")
             df = pd.read_parquet(clean_parquet_path)
             cleaned = []
@@ -109,6 +107,7 @@ def main():
         validator = DatasetValidator(OUTPUT_DIR)
         res = validator.validate_all()
         import json
+
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.command == "benchmark":

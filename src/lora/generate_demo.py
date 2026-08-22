@@ -64,7 +64,7 @@ def generate_answer(
             pad_token_id=tokenizer.eos_token_id,
         )
 
-    response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+    response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1] :], skip_special_tokens=True)
     print("\n" + "=" * 60)
     print(f"🤖 Ответ обученной LoRA модели:\n{response}")
     print("=" * 60 + "\n")

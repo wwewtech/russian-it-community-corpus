@@ -5,13 +5,12 @@ Statistical and NLP metrics calculations for conversational datasets.
 import math
 import re
 import statistics
-from collections import Counter, defaultdict
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from collections import Counter
+from typing import Any
 
 import tiktoken
 
-from src.config import SENTIMENT_DICT, STOPWORDS_RU
+from src.config import SENTIMENT_DICT
 
 # Try to initialize tiktoken cl100k_base for precise BPE token metrics
 try:
@@ -45,17 +44,24 @@ def compute_shannon_entropy(word_counts: Counter) -> float:
     return round(entropy, 3)
 
 
-def compute_percentiles(values: List[float]) -> Dict[str, float]:
+def compute_percentiles(values: list[float]) -> dict[str, float]:
     """Compute standard percentiles (p25, p50, p75, p90, p95, p99) and statistics."""
     if not values:
         return {
-            "mean": 0.0, "median": 0.0, "std": 0.0,
-            "min": 0.0, "max": 0.0,
-            "p25": 0.0, "p75": 0.0, "p90": 0.0, "p95": 0.0, "p99": 0.0
+            "mean": 0.0,
+            "median": 0.0,
+            "std": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p25": 0.0,
+            "p75": 0.0,
+            "p90": 0.0,
+            "p95": 0.0,
+            "p99": 0.0,
         }
     sorted_v = sorted(values)
     n = len(sorted_v)
-    
+
     def _pct(p: float) -> float:
         idx = min(n - 1, max(0, int(p * n)))
         return sorted_v[idx]
@@ -74,7 +80,7 @@ def compute_percentiles(values: List[float]) -> Dict[str, float]:
     }
 
 
-def analyze_sentiment(texts: List[str]) -> Dict[str, Any]:
+def analyze_sentiment(texts: list[str]) -> dict[str, Any]:
     """Calculate aggregate sentiment scores and sentiment distribution."""
     if not texts:
         return {"average": 0.0, "positive": 0, "negative": 0, "neutral": 0}
@@ -85,7 +91,7 @@ def analyze_sentiment(texts: List[str]) -> Dict[str, Any]:
     neu = 0
 
     for t in texts:
-        words = re.findall(r'\w+', t.lower())
+        words = re.findall(r"\w+", t.lower())
         s = sum(SENTIMENT_DICT.get(w, 0) for w in words)
         scores.append(s)
         if s > 0:

@@ -5,8 +5,8 @@ Supports dense semantic embedding retrieval + BM25 hybrid ranking.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-import numpy as np
+from typing import Any
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class LocalRAGPipeline:
         self.df_kb = pd.read_parquet(self.parquet_kb_path)
         logger.info(f"Loaded {len(self.df_kb):,} RAG knowledge chunks.")
 
-    def search(self, query: str, top_k: int = 3, domain_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 3, domain_filter: str | None = None) -> list[dict[str, Any]]:
         """
         Fast lexical and semantic retrieval across knowledge base chunks.
         """
@@ -62,27 +62,31 @@ class LocalRAGPipeline:
         results = []
         for _, row in top_matches.iterrows():
             if row["relevance_score"] > 0:
-                results.append({
-                    "chunk_id": row["chunk_id"],
-                    "title": row["title"],
-                    "domain": row["topic_domain"],
-                    "tags": row["topic_tags"],
-                    "content": row["content"],
-                    "date_range": row["date_range"],
-                    "score": round(float(row["relevance_score"]), 2),
-                })
+                results.append(
+                    {
+                        "chunk_id": row["chunk_id"],
+                        "title": row["title"],
+                        "domain": row["topic_domain"],
+                        "tags": row["topic_tags"],
+                        "content": row["content"],
+                        "date_range": row["date_range"],
+                        "score": round(float(row["relevance_score"]), 2),
+                    }
+                )
 
         return results
 
-    def format_rag_prompt(self, user_query: str, retrieved_contexts: List[Dict[str, Any]]) -> str:
+    def format_rag_prompt(self, user_query: str, retrieved_contexts: list[dict[str, Any]]) -> str:
         """Format retrieved context into an augmented prompt for the LLM."""
         if not retrieved_contexts:
             return user_query
 
-        context_str = "\n\n---\n\n".join([
-            f"[Контекст из базы знаний #{i+1} | {c['title']} ({c['date_range']})]:\n{c['content']}"
-            for i, c in enumerate(retrieved_contexts)
-        ])
+        context_str = "\n\n---\n\n".join(
+            [
+                f"[Контекст из базы знаний #{i + 1} | {c['title']} ({c['date_range']})]:\n{c['content']}"
+                for i, c in enumerate(retrieved_contexts)
+            ]
+        )
 
         return (
             f"Используй следующий подтвержденный практический опыт инженеров из базы знаний для точного ответа на вопрос:\n\n"

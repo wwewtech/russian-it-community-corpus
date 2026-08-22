@@ -4,9 +4,9 @@ Master Pipeline Orchestrator for IT Community Data Engineering & Curation.
 
 import json
 import logging
-from pathlib import Path
 import time
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
 
 from src.analytics.engine import DeepChatAnalyzer
 from src.analytics.report_generator import ReportGenerator
@@ -46,7 +46,7 @@ class MasterDataPipeline:
     Complete end-to-end data curation pipeline.
     """
 
-    def __init__(self, raw_export_dirs: List[Path] = RAW_EXPORT_DIRS):
+    def __init__(self, raw_export_dirs: list[Path] = RAW_EXPORT_DIRS):
         self.raw_export_dirs = raw_export_dirs
         self.anonymizer = UnifiedPIIAnonymizer(enable_ner=True)
         self.exact_dedup = ExactDeduplicator()
@@ -54,7 +54,7 @@ class MasterDataPipeline:
         self.tagger = TechnicalTagger()
         self.dag_builder = ThreadDAGBuilder()
         self.conv_extractor = ConversationExtractor()
-        
+
         # Exporters
         self.parquet_exporter = ParquetExporter(PARQUET_OUTPUT_DIR)
         self.jsonl_exporter = JSONLExporter(JSONL_OUTPUT_DIR)
@@ -62,16 +62,16 @@ class MasterDataPipeline:
         self.dpo_exporter = DPOExporter(JSONL_OUTPUT_DIR)
 
         # Output states
-        self.raw_messages: List[NormalizedMessage] = []
-        self.cleaned_messages: List[CleanedMessage] = []
-        self.threads: Dict[int, List[CleanedMessage]] = {}
-        self.sft_dialogues: List[SFTDialogue] = []
-        self.rag_chunks: List[RAGChunk] = []
-        self.dpo_pairs: List[Dict[str, Any]] = []
-        self.analytics_report: Dict[str, Any] = {}
-        self.validation_report: Dict[str, Any] = {}
+        self.raw_messages: list[NormalizedMessage] = []
+        self.cleaned_messages: list[CleanedMessage] = []
+        self.threads: dict[int, list[CleanedMessage]] = {}
+        self.sft_dialogues: list[SFTDialogue] = []
+        self.rag_chunks: list[RAGChunk] = []
+        self.dpo_pairs: list[dict[str, Any]] = []
+        self.analytics_report: dict[str, Any] = {}
+        self.validation_report: dict[str, Any] = {}
 
-    def run_all(self) -> Dict[str, Any]:
+    def run_all(self) -> dict[str, Any]:
         """Execute all pipeline stages in sequence."""
         start_time = time.time()
         logger.info("=" * 70)
@@ -91,9 +91,11 @@ class MasterDataPipeline:
         self.cleaned_messages = self.anonymizer.process_batch(self.raw_messages)
         pii_stats = self.anonymizer.get_stats_summary()
         t_pii = time.time() - t0
-        logger.info(f"✅ PII Scrubbing complete in {t_pii:.2f}s. Redacted {pii_stats.get('phones_scrubbed', 0)} phones, "
-                    f"{pii_stats.get('emails_scrubbed', 0)} emails, {pii_stats.get('crypto_wallets_scrubbed', 0)} wallets, "
-                    f"{pii_stats.get('api_keys_scrubbed', 0)} API keys.")
+        logger.info(
+            f"✅ PII Scrubbing complete in {t_pii:.2f}s. Redacted {pii_stats.get('phones_scrubbed', 0)} phones, "
+            f"{pii_stats.get('emails_scrubbed', 0)} emails, {pii_stats.get('crypto_wallets_scrubbed', 0)} wallets, "
+            f"{pii_stats.get('api_keys_scrubbed', 0)} API keys."
+        )
 
         # Stage 3: Exact & MinHash LSH Deduplication
         t0 = time.time()
@@ -101,7 +103,9 @@ class MasterDataPipeline:
         unique_exact, exact_dupes = self.exact_dedup.deduplicate(self.cleaned_messages)
         self.cleaned_messages, lsh_dupes = self.minhash_lsh.deduplicate_messages(unique_exact)
         t_dedup = time.time() - t0
-        logger.info(f"✅ Deduplication complete in {t_dedup:.2f}s. Removed {exact_dupes + lsh_dupes:,} duplicate/spam messages.")
+        logger.info(
+            f"✅ Deduplication complete in {t_dedup:.2f}s. Removed {exact_dupes + lsh_dupes:,} duplicate/spam messages."
+        )
 
         # Stage 4: Domain Taxonomy & Technical Keyword Tagging
         t0 = time.time()
@@ -118,24 +122,26 @@ class MasterDataPipeline:
         self.rag_chunks = self.conv_extractor.extract_rag_chunks(self.threads)
         self.dpo_pairs = self.conv_extractor.extract_dpo_pairs(self.threads)
         t_graph = time.time() - t0
-        logger.info(f"✅ Extraction complete in {t_graph:.2f}s: {len(self.threads):,} threads, "
-                    f"{len(self.sft_dialogues):,} SFT dialogues, {len(self.rag_chunks):,} RAG chunks, "
-                    f"{len(self.dpo_pairs):,} DPO pairs.")
+        logger.info(
+            f"✅ Extraction complete in {t_graph:.2f}s: {len(self.threads):,} threads, "
+            f"{len(self.sft_dialogues):,} SFT dialogues, {len(self.rag_chunks):,} RAG chunks, "
+            f"{len(self.dpo_pairs):,} DPO pairs."
+        )
 
         # Stage 6: Multi-Format Production Exporter
         t0 = time.time()
         logger.info("[Stage 6/7] Exporting Datasets to Apache Parquet, ShareGPT, Alpaca, ChatML, and RAG JSONL...")
         # Parquet
-        p_msgs = self.parquet_exporter.export_messages(self.cleaned_messages)
-        p_sft = self.parquet_exporter.export_sft_dialogues(self.sft_dialogues)
-        p_rag = self.parquet_exporter.export_rag_chunks(self.rag_chunks)
-        
+        self.parquet_exporter.export_messages(self.cleaned_messages)
+        self.parquet_exporter.export_sft_dialogues(self.sft_dialogues)
+        self.parquet_exporter.export_rag_chunks(self.rag_chunks)
+
         # JSONL
-        j_sharegpt = self.jsonl_exporter.export_sharegpt(self.sft_dialogues)
-        j_alpaca = self.jsonl_exporter.export_alpaca(self.sft_dialogues)
-        j_chatml = self.jsonl_exporter.export_openai_chatml(self.sft_dialogues)
-        j_rag = self.rag_exporter.export_rag_jsonl(self.rag_chunks)
-        j_dpo = self.dpo_exporter.export_dpo_pairs(self.dpo_pairs)
+        self.jsonl_exporter.export_sharegpt(self.sft_dialogues)
+        self.jsonl_exporter.export_alpaca(self.sft_dialogues)
+        self.jsonl_exporter.export_openai_chatml(self.sft_dialogues)
+        self.rag_exporter.export_rag_jsonl(self.rag_chunks)
+        self.dpo_exporter.export_dpo_pairs(self.dpo_pairs)
 
         # Export sample previews
         SAMPLES_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -177,7 +183,7 @@ class MasterDataPipeline:
 
         total_time = time.time() - start_time
         logger.info("=" * 70)
-        logger.info(f"🎉 PIPELINE COMPLETED SUCCESSFULLY IN {total_time:.2f}s ({total_time/60:.2f} min)")
+        logger.info(f"🎉 PIPELINE COMPLETED SUCCESSFULLY IN {total_time:.2f}s ({total_time / 60:.2f} min)")
         logger.info("=" * 70)
 
         # Print Visual Terminal Summary

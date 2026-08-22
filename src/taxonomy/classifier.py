@@ -5,7 +5,6 @@ Domain Classifier for Russian IT Community Messages and Dialogues.
 import logging
 import re
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
 
 from src.config import DOMAIN_TAXONOMY
 
@@ -17,26 +16,26 @@ class DomainClassifier:
     Classifies technical chat messages and dialogues into IT domains based on taxonomy dictionary.
     """
 
-    def __init__(self, taxonomy: Dict[str, Dict[str, any]] = DOMAIN_TAXONOMY):
+    def __init__(self, taxonomy: dict[str, dict[str, any]] = DOMAIN_TAXONOMY):
         self.taxonomy = taxonomy
         # Compile word-boundary regex patterns for fast matching
-        self.domain_patterns: Dict[str, List[re.Pattern]] = {}
+        self.domain_patterns: dict[str, list[re.Pattern]] = {}
         for domain, info in taxonomy.items():
             patterns = []
             for kw in info["keywords"]:
                 # Escaped keyword with word boundaries or punctuation boundaries
-                pat = re.compile(rf'(?<!\w){re.escape(kw)}(?!\w)', re.IGNORECASE)
+                pat = re.compile(rf"(?<!\w){re.escape(kw)}(?!\w)", re.IGNORECASE)
                 patterns.append(pat)
             self.domain_patterns[domain] = patterns
 
-    def classify_text(self, text: str) -> Tuple[str, float, Dict[str, int]]:
+    def classify_text(self, text: str) -> tuple[str, float, dict[str, int]]:
         """
         Classify text and return (best_domain, confidence_score, domain_match_counts).
         """
         if not text:
             return "general_tech_chat", 0.0, {}
 
-        scores: Dict[str, int] = defaultdict(int)
+        scores: dict[str, int] = defaultdict(int)
 
         for domain, patterns in self.domain_patterns.items():
             for pat in patterns:

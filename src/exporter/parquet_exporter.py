@@ -4,11 +4,8 @@ Apache Parquet exporter with zstd compression for high-performance ML dataset lo
 
 import logging
 from pathlib import Path
-from typing import List, Union
 
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue
 
@@ -20,11 +17,11 @@ class ParquetExporter:
     Exports clean messages, SFT dialogues, and RAG knowledge chunks to compressed Apache Parquet format.
     """
 
-    def __init__(self, output_dir: Union[str, Path]):
+    def __init__(self, output_dir: str | Path):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def export_messages(self, messages: List[CleanedMessage], file_name: str = "full_clean_messages.parquet") -> Path:
+    def export_messages(self, messages: list[CleanedMessage], file_name: str = "full_clean_messages.parquet") -> Path:
         """Export all cleaned messages to Parquet."""
         out_path = self.output_dir / file_name
         logger.info(f"Exporting {len(messages)} messages to Parquet at {out_path}...")
@@ -52,10 +49,10 @@ class ParquetExporter:
 
         df = pd.DataFrame.from_records(records)
         df.to_parquet(out_path, engine="pyarrow", compression="zstd", index=False)
-        logger.info(f"Successfully saved {out_path} (Size: {out_path.stat().st_size / (1024*1024):.2f} MB)")
+        logger.info(f"Successfully saved {out_path} (Size: {out_path.stat().st_size / (1024 * 1024):.2f} MB)")
         return out_path
 
-    def export_sft_dialogues(self, dialogues: List[SFTDialogue], file_name: str = "sft_dialogues.parquet") -> Path:
+    def export_sft_dialogues(self, dialogues: list[SFTDialogue], file_name: str = "sft_dialogues.parquet") -> Path:
         """Export SFT dialogues to Parquet."""
         out_path = self.output_dir / file_name
         logger.info(f"Exporting {len(dialogues)} SFT dialogues to Parquet at {out_path}...")
@@ -76,10 +73,10 @@ class ParquetExporter:
 
         df = pd.DataFrame.from_records(records)
         df.to_parquet(out_path, engine="pyarrow", compression="zstd", index=False)
-        logger.info(f"Successfully saved {out_path} (Size: {out_path.stat().st_size / (1024*1024):.2f} MB)")
+        logger.info(f"Successfully saved {out_path} (Size: {out_path.stat().st_size / (1024 * 1024):.2f} MB)")
         return out_path
 
-    def export_rag_chunks(self, chunks: List[RAGChunk], file_name: str = "rag_knowledge_base.parquet") -> Path:
+    def export_rag_chunks(self, chunks: list[RAGChunk], file_name: str = "rag_knowledge_base.parquet") -> Path:
         """Export RAG chunks to Parquet."""
         out_path = self.output_dir / file_name
         logger.info(f"Exporting {len(chunks)} RAG chunks to Parquet at {out_path}...")
@@ -103,5 +100,5 @@ class ParquetExporter:
 
         df = pd.DataFrame.from_records(records)
         df.to_parquet(out_path, engine="pyarrow", compression="zstd", index=False)
-        logger.info(f"Successfully saved {out_path} (Size: {out_path.stat().st_size / (1024*1024):.2f} MB)")
+        logger.info(f"Successfully saved {out_path} (Size: {out_path.stat().st_size / (1024 * 1024):.2f} MB)")
         return out_path

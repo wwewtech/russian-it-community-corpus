@@ -3,12 +3,12 @@ Unit tests for deterministic Regex and NER PII scrubbing.
 """
 
 import unittest
-from src.pii.regex_scrubber import RegexPIIScrubber
+
 from src.pii.anonymizer import UnifiedPIIAnonymizer
+from src.pii.regex_scrubber import RegexPIIScrubber
 
 
 class TestPIIScrubbing(unittest.TestCase):
-
     def setUp(self):
         self.scrubber = RegexPIIScrubber()
         self.anonymizer = UnifiedPIIAnonymizer(enable_ner=False)

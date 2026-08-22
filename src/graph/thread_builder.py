@@ -4,8 +4,6 @@ Conversation Thread Builder and DAG Reconstruction for Telegram Chat Exports.
 
 import logging
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set, Tuple
 
 from src.ingestion.schema import CleanedMessage
 
@@ -21,7 +19,9 @@ class ThreadDAGBuilder:
         self.max_reply_gap_hours = max_reply_gap_hours
         self.burst_window_minutes = burst_window_minutes
 
-    def build_threads(self, messages: List[CleanedMessage]) -> Tuple[List[CleanedMessage], Dict[int, List[CleanedMessage]]]:
+    def build_threads(
+        self, messages: list[CleanedMessage]
+    ) -> tuple[list[CleanedMessage], dict[int, list[CleanedMessage]]]:
         """
         Group messages into threads based on reply_to_id and temporal proximity.
         Assigns thread_id to each message in place and returns both updated messages and threads dictionary.
@@ -30,13 +30,11 @@ class ThreadDAGBuilder:
             return [], {}
 
         # Index messages by (chat_id, msg_id)
-        msg_map: Dict[Tuple[int, int], CleanedMessage] = {
-            (m.chat_id, m.msg_id): m for m in messages
-        }
+        msg_map: dict[tuple[int, int], CleanedMessage] = {(m.chat_id, m.msg_id): m for m in messages}
 
         # Parent to children mapping
-        children_map: Dict[Tuple[int, int], List[Tuple[int, int]]] = defaultdict(list)
-        parent_map: Dict[Tuple[int, int], Tuple[int, int]] = {}
+        children_map: dict[tuple[int, int], list[tuple[int, int]]] = defaultdict(list)
+        parent_map: dict[tuple[int, int], tuple[int, int]] = {}
 
         # Sort messages by timestamp
         sorted_msgs = sorted(messages, key=lambda m: (m.chat_id, m.unixtime, m.msg_id))
@@ -55,8 +53,8 @@ class ThreadDAGBuilder:
                         parent_map[cur_key] = parent_key
 
         # Second pass: Cluster reply chains into connected thread components
-        visited: Set[Tuple[int, int]] = set()
-        threads: Dict[int, List[CleanedMessage]] = defaultdict(list)
+        visited: set[tuple[int, int]] = set()
+        threads: dict[int, list[CleanedMessage]] = defaultdict(list)
         current_thread_id = 1
 
         # Process roots with explicit replies first
@@ -69,7 +67,7 @@ class ThreadDAGBuilder:
             if key not in parent_map and key in children_map:
                 # Traverse tree in BFS/DFS order
                 queue = deque([key])
-                thread_nodes: List[CleanedMessage] = []
+                thread_nodes: list[CleanedMessage] = []
                 while queue:
                     node_key = queue.popleft()
                     if node_key in visited:
@@ -91,7 +89,7 @@ class ThreadDAGBuilder:
         # Third pass: Group remaining orphan messages into temporal burst threads if they are part of active dialogues
         last_chat_id = None
         last_time = 0
-        burst_thread: List[CleanedMessage] = []
+        burst_thread: list[CleanedMessage] = []
         burst_id = current_thread_id
 
         for msg in sorted_msgs:

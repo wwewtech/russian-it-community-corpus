@@ -4,7 +4,6 @@ Multi-label technical keyword tagger and sentiment scoring analyzer.
 
 import logging
 import re
-from typing import Dict, List, Set, Tuple
 
 from src.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
 from src.ingestion.schema import CleanedMessage
@@ -21,9 +20,9 @@ class TechnicalTagger:
     def __init__(self):
         self.classifier = DomainClassifier()
         self.sentiment_dict = SENTIMENT_DICT
-        
+
         # Flatten all known keywords for fast tagging
-        self.all_keywords: Dict[str, str] = {}
+        self.all_keywords: dict[str, str] = {}
         for domain, info in DOMAIN_TAXONOMY.items():
             for kw in info["keywords"]:
                 self.all_keywords[kw.lower()] = domain
@@ -32,21 +31,21 @@ class TechnicalTagger:
         """Calculate sentiment score based on lexicon matches."""
         if not text:
             return 0
-        words = re.findall(r'\w+', text.lower())
+        words = re.findall(r"\w+", text.lower())
         score = 0
         for w in words:
             if w in self.sentiment_dict:
                 score += self.sentiment_dict[w]
         return score
 
-    def extract_tags(self, text: str) -> List[str]:
+    def extract_tags(self, text: str) -> list[str]:
         """Extract matched technical keyword tags from text."""
         if not text:
             return []
         text_lower = text.lower()
-        words = set(re.findall(r'[a-zA-Zа-яё0-9_\-\+\#\.]+', text_lower))
-        
-        tags: Set[str] = set()
+        words = set(re.findall(r"[a-zA-Zа-яё0-9_\-\+\#\.]+", text_lower))
+
+        tags: set[str] = set()
         for kw in self.all_keywords:
             if kw in words or (len(kw) > 3 and f" {kw} " in f" {text_lower} "):
                 tags.add(kw)
@@ -66,7 +65,7 @@ class TechnicalTagger:
         msg.sentiment_score = sentiment
         return msg
 
-    def tag_batch(self, messages: List[CleanedMessage]) -> List[CleanedMessage]:
+    def tag_batch(self, messages: list[CleanedMessage]) -> list[CleanedMessage]:
         """
         Tag a batch of messages.
         """

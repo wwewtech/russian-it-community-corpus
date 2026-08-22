@@ -5,9 +5,10 @@ Optimized for NVIDIA GeForce RTX 3060 (12GB VRAM).
 
 import argparse
 import logging
-from pathlib import Path
 import os
 import sys
+from pathlib import Path
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -20,13 +21,13 @@ os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 import torch
 from datasets import load_dataset
-from peft import LoraConfig, get_peft_model, TaskType
+from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    TrainingArguments,
-    Trainer,
     DataCollatorForSeq2Seq,
+    Trainer,
+    TrainingArguments,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,9 @@ def train_lora(
     """
     Execute LoRA domain adaptation on RTX 3060 with PEFT.
     """
-    print(f"🚀 Initializing LoRA Fine-Tuning on GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
+    print(
+        f"🚀 Initializing LoRA Fine-Tuning on GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
+    )
     print(f"📦 Base Model: {model_name}")
     print(f"📚 Dataset: {dataset_path}")
 

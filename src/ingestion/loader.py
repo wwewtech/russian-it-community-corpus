@@ -2,16 +2,15 @@
 Loader and parser for Telegram Chat Export JSON files.
 """
 
+import contextlib
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any
 
-try:
-    import ujson as fast_json
-except ImportError:
-    import json as fast_json
+with contextlib.suppress(ImportError):
+    pass
 
 from src.ingestion.schema import NormalizedMessage
 
@@ -42,7 +41,7 @@ def extract_raw_text(raw_text: Any) -> str:
     return str(raw_text).strip()
 
 
-def parse_timestamp(raw_msg: Dict[str, Any]) -> Tuple[datetime, int]:
+def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
     """Parse timestamp and unixtime from raw message object."""
     unixtime = raw_msg.get("date_unixtime")
     if unixtime is not None:
@@ -75,7 +74,7 @@ def parse_timestamp(raw_msg: Dict[str, Any]) -> Tuple[datetime, int]:
     return epoch, 0
 
 
-def load_export_file(file_path: Union[str, Path]) -> Tuple[Dict[str, Any], List[NormalizedMessage]]:
+def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[NormalizedMessage]]:
     """
     Load a Telegram chat export result.json file and return metadata and normalized messages.
     """
@@ -89,7 +88,7 @@ def load_export_file(file_path: Union[str, Path]) -> Tuple[Dict[str, Any], List[
             raise FileNotFoundError(f"Cannot find export file at {file_path}")
 
     logger.info(f"Loading export from {path}...")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
 
     chat_info = {
@@ -103,7 +102,7 @@ def load_export_file(file_path: Union[str, Path]) -> Tuple[Dict[str, Any], List[
     if not raw_msgs and isinstance(data, list):
         raw_msgs = data
 
-    normalized_msgs: List[NormalizedMessage] = []
+    normalized_msgs: list[NormalizedMessage] = []
     chat_id = chat_info["id"]
     chat_name = chat_info["name"]
 
@@ -123,15 +122,10 @@ def load_export_file(file_path: Union[str, Path]) -> Tuple[Dict[str, Any], List[
             or raw.get("sender")
             or "Anonymous"
         )
-        author_id = str(
-            raw.get("from_id")
-            or raw.get("actor_id")
-            or raw.get("user_id")
-            or author
-        )
+        author_id = str(raw.get("from_id") or raw.get("actor_id") or raw.get("user_id") or author)
 
         text = extract_raw_text(raw.get("text"))
-        
+
         # Check for media captions
         has_media = bool(
             raw.get("photo")
@@ -183,15 +177,13 @@ def load_export_file(file_path: Union[str, Path]) -> Tuple[Dict[str, Any], List[
     return chat_info, normalized_msgs
 
 
-def merge_multiple_exports(
-    export_dirs: List[Union[str, Path]]
-) -> Tuple[List[Dict[str, Any]], List[NormalizedMessage]]:
+def merge_multiple_exports(export_dirs: list[str | Path]) -> tuple[list[dict[str, Any]], list[NormalizedMessage]]:
     """
     Load and merge multiple Telegram export directories into a single unified stream.
     Sorts all messages chronologically.
     """
-    all_chats_info: List[Dict[str, Any]] = []
-    all_messages: List[NormalizedMessage] = []
+    all_chats_info: list[dict[str, Any]] = []
+    all_messages: list[NormalizedMessage] = []
 
     for d in export_dirs:
         try:

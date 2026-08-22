@@ -5,7 +5,6 @@ Exact and normalized hash deduplication.
 import hashlib
 import logging
 import re
-from typing import Dict, List, Set, Tuple
 
 from src.ingestion.schema import CleanedMessage
 
@@ -15,8 +14,8 @@ logger = logging.getLogger(__name__)
 def normalize_text_for_hash(text: str) -> str:
     """Normalize text by lowercasing, stripping punctuation and collapsing whitespace."""
     text = text.lower()
-    text = re.sub(r'[^\w\s]', '', text)
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
@@ -27,15 +26,13 @@ class ExactDeduplicator:
 
     def __init__(self, min_len_to_dedup: int = 15):
         self.min_len_to_dedup = min_len_to_dedup
-        self.seen_hashes: Set[str] = set()
+        self.seen_hashes: set[str] = set()
 
-    def deduplicate(
-        self, messages: List[CleanedMessage]
-    ) -> Tuple[List[CleanedMessage], int]:
+    def deduplicate(self, messages: list[CleanedMessage]) -> tuple[list[CleanedMessage], int]:
         """
         Filter out exact identical messages (e.g. repeated bot warnings, spam slogans).
         """
-        unique_msgs: List[CleanedMessage] = []
+        unique_msgs: list[CleanedMessage] = []
         dupes_count = 0
 
         for msg in messages:
