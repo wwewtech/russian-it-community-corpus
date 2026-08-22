@@ -1,8 +1,8 @@
 <div align="center">
 
-<!-- Theme-aware banner -->
-<img src="./assets/banner_light.svg#gh-light-mode-only" alt="RICC" width="640" />
-<img src="./assets/banner_dark.svg#gh-dark-mode-only" alt="RICC" width="640" />
+<!-- Theme-aware wordmark (GitHub light / dark) -->
+<img src="./assets/banner_light.svg#gh-light-mode-only" alt="RICC" width="420" />
+<img src="./assets/banner_dark.svg#gh-dark-mode-only" alt="RICC" width="420" />
 
 <br />
 

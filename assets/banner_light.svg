@@ -1,32 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 130" width="800" height="130">
-  <rect width="800" height="130" fill="#ffffff" rx="6" />
-  <rect x="0.5" y="0.5" width="799" height="129" rx="5.5" fill="none" stroke="#e4e4e7" stroke-width="1" />
-  
-  <!-- Left Logo Glyph: Isometric Monolith -->
-  <g transform="translate(36, 25)">
-    <!-- Top Plane -->
-    <path d="M40 10 L64 24 L40 38 L16 24 Z" fill="#18181b" />
-    <!-- Left Plane -->
-    <path d="M15 28 L38 41 L38 68 L15 54 Z" fill="#3f3f46" />
-    <!-- Right Plane -->
-    <path d="M42 41 L65 28 L65 54 L42 68 Z" fill="#71717a" />
-    <!-- Core Center Dot -->
-    <circle cx="40" cy="24" r="3" fill="#ffffff" />
-    <circle cx="40" cy="24" r="1.5" fill="#0284c7" />
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 76" width="460" height="76">
+  <!-- Minimalist Transparent Wordmark (Light Theme) -->
+  <g transform="translate(10, 8)">
+    <!-- Iconic Monolithic Diamond Glyph -->
+    <g transform="translate(6, 4)">
+      <!-- Outer Geometric Polygon -->
+      <polygon points="26,2 50,26 26,50 2,26" fill="none" stroke="#09090b" stroke-width="5" stroke-linejoin="round" />
+      <!-- Inner Solid Core -->
+      <polygon points="26,14 38,26 26,38 14,26" fill="#09090b" />
+    </g>
 
-  <!-- Typography: RICC -->
-  <text x="126" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif" font-size="28" font-weight="800" fill="#09090b" letter-spacing="-0.5">
-    RICC
-  </text>
-  
-  <text x="126" y="86" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="500" fill="#71717a" letter-spacing="-0.1">
-    Russian IT Community Corpus · 1.27M+ messages · 2018–2026
-  </text>
+    <!-- Bold Monolithic Typography -->
+    <text x="76" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', Roboto, Helvetica, sans-serif" font-size="46" font-weight="900" fill="#09090b" letter-spacing="-2">
+      RICC
+    </text>
 
-  <!-- Version Pill -->
-  <g transform="translate(670, 48)">
-    <rect width="94" height="24" rx="4" fill="#f4f4f5" stroke="#e4e4e7" stroke-width="1" />
-    <text x="47" y="16" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" fill="#18181b" text-anchor="middle">v4.0 · PROD</text>
+    <!-- Precision Vertical Hairline -->
+    <line x1="202" y1="12" x2="202" y2="48" stroke="#d4d4d8" stroke-width="1.5" />
+
+    <!-- Subtitle Lockup -->
+    <text x="218" y="27" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#09090b" letter-spacing="1">RUSSIAN IT CORPUS</text>
+    <text x="218" y="44" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="10" font-weight="500" fill="#71717a" letter-spacing="0">1.27M MSGS · 2018–2026</text>
   </g>
 </svg>
