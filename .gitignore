@@ -43,3 +43,6 @@ checkpoints/
 *.log
 .DS_Store
 Thumbs.db
+
+# AI
+prompt.md
