@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "russian-it-community-corpus"
+version = "4.0.0"
+description = "Production Data Engineering & Zero-PII Curation Platform for LLM Training (1.27M+ messages)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "wwewtech", email = "research@wwew.tech" }
+]
+keywords = [
+    "llm", "sft", "dpo", "rag", "lora", "dataset", "nlp", "russian-nlp", "zero-pii"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pandas>=2.2.0",
+    "pyarrow>=15.0.0",
+    "pydantic>=2.5.0",
+    "xxhash>=3.4.0",
+    "ujson>=5.9.0",
+    "natasha>=1.6.0",
+    "slovnet>=0.6.0",
+    "razdel>=0.5.0",
+    "yargy>=0.16.0",
+    "pymorphy3>=2.0.2",
+    "pymorphy3-dicts-ru>=2.4.417127.20260408",
+    "tiktoken>=0.7.0",
+    "scikit-learn>=1.4.0",
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "accelerate>=0.28.0",
+    "peft>=0.10.0",
+    "trl>=0.8.0",
+    "datasets>=2.18.0",
+    "streamlit>=1.32.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.3.0",
+    "black>=24.0.0",
+]
+
+[project.scripts]
+it-pipeline = "cli:main"
+it-studio = "app:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

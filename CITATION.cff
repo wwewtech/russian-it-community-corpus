@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this dataset, data curation pipeline, or benchmarks in your research, please cite it as below."
+authors:
+  - name: "Russian IT Community Open Research Group"
+title: "Russian IT Community Conversational Corpus (2018–2026): A Curated, Zero-PII Dataset for LLM SFT, DPO, and RAG"
+version: 4.0.0
+date-released: 2026-08-22
+url: "https://github.com/wwewtech/russian-it-community-corpus"
+repository-code: "https://github.com/wwewtech/russian-it-community-corpus"
+keywords:
+  - "machine-learning"
+  - "natural-language-processing"
+  - "russian-nlp"
+  - "sft"
+  - "dpo"
+  - "rag"
+  - "lora"
+  - "zero-pii"
+  - "conversational-dataset"
+license: "MIT"

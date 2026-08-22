@@ -6,7 +6,18 @@ Optimized for NVIDIA GeForce RTX 3060 (12GB VRAM).
 import argparse
 import logging
 from pathlib import Path
+import os
 import sys
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+# Ensure HuggingFace cache is located on local drive with full permissions
+os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 import torch
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model, TaskType
