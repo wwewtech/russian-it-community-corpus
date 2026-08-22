@@ -12,6 +12,8 @@
 
 <br />
 
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-FFD21E?style=flat-square)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
+[![Hugging Face Models](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-LoRA%20Zoo-orange?style=flat-square)](https://huggingface.co/wwewtech/russian-it-community-lora)
 [![Python](https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=flat-square&logo=python&logoColor=white)](#)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.6%20CUDA-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](#)
 [![PEFT](https://img.shields.io/badge/PEFT-LoRA%20and%20QLoRA-8A2BE2?style=flat-square)](#)
@@ -19,9 +21,17 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-Data%20Studio-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](#)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](#)
 [![Zero-PII](https://img.shields.io/badge/Security-Zero--PII%20Verified-10B981?style=flat-square)](#security-and-zero-pii-protocol)
-[![License](https://img.shields.io/badge/license-research--only-6B7280?style=flat-square)](#license-and-compliance)
-
 </div>
+
+> [!TIP]
+> **🤗 Official Hugging Face Hub Integration**:
+> - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2.91M clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
+> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 19 pre-trained adapters for Qwen 2.5, DeepSeek R1, LLaMA 3.2, SmolLM2, and Vikhr NLP.
+> 
+> ```python
+> from datasets import load_dataset
+> dataset = load_dataset("wwewtech/russian-it-community-corpus", "sft_dialogues", split="train")
+> ```
 
 ---
 
@@ -122,6 +132,58 @@ Detailed benchmark report: [`reports/MODEL_BENCHMARK_COMPARISON.md`](reports/MOD
 - Python 3.11, 3.12, or 3.13
 - NVIDIA GPU with 8 GB or more VRAM for training, or CPU for data processing
 - Docker with Docker Compose for containerized runs
+
+### Direct Loading from Hugging Face
+
+Load pre-built dataset splits in Python with a single line:
+
+```python
+from datasets import load_dataset
+
+# 1. Load SFT Multi-Turn Dialogues (171.5k dialogues)
+sft_ds = load_dataset(
+    "wwewtech/russian-it-community-corpus", "sft_dialogues", split="train"
+)
+
+# 2. Load RAG Knowledge Base Chunks (325.7k chunks)
+rag_ds = load_dataset(
+    "wwewtech/russian-it-community-corpus", "rag_knowledge_base", split="train"
+)
+
+# 3. Load Full Clean Messages (2.81M records)
+full_ds = load_dataset(
+    "wwewtech/russian-it-community-corpus", "full_corpus", split="train"
+)
+```
+
+### LoRA Model Zoo (18+ Pre-Trained Adapters)
+
+Pre-trained adapters fine-tuned on RICC dataset are available in [`lora_adapters/`](lora_adapters/) and on Hugging Face: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora). See full catalog in [`reports/LORA_MODEL_ZOO.md`](reports/LORA_MODEL_ZOO.md).
+
+| Base Model | Family | Parameters | LoRA Size | Local Path |
+| :--- | :--- | :---: | :---: | :--- |
+| `Qwen/Qwen2.5-0.5B-Instruct` | Qwen 2.5 | 0.5B | 8.27 MB | [`lora_adapters/qwen2.5_0.5b_instruct/`](lora_adapters/qwen2.5_0.5b_instruct/) |
+| `Qwen/Qwen2.5-1.5B-Instruct` | Qwen 2.5 | 1.5B | 16.65 MB | [`lora_adapters/qwen2.5_1.5b_instruct/`](lora_adapters/qwen2.5_1.5b_instruct/) |
+| `Qwen/Qwen2.5-3B-Instruct` | Qwen 2.5 | 3.0B | 28.16 MB | [`lora_adapters/qwen2.5_3b_instruct/`](lora_adapters/qwen2.5_3b_instruct/) |
+| `Qwen/Qwen2.5-Coder-1.5B-Instruct` | Qwen 2.5 Coder | 1.5B | 16.65 MB | [`lora_adapters/qwen2.5_coder_1.5b_instruct/`](lora_adapters/qwen2.5_coder_1.5b_instruct/) |
+| `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` | DeepSeek R1 | 1.5B | 16.65 MB | [`lora_adapters/deepseek_r1_distill_qwen_1.5b/`](lora_adapters/deepseek_r1_distill_qwen_1.5b/) |
+| `unsloth/Llama-3.2-1B-Instruct` | Llama 3.2 | 1.0B | 13.02 MB | [`lora_adapters/llama_3.2_1b_instruct/`](lora_adapters/llama_3.2_1b_instruct/) |
+| `unsloth/Llama-3.2-3B-Instruct` | Llama 3.2 | 3.0B | 35.03 MB | [`lora_adapters/llama_3.2_3b_instruct/`](lora_adapters/llama_3.2_3b_instruct/) |
+| `Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct` | Vikhr NLP | 1.5B | 16.65 MB | [`lora_adapters/vikhr_qwen_2.5_1.5b/`](lora_adapters/vikhr_qwen_2.5_1.5b/) |
+| `HuggingFaceTB/SmolLM2-1.7B-Instruct` | SmolLM2 | 1.7B | 24.02 MB | [`lora_adapters/smollm2_1.7b_instruct/`](lora_adapters/smollm2_1.7b_instruct/) |
+
+```python
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+base = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained(
+    "lora_adapters/qwen2.5_1.5b_instruct"
+)  # or "wwewtech/russian-it-community-lora"
+model = PeftModel.from_pretrained(base, "lora_adapters/qwen2.5_1.5b_instruct")
+```
 
 ### 1. Install
 

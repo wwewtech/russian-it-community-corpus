@@ -1,28 +1,37 @@
 ---
-license: other
-license_name: research-and-education-only
+license: mit
+pretty_name: "RICC: Russian IT Community Corpus (2.91M Conversations)"
 task_categories:
-  - conversational
   - text-generation
   - question-answering
 language:
   - ru
   - en
 tags:
-  - it-discussions
-  - russian-it-community
-  - software-engineering
-  - devops
-  - backend
-  - ai-ml
-  - instruction-tuning
+  - russian-nlp
   - sft
   - dpo
   - rag
-  - anonymized
-pretty_name: Russian IT Community Conversational Corpus (Anonymized 2017-2026)
+  - lora
+  - zero-pii
+  - it-community
+  - software-engineering
 size_categories:
   - 1M<n<10M
+configs:
+  - config_name: full_corpus
+    data_files:
+      - split: train
+        path: data/full_clean_messages.parquet
+    default: true
+  - config_name: sft_dialogues
+    data_files:
+      - split: train
+        path: data/sft_dialogues.parquet
+  - config_name: rag_knowledge_base
+    data_files:
+      - split: train
+        path: data/rag_knowledge_base.parquet
 dataset_info:
   features:
     - name: msg_id
@@ -51,7 +60,21 @@ dataset_info:
       dtype: int64
 ---
 
-# RICC: Russian IT Community Corpus
+<div align="center">
+
+# 💎 RICC: Russian IT Community Corpus
+### Масштабный деидентифицированный корпус русскоязычных IT-сообществ (2017–2026)
+
+[![Parquet](https://img.shields.io/badge/Format-Apache%20Parquet%20(zstd)-017CEE?style=flat-square)](#)
+[![Volume](https://img.shields.io/badge/Messages-2.91M%20(2.81M%20Clean)-10B981?style=flat-square)](#)
+[![SFT Dialogues](https://img.shields.io/badge/SFT%20Dialogues-171.5k-8A2BE2?style=flat-square)](#)
+[![RAG Knowledge Base](https://img.shields.io/badge/RAG%20Chunks-325.7k-F59E0B?style=flat-square)](#)
+[![Zero-PII](https://img.shields.io/badge/Privacy-100%25%20Zero--PII%20Verified-green?style=flat-square)](#)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](#)
+
+</div>
+
+---
 
 ## Описание датасета
 

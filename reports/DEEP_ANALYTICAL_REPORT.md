@@ -1,7 +1,12 @@
-# 🔬 ГЛУБОКИЙ АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО ДАТАСЕТУ (v4.0 Enterprise)
-## Russian IT Community Multi-Domain Conversational Corpus (2018–2026)
+# 🔬 ГЛУБОКИЙ АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО ДАТАСЕТУ (v6.0 Enterprise)
+## Russian IT Community Multi-Domain Conversational Corpus (2017–2026)
 
-> **Дата генерации:** `2026-08-22T22:38:31.460189` | **Версия движка:** `4.0.0-Enterprise`
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-FFD21E?style=flat-square)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
+[![Hugging Face Models](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-LoRA%20Zoo-orange?style=flat-square)](https://huggingface.co/wwewtech/russian-it-community-lora)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github)](https://github.com/wwewtech/russian-it-community-corpus)
+
+> **Официальный репозиторий Hugging Face:** [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
+> **Дата генерации:** `2026-08-23` | **Версия движка:** `6.0.0-Enterprise`
 
 ## 🏆 1. ИТОГОВАЯ ОЦЕНКА КАЧЕСТВА И ГОТОВНОСТИ К ОБУЧЕНИЮ LLM
 **Общий балл:** `90 / 100` | **Категория:** **Tier-1 Enterprise Grade (Экстра-класс)**

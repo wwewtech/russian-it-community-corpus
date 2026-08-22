@@ -2,6 +2,10 @@
 
 ## Сравнение базовой модели, модели с базой знаний и адаптера на видеокарте NVIDIA GeForce RTX 3060
 
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-FFD21E?style=flat-square)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
+[![Hugging Face Models](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-LoRA%20Zoo-orange?style=flat-square)](https://huggingface.co/wwewtech/russian-it-community-lora)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github)](https://github.com/wwewtech/russian-it-community-corpus)
+
 ---
 
 ## 1. Сводная матрица результатов

@@ -34,8 +34,9 @@ ChatExport_2026-08-23/
 dataset_output/parquet/*.parquet
 dataset_output/jsonl/*.jsonl
 
-# Trained LoRA adapter checkpoints
-lora_adapters/
+# Trained LoRA adapter binary weights (hosted on Hugging Face: wwewtech/russian-it-community-lora)
+lora_adapters/**/*.safetensors
+lora_adapters/**/checkpoint-*/
 outputs/
 checkpoints/
 
