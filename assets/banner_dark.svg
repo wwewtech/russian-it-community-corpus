@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 140" width="800" height="140">
+  <rect width="800" height="140" fill="#09090b" rx="8" />
+  
+  <!-- Subtle border -->
+  <rect x="0.5" y="0.5" width="799" height="139" rx="7.5" fill="none" stroke="#27272a" stroke-width="1" />
+  
+  <!-- Monospace grid lines -->
+  <line x1="40" y1="0" x2="40" y2="140" stroke="#18181b" stroke-width="1" />
+  <line x1="760" y1="0" x2="760" y2="140" stroke="#18181b" stroke-width="1" />
+  <line x1="0" y1="70" x2="800" y2="70" stroke="#121215" stroke-width="1" />
+
+  <!-- Minimal Icon Glyph -->
+  <g transform="translate(48, 38)">
+    <rect width="64" height="64" rx="8" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+    <path d="M18 46 L32 18 L46 46 Z" fill="none" stroke="#fafafa" stroke-width="2.5" stroke-linejoin="round" />
+    <circle cx="32" cy="36" r="3.5" fill="#38bdf8" />
+    <line x1="24" y1="38" x2="40" y2="38" stroke="#fafafa" stroke-width="2" />
+  </g>
+
+  <!-- Typography -->
+  <text x="128" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif" font-size="28" font-weight="700" fill="#fafafa" letter-spacing="-0.5">
+    Russian IT Community Corpus
+  </text>
+  
+  <text x="128" y="92" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="500" fill="#a1a1aa" letter-spacing="-0.2">
+    1.27M+ msgs (2018–2026) · Zero-PII · SFT · DPO · RAG · LoRA
+  </text>
+
+  <!-- Version / Stage Pill -->
+  <g transform="translate(640, 52)">
+    <rect width="105" height="26" rx="4" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+    <text x="52" y="17" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" fill="#f4f4f5" text-anchor="middle">v4.0 · PROD</text>
+  </g>
+</svg>
