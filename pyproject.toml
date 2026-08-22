@@ -3,9 +3,9 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "russian-it-community-corpus"
+name = "ricc"
 version = "4.0.0"
-description = "Production Data Engineering & Zero-PII Curation Platform for LLM Training (1.27M+ messages)"
+description = "RICC: Russian IT Community Corpus — Data Engineering and Zero-PII Curation Platform"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

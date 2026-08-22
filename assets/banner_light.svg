@@ -15,13 +15,13 @@
     <circle cx="40" cy="24" r="1.5" fill="#0284c7" />
   </g>
 
-  <!-- Typography -->
-  <text x="126" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif" font-size="24" font-weight="700" fill="#09090b" letter-spacing="-0.4">
-    Russian IT Community Corpus
+  <!-- Typography: RICC -->
+  <text x="126" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif" font-size="28" font-weight="800" fill="#09090b" letter-spacing="-0.5">
+    RICC
   </text>
   
   <text x="126" y="86" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="500" fill="#71717a" letter-spacing="-0.1">
-    1.27M+ msgs (2018–2026) · Zero-PII · SFT · DPO · RAG · LoRA
+    Russian IT Community Corpus · 1.27M+ messages · 2018–2026
   </text>
 
   <!-- Version Pill -->

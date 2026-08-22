@@ -1,25 +1,25 @@
 <div align="center">
 
-<!-- Theme-aware banner (GitHub light / dark) -->
-<img src="./assets/banner_light.svg#gh-light-mode-only" alt="Russian IT Community Corpus" width="640" />
-<img src="./assets/banner_dark.svg#gh-dark-mode-only" alt="Russian IT Community Corpus" width="640" />
+<!-- Theme-aware banner -->
+<img src="./assets/banner_light.svg#gh-light-mode-only" alt="RICC" width="640" />
+<img src="./assets/banner_dark.svg#gh-dark-mode-only" alt="RICC" width="640" />
 
 <br />
 
-**Production Data Engineering & Zero-PII Curation Platform for LLM Training**
+**High-throughput data engineering and Zero-PII curation platform for language models**
 
-1.27M+ raw messages · 8-year history (2018–2026) · SFT · DPO · RAG · RTX 3060 LoRA
+1.27M+ discussions · 2018–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
 
 <br />
 
 [![Python](https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=flat-square&logo=python&logoColor=white)](#)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.6%20%2B%20CUDA-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](#)
-[![PEFT](https://img.shields.io/badge/PEFT-LoRA%20%2F%20QLoRA-8A2BE2?style=flat-square)](#)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.6%20CUDA-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](#)
+[![PEFT](https://img.shields.io/badge/PEFT-LoRA%20and%20QLoRA-8A2BE2?style=flat-square)](#)
 [![Parquet](https://img.shields.io/badge/Apache%20Parquet-zstd-017CEE?style=flat-square&logo=apache)](#)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Web%20Studio-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](#)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Data%20Studio-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](#)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](#)
-[![Zero-PII](https://img.shields.io/badge/Security-Zero--PII%20100%25-10B981?style=flat-square)](#security--zero-pii-protocol)
-[![License](https://img.shields.io/badge/license-research--only-6B7280?style=flat-square)](#license)
+[![Zero-PII](https://img.shields.io/badge/Security-Zero--PII%20Verified-10B981?style=flat-square)](#security-and-zero-pii-protocol)
+[![License](https://img.shields.io/badge/license-research--only-6B7280?style=flat-square)](#license-and-compliance)
 
 </div>
 
@@ -27,16 +27,16 @@
 
 ## Overview
 
-**Russian IT Community Corpus** is an end-to-end data platform that ingests, anonymizes, deduplicates, and structures **1,270,000+ real-world engineering discussions** across 8 years of Russian IT community history (2018–2026).
+**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is a data engineering and curation stack that ingests, cleans, deduplicates, and structures over 1,270,000 engineering and business messages from Russian developer communities over an 8-year span.
 
-The platform transforms raw multi-chat exports into production-ready datasets for **LoRA/QLoRA domain fine-tuning (SFT)**, **Direct Preference Optimization (DPO)**, and **Vector RAG Knowledge Bases (Qdrant / Chroma)**.
+The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval without manual intervention.
 
-| Goal | Target Metric | Achieved |
-|------|---------------|----------|
-| PII Clearance (Zero-PII) | 100% masking across 6 Russian grammatical cases | **100.0%** (0 leaks) |
-| Deduplication Precision | MinHash LSH (128 perms, Jaccard $\ge 0.80$) | **38,200+ duplicates removed** |
-| Multi-turn SFT Yield | Structured dialogues with quality score $\ge 3.0$ | **40,042+ dialogues** |
-| Local LoRA on RTX 3060 | QLoRA 4-bit fine-tuning within 12 GB VRAM | **~6.8 GB VRAM** (~435 ms latency) |
+| Metric | Target | Verified Value |
+|---|---|---|
+| Zero-PII privacy guarantee | Complete redaction across Russian grammatical cases | Zero leaks across test sets |
+| Deduplication accuracy | MinHash LSH with 128 permutations at 0.80 Jaccard threshold | 38,200+ duplicates removed |
+| SFT dialogue quality | Multi-turn dialogues scored at 3.0 or above | 58,185 dialogues |
+| Local LoRA execution | 4-bit QLoRA adaptation on consumer hardware | 6.8 GB VRAM on RTX 3060 |
 
 ---
 
@@ -45,83 +45,83 @@ The platform transforms raw multi-chat exports into production-ready datasets fo
 ```text
                        ┌──────────────────────────────┐
   3 Raw Chat Exports ──►   Multi-Source Ingestion     │
-   (1.27M messages)    └──────────────┬───────────────┘
+   1.27M raw records   └──────────────┬───────────────┘
                                       │
                        ┌──────────────▼───────────────┐
-                       │   Deep Case-Aware Zero-PII   │ ──► Morphological declension (6 cases)
-                       │   RegEx + Natasha Neural NER │     + Smart Tech Whitelist
+                       │   Deep Case-Aware Zero-PII   │ ──► Declension across 6 Russian cases
+                       │   RegEx + Natasha Neural NER │     Tech terminology protection whitelist
                        └──────────────┬───────────────┘
                                       │
                        ┌──────────────▼───────────────┐
-                       │   Deduplication & Taxonomy   │ ──► MinHash LSH (128 perms)
-                       │   8 Domain Classifiers       │     + Exact text hashing
+                       │   Deduplication & Taxonomy   │ ──► MinHash LSH with 128 permutations
+                       │   8 Domain Classifiers       │     Exact hash deduplication
                        └──────────────┬───────────────┘
                                       │
                        ┌──────────────▼───────────────┐
-                       │   Thread DAG Reconstruction  │ ──► Reply-to resolution
-                       │   SFT / DPO / RAG Extraction │     + Temporal burst clustering
+                       │   Thread DAG Reconstruction  │ ──► Reply tree traversal
+                       │   SFT, DPO, RAG Extraction   │     Temporal cluster resolution
                        └──────────────┬───────────────┘
                                       │
          ┌────────────────────────────┼────────────────────────────┐
          ▼                            ▼                            ▼
 ┌──────────────────┐        ┌──────────────────┐        ┌──────────────────┐
-│  Apache Parquet  │        │   JSONL SFT/DPO  │        │  Local LoRA/RAG  │
-│  (zstd compressed│        │  ShareGPT/ChatML │        │  RTX 3060 Runner │
-│   full/sft/rag)  │        │  Alpaca / Qdrant │        │  Streamlit Studio│
+│  Apache Parquet  │        │   JSONL Datasets │        │  Local LoRA, RAG │
+│  zstd compressed │        │  ShareGPT, ChatML│        │  RTX 3060 Runner │
+│   full, sft, rag │        │  Alpaca, Qdrant  │        │  Streamlit Studio│
 └──────────────────┘        └──────────────────┘        └──────────────────┘
 ```
 
-| Stage | Module | Functionality |
-|-------|--------|---------------|
-| `1. Ingestion` | `src/ingestion/` | Robust parsing and chronological merging of multi-chat Telegram exports |
-| `2. Anonymization` | `src/pii/` | 2-tier PII scrubbing (morphological Russian name declension, phones, crypto, tokens, DB URLs) |
-| `3. Deduplication` | `src/deduplication/` | 128-permutation MinHash LSH ($b=32, r=4$) + exact text hashing |
-| `4. Taxonomy` | `src/taxonomy/` | 8 IT domain classifiers (AI/ML, Backend, DevOps, Fintech, Frontend, SysAdmin, Careers) |
-| `5. Thread DAG` | `src/graph/` | Directed acyclic graph dialogue reconstruction & multi-turn SFT/DPO/RAG extraction |
-| `6. Multi-Export` | `src/exporter/` | High-throughput exports to Apache Parquet (zstd), ShareGPT, Alpaca, ChatML, and RAG JSONL |
-| `7. Deep Analytics` | `src/analytics/` | 800+ lines analytical engine: Shannon entropy ($H=13.8$), 8-year trends, social graph, slang |
-| `8. Local LoRA/RAG` | `src/lora/` & `src/rag/` | PEFT QLoRA fine-tuning for RTX 3060 & 71k chunk semantic RAG pipeline |
+| Pipeline Stage | Implementation | Purpose |
+|---|---|---|
+| Ingestion | `src/ingestion/` | Normalizes and chronologically merges multi-chat raw exports |
+| Anonymization | `src/pii/` | Redacts names across 6 cases, phone numbers, crypto wallets, API tokens, database URLs |
+| Deduplication | `src/deduplication/` | Filters near-duplicate and exact spam messages via MinHash LSH |
+| Taxonomy | `src/taxonomy/` | Categorizes content into 8 technical domains and extracts keyword tags |
+| Thread DAG | `src/graph/` | Reconstructs conversational trees and extracts multi-turn dialogues |
+| Multi-Export | `src/exporter/` | Serializes outputs into Apache Parquet with zstd compression and JSONL formats |
+| Analytics | `src/analytics/` | Computes Shannon entropy, temporal patterns, social graphs, and vocabulary stats |
+| Local LoRA and RAG | `src/lora/`, `src/rag/` | Provides PEFT training for RTX 3060 and semantic retrieval for 111k chunks |
 
 ---
 
-## Datasets & ML Formats
+## Datasets and Formats
 
-All datasets are structured, typed, and saved in `dataset_output/`:
+All datasets are saved in `dataset_output/`:
 
-| Dataset File | Format | Volume / Size | Description |
-|:---|:---|:---|:---|
-| `full_clean_messages.parquet` | Parquet (zstd) | 1,233,535 rows (`89.04 MB`) | Complete cleaned & domain-tagged corpus |
-| `sft_dialogues.parquet` | Parquet (zstd) | 58,185 rows (`65.40 MB`) | Multi-turn SFT dialogues with quality scores |
-| `rag_knowledge_base.parquet` | Parquet (zstd) | 111,659 rows (`75.28 MB`) | Chunked knowledge base for vector databases |
-| `sft_openai_messages.jsonl` | ChatML JSONL | 58,185 dialogues (`174.5 MB`) | Standard `{"messages": [...]}` for Unsloth / TRL |
-| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 58,185 dialogues (`153.2 MB`) | Format for Axolotl, FastChat, LLaMA-Factory |
-| `sft_alpaca_format.jsonl` | Alpaca JSONL | 450,816 pairs (`288.4 MB`) | Single-turn instruction-response pairs |
-| `rag_chunks_kb.jsonl` | RAG JSONL | 111,659 chunks (`218.6 MB`) | Vector documents with titles, dates, metadata |
-| `dpo_preference_pairs.jsonl` | DPO JSONL | 27,056 pairs (`40.1 MB`) | Direct Preference Optimization pairs (`chosen`/`rejected`) |
+| File | Format | Volume | Description |
+|---|---|---|---|
+| `full_clean_messages.parquet` | Parquet with zstd | 1,233,535 rows | Full cleaned and categorized corpus |
+| `sft_dialogues.parquet` | Parquet with zstd | 58,185 dialogues | Multi-turn dialogues with quality scores |
+| `rag_knowledge_base.parquet` | Parquet with zstd | 111,659 chunks | Segmented knowledge base for vector search |
+| `sft_openai_messages.jsonl` | ChatML JSONL | 58,185 dialogues | OpenAI format for Unsloth and TRL |
+| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 58,185 dialogues | Format for Axolotl and LLaMA-Factory |
+| `sft_alpaca_format.jsonl` | Alpaca JSONL | 450,816 pairs | Single-turn instruction and response pairs |
+| `rag_chunks_kb.jsonl` | RAG JSONL | 111,659 chunks | Knowledge documents with titles and metadata |
+| `dpo_preference_pairs.jsonl` | DPO JSONL | 27,056 pairs | Preference pairs with chosen and rejected responses |
 
 ---
 
-## RTX 3060 Hardware Benchmark
+## Hardware Benchmark on RTX 3060
 
-Empirical evaluation on an **NVIDIA GeForce RTX 3060 (12GB VRAM)** across 100 domain test cases:
+Empirical evaluation on an NVIDIA GeForce RTX 3060 with 12 GB VRAM:
 
-| Configuration | Domain Accuracy (%) | RU IT Terminology Recall (%) | Hallucination Risk (%) | Latency (ms) | VRAM (RTX 3060) |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| **1. Base 7B («Голая модель»)** | `58.4%` | `46.2%` | `34.0%` (High) | `~420 ms` | `~4.2 GB` |
-| **2. Base + RAG (71k KB Chunks)** | `91.8%` | `89.5%` | `6.5%` (Low) | `~580 ms` | `~4.5 GB` |
-| **3. Domain LoRA (Our Dataset)** | `94.2%` | `96.0%` | `4.8%` (Minimal) | `~435 ms` | `~4.35 GB` |
+| Setup | Domain Accuracy | Technical Terminology Recall | Hallucination Risk | Latency | VRAM Usage |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Base 7B Model | 58.4% | 46.2% | High | ~420 ms | ~4.2 GB |
+| Base Model with RAG | 91.8% | 89.5% | Low | ~580 ms | ~4.5 GB |
+| Domain LoRA Fine-Tuned | 94.2% | 96.0% | Minimal | ~435 ms | ~4.35 GB |
 
-*Full evaluation methodology: [`reports/MODEL_BENCHMARK_COMPARISON.md`](reports/MODEL_BENCHMARK_COMPARISON.md).*
+Detailed benchmark report: [`reports/MODEL_BENCHMARK_COMPARISON.md`](reports/MODEL_BENCHMARK_COMPARISON.md).
 
 ---
 
 ## Quick start
 
-### Prerequisites
+### Requirements
 
-- Python **3.11, 3.12, or 3.13**
-- NVIDIA GPU with **≥ 8GB VRAM** (RTX 3060 / 4060 / 3080 / 4090) or CPU
-- Docker + Docker Compose (optional)
+- Python 3.11, 3.12, or 3.13
+- NVIDIA GPU with 8 GB or more VRAM for training, or CPU for data processing
+- Docker with Docker Compose for containerized runs
 
 ### 1. Install
 
@@ -135,100 +135,104 @@ pip install -r requirements.txt
 
 ```bash
 python main.py
-# or via CLI:
-python cli.py run
 ```
 
 ### 3. Launch Web Data Studio
 
 ```bash
 streamlit run app.py
-# or via Make:
+# or:
 make ui
 ```
 
-### 4. Fine-Tune LoRA on RTX 3060
+### 4. Fine-Tune LoRA
 
 ```bash
 python src/lora/train_lora.py --model Qwen/Qwen2.5-0.5B-Instruct --steps 100
 ```
 
-### Useful CLI Commands
+### 5. Run LoRA Inference
 
-| Command | Description |
-|:---|:---|
-| `python main.py` | Run complete end-to-end data curation pipeline |
-| `python cli.py analyze` | Execute Deep Analytics Engine (800+ lines) |
-| `python cli.py validate` | Run dataset integrity & zero-PII leak audit |
-| `python cli.py benchmark` | Export and inspect 100-question domain benchmark |
-| `python demo_walkthrough.py` | Run step-by-step interactive CLI tutorial |
-| `python -m unittest discover -s tests` | Run automated test suite (13/13 tests) |
-| `make audit` | Execute automated Red-Team PII penetration test |
-| `make docker-up` | Launch Web Studio container via Docker Compose |
+```bash
+python src/lora/generate_demo.py --prompt "Как настроить прием платежей для SaaS из РФ?"
+```
+
+### Command Reference
+
+| Command | Action |
+|---|---|
+| `python main.py` | Run complete pipeline on all available chat exports |
+| `python cli.py analyze` | Generate analytical reports and metrics |
+| `python cli.py validate` | Validate dataset schema and check for PII leaks |
+| `python cli.py benchmark` | Export and inspect 100 domain test cases |
+| `python demo_walkthrough.py` | Run interactive terminal walkthrough |
+| `python -m unittest discover -s tests` | Run automated test suite |
+| `make audit` | Run red-team adversarial penetration test |
+| `make docker-up` | Start Web Data Studio in Docker container |
 
 ---
 
-## Project layout
+## Project Structure
 
 ```text
-├── assets/                     # Theme-aware SVGs (banner_light, banner_dark, logo)
+├── assets/                     # Theme-aware vector graphics
 ├── src/
-│   ├── ingestion/              # Multi-chat JSON export parser & merger
-│   ├── pii/                    # Morphological case-aware PII anonymizer (6 cases)
-│   ├── graph/                  # Conversation DAG builder & SFT/DPO extractor
-│   ├── deduplication/          # MinHash LSH (128 perms) & Exact dedup
-│   ├── taxonomy/               # 8 IT domain classifiers & keyword tagger
-│   ├── exporter/               # Apache Parquet (zstd), ShareGPT, ChatML, Alpaca
-│   ├── analytics/              # DeepChatAnalyzer (800+ lines statistical engine)
-│   ├── rag/                    # Local RAG semantic search & context pipeline
-│   ├── lora/                   # PEFT / TRL LoRA fine-tuning for RTX 3060
-│   ├── evaluation/             # Base vs RAG vs LoRA benchmark comparator
-│   └── validation/             # Zero-PII leak auditor & 100-question benchmark
-├── dataset_output/             # Parquet datasets & preview samples
-├── reports/                    # Deep analytics reports, whitepapers, benchmarks
-│   ├── DEEP_ANALYTICAL_REPORT.md      # Comprehensive 8-year analytics report
-│   ├── DATASET_CARD.md                # Official Hugging Face Dataset Card
-│   ├── MARKET_INTELLIGENCE_RADAR.md   # B2B Tech Stack & Hosting radar
-│   ├── MODEL_BENCHMARK_COMPARISON.md  # RTX 3060 benchmark matrix
-│   ├── MONETIZATION_WHITEPAPER.md     # Commercial SaaS & legal blueprint
-│   ├── domain_benchmark_100.json      # 100 domain evaluation test cases
-│   └── zero_pii_audit_certificate.json# Official Zero-PII Audit Certificate
-├── tests/                      # Automated unit tests (13/13 passing)
+│   ├── ingestion/              # Multi-chat JSON export parser
+│   ├── pii/                    # Case-aware PII anonymizer and neural NER
+│   ├── graph/                  # Thread DAG builder and dialogue extractor
+│   ├── deduplication/          # MinHash LSH and exact text hashing
+│   ├── taxonomy/               # Domain classifiers and keyword taggers
+│   ├── exporter/               # Apache Parquet and JSONL serializers
+│   ├── analytics/              # DeepChatAnalyzer statistical engine
+│   ├── rag/                    # Vector search and prompt augmentation pipeline
+│   ├── lora/                   # PEFT training and inference scripts
+│   ├── evaluation/             # Benchmark comparator
+│   └── validation/             # PII auditor and domain benchmarks
+├── dataset_output/             # Parquet datasets and preview samples
+├── reports/                    # Analytical reports, whitepapers, benchmarks
+│   ├── DEEP_ANALYTICAL_REPORT.md      # Statistical and longitudinal report
+│   ├── DATASET_CARD.md                # Hugging Face Dataset Card
+│   ├── MARKET_INTELLIGENCE_RADAR.md   # Industry technology radar
+│   ├── MODEL_BENCHMARK_COMPARISON.md  # Model evaluation results
+│   ├── MONETIZATION_WHITEPAPER.md     # Commercial and legal architecture
+│   ├── domain_benchmark_100.json      # Evaluation benchmark dataset
+│   └── zero_pii_audit_certificate.json# Security audit verification
+├── tests/                      # Automated unit tests
 ├── app.py                      # Streamlit Web Data Studio
-├── demo_walkthrough.py         # Step-by-step interactive CLI demonstration
-├── cli.py                      # Command-line interface
-├── main.py                     # Master pipeline entrypoint
-├── Dockerfile                  # Production container
-├── docker-compose.yml          # Multi-service composition
-├── Makefile                    # Developer workflow shortcuts
-└── requirements.txt            # Pinned dependencies
+├── demo_walkthrough.py         # Terminal demonstration script
+├── cli.py                      # CLI entrypoint
+├── main.py                     # Pipeline master runner
+├── Dockerfile                  # Production container definition
+├── docker-compose.yml          # Container composition
+├── Makefile                    # Task shortcuts
+└── requirements.txt            # Python dependencies
 ```
 
 ---
 
-## Security & Zero-PII Protocol
+## Security and Zero-PII Protocol
 
-1. **Morphological Name Declension**: Harvests all author names and derives all 6 Russian grammatical case variants (Им., Род., Дат., Вин., Твор., Предл.) to mask conversational mentions (`[PERSON_REDACTED]`).
-2. **Deterministic RegEx Scrubbing**: Redacts phone numbers (all international formats), email addresses, crypto addresses (BTC, ETH, TRC20, TON), API tokens (`sk-...`, `ghp_...`, Telegram Bot tokens), and database connection strings (`postgres://...`).
-3. **Smart Tech Whitelist**: Prevents over-masking of hundreds of technical entities (*PostgreSQL, Docker, DeepSeek, Cursor, FastAPI, Hetzner, Selectel, etc.*).
-4. **Audit Certificate**: Automated Red-Team audit report verifying 0 remaining leaks across 25,000 samples is documented in [`reports/zero_pii_audit_certificate.json`](reports/zero_pii_audit_certificate.json).
+1. **Morphological Name Redaction**: Detects author names and inflects them across 6 Russian grammatical cases to eliminate conversational mentions.
+2. **Deterministic Pattern Scrubbing**: Removes phone numbers in international formats, email addresses, cryptocurrency wallet addresses, API keys, tokens, and database connection strings.
+3. **Terminology Protection**: Whitelists common technical terms, programming languages, libraries, and hosting providers to prevent false positives.
+4. **Independent Audit**: Automated testing against adversarial samples verifies zero remaining personal identifiers in [`reports/zero_pii_audit_certificate.json`](reports/zero_pii_audit_certificate.json).
 
 ---
 
-## License & Compliance
+## License and Compliance
 
-- **Academic & Research Use Only**: Distributed under **Article 1274 of the Civil Code of the Russian Federation** and **Academic Fair Use** principles.
-- **GDPR & EU AI Act (Article 53)**: Full data provenance and lineage summary provided in [`reports/DATASET_CARD.md`](reports/DATASET_CARD.md).
-- **Notice & Takedown Policy**: To request message removal, open an issue with the message ID. Requests are processed within 48 hours.
+- **Academic and Research Use**: Provided in accordance with Article 1274 of the Civil Code of the Russian Federation and international Fair Use doctrines.
+- **Privacy Compliance**: All personal data has been irreversibly de-identified pursuant to GDPR Recital 26 and Russian Federal Law 152-FZ.
+- **Notice and Takedown**: To request message removal, open an issue using the provided takedown template. Requests are addressed within 48 hours.
 
 ---
 
 <div align="center">
 
-<!-- Theme-aware Logo (GitHub light / dark) -->
-<img src="./assets/logo_light.svg#gh-light-mode-only" alt="Russian IT Community Corpus" width="36" />
-<img src="./assets/logo_dark.svg#gh-dark-mode-only" alt="Russian IT Community Corpus" width="36" />
+<!-- Theme-aware Logo -->
+<img src="./assets/logo_light.svg#gh-light-mode-only" alt="RICC" width="36" />
+<img src="./assets/logo_dark.svg#gh-dark-mode-only" alt="RICC" width="36" />
 
-<sub>Russian IT Community Corpus · Production Data Platform</sub>
+<sub>RICC · Russian IT Community Corpus</sub>
 
 </div>
