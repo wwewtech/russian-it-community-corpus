@@ -112,10 +112,10 @@
   },
   "production_parquet_audit": {
     "sampled_messages_audited": 25000,
-    "total_leaks_found": 12,
+    "total_leaks_found": 91,
     "zero_pii_cleared": false,
     "leak_breakdown": {
-      "phones": 12,
+      "phones": 91,
       "emails": 0,
       "crypto_wallets": 0,
       "api_keys": 0,

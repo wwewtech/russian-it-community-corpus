@@ -15,9 +15,11 @@ ENV/
 *.swp
 *.swo
 
-# Raw Telegram Exports (Large Binary Media & 400MB+ Dumps)
+# Raw Telegram Exports (Large Binary Media & 500MB+ Dumps)
+ChatExport_*/
 ChatExport_2026-08-21/
 ChatExport_2026-08-22/
+ChatExport_2026-08-23/
 *.mp4
 *.mp4_thumb.jpg
 *.gif

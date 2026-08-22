@@ -1,0 +1,85 @@
+{
+  "parquet_files": {
+    "passed": true,
+    "details": {
+      "full_clean_messages.parquet": {
+        "exists": true,
+        "rows": 1233535,
+        "columns": 15,
+        "size_mb": 89.04,
+        "status": "VALID"
+      },
+      "sft_dialogues.parquet": {
+        "exists": true,
+        "rows": 58185,
+        "columns": 8,
+        "size_mb": 65.4,
+        "status": "VALID"
+      },
+      "rag_knowledge_base.parquet": {
+        "exists": true,
+        "rows": 111659,
+        "columns": 11,
+        "size_mb": 75.28,
+        "status": "VALID"
+      }
+    }
+  },
+  "jsonl_files": {
+    "passed": true,
+    "details": {
+      "sft_sharegpt_format.jsonl": {
+        "exists": true,
+        "valid_lines": 58185,
+        "corrupt_lines": 0,
+        "size_mb": 200.04,
+        "status": "VALID"
+      },
+      "sft_alpaca_format.jsonl": {
+        "exists": true,
+        "valid_lines": 450816,
+        "corrupt_lines": 0,
+        "size_mb": 225.61,
+        "status": "VALID"
+      },
+      "sft_openai_messages.jsonl": {
+        "exists": true,
+        "valid_lines": 58185,
+        "corrupt_lines": 0,
+        "size_mb": 223.13,
+        "status": "VALID"
+      },
+      "rag_chunks_kb.jsonl": {
+        "exists": true,
+        "valid_lines": 111659,
+        "corrupt_lines": 0,
+        "size_mb": 250.28,
+        "status": "VALID"
+      },
+      "dpo_preference_pairs.jsonl": {
+        "exists": true,
+        "valid_lines": 27056,
+        "corrupt_lines": 0,
+        "size_mb": 42.42,
+        "status": "VALID"
+      }
+    }
+  },
+  "pii_leakage_audit": {
+    "passed": true,
+    "sample_lines_checked": 10000,
+    "leaks_found": {
+      "unmasked_phones": 0,
+      "unmasked_emails": 0,
+      "unmasked_api_keys": 0,
+      "unmasked_crypto": 0
+    },
+    "total_leak_count": 0
+  },
+  "sft_turn_conformance": {
+    "passed": true,
+    "conforming_dialogues": 58185,
+    "non_conforming_dialogues": 0
+  },
+  "overall_passed": true
+}

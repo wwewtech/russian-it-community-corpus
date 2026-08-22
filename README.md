@@ -90,14 +90,14 @@ All datasets are structured, typed, and saved in `dataset_output/`:
 
 | Dataset File | Format | Volume / Size | Description |
 |:---|:---|:---|:---|
-| `full_clean_messages.parquet` | Parquet (zstd) | 525,864 rows (`46.09 MB`) | Complete cleaned & domain-tagged corpus |
-| `sft_dialogues.parquet` | Parquet (zstd) | 40,042 rows (`33.89 MB`) | Multi-turn SFT dialogues with quality scores |
-| `rag_knowledge_base.parquet` | Parquet (zstd) | 71,436 rows (`41.12 MB`) | Chunked knowledge base for vector databases |
-| `sft_openai_messages.jsonl` | ChatML JSONL | 40,042 dialogues (`119.29 MB`) | Standard `{"messages": [...]}` for Unsloth / TRL |
-| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 40,042 dialogues (`104.80 MB`) | Format for Axolotl, FastChat, LLaMA-Factory |
-| `sft_alpaca_format.jsonl` | Alpaca JSONL | 175,912 pairs (`112.26 MB`) | Single-turn instruction-response pairs |
-| `rag_chunks_kb.jsonl` | RAG JSONL | 71,436 chunks (`139.57 MB`) | Vector documents with titles, dates, metadata |
-| `dpo_preference_pairs.jsonl` | DPO JSONL | 18,494 pairs (`27.31 MB`) | Direct Preference Optimization pairs (`chosen`/`rejected`) |
+| `full_clean_messages.parquet` | Parquet (zstd) | 1,233,535 rows (`89.04 MB`) | Complete cleaned & domain-tagged corpus |
+| `sft_dialogues.parquet` | Parquet (zstd) | 58,185 rows (`65.40 MB`) | Multi-turn SFT dialogues with quality scores |
+| `rag_knowledge_base.parquet` | Parquet (zstd) | 111,659 rows (`75.28 MB`) | Chunked knowledge base for vector databases |
+| `sft_openai_messages.jsonl` | ChatML JSONL | 58,185 dialogues (`174.5 MB`) | Standard `{"messages": [...]}` for Unsloth / TRL |
+| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 58,185 dialogues (`153.2 MB`) | Format for Axolotl, FastChat, LLaMA-Factory |
+| `sft_alpaca_format.jsonl` | Alpaca JSONL | 450,816 pairs (`288.4 MB`) | Single-turn instruction-response pairs |
+| `rag_chunks_kb.jsonl` | RAG JSONL | 111,659 chunks (`218.6 MB`) | Vector documents with titles, dates, metadata |
+| `dpo_preference_pairs.jsonl` | DPO JSONL | 27,056 pairs (`40.1 MB`) | Direct Preference Optimization pairs (`chosen`/`rejected`) |
 
 ---
 

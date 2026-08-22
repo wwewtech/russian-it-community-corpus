@@ -1,0 +1,25 @@
+{
+  "execution_time_seconds": 3070.56,
+  "raw_messages_count": 1271766,
+  "cleaned_messages_count": 1233535,
+  "threads_count": 186981,
+  "sft_dialogues_count": 58185,
+  "rag_chunks_count": 111659,
+  "dpo_pairs_count": 27056,
+  "pii_stats": {
+    "messages_processed": 1271766,
+    "phones_scrubbed": 1591,
+    "emails_scrubbed": 140,
+    "crypto_wallets_scrubbed": 16,
+    "api_keys_scrubbed": 101,
+    "jwt_tokens_scrubbed": 0,
+    "ssh_keys_scrubbed": 0,
+    "ip_addresses_scrubbed": 65,
+    "private_invites_scrubbed": 78,
+    "user_mentions_scrubbed": 8755,
+    "ner_persons_scrubbed": 168015,
+    "ner_locations_scrubbed": 69500,
+    "unique_authors_anonymized": 167540
+  },
+  "validation_passed": true
+}

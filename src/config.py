@@ -14,11 +14,14 @@ JSONL_OUTPUT_DIR = OUTPUT_DIR / "jsonl"
 SAMPLES_OUTPUT_DIR = OUTPUT_DIR / "samples"
 REPORTS_DIR = BASE_DIR / "reports"
 
-# Raw Input Data Paths
-RAW_EXPORT_DIRS = [
-    BASE_DIR / "ChatExport_2026-08-21",
-    BASE_DIR / "ChatExport_2026-08-22",
-]
+# Raw Input Data Paths (Auto-discover all ChatExport directories)
+RAW_EXPORT_DIRS = sorted([p for p in BASE_DIR.glob("ChatExport_*") if p.is_dir()])
+if not RAW_EXPORT_DIRS:
+    RAW_EXPORT_DIRS = [
+        BASE_DIR / "ChatExport_2026-08-21",
+        BASE_DIR / "ChatExport_2026-08-22",
+        BASE_DIR / "ChatExport_2026-08-23",
+    ]
 
 # MinHash LSH Settings
 MINHASH_NUM_PERM = 128
