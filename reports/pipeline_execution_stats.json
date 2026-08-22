@@ -1,25 +1,25 @@
 {
-  "execution_time_seconds": 4805.55,
-  "raw_messages_count": 2645780,
-  "cleaned_messages_count": 2558479,
-  "threads_count": 467199,
-  "sft_dialogues_count": 150749,
-  "rag_chunks_count": 282777,
-  "dpo_pairs_count": 55895,
+  "execution_time_seconds": 5602.82,
+  "raw_messages_count": 2911754,
+  "cleaned_messages_count": 2816454,
+  "threads_count": 543297,
+  "sft_dialogues_count": 171533,
+  "rag_chunks_count": 325747,
+  "dpo_pairs_count": 60900,
   "pii_stats": {
-    "messages_processed": 2645780,
-    "phones_scrubbed": 3069,
-    "emails_scrubbed": 264,
+    "messages_processed": 2911754,
+    "phones_scrubbed": 1631,
+    "emails_scrubbed": 289,
     "crypto_wallets_scrubbed": 56,
-    "api_keys_scrubbed": 105,
+    "api_keys_scrubbed": 116,
     "jwt_tokens_scrubbed": 0,
     "ssh_keys_scrubbed": 0,
-    "ip_addresses_scrubbed": 253,
-    "private_invites_scrubbed": 101,
-    "user_mentions_scrubbed": 22174,
-    "ner_persons_scrubbed": 330913,
-    "ner_locations_scrubbed": 144081,
-    "unique_authors_anonymized": 209039
+    "ip_addresses_scrubbed": 303,
+    "private_invites_scrubbed": 109,
+    "user_mentions_scrubbed": 25326,
+    "ner_persons_scrubbed": 352249,
+    "ner_locations_scrubbed": 149841,
+    "unique_authors_anonymized": 216355
   },
-  "validation_passed": false
+  "validation_passed": true
 }

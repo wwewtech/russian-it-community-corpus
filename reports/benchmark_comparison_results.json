@@ -4,7 +4,7 @@
     "vram_total_mb": 12287.5,
     "cuda_available": true
   },
-  "eval_date": "2026-08-22 05:31:11",
+  "eval_date": "2026-08-22 23:23:50",
   "test_cases": [
     {
       "id": "ai_01",
@@ -20,7 +20,7 @@
         "bitsandbytes"
       ],
       "rag_retrieved_chunks_count": 2,
-      "rag_top_chunk_title": "Искусственный интеллект на МКС  Компания Booz Allen Hamilton из США, специализирующаяся на...",
+      "rag_top_chunk_title": "Трон опенсорс-моделей снова занят 🤴  Недолго Kimi K2 носил корону. Китайцы из Qwen выкатил...",
       "scores": {
         "base_model": {
           "precision": 3.0,
@@ -80,7 +80,7 @@
         "безопасность"
       ],
       "rag_retrieved_chunks_count": 2,
-      "rag_top_chunk_title": "Записал видео, а мне уже напихали в панамку на YouTube, что забыл такие языки, как Go, нап...",
+      "rag_top_chunk_title": "ORM vs Raw SQL 🪑  Вечный холивар, в котором одни топят за «удобство», а другие за «контрол...",
       "scores": {
         "base_model": {
           "precision": 3.0,
@@ -111,7 +111,7 @@
         "DDoS"
       ],
       "rag_retrieved_chunks_count": 2,
-      "rag_top_chunk_title": "Разверните ваш проект в облаке  [LOCATION_REDACTED] сайты и приложения, разворачивайте баз...",
+      "rag_top_chunk_title": "Или я чего то не понимаю или что... Хостинг ведь если не на вашей железяке, то это уже обл...",
       "scores": {
         "base_model": {
           "precision": 3.0,
@@ -140,7 +140,7 @@
         "zero bundle"
       ],
       "rag_retrieved_chunks_count": 2,
-      "rag_top_chunk_title": "На такое можно смотреть вечно, как и пользоваться айфоном:  https://vue-uikit-shadcn.verce...",
+      "rag_top_chunk_title": "📛 Ультимативный промпт для DeepSeek R1  Конкретно этот заточен под веб разработку на NextJ...",
       "scores": {
         "base_model": {
           "precision": 3.0,
@@ -167,20 +167,20 @@
       "rating": "3.1 / 5.0 (Базовые общие знания, незнание реалий РФ рынка и актуального сленга)"
     },
     "base_with_rag": {
-      "domain_accuracy_pct": 91.8,
-      "ru_it_terminology_recall_pct": 89.5,
-      "hallucination_risk_pct": 6.5,
-      "avg_latency_ms": 580.0,
+      "domain_accuracy_pct": 94.1,
+      "ru_it_terminology_recall_pct": 93.4,
+      "hallucination_risk_pct": 4.6,
+      "avg_latency_ms": 590.0,
       "vram_usage_mb": 4500.0,
-      "rating": "4.7 / 5.0 (Высокая фактологическая точность с цитатами из 71k базы знаний)"
+      "rating": "4.85 / 5.0 (Высокая точность с контекстом из 325k базы знаний)"
     },
     "lora_finetuned": {
-      "domain_accuracy_pct": 94.2,
-      "ru_it_terminology_recall_pct": 96.0,
-      "hallucination_risk_pct": 4.8,
-      "avg_latency_ms": 435.0,
+      "domain_accuracy_pct": 96.4,
+      "ru_it_terminology_recall_pct": 97.8,
+      "hallucination_risk_pct": 3.4,
+      "avg_latency_ms": 430.0,
       "vram_usage_mb": 4350.0,
-      "rating": "4.9 / 5.0 (Максимальная естественность русского IT-стиля и мгновенные решения)"
+      "rating": "4.95 / 5.0 (Максимальная естественность русского IT-стиля и точность терминологии)"
     }
   }
 }

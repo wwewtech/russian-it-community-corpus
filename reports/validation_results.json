@@ -4,23 +4,23 @@
     "details": {
       "full_clean_messages.parquet": {
         "exists": true,
-        "rows": 2558479,
+        "rows": 2816454,
         "columns": 15,
-        "size_mb": 172.39,
+        "size_mb": 189.32,
         "status": "VALID"
       },
       "sft_dialogues.parquet": {
         "exists": true,
-        "rows": 150749,
+        "rows": 171533,
         "columns": 8,
-        "size_mb": 122.59,
+        "size_mb": 132.25,
         "status": "VALID"
       },
       "rag_knowledge_base.parquet": {
         "exists": true,
-        "rows": 282777,
+        "rows": 325747,
         "columns": 11,
-        "size_mb": 145.24,
+        "size_mb": 159.28,
         "status": "VALID"
       }
     }
@@ -30,56 +30,56 @@
     "details": {
       "sft_sharegpt_format.jsonl": {
         "exists": true,
-        "valid_lines": 150749,
+        "valid_lines": 171533,
         "corrupt_lines": 0,
-        "size_mb": 377.87,
+        "size_mb": 407.63,
         "status": "VALID"
       },
       "sft_alpaca_format.jsonl": {
         "exists": true,
-        "valid_lines": 876798,
+        "valid_lines": 933331,
         "corrupt_lines": 0,
-        "size_mb": 416.66,
+        "size_mb": 446.93,
         "status": "VALID"
       },
       "sft_openai_messages.jsonl": {
         "exists": true,
-        "valid_lines": 150749,
+        "valid_lines": 171533,
         "corrupt_lines": 0,
-        "size_mb": 435.55,
+        "size_mb": 472.75,
         "status": "VALID"
       },
       "rag_chunks_kb.jsonl": {
         "exists": true,
-        "valid_lines": 282777,
+        "valid_lines": 325747,
         "corrupt_lines": 0,
-        "size_mb": 500.14,
+        "size_mb": 551.9,
         "status": "VALID"
       },
       "dpo_preference_pairs.jsonl": {
         "exists": true,
-        "valid_lines": 55895,
+        "valid_lines": 60900,
         "corrupt_lines": 0,
-        "size_mb": 74.71,
+        "size_mb": 82.06,
         "status": "VALID"
       }
     }
   },
   "pii_leakage_audit": {
-    "passed": false,
+    "passed": true,
     "sample_lines_checked": 10000,
     "leaks_found": {
-      "unmasked_phones": 1,
+      "unmasked_phones": 0,
       "unmasked_emails": 0,
       "unmasked_api_keys": 0,
       "unmasked_crypto": 0
     },
-    "total_leak_count": 1
+    "total_leak_count": 0
   },
   "sft_turn_conformance": {
     "passed": true,
-    "conforming_dialogues": 150749,
+    "conforming_dialogues": 171533,
     "non_conforming_dialogues": 0
   },
-  "overall_passed": false
+  "overall_passed": true
 }

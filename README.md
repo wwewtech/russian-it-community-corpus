@@ -8,7 +8,7 @@
 
 **High-throughput data engineering and Zero-PII curation platform for language models**
 
-2.65M+ discussions · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
+2.91M+ discussions · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
 
 <br />
 
@@ -27,15 +27,15 @@
 
 ## Overview
 
-**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is a data engineering and curation stack that ingests, cleans, deduplicates, and structures over 2,645,000 engineering, infrastructure, business, and software development messages from Russian developer communities over a 9-year span (2017–2026).
+**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is a data engineering and curation stack that ingests, cleans, deduplicates, and structures over 2,910,000 engineering, infrastructure, business, and software development messages from 11 community nodes over a 9-year span (2017–2026).
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval without manual intervention.
 
 | Metric | Target | Verified Value |
 |---|---|---|
 | Zero-PII privacy guarantee | Complete redaction across Russian grammatical cases | 100% Zero-PII verified (25,000 samples audited) |
-| Deduplication accuracy | MinHash LSH with 128 permutations at 0.80 Jaccard threshold | 87,301 duplicates removed |
-| SFT dialogue quality | Multi-turn dialogues scored at 3.0 or above | 150,749 dialogues |
+| Deduplication accuracy | MinHash LSH with 128 permutations at 0.80 Jaccard threshold | 95,300+ duplicates removed |
+| SFT dialogue quality | Multi-turn dialogues scored at 3.0 or above | 171,533 dialogues |
 | Local LoRA execution | PEFT LoRA adaptation on consumer hardware | 4.35 GB VRAM on RTX 3060 |
 
 ---
@@ -44,8 +44,8 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 
 ```text
                        ┌──────────────────────────────┐
-  5 Raw Chat Exports ──►   Multi-Source Ingestion     │
-   2.65M raw records   └──────────────┬───────────────┘
+ 11 Community Nodes ──►   Multi-Source Ingestion      │
+   2.91M raw records   └──────────────┬───────────────┘
                                       │
                        ┌──────────────▼───────────────┐
                        │   Deep Case-Aware Zero-PII   │ ──► Declension across 6 Russian cases
@@ -73,14 +73,14 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 
 | Pipeline Stage | Implementation | Purpose |
 |---|---|---|
-| Ingestion | `src/ingestion/` | Normalizes and chronologically merges multi-chat raw exports (5 sources) |
+| Ingestion | `src/ingestion/` | Normalizes and chronologically merges multi-chat raw exports (11 sources) |
 | Anonymization | `src/pii/` | Redacts names across 6 cases, phone numbers, crypto wallets, API tokens, database URLs |
 | Deduplication | `src/deduplication/` | Filters near-duplicate and exact spam messages via MinHash LSH |
 | Taxonomy | `src/taxonomy/` | Categorizes content into 8 technical domains and extracts keyword tags |
 | Thread DAG | `src/graph/` | Reconstructs conversational trees and extracts multi-turn dialogues |
 | Multi-Export | `src/exporter/` | Serializes outputs into Apache Parquet with zstd compression and JSONL formats |
 | Analytics | `src/analytics/` | Computes Shannon entropy, temporal patterns, social graphs, and vocabulary stats |
-| Local LoRA and RAG | `src/lora/`, `src/rag/` | Provides PEFT training for RTX 3060 and semantic retrieval for 282k chunks |
+| Local LoRA and RAG | `src/lora/`, `src/rag/` | Provides PEFT training for RTX 3060 and semantic retrieval for 325k chunks |
 
 ---
 
@@ -90,14 +90,14 @@ All datasets are saved in `dataset_output/`:
 
 | File | Format | Volume | Description |
 |---|---|---|---|
-| `full_clean_messages.parquet` | Parquet with zstd | 2,558,479 rows (172.39 MB) | Full cleaned and categorized corpus |
-| `sft_dialogues.parquet` | Parquet with zstd | 150,749 dialogues (122.59 MB) | Multi-turn dialogues with quality scores |
-| `rag_knowledge_base.parquet` | Parquet with zstd | 282,777 chunks (145.24 MB) | Segmented knowledge base for vector search |
-| `sft_openai_messages.jsonl` | ChatML JSONL | 150,749 dialogues (435.55 MB) | OpenAI format for Unsloth and TRL |
-| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 150,749 dialogues (377.87 MB) | Format for Axolotl and LLaMA-Factory |
-| `sft_alpaca_format.jsonl` | Alpaca JSONL | 876,798 pairs (416.66 MB) | Single-turn instruction and response pairs |
-| `rag_chunks_kb.jsonl` | RAG JSONL | 282,777 chunks (500.14 MB) | Knowledge documents with titles and metadata |
-| `dpo_preference_pairs.jsonl` | DPO JSONL | 55,895 pairs (74.71 MB) | Preference pairs with chosen and rejected responses |
+| `full_clean_messages.parquet` | Parquet with zstd | 2,816,454 rows (189.32 MB) | Full cleaned and categorized corpus |
+| `sft_dialogues.parquet` | Parquet with zstd | 171,533 dialogues (132.25 MB) | Multi-turn dialogues with quality scores |
+| `rag_knowledge_base.parquet` | Parquet with zstd | 325,747 chunks (159.28 MB) | Segmented knowledge base for vector search |
+| `sft_openai_messages.jsonl` | ChatML JSONL | 171,533 dialogues | OpenAI format for Unsloth and TRL |
+| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,533 dialogues | Format for Axolotl and LLaMA-Factory |
+| `sft_alpaca_format.jsonl` | Alpaca JSONL | 933,331 pairs | Single-turn instruction and response pairs |
+| `rag_chunks_kb.jsonl` | RAG JSONL | 325,747 chunks | Knowledge documents with titles and metadata |
+| `dpo_preference_pairs.jsonl` | DPO JSONL | 60,900 pairs | Preference pairs with chosen and rejected responses |
 
 ---
 
@@ -108,8 +108,8 @@ Empirical evaluation on an NVIDIA GeForce RTX 3060 with 12 GB VRAM:
 | Setup | Domain Accuracy | Technical Terminology Recall | Hallucination Risk | Latency | VRAM Usage |
 |---|:---:|:---:|:---:|:---:|:---:|
 | Base 7B Model | 58.4% | 46.2% | High | ~420 ms | ~4.2 GB |
-| Base Model with RAG | 91.8% | 89.5% | Low | ~580 ms | ~4.5 GB |
-| Domain LoRA Fine-Tuned | 94.2% | 96.0% | Minimal | ~435 ms | ~4.35 GB |
+| Base Model with RAG (325k chunks) | 94.1% | 93.4% | Low | ~590 ms | ~4.5 GB |
+| Domain LoRA Fine-Tuned (171k dialogues) | 96.4% | 97.8% | Minimal | ~430 ms | ~4.35 GB |
 
 Detailed benchmark report: [`reports/MODEL_BENCHMARK_COMPARISON.md`](reports/MODEL_BENCHMARK_COMPARISON.md).
 

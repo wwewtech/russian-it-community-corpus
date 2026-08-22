@@ -180,14 +180,19 @@ def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[Normal
 def merge_multiple_exports(export_dirs: list[str | Path]) -> tuple[list[dict[str, Any]], list[NormalizedMessage]]:
     """
     Load and merge multiple Telegram export directories into a single unified stream.
+    Anonymizes chat names to Community Node #XX to preserve privacy.
     Sorts all messages chronologically.
     """
     all_chats_info: list[dict[str, Any]] = []
     all_messages: list[NormalizedMessage] = []
 
-    for d in export_dirs:
+    for idx, d in enumerate(export_dirs, 1):
         try:
             info, msgs = load_export_file(d)
+            anon_cname = f"Community Node #{idx:02d}"
+            info["name"] = anon_cname
+            for m in msgs:
+                m.chat_name = anon_cname
             all_chats_info.append(info)
             all_messages.extend(msgs)
         except Exception as e:

@@ -1,119 +1,119 @@
 {
   "report_metadata": {
-    "generated_at": "2026-08-22T19:30:19.985603",
+    "generated_at": "2026-08-22T22:38:31.460189",
     "engine_version": "4.0.0-Enterprise",
-    "total_messages_analyzed": 2558479
+    "total_messages_analyzed": 2816454
   },
   "volume_statistics": {
-    "total_messages": 2558479,
-    "unique_authors": 203682,
+    "total_messages": 2816454,
+    "unique_authors": 210890,
     "date_start": "2017-08-06 15:01:46",
-    "date_end": "2026-08-22 05:41:34",
-    "total_days_active": 3302,
-    "messages_per_day": 774.83,
-    "tokens_per_day": 13580.62,
-    "total_characters": 213316626,
-    "total_words": 34040025,
-    "total_tokens_estimated": 44843222,
-    "vocabulary_unique_words": 43305,
+    "date_end": "2026-08-22 18:48:36",
+    "total_days_active": 3303,
+    "messages_per_day": 852.7,
+    "tokens_per_day": 14860.89,
+    "total_characters": 233635221,
+    "total_words": 37260192,
+    "total_tokens_estimated": 49085532,
+    "vocabulary_unique_words": 43296,
     "character_length_distribution": {
-      "mean": 83.38,
-      "median": 45,
-      "std": 137.35,
+      "mean": 82.95,
+      "median": 43.0,
+      "std": 146.02,
       "min": 0,
       "max": 8919,
-      "p25": 20,
-      "p75": 93,
-      "p90": 188,
-      "p95": 285,
-      "p99": 637
+      "p25": 19,
+      "p75": 91,
+      "p90": 185,
+      "p95": 284,
+      "p99": 662
     },
     "word_count_distribution": {
-      "mean": 13.3,
-      "median": 7,
-      "std": 20.58,
+      "mean": 13.23,
+      "median": 7.0,
+      "std": 21.71,
       "min": 0,
       "max": 2046,
-      "p25": 4,
+      "p25": 3,
       "p75": 15,
-      "p90": 30,
+      "p90": 29,
       "p95": 44,
-      "p99": 96
+      "p99": 100
     },
     "token_count_distribution": {
-      "mean": 17.53,
-      "median": 9,
-      "std": 27.75,
+      "mean": 17.43,
+      "median": 9.0,
+      "std": 29.28,
       "min": 0,
       "max": 2762,
-      "p25": 5,
+      "p25": 4,
       "p75": 20,
-      "p90": 40,
+      "p90": 39,
       "p95": 59,
-      "p99": 129
+      "p99": 135
     },
     "author_activity_distribution": {
-      "mean": 12.56,
+      "mean": 13.36,
       "median": 2.0,
-      "std": 170.48,
+      "std": 182.17,
       "min": 1,
-      "max": 24963,
+      "max": 24959,
       "p25": 1,
       "p75": 5,
       "p90": 14,
       "p95": 31,
-      "p99": 148
+      "p99": 158
     }
   },
   "temporal_dynamics": {
-    "peak_hour": 15,
+    "peak_hour": 21,
     "peak_weekday": "Вторник",
     "hourly_distribution": {
-      "00:00": 100791,
-      "01:00": 72280,
-      "02:00": 44377,
-      "03:00": 27683,
-      "04:00": 17221,
-      "05:00": 13365,
-      "06:00": 12797,
-      "07:00": 17159,
-      "08:00": 30314,
-      "09:00": 59453,
-      "10:00": 92727,
-      "11:00": 129644,
-      "12:00": 153629,
-      "13:00": 156562,
-      "14:00": 169791,
-      "15:00": 171634,
-      "16:00": 163012,
-      "17:00": 166721,
-      "18:00": 166205,
-      "19:00": 157481,
-      "20:00": 164472,
-      "21:00": 169601,
-      "22:00": 167662,
-      "23:00": 133898
+      "00:00": 110601,
+      "01:00": 77944,
+      "02:00": 47560,
+      "03:00": 29200,
+      "04:00": 18263,
+      "05:00": 14079,
+      "06:00": 13738,
+      "07:00": 18991,
+      "08:00": 33596,
+      "09:00": 65299,
+      "10:00": 102091,
+      "11:00": 141772,
+      "12:00": 171781,
+      "13:00": 171824,
+      "14:00": 184257,
+      "15:00": 187363,
+      "16:00": 178308,
+      "17:00": 182672,
+      "18:00": 183112,
+      "19:00": 176536,
+      "20:00": 183852,
+      "21:00": 189816,
+      "22:00": 185938,
+      "23:00": 147861
     },
     "weekday_distribution": {
-      "Понедельник": 430783,
-      "Вторник": 434681,
-      "Среда": 399876,
-      "Четверг": 389359,
-      "Пятница": 364282,
-      "Суббота": 281777,
-      "Воскресенье": 257721
+      "Понедельник": 464841,
+      "Вторник": 473360,
+      "Среда": 437438,
+      "Четверг": 430303,
+      "Пятница": 405908,
+      "Суббота": 314160,
+      "Воскресенье": 290444
     },
     "yearly_volume": {
       "2017": 24866,
       "2018": 64043,
       "2019": 29855,
       "2020": 43488,
-      "2021": 187905,
-      "2022": 129659,
-      "2023": 231652,
-      "2024": 574244,
-      "2025": 790653,
-      "2026": 482114
+      "2021": 187904,
+      "2022": 141196,
+      "2023": 242863,
+      "2024": 611834,
+      "2025": 918541,
+      "2026": 551864
     },
     "monthly_volume": {
       "2017-08": 7322,
@@ -167,64 +167,64 @@
       "2021-08": 18693,
       "2021-09": 19829,
       "2021-10": 20514,
-      "2021-11": 14710,
+      "2021-11": 14709,
       "2021-12": 14489,
       "2022-01": 14568,
       "2022-02": 11572,
-      "2022-03": 1502,
+      "2022-03": 1534,
       "2022-04": 2521,
-      "2022-05": 2183,
-      "2022-06": 8441,
-      "2022-07": 8935,
-      "2022-08": 16474,
-      "2022-09": 15655,
-      "2022-10": 16456,
-      "2022-11": 17012,
-      "2022-12": 14340,
-      "2023-01": 14533,
-      "2023-02": 14599,
-      "2023-03": 16031,
-      "2023-04": 12331,
-      "2023-05": 15109,
-      "2023-06": 14825,
-      "2023-07": 14224,
-      "2023-08": 17302,
-      "2023-09": 25977,
-      "2023-10": 34238,
-      "2023-11": 30977,
-      "2023-12": 21506,
-      "2024-01": 28488,
-      "2024-02": 25271,
-      "2024-03": 24009,
-      "2024-04": 23528,
-      "2024-05": 18894,
-      "2024-06": 71381,
-      "2024-07": 56777,
-      "2024-08": 70403,
-      "2024-09": 95715,
-      "2024-10": 54658,
-      "2024-11": 51365,
-      "2024-12": 53755,
-      "2025-01": 60858,
-      "2025-02": 56722,
-      "2025-03": 57175,
-      "2025-04": 58029,
-      "2025-05": 50102,
-      "2025-06": 61872,
-      "2025-07": 73862,
-      "2025-08": 71158,
-      "2025-09": 97388,
-      "2025-10": 64742,
-      "2025-11": 61880,
-      "2025-12": 76865,
-      "2026-01": 64315,
-      "2026-02": 67545,
-      "2026-03": 76844,
-      "2026-04": 65880,
-      "2026-05": 52128,
-      "2026-06": 61890,
-      "2026-07": 55109,
-      "2026-08": 38403
+      "2022-05": 2395,
+      "2022-06": 9335,
+      "2022-07": 10094,
+      "2022-08": 17888,
+      "2022-09": 17816,
+      "2022-10": 18220,
+      "2022-11": 20076,
+      "2022-12": 15177,
+      "2023-01": 16103,
+      "2023-02": 16606,
+      "2023-03": 17055,
+      "2023-04": 13169,
+      "2023-05": 15761,
+      "2023-06": 15296,
+      "2023-07": 14734,
+      "2023-08": 18462,
+      "2023-09": 26896,
+      "2023-10": 34923,
+      "2023-11": 31323,
+      "2023-12": 22535,
+      "2024-01": 29376,
+      "2024-02": 26549,
+      "2024-03": 26474,
+      "2024-04": 26073,
+      "2024-05": 22892,
+      "2024-06": 74644,
+      "2024-07": 60675,
+      "2024-08": 73647,
+      "2024-09": 99680,
+      "2024-10": 58967,
+      "2024-11": 54893,
+      "2024-12": 57964,
+      "2025-01": 66931,
+      "2025-02": 63194,
+      "2025-03": 64513,
+      "2025-04": 65134,
+      "2025-05": 65240,
+      "2025-06": 75006,
+      "2025-07": 86706,
+      "2025-08": 87926,
+      "2025-09": 109318,
+      "2025-10": 75724,
+      "2025-11": 73675,
+      "2025-12": 85174,
+      "2026-01": 71971,
+      "2026-02": 87983,
+      "2026-03": 91016,
+      "2026-04": 75651,
+      "2026-05": 57570,
+      "2026-06": 67057,
+      "2026-07": 59072,
+      "2026-08": 41544
     },
     "monthly_avg_character_length": {
       "2017-08": 30.3,
@@ -243,7 +243,7 @@
       "2018-09": 26.6,
       "2018-10": 29.0,
       "2018-11": 61.9,
-      "2018-12": 72.3,
+      "2018-12": 72.2,
       "2019-01": 43.6,
       "2019-02": 41.0,
       "2019-03": 42.2,
@@ -259,7 +259,7 @@
       "2020-01": 84.7,
       "2020-02": 103.9,
       "2020-03": 66.2,
-      "2020-04": 67.4,
+      "2020-04": 67.3,
       "2020-05": 82.5,
       "2020-06": 125.6,
       "2020-07": 95.4,
@@ -282,82 +282,82 @@
       "2021-12": 89.4,
       "2022-01": 91.1,
       "2022-02": 91.6,
-      "2022-03": 161.5,
+      "2022-03": 164.6,
       "2022-04": 141.2,
-      "2022-05": 138.6,
-      "2022-06": 70.1,
-      "2022-07": 82.3,
-      "2022-08": 68.9,
-      "2022-09": 74.3,
-      "2022-10": 82.0,
-      "2022-11": 100.4,
-      "2022-12": 101.4,
+      "2022-05": 131.3,
+      "2022-06": 73.4,
+      "2022-07": 83.3,
+      "2022-08": 73.9,
+      "2022-09": 78.3,
+      "2022-10": 84.3,
+      "2022-11": 98.5,
+      "2022-12": 102.5,
       "2023-01": 95.5,
-      "2023-02": 96.8,
-      "2023-03": 107.8,
-      "2023-04": 104.2,
-      "2023-05": 106.9,
-      "2023-06": 104.1,
-      "2023-07": 74.6,
-      "2023-08": 71.2,
-      "2023-09": 61.3,
-      "2023-10": 54.3,
-      "2023-11": 59.5,
-      "2023-12": 99.7,
-      "2024-01": 97.1,
-      "2024-02": 93.9,
-      "2024-03": 93.9,
-      "2024-04": 93.4,
-      "2024-05": 102.6,
-      "2024-06": 54.7,
-      "2024-07": 77.8,
-      "2024-08": 77.5,
-      "2024-09": 70.4,
-      "2024-10": 83.9,
+      "2023-02": 98.8,
+      "2023-03": 110.8,
+      "2023-04": 106.5,
+      "2023-05": 108.5,
+      "2023-06": 105.7,
+      "2023-07": 77.9,
+      "2023-08": 74.0,
+      "2023-09": 64.4,
+      "2023-10": 56.5,
+      "2023-11": 61.1,
+      "2023-12": 99.3,
+      "2024-01": 97.5,
+      "2024-02": 94.6,
+      "2024-03": 93.8,
+      "2024-04": 93.8,
+      "2024-05": 99.1,
+      "2024-06": 56.0,
+      "2024-07": 78.4,
+      "2024-08": 77.9,
+      "2024-09": 71.2,
+      "2024-10": 83.2,
       "2024-11": 85.8,
-      "2024-12": 86.5,
-      "2025-01": 84.6,
-      "2025-02": 84.1,
-      "2025-03": 88.5,
-      "2025-04": 86.9,
-      "2025-05": 97.2,
-      "2025-06": 86.2,
-      "2025-07": 87.9,
-      "2025-08": 79.2,
-      "2025-09": 75.2,
-      "2025-10": 91.8,
-      "2025-11": 92.1,
-      "2025-12": 83.8,
-      "2026-01": 85.1,
-      "2026-02": 93.6,
-      "2026-03": 94.3,
-      "2026-04": 94.5,
-      "2026-05": 96.9,
-      "2026-06": 93.4,
-      "2026-07": 108.1,
-      "2026-08": 105.4
+      "2024-12": 87.3,
+      "2025-01": 85.4,
+      "2025-02": 85.0,
+      "2025-03": 88.6,
+      "2025-04": 87.4,
+      "2025-05": 88.5,
+      "2025-06": 82.0,
+      "2025-07": 84.1,
+      "2025-08": 75.9,
+      "2025-09": 74.5,
+      "2025-10": 88.6,
+      "2025-11": 87.5,
+      "2025-12": 82.6,
+      "2026-01": 84.5,
+      "2026-02": 83.7,
+      "2026-03": 89.0,
+      "2026-04": 91.6,
+      "2026-05": 97.6,
+      "2026-06": 96.2,
+      "2026-07": 109.2,
+      "2026-08": 107.7
     },
     "inter_arrival_seconds_distribution": {
-      "mean": 105.37,
-      "median": 19,
-      "std": 968.85,
+      "mean": 95.74,
+      "median": 17.0,
+      "std": 920.64,
       "min": 0,
       "max": 86141,
-      "p25": 7,
-      "p75": 51,
-      "p90": 139,
-      "p95": 284,
-      "p99": 1273
+      "p25": 6,
+      "p75": 46,
+      "p90": 125,
+      "p95": 253,
+      "p99": 1147
     }
   },
   "lexical_analytics": {
-    "shannon_entropy": 12.214,
-    "type_token_ratio_ttr": 0.12539,
+    "shannon_entropy": 12.216,
+    "type_token_ratio_ttr": 0.12544,
     "root_ttr": 73.69,
     "top_unigrams": [
       {
         "word": "redacted",
-        "count": 7806
+        "count": 7700
       },
       {
         "word": "person",
@@ -425,7 +425,7 @@
       },
       {
         "word": "вы",
-        "count": 1120
+        "count": 1121
       },
       {
         "word": "знать",
@@ -441,7 +441,7 @@
       },
       {
         "word": "делать",
-        "count": 987
+        "count": 989
       },
       {
         "word": "чем",
@@ -586,10 +586,6 @@
         "count": 128
       },
       {
-        "ngram": "phone redacted",
-        "count": 121
-      },
-      {
         "ngram": "redacted person",
         "count": 120
       },
@@ -614,7 +610,7 @@
         "count": 96
       },
       {
-        "ngram": "rozetked me",
+        "ngram": "Tech Community Node me",
         "count": 96
       },
       {
@@ -658,24 +654,28 @@
         "count": 68
       },
       {
-        "ngram": "status phone",
-        "count": 66
-      },
-      {
         "ngram": "https twitter",
         "count": 65
-      },
-      {
-        "ngram": "redacted такой",
-        "count": 63
       },
       {
         "ngram": "ты мочь",
         "count": 62
       },
       {
+        "ngram": "redacted такой",
+        "count": 62
+      },
+      {
         "ngram": "тёмный тема",
         "count": 61
+      },
+      {
+        "ngram": "один раз",
+        "count": 59
+      },
+      {
+        "ngram": "говорить про",
+        "count": 59
       }
     ],
     "top_trigrams": [
@@ -720,12 +720,8 @@
         "count": 79
       },
       {
-        "ngram": "rozetked me news",
+        "ngram": "Tech Community Node me news",
         "count": 75
-      },
-      {
-        "ngram": "status phone redacted",
-        "count": 66
       },
       {
         "ngram": "https twitter com",
@@ -757,6 +753,10 @@
       },
       {
         "ngram": "person redacted вы",
+        "count": 33
+      },
+      {
+        "ngram": "https tjournal ru",
         "count": 33
       }
     ],
@@ -969,411 +969,411 @@
     ],
     "domain_message_distribution": {
       "general_tech_chat": {
-        "count": 2444512,
-        "percentage": 95.55
+        "count": 2683686,
+        "percentage": 95.29
       },
       "business_legal_fintech": {
-        "count": 41823,
-        "percentage": 1.63
-      },
-      "frontend_ui": {
-        "count": 18376,
-        "percentage": 0.72
+        "count": 44017,
+        "percentage": 1.56
       },
       "ai_ml_nlp": {
-        "count": 16652,
-        "percentage": 0.65
+        "count": 29411,
+        "percentage": 1.04
+      },
+      "frontend_ui": {
+        "count": 18775,
+        "percentage": 0.67
       },
       "career_team_management": {
-        "count": 11677,
-        "percentage": 0.46
+        "count": 11970,
+        "percentage": 0.43
       },
       "backend_databases": {
-        "count": 10057,
-        "percentage": 0.39
+        "count": 11707,
+        "percentage": 0.42
       },
       "sysadmin_security": {
-        "count": 9353,
-        "percentage": 0.37
+        "count": 9970,
+        "percentage": 0.35
       },
       "devops_infra": {
-        "count": 6029,
-        "percentage": 0.24
+        "count": 6918,
+        "percentage": 0.25
       }
     },
     "top_technical_tags": [
       {
         "tag": "бизнес",
-        "count": 17430
+        "count": 17896
       },
       {
         "tag": "ios",
-        "count": 10849
+        "count": 11013
       },
       {
         "tag": "телеграм",
-        "count": 7588
+        "count": 7797
       },
       {
         "tag": "бот",
-        "count": 5376
-      },
-      {
-        "tag": "android",
-        "count": 5152
-      },
-      {
-        "tag": "продажи",
-        "count": 4196
-      },
-      {
-        "tag": "vpn",
-        "count": 4196
-      },
-      {
-        "tag": "зп",
-        "count": 4137
+        "count": 6531
       },
       {
         "tag": "ai",
-        "count": 3852
-      },
-      {
-        "tag": "база",
-        "count": 3385
-      },
-      {
-        "tag": "ноут",
-        "count": 3381
-      },
-      {
-        "tag": "банк",
-        "count": 3345
-      },
-      {
-        "tag": "chatgpt",
-        "count": 3259
-      },
-      {
-        "tag": "счет",
-        "count": 3208
-      },
-      {
-        "tag": "tg",
-        "count": 2798
-      },
-      {
-        "tag": "прокси",
-        "count": 2623
+        "count": 6257
       },
       {
         "tag": "gemini",
-        "count": 2542
+        "count": 6036
       },
       {
-        "tag": "офис",
-        "count": 2487
+        "tag": "android",
+        "count": 5273
       },
       {
-        "tag": "ton",
-        "count": 2466
+        "tag": "chatgpt",
+        "count": 4569
       },
       {
-        "tag": "сервер",
-        "count": 2387
+        "tag": "vpn",
+        "count": 4499
       },
       {
-        "tag": "налоги",
-        "count": 2236
+        "tag": "продажи",
+        "count": 4410
       },
       {
-        "tag": "железо",
-        "count": 2234
-      },
-      {
-        "tag": "openai",
-        "count": 2228
-      },
-      {
-        "tag": "маркетинг",
-        "count": 2083
+        "tag": "зп",
+        "count": 4342
       },
       {
         "tag": "gpt",
-        "count": 2064
+        "count": 4066
       },
       {
-        "tag": "ооо",
-        "count": 1848
-      },
-      {
-        "tag": "ип",
-        "count": 1781
-      },
-      {
-        "tag": "macbook",
-        "count": 1732
-      },
-      {
-        "tag": "go",
-        "count": 1602
-      },
-      {
-        "tag": "безопасность",
-        "count": 1594
-      },
-      {
-        "tag": "linux",
-        "count": 1567
+        "tag": "openai",
+        "count": 3938
       },
       {
         "tag": "claude",
-        "count": 1468
+        "count": 3788
       },
       {
-        "tag": "резюме",
-        "count": 1391
+        "tag": "база",
+        "count": 3787
       },
       {
-        "tag": "llm",
-        "count": 1374
+        "tag": "ноут",
+        "count": 3493
       },
       {
-        "tag": "монитор",
-        "count": 1372
+        "tag": "счет",
+        "count": 3474
       },
       {
-        "tag": "стартап",
-        "count": 1353
+        "tag": "банк",
+        "count": 3424
+      },
+      {
+        "tag": "прокси",
+        "count": 2951
+      },
+      {
+        "tag": "tg",
+        "count": 2815
+      },
+      {
+        "tag": "сервер",
+        "count": 2746
+      },
+      {
+        "tag": "офис",
+        "count": 2546
+      },
+      {
+        "tag": "ton",
+        "count": 2498
       },
       {
         "tag": "python",
-        "count": 1327
+        "count": 2482
       },
       {
-        "tag": "php",
-        "count": 1296
+        "tag": "железо",
+        "count": 2359
+      },
+      {
+        "tag": "налоги",
+        "count": 2260
+      },
+      {
+        "tag": "маркетинг",
+        "count": 2250
+      },
+      {
+        "tag": "llm",
+        "count": 2101
+      },
+      {
+        "tag": "deepseek",
+        "count": 1999
+      },
+      {
+        "tag": "ооо",
+        "count": 1952
+      },
+      {
+        "tag": "ип",
+        "count": 1834
+      },
+      {
+        "tag": "go",
+        "count": 1768
+      },
+      {
+        "tag": "macbook",
+        "count": 1747
+      },
+      {
+        "tag": "безопасность",
+        "count": 1747
+      },
+      {
+        "tag": "linux",
+        "count": 1716
+      },
+      {
+        "tag": "резюме",
+        "count": 1576
+      },
+      {
+        "tag": "стартап",
+        "count": 1501
+      },
+      {
+        "tag": "монитор",
+        "count": 1403
       },
       {
         "tag": "js",
-        "count": 1207
+        "count": 1369
       },
       {
-        "tag": "налог",
-        "count": 1199
+        "tag": "php",
+        "count": 1337
       }
     ]
   },
   "sentiment_and_syntax": {
     "sentiment": {
       "average": 0.023,
-      "positive": 108137,
-      "negative": 59976,
-      "neutral": 2390366,
-      "pos_ratio": 4.23,
-      "neg_ratio": 2.34,
-      "neu_ratio": 93.43
+      "positive": 118301,
+      "negative": 64440,
+      "neutral": 2633713,
+      "pos_ratio": 4.2,
+      "neg_ratio": 2.29,
+      "neu_ratio": 93.51
     },
-    "questions_count": 424812,
-    "questions_ratio_percentage": 16.6,
-    "code_snippets_count": 1481,
-    "code_snippets_ratio_percentage": 0.06
+    "questions_count": 459309,
+    "questions_ratio_percentage": 16.31,
+    "code_snippets_count": 2406,
+    "code_snippets_ratio_percentage": 0.09
   },
   "social_network": {
-    "total_nodes": 200314,
-    "total_edges": 1047503,
-    "total_interactions": 2227821,
-    "density": 2.6e-05,
-    "reciprocal_connections": 115669,
+    "total_nodes": 206644,
+    "total_edges": 1060168,
+    "total_interactions": 2385666,
+    "density": 2.5e-05,
+    "reciprocal_connections": 110431,
     "top_influencers": [
       {
-        "author": "Developer_56900",
-        "replies_received": 359212
+        "author": "Developer_59062",
+        "replies_received": 359120
       },
       {
         "author": "Developer_14995",
-        "replies_received": 86542
+        "replies_received": 69008
+      },
+      {
+        "author": "Developer_44794",
+        "replies_received": 63710
       },
       {
         "author": "Developer_01792",
-        "replies_received": 64954
+        "replies_received": 58433
       },
       {
-        "author": "Developer_28528",
-        "replies_received": 61350
+        "author": "Developer_44743",
+        "replies_received": 45054
       },
       {
         "author": "Developer_02311",
-        "replies_received": 33180
+        "replies_received": 32438
       },
       {
-        "author": "Developer_191556",
-        "replies_received": 26050
+        "author": "Developer_197845",
+        "replies_received": 25991
+      },
+      {
+        "author": "Developer_153427",
+        "replies_received": 25722
       },
       {
         "author": "Developer_00475",
-        "replies_received": 22064
+        "replies_received": 16833
       },
       {
-        "author": "Developer_30296",
-        "replies_received": 20945
-      },
-      {
-        "author": "Developer_63348",
-        "replies_received": 16048
+        "author": "Developer_65546",
+        "replies_received": 15583
       },
       {
         "author": "Developer_17393",
-        "replies_received": 15003
+        "replies_received": 14930
       },
       {
-        "author": "Developer_37887",
-        "replies_received": 13940
+        "author": "Developer_39049",
+        "replies_received": 13867
       },
       {
-        "author": "Developer_28061",
-        "replies_received": 12750
+        "author": "Developer_28741",
+        "replies_received": 12398
       },
       {
-        "author": "Developer_121846",
-        "replies_received": 12262
+        "author": "Developer_153968",
+        "replies_received": 12108
       },
       {
-        "author": "Developer_120443",
-        "replies_received": 11412
-      },
-      {
-        "author": "Developer_38411",
-        "replies_received": 11396
+        "author": "Developer_124931",
+        "replies_received": 11869
       }
     ],
     "top_responders": [
       {
-        "author": "Developer_37887",
-        "replies_given": 19202
+        "author": "Developer_39049",
+        "replies_given": 19088
       },
       {
         "author": "Developer_05851",
-        "replies_given": 16987
+        "replies_given": 16922
       },
       {
         "author": "Developer_17393",
-        "replies_given": 16364
+        "replies_given": 16321
       },
       {
         "author": "Developer_00475",
-        "replies_given": 15831
+        "replies_given": 15828
       },
       {
-        "author": "Developer_123337",
-        "replies_given": 8974
+        "author": "Developer_44743",
+        "replies_given": 9132
       },
       {
-        "author": "Developer_63348",
-        "replies_given": 8205
+        "author": "Developer_126467",
+        "replies_given": 8861
+      },
+      {
+        "author": "Developer_31061",
+        "replies_given": 8320
+      },
+      {
+        "author": "Developer_65546",
+        "replies_given": 8211
       },
       {
         "author": "Developer_07386",
-        "replies_given": 8171
+        "replies_given": 8103
       },
       {
-        "author": "Developer_30296",
-        "replies_given": 7816
+        "author": "Developer_62268",
+        "replies_given": 6959
       },
       {
-        "author": "Developer_60104",
-        "replies_given": 6989
+        "author": "Developer_43934",
+        "replies_given": 6843
       },
       {
-        "author": "Developer_42193",
-        "replies_given": 6879
+        "author": "Developer_123482",
+        "replies_given": 6562
       },
       {
-        "author": "Developer_120443",
-        "replies_given": 6570
+        "author": "Developer_44794",
+        "replies_given": 6513
       },
       {
-        "author": "Developer_121846",
-        "replies_given": 6494
+        "author": "Developer_124931",
+        "replies_given": 6477
       },
       {
         "author": "Developer_18916",
-        "replies_given": 6463
-      },
-      {
-        "author": "Developer_191556",
-        "replies_given": 6419
-      },
-      {
-        "author": "Developer_111012",
-        "replies_given": 6338
+        "replies_given": 6442
       }
     ],
     "strongest_collaboration_pairs": [
       {
         "user_a": "Developer_07386",
-        "user_b": "Developer_154425",
-        "total_replies": 1676
+        "user_b": "Developer_158887",
+        "total_replies": 1664
       },
       {
         "user_a": "Developer_01792",
         "user_b": "Developer_05851",
-        "total_replies": 1637
+        "total_replies": 1612
       },
       {
         "user_a": "Developer_00475",
-        "user_b": "Developer_28061",
-        "total_replies": 1484
-      },
-      {
-        "user_a": "Developer_30296",
-        "user_b": "Developer_35218",
-        "total_replies": 1321
+        "user_b": "Developer_28741",
+        "total_replies": 1470
       },
       {
         "user_a": "Developer_07386",
         "user_b": "Developer_17393",
-        "total_replies": 1274
-      },
-      {
-        "user_a": "Developer_28061",
-        "user_b": "Developer_63348",
-        "total_replies": 1189
+        "total_replies": 1264
       },
       {
         "user_a": "Developer_07386",
-        "user_b": "Developer_89239",
-        "total_replies": 1183
-      },
-      {
-        "user_a": "Developer_07386",
-        "user_b": "Developer_123337",
-        "total_replies": 1182
-      },
-      {
-        "user_a": "Developer_01792",
-        "user_b": "Developer_42193",
+        "user_b": "Developer_91760",
         "total_replies": 1178
       },
       {
-        "user_a": "Developer_123337",
-        "user_b": "Developer_131318",
-        "total_replies": 1102
+        "user_a": "Developer_01792",
+        "user_b": "Developer_43934",
+        "total_replies": 1177
       },
       {
-        "user_a": "Developer_63348",
-        "user_b": "Developer_121846",
-        "total_replies": 1096
+        "user_a": "Developer_28741",
+        "user_b": "Developer_65546",
+        "total_replies": 1177
+      },
+      {
+        "user_a": "Developer_07386",
+        "user_b": "Developer_126467",
+        "total_replies": 1165
+      },
+      {
+        "user_a": "Developer_126467",
+        "user_b": "Developer_134670",
+        "total_replies": 1090
+      },
+      {
+        "user_a": "Developer_65546",
+        "user_b": "Developer_124931",
+        "total_replies": 1086
       },
       {
         "user_a": "Developer_01792",
-        "user_b": "Developer_111012",
-        "total_replies": 1037
+        "user_b": "Developer_113771",
+        "total_replies": 1034
+      },
+      {
+        "user_a": "Developer_00475",
+        "user_b": "Developer_44794",
+        "total_replies": 1016
       }
     ]
   },
   "author_signature_phrases": {
-    "Developer_37887": [
+    "Developer_39049": [
       "s23",
       "nothing",
       "имб",
@@ -1384,8 +1384,15 @@
       "news",
       "rtx",
       "ultra",
-      "rozetked",
+      "Tech Community Node",
       "юань"
+    ],
+    "Developer_44794": [
+      "опус",
+      "геминь",
+      "клод",
+      "гпт",
+      "промпт"
     ],
     "Developer_17393": [
       "стриминг",
@@ -1408,7 +1415,7 @@
       "дурова",
       "openai"
     ],
-    "Developer_56900": [
+    "Developer_59062": [
       "ultra",
       "ии",
       "ма",
@@ -1429,14 +1436,21 @@
       "картинке",
       "clickfraud"
     ],
-    "Developer_123337": [
+    "Developer_44743": [
+      "boosty",
+      "Tech Community Node",
+      "нейросети",
+      "openai",
+      "claude"
+    ],
+    "Developer_126467": [
       "пон",
       "вобщий",
       "воьщий",
       "звезда",
       "мут"
     ],
-    "Developer_30296": [
+    "Developer_31061": [
       "убери",
       "ограничениеадмин",
       "worldhello",
@@ -1450,28 +1464,35 @@
       "спотик",
       "хайфай"
     ],
-    "Developer_191556": [
+    "Developer_197845": [
       "айпить",
       "фурри",
       "клаудфлеер",
       "фембой",
       "матрикс"
     ],
-    "Developer_63348": [
+    "Developer_65546": [
       "ии",
       "cursor",
       "shadcn",
       "грок",
       "llm"
     ],
-    "Developer_28528": [
+    "Developer_29240": [
       "ии",
       "openai",
       "xor",
       "chatgpt",
       "claude"
     ],
-    "Developer_42193": [
+    "Developer_153427": [
+      "gemini",
+      "claude",
+      "gpt",
+      "deepseek",
+      "grok"
+    ],
+    "Developer_43934": [
       "кд",
       "жидкий",
       "ия",
@@ -1485,35 +1506,35 @@
       "шиза",
       "screenshots"
     ],
-    "Developer_60104": [
+    "Developer_62268": [
       "ultra",
       "display",
       "победитель",
-      "wylsared",
+      "Tech Community Nodered",
       "vivo"
     ],
-    "Developer_121846": [
+    "Developer_124931": [
       "ии",
       "llm",
       "ия",
       "gpt",
       "опус"
     ],
-    "Developer_28061": [
+    "Developer_28741": [
       "собеседование",
       "веб-студия",
       "собес",
       "эйчар",
       "бигтех"
     ],
-    "Developer_111012": [
+    "Developer_113771": [
       "кхе-кх",
       "тспа",
       "отечественный",
       "гражданин",
       "суверенный"
     ],
-    "Developer_120443": [
+    "Developer_123482": [
       "ия",
       "gemini",
       "мах",
@@ -1526,156 +1547,135 @@
       "заебумба",
       "грипа",
       "хуявь"
-    ],
-    "Developer_183309": [
-      "м1",
-      "браток",
-      "сперма",
-      "так-же",
-      "имб"
-    ],
-    "Developer_187234": [
-      "fhd",
-      "mackbook",
-      "телевика",
-      "кринж",
-      "шоть"
-    ],
-    "Developer_06622": [
-      "жидкий",
-      "реакция",
-      "мошенник",
-      "ск",
-      "шлюхобот"
     ]
   },
   "topic_clusters_lda": [
     {
       "topic_id": 1,
-      "label": "Topic 1: ты, мне, location_redacted, он",
+      "label": "Topic 1: ты, мне, он, они",
       "top_keywords": [
         "ты",
         "мне",
-        "location_redacted",
         "он",
-        "лучше",
-        "про",
+        "они",
+        "location_redacted",
+        "много",
+        "хочу",
         "норм",
-        "может",
-        "нибудь",
-        "они"
+        "msi",
+        "оно"
       ]
     },
     {
       "topic_id": 2,
-      "label": "Topic 2: location_redacted, ноут, ты, тебя",
+      "label": "Topic 2: ты, мне, location_redacted, он",
       "top_keywords": [
-        "location_redacted",
-        "ноут",
         "ты",
-        "тебя",
-        "была",
-        "был",
-        "человек",
+        "мне",
+        "location_redacted",
         "он",
-        "ноутбук",
-        "мне"
+        "про",
+        "может",
+        "чем",
+        "мы",
+        "норм",
+        "https"
       ]
     },
     {
       "topic_id": 3,
-      "label": "Topic 3: https, мне, он, id",
+      "label": "Topic 3: https, id, был, он",
       "top_keywords": [
         "https",
-        "мне",
-        "он",
         "id",
         "был",
-        "location_redacted",
+        "он",
+        "они",
+        "вы",
         "ты",
-        "ору",
-        "такое",
-        "apple"
+        "мы",
+        "года",
+        "работает"
       ]
     },
     {
       "topic_id": 4,
-      "label": "Topic 4: ты, он, мне, про",
-      "top_keywords": [
-        "ты",
-        "он",
-        "мне",
-        "про",
-        "location_redacted",
-        "они",
-        "раз",
-        "хочу",
-        "https",
-        "стоит"
-      ]
-    },
-    {
-      "topic_id": 5,
-      "label": "Topic 5: ты, он, чем, мне",
-      "top_keywords": [
-        "ты",
-        "он",
-        "чем",
-        "мне",
-        "location_redacted",
-        "они",
-        "мы",
-        "тебя",
-        "раз",
-        "вы"
-      ]
-    },
-    {
-      "topic_id": 6,
-      "label": "Topic 6: мне, location_redacted, d0, про",
-      "top_keywords": [
-        "мне",
-        "location_redacted",
-        "d0",
-        "про",
-        "он",
-        "тебя",
-        "народ",
-        "ты",
-        "они",
-        "этого"
-      ]
-    },
-    {
-      "topic_id": 7,
-      "label": "Topic 7: the, to, and, in",
+      "label": "Topic 4: the, to, and, мне",
       "top_keywords": [
         "the",
         "to",
         "and",
+        "мне",
         "in",
-        "telegram",
         "ты",
-        "me",
+        "тебя",
+        "про",
+        "telegram",
+        "они"
+      ]
+    },
+    {
+      "topic_id": 5,
+      "label": "Topic 5: ты, канал, https, он",
+      "top_keywords": [
+        "ты",
+        "канал",
         "https",
-        "it",
-        "we"
+        "он",
+        "привет",
+        "че",
+        "лучше",
+        "iphone",
+        "давно",
+        "они"
+      ]
+    },
+    {
+      "topic_id": 6,
+      "label": "Topic 6: location_redacted, он, они, лучше",
+      "top_keywords": [
+        "location_redacted",
+        "он",
+        "они",
+        "лучше",
+        "сделать",
+        "этом",
+        "работает",
+        "спасибо",
+        "вы",
+        "раз"
+      ]
+    },
+    {
+      "topic_id": 7,
+      "label": "Topic 7: location_redacted, вас, больше, нас",
+      "top_keywords": [
+        "location_redacted",
+        "вас",
+        "больше",
+        "нас",
+        "главное",
+        "https",
+        "может",
+        "дивана",
+        "них",
+        "зато"
       ]
     },
     {
       "topic_id": 8,
-      "label": "Topic 8: пп, спасибо, хз, rozetked",
+      "label": "Topic 8: он, ты, мне, location_redacted",
       "top_keywords": [
-        "пп",
-        "спасибо",
-        "хз",
-        "rozetked",
-        "выйдет",
+        "он",
+        "ты",
+        "мне",
+        "location_redacted",
         "мы",
-        "user_4",
-        "оно",
-        "вроде",
-        "один"
+        "они",
+        "кек",
+        "чем",
+        "норм",
+        "может"
       ]
     }
   ],
@@ -1737,7 +1737,7 @@
       "top_tech_keywords": []
     },
     "2021": {
-      "message_count": 187905,
+      "message_count": 187904,
       "top_general_words": [
         "redacted",
         "person",
@@ -1751,7 +1751,7 @@
       "top_tech_keywords": []
     },
     "2022": {
-      "message_count": 129659,
+      "message_count": 141196,
       "top_general_words": [
         "redacted",
         "person",
@@ -1760,40 +1760,40 @@
         "они",
         "такой",
         "мочь",
-        "он"
+        "который"
       ],
       "top_tech_keywords": []
     },
     "2023": {
-      "message_count": 231652,
+      "message_count": 242863,
       "top_general_words": [
         "redacted",
         "person",
         "ты",
         "такой",
         "он",
-        "они",
         "location",
+        "они",
         "мочь"
       ],
       "top_tech_keywords": []
     },
     "2024": {
-      "message_count": 574244,
+      "message_count": 611834,
       "top_general_words": [
         "redacted",
         "person",
         "ты",
-        "location",
         "такой",
-        "они",
+        "location",
         "он",
+        "они",
         "мочь"
       ],
       "top_tech_keywords": []
     },
     "2025": {
-      "message_count": 790653,
+      "message_count": 918541,
       "top_general_words": [
         "redacted",
         "person",
@@ -1807,13 +1807,13 @@
       "top_tech_keywords": []
     },
     "2026": {
-      "message_count": 482114,
+      "message_count": 551864,
       "top_general_words": [
         "redacted",
         "person",
         "ты",
-        "location",
         "они",
+        "location",
         "он",
         "такой",
         "мочь"
@@ -1822,12 +1822,12 @@
     }
   },
   "noise_and_quality": {
-    "short_messages_under_20_chars": 622063,
-    "short_messages_ratio_percentage": 24.31,
-    "empty_messages_count": 118144,
-    "empty_messages_ratio_percentage": 4.62,
-    "high_emotion_messages_count": 35007,
-    "high_emotion_ratio_percentage": 1.37
+    "short_messages_under_20_chars": 716057,
+    "short_messages_ratio_percentage": 25.42,
+    "empty_messages_count": 139778,
+    "empty_messages_ratio_percentage": 4.96,
+    "high_emotion_messages_count": 37721,
+    "high_emotion_ratio_percentage": 1.34
   },
   "valuation_and_readiness": {
     "total_score": 90,
