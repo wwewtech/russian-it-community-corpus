@@ -25,8 +25,8 @@ ChatExport_2026-08-22/
 *.jpg
 *.png
 
-# Large Uncompressed JSONL Files (>100MB exceed GitHub file limit)
-# Note: Full data is preserved in compressed Apache Parquet format in dataset_output/parquet/
+# Large Dataset Binaries (Generate with python main.py or host on Hugging Face)
+dataset_output/parquet/*.parquet
 dataset_output/jsonl/*.jsonl
 
 # Trained LoRA adapter checkpoints
