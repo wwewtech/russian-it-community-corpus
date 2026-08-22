@@ -4,6 +4,7 @@ pyarrow>=15.0.0
 pydantic>=2.5.0
 xxhash>=3.4.0
 ujson>=5.9.0
+tqdm>=4.66.0
 
 # NLP & PII Anonymization
 natasha>=1.6.0

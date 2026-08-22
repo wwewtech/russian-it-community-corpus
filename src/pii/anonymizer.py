@@ -5,6 +5,8 @@ Unified PII Anonymizer combining Deterministic RegEx and NLP/NER scrubbers with 
 import logging
 import re
 
+from tqdm import tqdm
+
 from src.ingestion.schema import CleanedMessage, NormalizedMessage
 from src.pii.ner_scrubber import NERPIIScrubber
 from src.pii.regex_scrubber import RegexPIIScrubber
@@ -82,8 +84,12 @@ class UnifiedPIIAnonymizer:
         self.cumulative_stats["private_invites_scrubbed"] += reg_stats.get("private_invites", 0)
         self.cumulative_stats["user_mentions_scrubbed"] += reg_stats.get("user_mentions", 0)
 
-        # Step 2: NER scrubbing (if enabled and applicable)
-        if self.ner_scrubber and self.ner_scrubber.enabled:
+        # Step 2: NER scrubbing (if enabled and text contains capitalized Cyrillic characters)
+        if (
+            self.ner_scrubber
+            and self.ner_scrubber.enabled
+            and any(c.isupper() for c in clean_text if "\u0400" <= c <= "\u04ff")
+        ):
             clean_text, ner_stats = self.ner_scrubber.scrub(clean_text)
             self.cumulative_stats["ner_persons_scrubbed"] += ner_stats.get("ner_per", 0)
             self.cumulative_stats["ner_locations_scrubbed"] += ner_stats.get("ner_loc", 0)
@@ -125,10 +131,10 @@ class UnifiedPIIAnonymizer:
 
     def process_batch(self, messages: list[NormalizedMessage]) -> list[CleanedMessage]:
         """
-        Process a list of NormalizedMessages in batch.
+        Process a list of NormalizedMessages in batch with progress bar.
         """
         cleaned: list[CleanedMessage] = []
-        for msg in messages:
+        for msg in tqdm(messages, desc="Zero-PII Scrubbing", unit="msg"):
             cleaned.append(self.process_message(msg))
         return cleaned
 

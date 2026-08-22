@@ -6,6 +6,8 @@ import hashlib
 import logging
 import re
 
+from tqdm import tqdm
+
 from src.config import MINHASH_NUM_PERM, MINHASH_SHINGLE_SIZE, MINHASH_THRESHOLD
 from src.ingestion.schema import CleanedMessage
 
@@ -120,13 +122,13 @@ class MinHashLSH:
 
     def deduplicate_messages(self, messages: list[CleanedMessage]) -> tuple[list[CleanedMessage], int]:
         """
-        Deduplicate a list of messages in place.
+        Deduplicate a list of messages in place with a progress bar.
         Returns list of unique messages and number of removed duplicates.
         """
         unique_msgs: list[CleanedMessage] = []
         dupes_count = 0
 
-        for m in messages:
+        for m in tqdm(messages, desc="MinHash LSH Dedup", unit="msg"):
             # Skip very short messages from fuzzy dedup to avoid over-filtering
             if len(m.text_clean.strip()) < 30:
                 unique_msgs.append(m)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ricc"
-version = "4.0.0"
+version = "5.0.0"
 description = "RICC: Russian IT Community Corpus — Data Engineering and Zero-PII Curation Platform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,6 +33,7 @@ dependencies = [
     "pydantic>=2.5.0",
     "xxhash>=3.4.0",
     "ujson>=5.9.0",
+    "tqdm>=4.66.0",
     "natasha>=1.6.0",
     "slovnet>=0.6.0",
     "razdel>=0.5.0",

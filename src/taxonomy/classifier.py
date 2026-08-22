@@ -5,6 +5,7 @@ Domain Classifier for Russian IT Community Messages and Dialogues.
 import logging
 import re
 from collections import defaultdict
+from typing import Any
 
 from src.config import DOMAIN_TAXONOMY
 
@@ -13,20 +14,16 @@ logger = logging.getLogger(__name__)
 
 class DomainClassifier:
     """
-    Classifies technical chat messages and dialogues into IT domains based on taxonomy dictionary.
+    High-throughput Domain Classifier using token set intersections.
     """
 
-    def __init__(self, taxonomy: dict[str, dict[str, any]] = DOMAIN_TAXONOMY):
+    def __init__(self, taxonomy: dict[str, dict[str, Any]] = DOMAIN_TAXONOMY):
         self.taxonomy = taxonomy
-        # Compile word-boundary regex patterns for fast matching
-        self.domain_patterns: dict[str, list[re.Pattern]] = {}
+        self.kw_to_domains: dict[str, list[str]] = defaultdict(list)
         for domain, info in taxonomy.items():
-            patterns = []
             for kw in info["keywords"]:
-                # Escaped keyword with word boundaries or punctuation boundaries
-                pat = re.compile(rf"(?<!\w){re.escape(kw)}(?!\w)", re.IGNORECASE)
-                patterns.append(pat)
-            self.domain_patterns[domain] = patterns
+                self.kw_to_domains[kw.lower()].append(domain)
+        self.all_keywords_set: set[str] = set(self.kw_to_domains.keys())
 
     def classify_text(self, text: str) -> tuple[str, float, dict[str, int]]:
         """
@@ -35,16 +32,16 @@ class DomainClassifier:
         if not text:
             return "general_tech_chat", 0.0, {}
 
-        scores: dict[str, int] = defaultdict(int)
+        tokens = set(re.findall(r"[a-zA-Zа-яё0-9_\-\+\#\.]+", text.lower()))
+        matched_kws = tokens.intersection(self.all_keywords_set)
 
-        for domain, patterns in self.domain_patterns.items():
-            for pat in patterns:
-                matches = len(pat.findall(text))
-                if matches > 0:
-                    scores[domain] += matches
-
-        if not scores:
+        if not matched_kws:
             return "general_tech_chat", 0.0, {}
+
+        scores: dict[str, int] = defaultdict(int)
+        for kw in matched_kws:
+            for domain in self.kw_to_domains[kw]:
+                scores[domain] += 1
 
         sorted_domains = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         best_domain, best_count = sorted_domains[0]
