@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  data-studio:
+    build: .
+    container_name: it_community_data_studio
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+      - ./dataset_output:/app/dataset_output
+      - ./reports:/app/reports
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONIOENCODING=utf-8
+    restart: unless-stopped
+
+  pipeline-runner:
+    build: .
+    container_name: it_community_pipeline_runner
+    command: ["python", "main.py"]
+    volumes:
+      - .:/app
+      - ./dataset_output:/app/dataset_output
+      - ./reports:/app/reports
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONIOENCODING=utf-8
+    profiles:
+      - pipeline

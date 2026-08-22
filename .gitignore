@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & IDEs
+.env
+.venv
+env/
+venv/
+ENV/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Raw Telegram Exports (Large Binary Media & 400MB+ Dumps)
+ChatExport_2026-08-21/
+ChatExport_2026-08-22/
+*.mp4
+*.mp4_thumb.jpg
+*.gif
+*.ogg
+*.jpg
+*.png
+
+# Large Uncompressed JSONL Files (>100MB exceed GitHub file limit)
+# Note: Full data is preserved in compressed Apache Parquet format in dataset_output/parquet/
+dataset_output/jsonl/*.jsonl
+
+# Trained LoRA adapter checkpoints
+lora_adapters/
+outputs/
+checkpoints/
+
+# System and logs
+*.log
+.DS_Store
+Thumbs.db

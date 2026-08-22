@@ -1,0 +1,41 @@
+name: Data Platform CI & Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas pyarrow scikit-learn rich tiktoken \
+                    natasha slovnet razdel yargy pymorphy3 pymorphy3-dicts-ru \
+                    streamlit pydantic ujson xxhash
+
+    - name: Run Unit Tests
+      run: |
+        python -m unittest discover -s tests
+
+    - name: Run Red-Team PII Penetration Audit
+      run: |
+        python -c "from pathlib import Path; from src.validation.pii_redteam import RedTeamPIIAuditor; auditor = RedTeamPIIAuditor(Path('dataset_output/parquet/full_clean_messages.parquet')); auditor.generate_audit_certificate(Path('reports/zero_pii_audit_certificate.json'))"
+
+    - name: Run Domain Benchmark Generation
+      run: |
+        python cli.py benchmark

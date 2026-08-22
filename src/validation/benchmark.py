@@ -1,0 +1,144 @@
+"""
+Russian IT Community Domain Evaluation Benchmark (100 Comprehensive Questions & Test Harness).
+"""
+
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+logger = logging.getLogger(__name__)
+
+BENCHMARK_SUITE_100: List[Dict[str, Any]] = [
+    # 1. AI, ML, NLP & RAG (25 questions)
+    {"id": "ai_01", "domain": "ai_ml_nlp", "query": "В чем ключевое различие между методами дообучения LoRA и QLoRA? Как QLoRA оптимизирует использование VRAM?", "eval_focus": "Квантование 4-bit NormalFloat, двойное квантование, экономия памяти GPU."},
+    {"id": "ai_02", "domain": "ai_ml_nlp", "query": "Как правильно организовать гибридный поиск (Hybrid Search) в Qdrant, комбинируя плотные эмбеддинги (Dense) и разреженные (Sparse/BM25)?", "eval_focus": "RRF (Reciprocal Rank Fusion), веса скоринга, индексация."},
+    {"id": "ai_03", "domain": "ai_ml_nlp", "query": "Почему при локальном инференсе LLM через vLLM или SGLang throughput в разы выше, чем при стандартном HuggingFace pipeline?", "eval_focus": "PagedAttention, непрерывный батчинг (Continuous Batching), управление KV-кэшем."},
+    {"id": "ai_04", "domain": "ai_ml_nlp", "query": "Как рассчитать необходимый объём видеопамяти (VRAM) для инференса модели Llama-3-70B в квантовании FP16, INT8 и INT4?", "eval_focus": "Вес параметров: 140GB в FP16, 70GB в INT8, 35-40GB в INT4 + оверхед KV-кэша и контекстного окна."},
+    {"id": "ai_05", "domain": "ai_ml_nlp", "query": "Какие эмбеддинг-модели лучше всего подходят для русского языка в задаче RAG (напр. bge-m3, rubert-tiny2, multilingual-e5)?", "eval_focus": "MTEB русскоязычный лидерборд, размерность векторов, длина контекста."},
+    {"id": "ai_06", "domain": "ai_ml_nlp", "query": "В каких случаях Direct Preference Optimization (DPO) предпочтительнее, чем традиционный PPO/RLHF?", "eval_focus": "Отсутствие отдельной модели вознаграждения (Reward Model), стабильность обучения, замкнутая форма лосса."},
+    {"id": "ai_07", "domain": "ai_ml_nlp", "query": "Как эффективно реализовать чанкинг (Chunking) markdown-документов с кодом и таблицами для RAG?", "eval_focus": "Рекурсивный разделитель, сохранение целостности AST кода и таблиц, оверлап (overlap)."},
+    {"id": "ai_08", "domain": "ai_ml_nlp", "query": "Что такое ReAct-паттерн в архитектуре автономных AI-агентов и как строится цикл Thought-Action-Observation?", "eval_focus": "Пошаговый вызов инструментов (Tool calling), разбор вывода, итеративная коррекция."},
+    {"id": "ai_09", "domain": "ai_ml_nlp", "query": "Как устроен механизм Attention Sink и StreamingLLM для бесконечного контекста без деградации перплексии?", "eval_focus": "Фиксация начальных токенов внимания + скользящее окно."},
+    {"id": "ai_10", "domain": "ai_ml_nlp", "query": "В чем преимущества архитектуры DeepSeek-V3 MoE (Multi-head Latent Attention и Sparsely-Gated Mixture of Experts)?", "eval_focus": "MLA сжатие KV-кэша, активные эксперты на токен, балансировка нагрузки без вспомогательного лосса."},
+    {"id": "ai_11", "domain": "ai_ml_nlp", "query": "Как защитить LLM-приложение от Prompt Injection и Jailbreak атак в production?", "eval_focus": "Llama-Guard, валидация входных данных, разделение системного промпта и пользовательского ввода, санитизация."},
+    {"id": "ai_12", "domain": "ai_ml_nlp", "query": "Как настроить Unsloth для ускоренного fine-tuning Llama-3 или Qwen-2.5 на одном GPU?", "eval_focus": "Кастомные тритоновские ядра (Triton kernels), градиентный чекпоинтинг, LoRA target modules."},
+    {"id": "ai_13", "domain": "ai_ml_nlp", "query": "Что такое Self-RAG и Corrective RAG (CRAG) и как они уменьшают галлюцинации?", "eval_focus": "Оценка релевантности извлеченных документов моделью-судьей, веб-поиск при низком качестве контекста."},
+    {"id": "ai_14", "domain": "ai_ml_nlp", "query": "Как работает квантование AWQ и GPTQ и в чем их отличие от стандартного bitsandbytes?", "eval_focus": "Защита важных весов активаций (Activation-aware Weight Quantization), матричная калибровка."},
+    {"id": "ai_15", "domain": "ai_ml_nlp", "query": "Как настроить Ollama для локального запуска моделей в корпоративной сети с поддержкой OpenAI API совместимости?", "eval_focus": "Modelfile, параметры OLLAMA_HOST, эндпоинты /v1/chat/completions."},
+    {"id": "ai_16", "domain": "ai_ml_nlp", "query": "Как работает механизм Speculative Decoding для ускорения генерации токенов LLM?", "eval_focus": "Draft модель меньшего размера генерирует кандидаты, целевая модель верифицирует их за один параллельный проход."},
+    {"id": "ai_17", "domain": "ai_ml_nlp", "query": "В чем отличие Cross-Encoder реранкеров от Bi-Encoder эмбеддеров в пайплайнах поиска?", "eval_focus": "Cross-Encoder оценивает пару (запрос, документ) целиком с полным вниманием, Bi-Encoder строит независимые векторы."},
+    {"id": "ai_18", "domain": "ai_ml_nlp", "query": "Как оптимизировать размер контекстного окна через RoPE Scaling (NTK-aware, YaRN)?", "eval_focus": "Интерполяция частот позиционных эмбеддингов для сохранения локального разрешения внимания."},
+    {"id": "ai_19", "domain": "ai_ml_nlp", "query": "Как построить оценку качества RAG с помощью метрик Ragas (Faithfulness, Answer Relevance, Context Precision)?", "eval_focus": "Синтетический датасет, LLM-as-a-Judge, автоматическое вычисление скоров точности и галлюцинаций."},
+    {"id": "ai_20", "domain": "ai_ml_nlp", "query": "Что такое FlashAttention-2 и FlashAttention-3 и почему они ускоряют обучение?", "eval_focus": "Тайлинг в SRAM GPU, уменьшение обращений к HBM памяти, параллелизация по измерению последовательности."},
+    {"id": "ai_21", "domain": "ai_ml_nlp", "query": "Как использовать библиотеку LangGraph для построения циклических мультиагентных графов?", "eval_focus": "StateGraph, узлы, условные ребра (conditional edges), персистентный checkpointing состояния."},
+    {"id": "ai_22", "domain": "ai_ml_nlp", "query": "Как настроить модель Whisper Large-v3 Turbo для быстрого распознавания русской речи в реальном времени?", "eval_focus": "Faster-Whisper (CTranslate2), batched inference, VAD фильтрация пауз."},
+    {"id": "ai_23", "domain": "ai_ml_nlp", "query": "Как генерировать качественные синтетические Chain-of-Thought датасеты с помощью мощных моделей-учителей?", "eval_focus": "Фильтрация по перплексии, верификация шагов рассуждения (verifiable rewards), дедупликация MinHash."},
+    {"id": "ai_24", "domain": "ai_ml_nlp", "query": "В чем преимущество формата GGUF по сравнению с GGML и Safetensors для локального запуска через llama.cpp?", "eval_focus": "Расширяемые метаданные в одном файле, поддержка квантов m-серии (IQ4_XS, Q4_K_M), кроссплатформенность."},
+    {"id": "ai_25", "domain": "ai_ml_nlp", "query": "Как настроить Function Calling и Structured Outputs (JSON Schema) в локальных моделях через vLLM?", "eval_focus": "Outlines / Guidance грамматический парсер, маскирование недопустимых токенов на шаге выборки лоджитов."},
+
+    # 2. Backend & Databases (25 questions)
+    {"id": "be_01", "domain": "backend_databases", "query": "В чем разница между asyncio.gather и asyncio.TaskGroup (Python 3.11+) при обработке исключений?", "eval_focus": "TaskGroup гарантирует отмену оставшихся тасок при падении одной (ExceptionGroup) и безопасное завершение скоупа."},
+    {"id": "be_02", "domain": "backend_databases", "query": "Как в PostgreSQL работает механизм MVCC и к каким проблемам может привести агрессивный UPDATE без своевременного VACUUM?", "eval_focus": "Создание новых версий строк (xmin/xmax), разрастание таблиц (table bloat), Wraparound транзакций."},
+    {"id": "be_03", "domain": "backend_databases", "query": "Как оптимизировать тяжелые аналитические агрегации в ClickHouse по сравнению с PostgreSQL?", "eval_focus": "Колоночное хранение, MergeTree движки, векторное исполнение запросов, компрессия данных."},
+    {"id": "be_04", "domain": "backend_databases", "query": "Как правильно настроить Connection Pooling для SQLAlchemy 2.0 в высоконагруженном асинхронном FastAPI сервисе?", "eval_focus": "AsyncEngine, pool_size, max_overflow, pool_recycle, pool_pre_ping для отсечения мертвых соединений."},
+    {"id": "be_05", "domain": "backend_databases", "query": "Как реализовать паттерн Idempotency Key в REST API для предотвращения повторного списания средств при сетевых сбоях?", "eval_focus": "Хранение ключа идемпотентности в Redis с атомарным SETNX, статус PENDING/DONE, кэширование ответа."},
+    {"id": "be_06", "domain": "backend_databases", "query": "В чем разница между индексами B-Tree, GIN и GiST в PostgreSQL и когда какой использовать?", "eval_focus": "B-Tree для сравнений (=, <, >), GIN для полнотекстового поиска, JSONB и массивов, GiST для геоданных и диапазонов."},
+    {"id": "be_07", "domain": "backend_databases", "query": "Как устроен паттерн Outbox для надежной отправки событий в Kafka из транзакции базы данных?", "eval_focus": "Запись события в таблицу transactional_outbox в той же транзакции, Debezium CDC или фоновый поллер."},
+    {"id": "be_08", "domain": "backend_databases", "query": "Как избежать проблем N+1 запросов в SQLAlchemy при работе со связями?", "eval_focus": "selectinload, joinedload, contains_eager, явные JOIN запросы."},
+    {"id": "be_09", "domain": "backend_databases", "query": "Как устроен механизм распределенных блокировок (Distributed Locks) в Redis через Redlock?", "eval_focus": "Случайное значение токена, TTL, кворум узлов Redis, Lua-скрипт для атомарного освобождения."},
+    {"id": "be_10", "domain": "backend_databases", "query": "В чем отличия Go goroutines от потоков ОС (OS Threads) и как планировщик Go (GMP) переключает контекст?", "eval_focus": "Легковесный стек (от 2KB), M:N планировщик (Goroutines, Machines, Processors), кооперативная многозадачность."},
+    {"id": "be_11", "domain": "backend_databases", "query": "Как устроен механизм WAL (Write-Ahead Logging) в PostgreSQL и репликация через логические слоты?", "eval_focus": "Гарантия ACID (Durability), последовательная запись изменений на диск до модификации страниц данных."},
+    {"id": "be_12", "domain": "backend_databases", "query": "Как спроектировать шардирование базы данных на основе Consistent Hashing?", "eval_focus": "Хэш-кольцо (Hash Ring), виртуальные ноды (Virtual Nodes), минимизация миграций ключей при добавлении узлов."},
+    {"id": "be_13", "domain": "backend_databases", "query": "В чем разница между gRPC и REST в микросервисной архитектуре по задержкам и сериализации?", "eval_focus": "Protobuf бинарная сериализация, HTTP/2 мультиплексирование потоков в одном TCP-соединении, streaming."},
+    {"id": "be_14", "domain": "backend_databases", "query": "Как устроен механизм работы Pydantic v2 (pydantic-core на Rust)?", "eval_focus": "Валидация на уровне Rust-структур без оверхеда CPython объектов, 5-20x прирост производительности."},
+    {"id": "be_15", "domain": "backend_databases", "query": "Как реализовать эффективный Rate Limiting алгоритмом Leaky Bucket / Token Bucket на Redis?", "eval_focus": "Lua-скрипт для атомарного обновления баланса токенов и временной метки последнего обращения."},
+    {"id": "be_16", "domain": "backend_databases", "query": "В чем специфика уровней изоляции транзакций: Read Committed, Repeatable Read, Serializable?", "eval_focus": "Феномены Dirty Read, Non-repeatable Read, Phantom Read, Serialization Anomaly (SSI в PostgreSQL)."},
+    {"id": "be_17", "domain": "backend_databases", "query": "Как работает механизм сжатия в ClickHouse (LZ4, ZSTD) и выбор сортировочного ключа (ORDER BY)?", "eval_focus": "Сортировка группирует одинаковые значения, максимизируя эффективность RLE и LZ4 компрессии."},
+    {"id": "be_18", "domain": "backend_databases", "query": "Как реализовать Saga-паттерн (Orchestration vs Choreography) для распределенных транзакций?", "eval_focus": "Компенсирующие транзакции (Compensating actions) при сбоях на промежуточных шагах цепочки."},
+    {"id": "be_19", "domain": "backend_databases", "query": "Как работает Event Loop в Python (uvloop vs стандартный asyncio loop)?", "eval_focus": "uvloop построен на базе libuv (C-библиотека Node.js), ускоряет системные вызовы epoll/kqueue."},
+    {"id": "be_20", "domain": "backend_databases", "query": "Как правильно организовать партиционирование больших таблиц в PostgreSQL по диапазонам дат (Declarative Partitioning)?", "eval_focus": "PARTITION BY RANGE (created_at), автоматическое создание партиций через pg_partman, Partition Pruning."},
+    {"id": "be_21", "domain": "backend_databases", "query": "В каких случаях использовать Apache Kafka, а в каких RabbitMQ / Redis Streams?", "eval_focus": "Kafka для долговечного распределенного лога событий с высоким throughput, RabbitMQ для сложного роутинга сообщений."},
+    {"id": "be_22", "domain": "backend_databases", "query": "Как устроена работа с памятью и Garbage Collector в Golang (Tricolor Mark-Sweep)?", "eval_focus": "Неблокирующая трехцветная разметка, фазы Mark Termination, барьеры записи (Write Barriers)."},
+    {"id": "be_23", "domain": "backend_databases", "query": "Как настроить миграции схемы базы данных через Alembic без даунтайма (Zero-Downtime Migrations)?", "eval_focus": "Паттерн Expand and Contract: добавление nullable колонок -> параллельная запись -> миграция данных -> удаление старой колонки."},
+    {"id": "be_24", "domain": "backend_databases", "query": "Как устроен протокол WebSockets и организация масштабирования через Redis Pub/Sub?", "eval_focus": "Upgrade HTTP-соединения до дуплексного TCP сокета, брокер сообщений для вещания между инстансами бэкенда."},
+    {"id": "be_25", "domain": "backend_databases", "query": "Как настроить мониторинг метрик приложения через Prometheus и экспортер prometheus-client?", "eval_focus": "Типы метрик (Counter, Gauge, Histogram, Summary), сборка percentiles p95/p99 задержек эндпоинтов."},
+
+    # 3. DevOps, Cloud & Infra (20 questions)
+    {"id": "do_01", "domain": "devops_infra", "query": "Как настроить Docker multi-stage build для Python приложения, чтобы уменьшить размер образа и убрать компиляторы?", "eval_focus": "Builder stage с gcc/библиотеками -> финальный distroless/slim stage с копированием wheels/venv."},
+    {"id": "do_02", "domain": "devops_infra", "query": "В чем разница между K8s Liveness, Readiness и Startup пробами и как их правильно сконфигурировать?", "eval_focus": "Liveness перезапускает контейнер, Readiness убирает трафик из Service, Startup дает время на инициализацию."},
+    {"id": "do_03", "domain": "devops_infra", "query": "Как оптимизировать настройки Nginx для обработки 50,000+ одновременных WebSocket соединений?", "eval_focus": "worker_rlimit_nofile, worker_connections, proxy_read_timeout, sysctl fs.file-max, net.ipv4.ip_local_port_range."},
+    {"id": "do_04", "domain": "devops_infra", "query": "Как организовать автоматический выпуск и продление SSL-сертификатов Let's Encrypt через DNS-01 challenge для wildcard доменов?", "eval_focus": "Certbot / Caddy с плагином Cloudflare / RFC2136 DNS API."},
+    {"id": "do_05", "domain": "devops_infra", "query": "Как настроить непрерывный сбор логов в Kubernetes с помощью Vector / Fluent Bit и отправку в Grafana Loki?", "eval_focus": "DaemonSet, парсинг CRI логов, добавление метаданных pod/namespace, лейблинг в Loki."},
+    {"id": "do_06", "domain": "devops_infra", "query": "Как устроен механизм Ingress Controller (Traefik vs Nginx Ingress) в Kubernetes?", "eval_focus": "Маршрутизация L7 трафика на основе Host и Path, интеграция с cert-manager и Service endpoints."},
+    {"id": "do_07", "domain": "devops_infra", "query": "Как настроить CI/CD пайплайн в GitHub Actions для сборки, тестирования и деплоя через Docker Compose / K8s?", "eval_focus": "Кэширование слоев сборщика (actions/cache), secrets, SSH-агент, безшовный rolling update."},
+    {"id": "do_08", "domain": "devops_infra", "query": "Как работает Linux cgroups v2 и пространства имен (Namespaces) в изоляции контейнеров?", "eval_focus": "PID, Mount, Net, IPC, UTS, User namespaces + cgroups для ограничения CPU, памяти и IOPS."},
+    {"id": "do_09", "domain": "devops_infra", "query": "Как настроить мониторинг и алертинг в Grafana Alerting / Prometheus Alertmanager?", "eval_focus": "PromQL выражения для error rate > 1%, роутинг алертов в Telegram/Slack, группировка и глушение (silence)."},
+    {"id": "do_10", "domain": "devops_infra", "query": "В чем преимущества архитектуры WireGuard перед OpenVPN / IPSec по скорости и простоте настройки?", "eval_focus": "Работа в ядре Linux (Kernel module), современная криптография (ChaCha20-Poly1305, Curve25519), минимальный код."},
+    {"id": "do_11", "domain": "devops_infra", "query": "Как настроить резервное копирование PostgreSQL с помощью pgBackRest / WAL-G в S3 хранилище?", "eval_focus": "Непрерывная архивация WAL-сегментов, инкрементальные и дифференциальные бэкапы, Point-In-Time Recovery (PITR)."},
+    {"id": "do_12", "domain": "devops_infra", "query": "Как устроен Horizontal Pod Autoscaler (HPA) в Kubernetes на основе CPU и кастомных метрик?", "eval_focus": "Metrics Server, Prometheus Adapter, расчет целевого количества реплик по формуле desiredReplicas."},
+    {"id": "do_13", "domain": "devops_infra", "query": "Как защитить веб-инфраструктуру от L7 DDoS атак на уровне Nginx и Cloudflare?", "eval_focus": "limit_req_zone, limit_conn_zone, Cloudflare WAF, блокировка подозрительных User-Agent и ASN."},
+    {"id": "do_14", "domain": "devops_infra", "query": "Как развернуть безопасный VLESS / XTLS / Shadowsocks прокси для обхода блокировок сетевого трафика?", "eval_focus": "Xray core, Reality протокол (маскировка под легитимный TLS handshake внешнего домена)."},
+    {"id": "do_15", "domain": "devops_infra", "query": "Как использовать Ansible для автоматической настройки безопасного Linux сервера (Hardening)?", "eval_focus": "Отключение root SSH входа, fail2ban, UFW фаервол, автоматические обновления безопасности (unattended-upgrades)."},
+    {"id": "do_16", "domain": "devops_infra", "query": "Как настроить Terraform для декларативного управления инфраструктурой в Hetzner Cloud / Yandex Cloud?", "eval_focus": "Провайдеры hcloud/yandex, управление состоянием (Remote State в S3), модули виртуальных машин и сетей."},
+    {"id": "do_17", "domain": "devops_infra", "query": "В чем разница между Persistent Volume (PV), Persistent Volume Claim (PVC) и StorageClass в K8s?", "eval_focus": "Динамический провижининг дисков (CSI), абстракция физического блочного/файлового хранилища."},
+    {"id": "do_18", "domain": "devops_infra", "query": "Как оптимизировать Linux kernel sysctl параметры для высокопроизводительных серверов?", "eval_focus": "tcp_max_syn_backlog, somaxconn, tcp_tw_reuse, vm.swappiness, dirty_ratio."},
+    {"id": "do_19", "domain": "devops_infra", "query": "Как организовать Tracing распределенных сервисов с помощью OpenTelemetry и Jaeger?", "eval_focus": "Trace ID, Span ID, проброс W3C TraceContext заголовков через микросервисы."},
+    {"id": "do_20", "domain": "devops_infra", "query": "Как устроен GitOps подход с использованием ArgoCD / Flux в Kubernetes?", "eval_focus": "Синхронизация состояния кластера с Git репозиторием, авто-хилинг (Self-healing), визуализация деплоев."},
+
+    # 4. IT Business, Legal & Fintech (15 questions)
+    {"id": "biz_01", "domain": "business_legal_fintech", "query": "Как фаундеру из РФ организовать прием международных платежей (Stripe, PayPal, карты) для SaaS сервиса в 2026 году?", "eval_focus": "Регистрация компании в юрисдикциях Кипр/ОАЭ/Грузия/США/Армения, Merchant of Record (Paddle, LemonSqueezy, PayPro Global), крипто-эквайринг (USDT/TON)."},
+    {"id": "biz_02", "domain": "business_legal_fintech", "query": "В чем разница между агентской схемой (Merchant of Record) и прямым эквайрингом при продаже цифровых подписок за рубеж?", "eval_focus": "MoR берет на себя расчет и уплату НДС/Sales Tax в 100+ странах, chargeback риски и комплаенс."},
+    {"id": "biz_03", "domain": "business_legal_fintech", "query": "Какие налоги и требования валютного контроля возникают у ИП в РФ при получении оплаты от зарубежных заказчиков в крипте или валюте?", "eval_focus": "УСН Доходы 6%, декларация цифровой валюты, постановка контрактов на учет, подтверждающие документы."},
+    {"id": "biz_04", "domain": "business_legal_fintech", "query": "Как юридически оформить условия использования (Terms of Service) и Privacy Policy для AI сервиса с точки зрения GDPR и 152-ФЗ?", "eval_focus": "Согласие на обработку, отказ от ответственности за генерации AI, право на забвение, трансграничная передача."},
+    {"id": "biz_05", "domain": "business_legal_fintech", "query": "Как устроен налоговый режим IP Box на Кипре и какие требования предъявляются к разработке ПО?", "eval_focus": "Nexus подход, 80% освобождение квалифицированного дохода от собственного ПО, эффективная ставка налога 2.5%."},
+    {"id": "biz_06", "domain": "business_legal_fintech", "query": "Как рассчитать ключевые метрики SaaS продукта: MRR, ARR, Churn Rate, LTV, CAC и LTV/CAC ratio?", "eval_focus": "Формулы расчета, когортный анализ оттока, соотношение LTV/CAC > 3 для здоровой юнит-экономики."},
+    {"id": "biz_07", "domain": "business_legal_fintech", "query": "Как настроить крипто-эквайринг (USDT TRC20, TON, BTC) без посредников с подтверждением транзакций в блокчейне?", "eval_focus": "Генерация уникального адреса/инвойса, сканирование блоков через RPC ноду, сверка входящих переводов."},
+    {"id": "biz_08", "domain": "business_legal_fintech", "query": "В чем особенности открытия счетов в банках ОАЭ (Wio Bank, Mashreq) для IT-компаний во Free Zone?", "eval_focus": "Процедура KYC/KYB, подтверждение Substance (офис, резидентская виза, выписки счетов, контракты с клиентами)."},
+    {"id": "biz_09", "domain": "business_legal_fintech", "query": "Как составить договор на заказную разработку программного обеспечения (Time & Material vs Fixed Price)?", "eval_focus": "Акты приема-передачи, этапы, интеллектуальные права (IP Transfer), гарантийные обязательства и SLA."},
+    {"id": "biz_10", "domain": "business_legal_fintech", "query": "Как защитить исходный код и коммерческую тайну при найме удаленных разработчиков (NDA, служебные произведения)?", "eval_focus": "Служебное задание, трудовой договор с передачей исключительных прав, положение о коммерческой тайне."},
+    {"id": "biz_11", "domain": "business_legal_fintech", "query": "Как привлекать инвестиции на предпосевной стадии (Pre-Seed) через SAFE и Convertible Note?", "eval_focus": "Valuation Cap, Discount Rate, конвертация займа в акции при следующем раунде финансирования."},
+    {"id": "biz_12", "domain": "business_legal_fintech", "query": "Какие правила действуют в ЕС в отношении авторских прав при использовании датасетов для обучения ИИ (EU AI Act & DSM Directive)?", "eval_focus": "Text and Data Mining (TDM) исключения (Article 4 DSM), Opt-out правообладателей, публикация Data Provenance Summary."},
+    {"id": "biz_13", "domain": "business_legal_fintech", "query": "Как фаундеру выстроить ценовую модель (Pricing Strategy) для B2B Micro-SaaS на ранней стадии?", "eval_focus": "Freemium vs Free Trial, ценообразование на основе ценности (Value-based pricing), tiered тарифы по количеству мест/токенов."},
+    {"id": "biz_14", "domain": "business_legal_fintech", "query": "Как организовать автоматический биллинг подписок с поддержкой рекуррентных списаний?", "eval_focus": "Вебхуки invoice.payment_succeeded, обработка отказов карт (dunning management), grace period."},
+    {"id": "biz_15", "domain": "business_legal_fintech", "query": "Как оптимизировать налоги IT-компании в юрисдикции Армении или Грузии (IT Zone Status)?", "eval_focus": "Критерии квалификации экспорта IT услуг, нулевая ставка налога на прибыль, налог на вывод дивидендов."},
+
+    # 5. Frontend & UI (15 questions)
+    {"id": "fe_01", "domain": "frontend_ui", "query": "В чем разница между Server Components (RSC) и Client Components в Next.js App Router и как они гидратируются?", "eval_focus": "RSC рендерятся только на сервере (ноль JS в бандле), Client Components компилируются с директивой 'use client' и гидратируются на клиенте."},
+    {"id": "fe_02", "domain": "frontend_ui", "query": "Как устроен виртуальный DOM и механизм Fiber в React для прерываемого рендеринга (Concurrent Mode)?", "eval_focus": "Дерево Fiber нод, двусторонняя буферизация (workInProgress/current), планировщик Scheduler (time slicing)."},
+    {"id": "fe_03", "domain": "frontend_ui", "query": "Как в Tailwind CSS v4 устроен JIT компилятор и почему отказались от tailwind.config.js в пользу чистого CSS?", "eval_focus": "CSS-first конфигурация через @theme, движок Oxide на Rust, ускорение компиляции."},
+    {"id": "fe_04", "domain": "frontend_ui", "query": "Как устроена архитектура Shadcn UI и почему подход копирования компонентов (Copy-Paste) стал популярнее npm-библиотек?", "eval_focus": "Полный контроль над кодом компонентов, кастомизация через Radix UI примитивы и Tailwind классы, отсутствие vendor lock-in."},
+    {"id": "fe_05", "domain": "frontend_ui", "query": "Как оптимизировать Core Web Vitals (LCP, INP, CLS) в современном веб-приложении?", "eval_focus": "Оптимизация изображений (WebP/AVIF), отложенная загрузка тяжелых скриптов, резервирование размеров блоков (aspect-ratio)."},
+    {"id": "fe_06", "domain": "frontend_ui", "query": "В чем преимущества TypeScript 5.x декораторов и const type parameters для строгой типизации?", "eval_focus": "ECMAScript стандарт декораторов, точный вывод литеральных типов аргументов без явного 'as const'."},
+    {"id": "fe_07", "domain": "frontend_ui", "query": "Как устроен стейт-менеджмент в Zustand по сравнению с Redux Toolkit?", "eval_focus": "Минималистичный стор без Context Provider, селекторы для точечного ре-рендеринга, подписка вне React дерева."},
+    {"id": "fe_08", "domain": "frontend_ui", "query": "Как работает механизм Server-Sent Events (SSE) для стриминга ответов LLM в веб-интерфейсе?", "eval_focus": "EventSource API, заголовок Content-Type: text/event-stream, потоковая chunked передача данных."},
+    {"id": "fe_09", "domain": "frontend_ui", "query": "Как устроена реактивность в Vue 3 (Proxy-based Reactivity) и Composition API?", "eval_focus": "Перехват get/set через ES6 Proxy, отслеживание зависимостей (track) и триггер эффектов (trigger)."},
+    {"id": "fe_10", "domain": "frontend_ui", "query": "Как настроить TanStack Query (React Query) для эффективного кэширования серверного состояния и оптимистичных обновлений?", "eval_focus": "staleTime, gcTime, useMutation с onMutate для мгновенной отрисовки UI до ответа сервера."},
+    {"id": "fe_11", "domain": "frontend_ui", "query": "Как работает сборщик Vite на базе esbuild и Rollup по сравнению со старым Webpack?", "eval_focus": "Нативные ESM модули в режиме разработки (no bundling), esbuild на Go для мгновенного старта."},
+    {"id": "fe_12", "domain": "frontend_ui", "query": "Как устроен рендеринг в кроссплатформенном фреймворке Flutter (Impeller engine)?", "eval_focus": "Собственный движок отрисовки (No Web View, No Bridge), AOT компиляция в нативный код, 120 FPS UI."},
+    {"id": "fe_13", "domain": "frontend_ui", "query": "Как настроить Virtualized List (TanStack Virtual / react-window) для плавной отрисовки списков из 100,000+ элементов?", "eval_focus": "Рендеринг только видимых в viewport элементов со смещением абсолютным позиционированием."},
+    {"id": "fe_14", "domain": "frontend_ui", "query": "Как работает механизм View Transitions API в современных браузерах для плавных анимаций страниц?", "eval_focus": "document.startViewTransition, создание снимков старого и нового состояния DOM, CSS анимации псевдоэлементов."},
+    {"id": "fe_15", "domain": "frontend_ui", "query": "Как защитить веб-приложение от XSS, CSRF и Clickjacking атак на клиенте?", "eval_focus": "Content Security Policy (CSP), SameSite cookies, экранирование HTML, фреймгард (X-Frame-Options)."},
+]
+
+
+class BenchmarkRunner:
+    """
+    Evaluation suite runner for measuring LLM performance on Russian IT domain benchmarks.
+    """
+
+    def __init__(self, benchmark_questions: List[Dict[str, Any]] = BENCHMARK_SUITE_100):
+        self.questions = benchmark_questions
+
+    def export_benchmark_file(self, output_path: Union[str, Path]) -> Path:
+        """Export the benchmark questions to a structured JSON file."""
+        out = Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(self.questions, f, ensure_ascii=False, indent=2)
+        logger.info(f"Saved {len(self.questions)} benchmark evaluation test cases to {out}")
+        return out
+
+    def get_benchmark_by_domain(self, domain: str) -> List[Dict[str, Any]]:
+        """Filter benchmark questions by domain."""
+        return [q for q in self.questions if q.get("domain") == domain]

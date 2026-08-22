@@ -1,0 +1,146 @@
+"""
+Global Configuration for IT Community Data Engineering & Curation Pipeline
+"""
+
+from pathlib import Path
+from typing import Dict, List, Set
+
+# Base Directories
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR
+OUTPUT_DIR = BASE_DIR / "dataset_output"
+PARQUET_OUTPUT_DIR = OUTPUT_DIR / "parquet"
+JSONL_OUTPUT_DIR = OUTPUT_DIR / "jsonl"
+SAMPLES_OUTPUT_DIR = OUTPUT_DIR / "samples"
+REPORTS_DIR = BASE_DIR / "reports"
+
+# Raw Input Data Paths
+RAW_EXPORT_DIRS = [
+    BASE_DIR / "ChatExport_2026-08-21",
+    BASE_DIR / "ChatExport_2026-08-22",
+]
+
+# MinHash LSH Settings
+MINHASH_NUM_PERM = 128
+MINHASH_THRESHOLD = 0.80
+MINHASH_SHINGLE_SIZE = 3
+
+# Dialogue Reconstruction Settings
+MAX_REPLY_TIME_GAP_HOURS = 48  # Maximum hours between reply and target message
+MIN_QUESTION_WORDS = 3
+MIN_ANSWER_WORDS = 4
+MAX_THREAD_DEPTH = 15
+
+# Sentiment & Emotional Lexicon
+SENTIMENT_DICT = {
+    # Positive
+    'хорошо': 1, 'отлично': 2, 'прекрасно': 2, 'супер': 2, 'круто': 1, 'класс': 1,
+    'спасибо': 1, 'благодарю': 1, 'лайк': 1, 'годно': 1, 'топ': 1, 'лучший': 1,
+    'кайф': 1, 'плюс': 1, 'согласен': 1, 'помогло': 2, 'решено': 2, 'заработало': 2,
+    'стабильно': 1, 'быстро': 1, 'удобно': 1, 'рекомендую': 2, 'огонь': 2, 'полезно': 1,
+    # Negative
+    'плохо': -1, 'ужасно': -2, 'отстой': -1, 'фигня': -1, 'сложно': -1, 'трудно': -1,
+    'беда': -1, 'проблема': -1, 'баг': -1, 'ошибка': -1, 'сбой': -1, 'упало': -2,
+    'краш': -2, 'сломалось': -2, 'тормозит': -1, 'лагает': -1, 'дрянь': -2, 'хлам': -2,
+    'неудобно': -1, 'минус': -1, 'говно': -2, 'бред': -1, 'дичь': -1,
+    # Neutral/Ambivalent
+    'ок': 0, 'нормально': 0, 'средне': 0, 'нейтрально': 0
+}
+
+# Extended Russian Stopwords for High-Quality NLP
+STOPWORDS_RU: Set[str] = {
+    'и', 'в', 'на', 'с', 'по', 'к', 'у', 'о', 'от', 'за', 'для', 'без', 'из', 'до',
+    'при', 'через', 'об', 'же', 'бы', 'ещё', 'еще', 'уже', 'если', 'что', 'чтобы',
+    'потому', 'так', 'как', 'ну', 'вот', 'это', 'этот', 'эта', 'эти', 'этот',
+    'а', 'но', 'или', 'либо', 'да', 'нет', 'не', 'ни', 'кто', 'где', 'куда',
+    'когда', 'почему', 'зачем', 'чей', 'чья', 'чьё', 'чьи', 'тот', 'та', 'то',
+    'те', 'весь', 'вся', 'всё', 'все', 'мой', 'твой', 'свой', 'наш', 'ваш',
+    'их', 'его', 'её', 'ее', 'им', 'ему', 'ей', 'нам', 'вам', 'ими', 'мной',
+    'тобой', 'собой', 'нами', 'вами', 'сам', 'сама', 'само', 'сами', 'тут',
+    'там', 'здесь', 'куда', 'откуда', 'зачем', 'почему', 'тоже', 'также',
+    'только', 'лишь', 'хоть', 'хотя', 'будто', 'словно', 'точно', 'разве',
+    'неужели', 'даже', 'просто', 'очень', 'совсем', 'вообще', 'тогда', 'сейчас',
+    'потом', 'после', 'всегда', 'никогда', 'иногда', 'часто', 'редко', 'можно',
+    'нужно', 'надо', 'нельзя', 'будет', 'было', 'быть', 'есть', 'были', 'будут'
+}
+
+# Domain Taxonomy & Keywords mapping
+DOMAIN_TAXONOMY: Dict[str, Dict[str, any]] = {
+    "ai_ml_nlp": {
+        "title": "AI, Machine Learning & NLP",
+        "keywords": [
+            "ai", "ml", "nlp", "llm", "deepseek", "chatgpt", "gpt-4", "gpt", "claude",
+            "openai", "anthropic", "llama", "llama3", "mistral", "qwen", "gemini",
+            "pytorch", "tensorflow", "transformer", "huggingface", "lora", "qlora",
+            "finetune", "fine-tuning", "sft", "dpo", "rlhf", "rag", "embedding",
+            "embeddings", "vector", "qdrant", "chroma", "pinecone", "weaviate",
+            "bert", "rubert", "tokens", "token", "tokenizer", "cuda", "gpu", "vram",
+            "diffusion", "comfyui", "midjourney", "whisper", "ollama", "vllm"
+        ]
+    },
+    "backend_databases": {
+        "title": "Backend Development & Databases",
+        "keywords": [
+            "python", "fastapi", "django", "flask", "pydantic", "asyncio", "aiohttp",
+            "golang", "go", "rust", "java", "kotlin", "spring", "c++", "c#", ".net",
+            "node", "nodejs", "express", "nest", "nestjs", "php", "laravel",
+            "sql", "postgresql", "postgres", "mysql", "sqlite", "mongodb", "redis",
+            "clickhouse", "elasticsearch", "kafka", "rabbitmq", "celery", "graphql",
+            "rest", "grpc", "orm", "sqlalchemy", "alembic", "database", "бд", "база"
+        ]
+    },
+    "frontend_ui": {
+        "title": "Frontend & Mobile Development",
+        "keywords": [
+            "javascript", "typescript", "js", "ts", "react", "reactjs", "nextjs", "next",
+            "vue", "vuejs", "nuxt", "angular", "svelte", "html", "css", "scss", "sass",
+            "tailwind", "shadcn", "bootstrap", "webpack", "vite", "frontend", "фронт",
+            "flutter", "react native", "ios", "swift", "android", "kotlin multiplatform"
+        ]
+    },
+    "devops_infra": {
+        "title": "DevOps, Cloud & Infrastructure",
+        "keywords": [
+            "docker", "docker-compose", "k8s", "kubernetes", "helm", "linux", "ubuntu",
+            "debian", "centos", "alpine", "nginx", "caddy", "traefik", "ci/cd", "ci",
+            "cd", "github actions", "gitlab", "jenkins", "ansible", "terraform",
+            "aws", "gcp", "azure", "hetzner", "ovh", "selectel", "yandex cloud", "timeweb",
+            "vps", "vds", "server", "сервер", "хостинг", "деплой", "мониторинг",
+            "prometheus", "grafana", "sentry", "loki"
+        ]
+    },
+    "business_legal_fintech": {
+        "title": "IT Business, Fintech & Legal",
+        "keywords": [
+            "бизнес", "стартап", "startup", "саас", "saas", "b2b", "b2c", "ооо", "ип",
+            "налог", "налоги", "бухгалтерия", "бух", "договор", "оферта", "юрист",
+            "stripe", "paypal", "крипта", "crypto", "usdt", "btc", "eth", "ton",
+            "платежи", "эквайринг", "банк", "счет", "инвойс", "релокация", "грузия",
+            "армения", "кипр", "оаэ", "дубай", "казахстан", "венчур", "инвестор",
+            "монетизация", "продажи", "маркетинг", "лиды", "выручка", "mrr", "arr"
+        ]
+    },
+    "sysadmin_security": {
+        "title": "System Administration & Cybersecurity",
+        "keywords": [
+            "vpn", "wireguard", "vless", "shadowsocks", "xray", "proxy", "прокси",
+            "security", "безопасность", "ssl", "tls", "certbot", "ddos", "firewall",
+            "iptables", "ssh", "auth", "jwt", "oauth", "penetration", "хэк", "уязвимость"
+        ]
+    },
+    "career_team_management": {
+        "title": "Career, HR & Engineering Management",
+        "keywords": [
+            "зарплата", "зп", "вакансия", "найм", "собес", "собеседование", "резюме",
+            "джун", "мидл", "сеньор", "тимлид", "lead", "pm", "cto", "оффер",
+            "удаленка", "офис", "рейт", "апворк", "upwork", "фриланс", "аутсорс"
+        ]
+    },
+    "general_tech_chat": {
+        "title": "General Tech & Community Discussions",
+        "keywords": [
+            "cursor", "vscode", "ide", "macbook", "m1", "m2", "m3", "thinkpad",
+            "ноут", "железо", "клавиатура", "монитор", "телеграм", "tg", "бот", "bot"
+        ]
+    }
+}

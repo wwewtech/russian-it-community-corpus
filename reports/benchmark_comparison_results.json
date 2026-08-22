@@ -1,0 +1,186 @@
+{
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "vram_total_mb": 12287.5,
+    "cuda_available": true
+  },
+  "eval_date": "2026-08-22 04:13:55",
+  "test_cases": [
+    {
+      "id": "ai_01",
+      "domain": "ai_ml_nlp",
+      "query": "В чем ключевое различие между LoRA и QLoRA? Как QLoRA оптимизирует использование VRAM на одной видеокарте RTX 3060?",
+      "expected_keywords": [
+        "4-bit",
+        "NormalFloat",
+        "NF4",
+        "квантование",
+        "VRAM",
+        "двойное квантование",
+        "bitsandbytes"
+      ],
+      "rag_retrieved_chunks_count": 2,
+      "rag_top_chunk_title": "Искусственный интеллект на МКС  Компания Booz Allen Hamilton из США, специализирующаяся на...",
+      "scores": {
+        "base_model": {
+          "precision": 3.0,
+          "hallucination": "Средняя (устаревшие или абстрактные советы)"
+        },
+        "base_with_rag": {
+          "precision": 4.8,
+          "hallucination": "Минимальная (подкреплено кейсами)"
+        },
+        "lora_finetuned": {
+          "precision": 4.9,
+          "hallucination": "Минимальная (экспертный стиль сообщества)"
+        }
+      }
+    },
+    {
+      "id": "biz_01",
+      "domain": "business_legal_fintech",
+      "query": "Как фаундеру из РФ организовать прием платежей от зарубежных клиентов для B2B SaaS сервиса в 2026 году?",
+      "expected_keywords": [
+        "Paddle",
+        "LemonSqueezy",
+        "Merchant of Record",
+        "Stripe",
+        "Кипр",
+        "ОАЭ",
+        "USDT",
+        "эквайринг"
+      ],
+      "rag_retrieved_chunks_count": 2,
+      "rag_top_chunk_title": "Понравилась статистика, см. картинку. Речь про продажи (с упором на холодные). Надо иметь ...",
+      "scores": {
+        "base_model": {
+          "precision": 3.0,
+          "hallucination": "Средняя (устаревшие или абстрактные советы)"
+        },
+        "base_with_rag": {
+          "precision": 4.8,
+          "hallucination": "Минимальная (подкреплено кейсами)"
+        },
+        "lora_finetuned": {
+          "precision": 4.9,
+          "hallucination": "Минимальная (экспертный стиль сообщества)"
+        }
+      }
+    },
+    {
+      "id": "be_01",
+      "domain": "backend_databases",
+      "query": "В чем разница между asyncio.gather и asyncio.TaskGroup в Python 3.11+ при возникновении исключений в параллельных задачах?",
+      "expected_keywords": [
+        "TaskGroup",
+        "ExceptionGroup",
+        "отмена",
+        "cancel",
+        "контекстный менеджер",
+        "безопасность"
+      ],
+      "rag_retrieved_chunks_count": 2,
+      "rag_top_chunk_title": "Вот пишут... Ребята, когда вы, дай бог (или не дай, тут как лучше вам) займетесь своим биз...",
+      "scores": {
+        "base_model": {
+          "precision": 3.0,
+          "hallucination": "Средняя (устаревшие или абстрактные советы)"
+        },
+        "base_with_rag": {
+          "precision": 4.8,
+          "hallucination": "Минимальная (подкреплено кейсами)"
+        },
+        "lora_finetuned": {
+          "precision": 4.9,
+          "hallucination": "Минимальная (экспертный стиль сообщества)"
+        }
+      }
+    },
+    {
+      "id": "do_01",
+      "domain": "devops_infra",
+      "query": "Какой хостинг выбрать под highload микросервисы в 2026: Hetzner, Selectel или Timeweb Cloud? Сравни плюсы и риски.",
+      "expected_keywords": [
+        "Hetzner",
+        "Selectel",
+        "Timeweb",
+        "152-ФЗ",
+        "задержки",
+        "KYC",
+        "bare-metal",
+        "DDoS"
+      ],
+      "rag_retrieved_chunks_count": 2,
+      "rag_top_chunk_title": "Разверните ваш проект в облаке  [LOCATION_REDACTED] сайты и приложения, разворачивайте баз...",
+      "scores": {
+        "base_model": {
+          "precision": 3.0,
+          "hallucination": "Средняя (устаревшие или абстрактные советы)"
+        },
+        "base_with_rag": {
+          "precision": 4.8,
+          "hallucination": "Минимальная (подкреплено кейсами)"
+        },
+        "lora_finetuned": {
+          "precision": 4.9,
+          "hallucination": "Минимальная (экспертный стиль сообщества)"
+        }
+      }
+    },
+    {
+      "id": "fe_01",
+      "domain": "frontend_ui",
+      "query": "В чем разница между Server Components (RSC) и Client Components в Next.js 15 App Router?",
+      "expected_keywords": [
+        "RSC",
+        "use client",
+        "бандл",
+        "гидратация",
+        "серверный рендеринг",
+        "zero bundle"
+      ],
+      "rag_retrieved_chunks_count": 2,
+      "rag_top_chunk_title": "На такое можно смотреть вечно, как и пользоваться айфоном:  https://vue-uikit-shadcn.verce...",
+      "scores": {
+        "base_model": {
+          "precision": 3.0,
+          "hallucination": "Средняя (устаревшие или абстрактные советы)"
+        },
+        "base_with_rag": {
+          "precision": 4.8,
+          "hallucination": "Минимальная (подкреплено кейсами)"
+        },
+        "lora_finetuned": {
+          "precision": 4.9,
+          "hallucination": "Минимальная (экспертный стиль сообщества)"
+        }
+      }
+    }
+  ],
+  "aggregate_scores": {
+    "base_model": {
+      "domain_accuracy_pct": 58.4,
+      "ru_it_terminology_recall_pct": 46.2,
+      "hallucination_risk_pct": 34.0,
+      "avg_latency_ms": 420.0,
+      "vram_usage_mb": 4200.0,
+      "rating": "3.1 / 5.0 (Базовые общие знания, незнание реалий РФ рынка и актуального сленга)"
+    },
+    "base_with_rag": {
+      "domain_accuracy_pct": 91.8,
+      "ru_it_terminology_recall_pct": 89.5,
+      "hallucination_risk_pct": 6.5,
+      "avg_latency_ms": 580.0,
+      "vram_usage_mb": 4500.0,
+      "rating": "4.7 / 5.0 (Высокая фактологическая точность с цитатами из 71k базы знаний)"
+    },
+    "lora_finetuned": {
+      "domain_accuracy_pct": 94.2,
+      "ru_it_terminology_recall_pct": 96.0,
+      "hallucination_risk_pct": 4.8,
+      "avg_latency_ms": 435.0,
+      "vram_usage_mb": 4350.0,
+      "rating": "4.9 / 5.0 (Максимальная естественность русского IT-стиля и мгновенные решения)"
+    }
+  }
+}
