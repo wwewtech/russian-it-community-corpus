@@ -42,10 +42,17 @@ class TestCLICommands(unittest.TestCase):
     def test_cli_rag_search(self):
         f = io.StringIO()
         with patch("sys.argv", ["cli.py", "rag", "docker nginx reverse proxy", "--top-k", "1"]):
-            with redirect_stdout(f):
-                main()
+            with patch("pathlib.Path.exists", return_value=True):
+                with patch("src.rag.rag_pipeline.LocalRAGPipeline") as mock_rag_cls:
+                    mock_rag = mock_rag_cls.return_value
+                    mock_rag.search.return_value = [
+                        {"score": 0.95, "domain": "devops_infra", "content": "Sample docker nginx result"}
+                    ]
+                    with redirect_stdout(f):
+                        main()
         output = f.getvalue()
         self.assertIn("Top 1 RAG Results", output)
+        self.assertIn("Sample docker nginx result", output)
 
 
 if __name__ == "__main__":
