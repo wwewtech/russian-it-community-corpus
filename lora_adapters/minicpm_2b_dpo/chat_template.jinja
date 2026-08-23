@@ -1,0 +1,1 @@
+{% for message in messages %}{% if message['role'] == 'user' %}{{'<用户>' + message['content'] + '<AI>'}}{% else %}{{message['content']}}{% endif %}{% endfor %}
