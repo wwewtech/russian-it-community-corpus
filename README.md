@@ -251,14 +251,11 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 │   ├── evaluation/             # Benchmark comparator
 │   └── validation/             # PII auditor and domain benchmarks
 ├── dataset_output/             # Parquet datasets and preview samples
-├── reports/                    # Analytical reports and academic scientific benchmarks
-│   ├── OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md # OpenAI HumanEval & RuMMLU academic evaluation
-│   ├── ENTERPRISE_PRODUCTION_BENCHMARK_REPORT.md  # 50-Scenario production benchmark across 7 domains
-│   ├── SOTA_EXPERT_SHOWCASE_DIFFS.md              # Side-by-side prompt architectural comparisons
-│   ├── LORA_MODEL_ZOO.md                          # Catalog of all 44+ LoRA adapters & 7B-8B QLoRA
-│   ├── DEEP_ANALYTICAL_REPORT.md                  # Statistical and longitudinal report
-│   ├── DATASET_CARD.md                            # Hugging Face Dataset Card
-│   └── zero_pii_audit_certificate.json            # Security audit verification
+├── reports/                    # Consolidated reports and scientific benchmarks
+│   ├── DATASET_AND_ANALYTICS.md   # Dataset Card, 2017-2026 Analytics, and Zero-PII Protocol
+│   ├── LORA_MODEL_ZOO.md          # Full Catalog of 44+ LoRA Adapters & Flagship 7B-8B QLoRA
+│   ├── BENCHMARK_AND_EVALUATION.md# OpenAI HumanEval pass@1, RuMMLU CS, PPL, and 50 Scenarios
+│   └── metrics_index.json         # Unified machine-readable telemetry and audit matrices
 ├── tests/                      # Automated unit tests
 ├── app.py                      # Streamlit Web Data Studio
 ├── demo_walkthrough.py         # Terminal demonstration script
