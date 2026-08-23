@@ -1,0 +1,32 @@
+{
+  "humaneval_pass_at_1": {
+    "base": 25.0,
+    "rag": 75.0,
+    "lora": 25.0,
+    "hybrid": 75.0
+  },
+  "rummlu_accuracy": {
+    "base": 100.0,
+    "rag": 100.0,
+    "lora": 100.0,
+    "hybrid": 100.0
+  },
+  "perplexity": {
+    "base": 12.18,
+    "lora": 12.18
+  },
+  "rouge": {
+    "base": {
+      "rouge1": 0.45416666666666666,
+      "rouge2": 0.29670329670329676,
+      "rougeL": 0.3875,
+      "rougeLsum": 0.3875
+    },
+    "lora": {
+      "rouge1": 0.45416666666666666,
+      "rouge2": 0.29670329670329676,
+      "rougeL": 0.3875,
+      "rougeLsum": 0.3875
+    }
+  }
+}
