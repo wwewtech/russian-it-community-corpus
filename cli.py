@@ -37,6 +37,17 @@ def main():
     # Command: benchmark
     subparsers.add_parser("benchmark", help="Export and display benchmark questions")
 
+    # Command: chat
+    parser_chat = subparsers.add_parser("chat", help="Start interactive LLM + RAG terminal chat session")
+    parser_chat.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID")
+    parser_chat.add_argument("--adapter", type=str, default="heavyweight_qwen2.5_coder_7b", help="LoRA Adapter ID")
+    parser_chat.add_argument("--no-rag", action="store_true", help="Disable RAG knowledge retrieval")
+
+    # Command: rag
+    parser_rag = subparsers.add_parser("rag", help="Search the 325k RAG knowledge base from the CLI")
+    parser_rag.add_argument("query", type=str, help="Technical search query")
+    parser_rag.add_argument("--top-k", type=int, default=3, help="Number of retrieved chunks")
+
     args = parser.parse_args()
 
     if args.command in ("run", None):
@@ -115,6 +126,27 @@ def main():
         bench = BenchmarkRunner()
         out = bench.export_benchmark_file(REPORTS_DIR / "domain_benchmark_100.json")
         print(f"✅ Benchmark saved to {out} (Total questions: {len(bench.questions)})")
+
+    elif args.command == "chat":
+        from src.inference import interactive_chat_session
+        interactive_chat_session(
+            model_name=args.model,
+            adapter_id=args.adapter,
+            use_rag=not args.no_rag,
+        )
+
+    elif args.command == "rag":
+        from src.rag.rag_pipeline import LocalRAGPipeline
+        kb_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
+        if not kb_path.exists():
+            print("❌ RAG knowledge base not found at dataset_output/parquet/rag_knowledge_base.parquet")
+            sys.exit(1)
+        rag = LocalRAGPipeline(kb_path)
+        hits = rag.search(args.query, top_k=args.top_k)
+        print(f"\n🔍 Top {len(hits)} RAG Results for: '{args.query}'\n" + "=" * 60)
+        for i, hit in enumerate(hits, 1):
+            print(f"[{i}] Score: {hit['score']:.3f} | Domain: {hit.get('domain', 'general')}")
+            print(f"    {hit['content']}\n" + "-" * 60)
 
 
 if __name__ == "__main__":

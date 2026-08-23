@@ -1,0 +1,15 @@
+# Modelfile for Russian IT Community LLM (Ollama)
+FROM qwen2.5-coder:7b
+
+# LoRA Adapter: Flagship Russian IT Community Model
+# Downloaded from: https://huggingface.co/wwewtech/russian-it-community-lora
+ADAPTER ./lora_adapters/heavyweight_qwen2.5_coder_7b
+
+# System Prompt Configuration
+SYSTEM """Ты — старший ведущий системный архитектор и инженер русскоязычного IT-сообщества. Отвечай технически строго, без лишней воды, с конкретными примерами кода, конфигурациями и рекомендациями."""
+
+# Generation Parameters
+PARAMETER temperature 0.3
+PARAMETER top_p 0.9
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|endoftext|>"
