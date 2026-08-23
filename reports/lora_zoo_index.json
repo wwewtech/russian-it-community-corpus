@@ -1,226 +1,376 @@
 [
   {
-    "id": "deepseek_coder_1.3b_instruct",
-    "size_mb": 152.12,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/deepseek_coder_1.3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "deepseek_r1_distill_qwen_1.5b",
-    "size_mb": 16.65,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/deepseek_r1_distill_qwen_1.5b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "gemma_2_2b_it",
-    "size_mb": 24.4,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/gemma_2_2b_it",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "granite_3b_code_instruct",
-    "size_mb": 283.19,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/granite_3b_code_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "llama_3.2_1b_instruct",
-    "size_mb": 13.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/llama_3.2_1b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "llama_3.2_3b_instruct",
-    "size_mb": 35.03,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/llama_3.2_3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "minicpm_2b_dpo",
-    "size_mb": 592.12,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/minicpm_2b_dpo",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "phi_3.5_mini_instruct",
-    "size_mb": 36.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/phi_3.5_mini_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "pythia_1.4b",
-    "size_mb": 12.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/pythia_1.4b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "pythia_2.8b",
-    "size_mb": 20.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/pythia_2.8b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
     "id": "qwen2.5_0.5b_instruct",
-    "size_mb": 8.27,
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "0.5B",
+    "description": "Ultra-lightweight edge LLM with high Russian language proficiency",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_0.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\qwen2.5_0.5b_instruct"
   },
   {
     "id": "qwen2.5_1.5b_instruct",
-    "size_mb": 16.65,
+    "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "1.5B",
+    "description": "Compact high-efficiency assistant for local edge deployment",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_1.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\qwen2.5_1.5b_instruct"
   },
   {
     "id": "qwen2.5_3b_instruct",
-    "size_mb": 28.16,
+    "model_name": "Qwen/Qwen2.5-3B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "3.0B",
+    "description": "Balanced reasoning and domain knowledge model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\qwen2.5_3b_instruct"
   },
   {
     "id": "qwen2.5_coder_0.5b_instruct",
-    "size_mb": 8.27,
+    "model_name": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "0.5B",
+    "description": "Specialized coding and programming assistant adapter",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_coder_0.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\qwen2.5_coder_0.5b_instruct"
   },
   {
     "id": "qwen2.5_coder_1.5b_instruct",
-    "size_mb": 16.65,
+    "model_name": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "1.5B",
+    "description": "High-speed coding assistant with deep code syntax mastery",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_coder_1.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\qwen2.5_coder_1.5b_instruct"
   },
   {
     "id": "qwen2.5_coder_3b_instruct",
-    "size_mb": 28.16,
+    "model_name": "Qwen/Qwen2.5-Coder-3B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "3.0B",
+    "description": "Mid-sized code generation and debugging model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_coder_3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\qwen2.5_coder_3b_instruct"
   },
   {
     "id": "qwen2.5_math_1.5b_instruct",
-    "size_mb": 471.15,
+    "model_name": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+    "family": "Qwen 2.5 Math",
+    "params": "1.5B",
+    "description": "Quantitative reasoning and algorithm solver",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_math_1.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 7.9203,
+    "training_time_sec": 305.3,
+    "adapter_dir": "lora_adapters\\qwen2.5_math_1.5b_instruct"
   },
   {
-    "id": "rugpt3_large",
-    "size_mb": 9.01,
+    "id": "deepseek_r1_distill_qwen_1.5b",
+    "model_name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    "family": "DeepSeek R1",
+    "params": "1.5B",
+    "description": "Chain-of-thought reasoning distilled model for architectural tasks",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/rugpt3_large",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\deepseek_r1_distill_qwen_1.5b"
   },
   {
-    "id": "rugpt3_medium",
-    "size_mb": 6.01,
+    "id": "deepseek_coder_1.3b_instruct",
+    "model_name": "deepseek-ai/deepseek-coder-1.3b-instruct",
+    "family": "DeepSeek Coder",
+    "params": "1.3B",
+    "description": "Classic compact DeepSeek coding model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/rugpt3_medium",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.2149,
+    "training_time_sec": 268.2,
+    "adapter_dir": "lora_adapters\\deepseek_coder_1.3b_instruct"
   },
   {
-    "id": "rugpt3_small",
-    "size_mb": 2.25,
+    "id": "llama_3.2_1b_instruct",
+    "model_name": "unsloth/Llama-3.2-1B-Instruct",
+    "family": "Llama 3.2",
+    "params": "1.0B",
+    "description": "Meta Llama 3.2 compact instruction model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/rugpt3_small",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\llama_3.2_1b_instruct"
   },
   {
-    "id": "russian_it_lora",
-    "size_mb": 8.27,
+    "id": "llama_3.2_3b_instruct",
+    "model_name": "unsloth/Llama-3.2-3B-Instruct",
+    "family": "Llama 3.2",
+    "params": "3.0B",
+    "description": "Meta Llama 3.2 high-capacity lightweight model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/russian_it_lora",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "smollm2_1.7b_instruct",
-    "size_mb": 24.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm2_1.7b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\llama_3.2_3b_instruct"
   },
   {
     "id": "smollm2_135m_instruct",
-    "size_mb": 7.06,
+    "model_name": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "family": "SmolLM2",
+    "params": "135M",
+    "description": "Micro-model for embedded hardware, IoT and instant inference",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm2_135m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\smollm2_135m_instruct"
   },
   {
     "id": "smollm2_360m_instruct",
-    "size_mb": 12.53,
+    "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct",
+    "family": "SmolLM2",
+    "params": "360M",
+    "description": "Lightweight sub-half-billion instruction tuned model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm2_360m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\smollm2_360m_instruct"
   },
   {
-    "id": "smollm_1.7b_instruct",
-    "size_mb": 219.15,
+    "id": "smollm2_1.7b_instruct",
+    "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "family": "SmolLM2",
+    "params": "1.7B",
+    "description": "Fast instruction-tuned small language model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm_1.7b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\smollm2_1.7b_instruct"
   },
   {
     "id": "smollm_135m_instruct",
-    "size_mb": 64.1,
+    "model_name": "HuggingFaceTB/SmolLM-135M-Instruct",
+    "family": "SmolLM v1",
+    "params": "135M",
+    "description": "Original SmolLM 135M instruction model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm_135m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.2647,
+    "training_time_sec": 51.3,
+    "adapter_dir": "lora_adapters\\smollm_135m_instruct"
   },
   {
     "id": "smollm_360m_instruct",
-    "size_mb": 105.59,
+    "model_name": "HuggingFaceTB/SmolLM-360M-Instruct",
+    "family": "SmolLM v1",
+    "params": "360M",
+    "description": "Original SmolLM 360M instruction model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm_360m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.0135,
+    "training_time_sec": 208.3,
+    "adapter_dir": "lora_adapters\\smollm_360m_instruct"
   },
   {
-    "id": "stablelm_2_1_6b_chat",
-    "size_mb": 422.27,
+    "id": "smollm_1.7b_instruct",
+    "model_name": "HuggingFaceTB/SmolLM-1.7B-Instruct",
+    "family": "SmolLM v1",
+    "params": "1.7B",
+    "description": "Original SmolLM 1.7B instruction model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/stablelm_2_1_6b_chat",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "tinyllama_1.1b_chat",
-    "size_mb": 17.21,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/tinyllama_1.1b_chat",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
-  },
-  {
-    "id": "vikhr_llama_3.2_1b",
-    "size_mb": 13.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/vikhr_llama_3.2_1b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.0754,
+    "training_time_sec": 330.8,
+    "adapter_dir": "lora_adapters\\smollm_1.7b_instruct"
   },
   {
     "id": "vikhr_qwen_2.5_0.5b",
-    "size_mb": 8.27,
+    "model_name": "Vikhrmodels/Vikhr-Qwen-2.5-0.5B-Instruct",
+    "family": "Vikhr Russian NLP",
+    "params": "0.5B",
+    "description": "Russian-specialized adaptation on Qwen 2.5 architecture",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/vikhr_qwen_2.5_0.5b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\vikhr_qwen_2.5_0.5b"
   },
   {
     "id": "vikhr_qwen_2.5_1.5b",
-    "size_mb": 16.65,
+    "model_name": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+    "family": "Vikhr Russian NLP",
+    "params": "1.5B",
+    "description": "Enhanced Russian vocabulary and morphology model",
     "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/vikhr_qwen_2.5_1.5b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\vikhr_qwen_2.5_1.5b"
+  },
+  {
+    "id": "vikhr_llama_3.2_1b",
+    "model_name": "Vikhrmodels/Vikhr-Llama-3.2-1B-instruct",
+    "family": "Vikhr Russian NLP",
+    "params": "1.0B",
+    "description": "Llama 3.2 adapted for Russian technical discourse",
+    "status": "SUCCESS",
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\vikhr_llama_3.2_1b"
+  },
+  {
+    "id": "rugpt3_small",
+    "model_name": "ai-forever/rugpt3small_based_on_gpt2",
+    "family": "Sber AI",
+    "params": "125M",
+    "description": "Classic Russian GPT-2 small generative model",
+    "status": "SUCCESS",
+    "train_loss": 4.2664,
+    "training_time_sec": 65.4,
+    "adapter_dir": "lora_adapters\\rugpt3_small"
+  },
+  {
+    "id": "rugpt3_medium",
+    "model_name": "ai-forever/rugpt3medium_based_on_gpt2",
+    "family": "Sber AI",
+    "params": "350M",
+    "description": "Russian GPT-2 medium generative architecture",
+    "status": "SUCCESS",
+    "train_loss": 6.0803,
+    "training_time_sec": 164.7,
+    "adapter_dir": "lora_adapters\\rugpt3_medium"
+  },
+  {
+    "id": "rugpt3_large",
+    "model_name": "ai-forever/rugpt3large_based_on_gpt2",
+    "family": "Sber AI",
+    "params": "760M",
+    "description": "Russian GPT-2 large 760M generative foundation model",
+    "status": "SUCCESS",
+    "train_loss": 5.355,
+    "training_time_sec": 284.5,
+    "adapter_dir": "lora_adapters\\rugpt3_large"
+  },
+  {
+    "id": "gemma_2_2b_it",
+    "model_name": "unsloth/gemma-2-2b-it",
+    "family": "Gemma 2",
+    "params": "2.0B",
+    "description": "Google Gemma 2 high-precision instruction model",
+    "status": "SUCCESS",
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\gemma_2_2b_it"
+  },
+  {
+    "id": "phi_3.5_mini_instruct",
+    "model_name": "microsoft/Phi-3.5-mini-instruct",
+    "family": "Phi 3.5",
+    "params": "3.8B",
+    "description": "Microsoft Phi 3.5 mini with deep synthetic reasoning",
+    "status": "SUCCESS",
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\phi_3.5_mini_instruct"
+  },
+  {
+    "id": "granite_3b_code_instruct",
+    "model_name": "ibm-granite/granite-3b-code-instruct",
+    "family": "IBM Granite",
+    "params": "3.0B",
+    "description": "IBM Granite code generation and enterprise assistant",
+    "status": "SUCCESS",
+    "train_loss": 2.3052,
+    "training_time_sec": 524.2,
+    "adapter_dir": "lora_adapters\\granite_3b_code_instruct"
+  },
+  {
+    "id": "minicpm_2b_dpo",
+    "model_name": "openbmb/MiniCPM-2B-dpo-bf16",
+    "family": "MiniCPM",
+    "params": "2.0B",
+    "description": "OpenBMB MiniCPM compact edge language model",
+    "status": "SUCCESS",
+    "train_loss": 2.2477,
+    "training_time_sec": 587.7,
+    "adapter_dir": "lora_adapters\\minicpm_2b_dpo"
+  },
+  {
+    "id": "tinyllama_1.1b_chat",
+    "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "family": "TinyLlama",
+    "params": "1.1B",
+    "description": "Classic compact architecture with fast throughput",
+    "status": "SUCCESS",
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\tinyllama_1.1b_chat"
+  },
+  {
+    "id": "pythia_1.4b",
+    "model_name": "EleutherAI/pythia-1.4b-deduped",
+    "family": "EleutherAI Pythia",
+    "params": "1.4B",
+    "description": "EleutherAI Pythia 1.4B scientific research checkpoint",
+    "status": "SUCCESS",
+    "train_loss": 2.0675,
+    "training_time_sec": 501.3,
+    "adapter_dir": "lora_adapters\\pythia_1.4b"
+  },
+  {
+    "id": "pythia_2.8b",
+    "model_name": "EleutherAI/pythia-2.8b-deduped",
+    "family": "EleutherAI Pythia",
+    "params": "2.8B",
+    "description": "EleutherAI Pythia 2.8B language model",
+    "status": "SUCCESS",
+    "train_loss": 1.917,
+    "training_time_sec": 516.1,
+    "adapter_dir": "lora_adapters\\pythia_2.8b"
+  },
+  {
+    "id": "stablelm_2_1_6b_chat",
+    "model_name": "stabilityai/stablelm-2-1_6b-chat",
+    "family": "Stability AI",
+    "params": "1.6B",
+    "description": "Stability AI StableLM 2 1.6B chat model",
+    "status": "SUCCESS",
+    "train_loss": 2.5983,
+    "training_time_sec": 458.6,
+    "adapter_dir": "lora_adapters\\stablelm_2_1_6b_chat"
+  },
+  {
+    "id": "stablelm_2_zephyr_1_6b",
+    "model_name": "stabilityai/stablelm-2-zephyr-1_6b",
+    "family": "Stability AI",
+    "params": "1.6B",
+    "description": "Stability AI Zephyr aligned 1.6B model",
+    "status": "SUCCESS",
+    "train_loss": 2.333,
+    "training_time_sec": 526.4,
+    "adapter_dir": "lora_adapters\\stablelm_2_zephyr_1_6b"
+  },
+  {
+    "id": "bloom_1b7",
+    "model_name": "bigscience/bloom-1b7",
+    "family": "BigScience BLOOM",
+    "params": "1.7B",
+    "description": "BigScience multilingual BLOOM 1.7B foundation model",
+    "status": "SUCCESS",
+    "train_loss": 19.831,
+    "training_time_sec": 424.3,
+    "adapter_dir": "lora_adapters\\bloom_1b7"
+  },
+  {
+    "id": "russian_it_lora",
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+    "family": "Qwen Baseline",
+    "params": "0.5B",
+    "description": "Primary Russian IT baseline LoRA adapter",
+    "status": "SUCCESS",
+    "train_loss": 2.45,
+    "training_time_sec": 0,
+    "adapter_dir": "lora_adapters\\russian_it_lora"
   }
 ]

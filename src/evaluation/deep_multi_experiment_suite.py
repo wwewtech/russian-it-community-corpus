@@ -16,6 +16,10 @@ from typing import Any
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -28,7 +32,7 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.rag.vector_retriever import SimpleVectorStore
+from src.rag.rag_pipeline import LocalRAGPipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("DeepBenchmarkSuite")
@@ -174,10 +178,8 @@ def run_benchmark_experiment_suite(
     """Execute all 16 benchmark suites across Base, RAG, LoRA, and Hybrid."""
     logger.info(f"=== Initializing 16-Suite Deep Empirical Benchmark for {model_name} ===")
     
-    # 1. Load RAG Vector Store
-    rag_kb = SimpleVectorStore()
-    if Path("dataset_output/parquet/rag_knowledge_base.parquet").exists():
-        rag_kb.load_from_parquet(Path("dataset_output/parquet/rag_knowledge_base.parquet"), max_chunks=2500)
+    # 1. Load RAG Knowledge Base
+    rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
     
     # 2. Load Base Model & Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
@@ -192,16 +194,6 @@ def run_benchmark_experiment_suite(
         trust_remote_code=True,
     )
     
-    # 3. Load LoRA Model
-    adapter_path = Path(f"lora_adapters/{adapter_id}")
-    lora_model = None
-    if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
-        try:
-            lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
-            logger.info(f"Loaded LoRA Adapter from {adapter_path}")
-        except Exception as e:
-            logger.warning(f"Could not load LoRA adapter {adapter_path}: {e}")
-
     results = {
         "metadata": {
             "model_name": model_name,
@@ -216,14 +208,14 @@ def run_benchmark_experiment_suite(
     }
 
     def generate_response(model_to_use, prompt_text: str) -> tuple[str, float, float, float]:
-        """Generate text and return (text, latency_sec, tok_per_sec, vram_mb)."""
+        """Generate text with bounded token length and memory cleanup."""
         messages = [{"role": "user", "content": prompt_text}]
         try:
             input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         except Exception:
             input_text = f"[USER]: {prompt_text}\n[ASSISTANT]:"
 
-        inputs = tokenizer(input_text, return_tensors="pt")
+        inputs = tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True)
         if torch.cuda.is_available():
             inputs = {k: v.to("cuda") for k, v in inputs.items()}
 
@@ -232,85 +224,115 @@ def run_benchmark_experiment_suite(
             torch.cuda.reset_peak_memory_stats()
 
         with torch.no_grad():
-            output_ids = model_to_use.generate(**inputs, max_new_tokens=max_new_tokens, temperature=0.7, do_sample=True)
+            output_ids = model_to_use.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=0.7,
+                do_sample=True,
+                pad_token_id=tokenizer.pad_token_id,
+            )
 
         elapsed = time.time() - t0
         generated_tokens = len(output_ids[0]) - len(inputs["input_ids"][0])
         tok_per_sec = generated_tokens / max(elapsed, 0.001)
         vram_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0
         output_text = tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         return output_text, elapsed, tok_per_sec, vram_mb
 
-    # Evaluate all 16 Suites
+    # Step A: Evaluate Base and RAG
+    base_evals = []
+    rag_evals = []
     for idx, suite in enumerate(BENCHMARK_SUITES, 1):
         prompt = suite["prompt"]
         kw = suite["ground_truth_keywords"]
-        is_trick = suite["trick_or_adversarial"]
-
-        logger.info(f"[{idx}/{len(BENCHMARK_SUITES)}] Evaluating {suite['name']}...")
+        logger.info(f"[{idx}/{len(BENCHMARK_SUITES)}] Base & RAG: {suite['name']}...")
 
         # 1. Base Model
-        base_out, base_lat, base_tps, base_vram = generate_response(base_model, prompt)
-        base_kw_matches = sum(1 for k in kw if k.lower() in base_out.lower())
-        base_score = (base_kw_matches / len(kw)) * 100
+        b_out, b_lat, b_tps, b_vram = generate_response(base_model, prompt)
+        b_matches = sum(1 for k in kw if k.lower() in b_out.lower())
+        b_score = (b_matches / len(kw)) * 100
+        base_evals.append({"score": b_score, "latency": b_lat, "tps": b_tps, "vram": b_vram, "out": b_out})
 
         # 2. RAG Augmented
-        rag_chunks = rag_kb.retrieve(prompt, top_k=2)
-        rag_context = "\n".join(f"- {c['text']}" for c in rag_chunks) if rag_chunks else ""
-        rag_prompt = f"Контекст из базы знаний:\n{rag_context}\n\nВопрос: {prompt}"
-        rag_out, rag_lat, rag_tps, rag_vram = generate_response(base_model, rag_prompt)
-        rag_kw_matches = sum(1 for k in kw if k.lower() in rag_out.lower())
-        rag_score = min(100.0, (rag_kw_matches / len(kw)) * 100 + (15.0 if rag_chunks else 0.0))
+        rag_chunks = rag_kb.search(prompt, top_k=2)
+        rag_ctx = "\n".join(f"- {str(c.get('content', ''))[:200]}" for c in rag_chunks) if rag_chunks else ""
+        rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}"
+        r_out, r_lat, r_tps, r_vram = generate_response(base_model, rag_prompt)
+        r_matches = sum(1 for k in kw if k.lower() in r_out.lower())
+        r_score = min(100.0, (r_matches / len(kw)) * 100 + (15.0 if rag_chunks else 0.0))
+        rag_evals.append({"score": r_score, "latency": r_lat, "tps": r_tps, "vram": r_vram, "out": r_out})
+
+    # Step B: Attach LoRA Adapter and evaluate LoRA and Hybrid
+    adapter_path = Path(f"lora_adapters/{adapter_id}")
+    lora_model = None
+    if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
+        try:
+            lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
+            logger.info(f"Attached LoRA Adapter from {adapter_path}")
+        except Exception as e:
+            logger.warning(f"Could not attach LoRA adapter {adapter_path}: {e}")
+
+    for idx, suite in enumerate(BENCHMARK_SUITES, 1):
+        prompt = suite["prompt"]
+        kw = suite["ground_truth_keywords"]
+        logger.info(f"[{idx}/{len(BENCHMARK_SUITES)}] LoRA & Hybrid: {suite['name']}...")
 
         # 3. LoRA Model
         if lora_model:
-            lora_out, lora_lat, lora_tps, lora_vram = generate_response(lora_model, prompt)
-            lora_kw_matches = sum(1 for k in kw if k.lower() in lora_out.lower())
-            lora_score = (lora_kw_matches / len(kw)) * 100
+            l_out, l_lat, l_tps, l_vram = generate_response(lora_model, prompt)
+            l_matches = sum(1 for k in kw if k.lower() in l_out.lower())
+            l_score = (l_matches / len(kw)) * 100
         else:
-            lora_out, lora_lat, lora_tps, lora_vram = base_out, base_lat, base_tps, base_vram
-            lora_score = base_score
+            l_out, l_lat, l_tps, l_vram = base_evals[idx-1]["out"], base_evals[idx-1]["latency"], base_evals[idx-1]["tps"], base_evals[idx-1]["vram"]
+            l_score = base_evals[idx-1]["score"]
 
         # 4. Hybrid (LoRA + RAG)
+        rag_chunks = rag_kb.search(prompt, top_k=2)
+        rag_ctx = "\n".join(f"- {str(c.get('content', ''))[:200]}" for c in rag_chunks) if rag_chunks else ""
+        rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}"
         if lora_model and rag_chunks:
-            hyb_out, hyb_lat, hyb_tps, hyb_vram = generate_response(lora_model, rag_prompt)
-            hyb_kw_matches = sum(1 for k in kw if k.lower() in hyb_out.lower())
-            hyb_score = min(100.0, (hyb_kw_matches / len(kw)) * 100 + 20.0)
+            h_out, h_lat, h_tps, h_vram = generate_response(lora_model, rag_prompt)
+            h_matches = sum(1 for k in kw if k.lower() in h_out.lower())
+            h_score = min(100.0, (h_matches / len(kw)) * 100 + 20.0)
         else:
-            hyb_out, hyb_lat, hyb_tps, hyb_vram = lora_out, lora_lat, lora_tps, lora_vram
-            hyb_score = lora_score
+            h_out, h_lat, h_tps, h_vram = l_out, l_lat, l_tps, l_vram
+            h_score = l_score
 
         suite_record = {
             "suite_id": suite["id"],
             "name": suite["name"],
             "domain": suite["domain"],
             "base": {
-                "score": round(base_score, 1),
-                "latency_sec": round(base_lat, 3),
-                "tok_per_sec": round(base_tps, 1),
-                "vram_mb": round(base_vram, 1),
-                "sample_output": base_out[:220] + "...",
+                "score": round(base_evals[idx-1]["score"], 1),
+                "latency_sec": round(base_evals[idx-1]["latency"], 3),
+                "tok_per_sec": round(base_evals[idx-1]["tps"], 1),
+                "vram_mb": round(base_evals[idx-1]["vram"], 1),
+                "sample_output": base_evals[idx-1]["out"][:220] + "...",
             },
             "rag": {
-                "score": round(rag_score, 1),
-                "latency_sec": round(rag_lat, 3),
-                "tok_per_sec": round(rag_tps, 1),
-                "vram_mb": round(rag_vram, 1),
-                "sample_output": rag_out[:220] + "...",
+                "score": round(rag_evals[idx-1]["score"], 1),
+                "latency_sec": round(rag_evals[idx-1]["latency"], 3),
+                "tok_per_sec": round(rag_evals[idx-1]["tps"], 1),
+                "vram_mb": round(rag_evals[idx-1]["vram"], 1),
+                "sample_output": rag_evals[idx-1]["out"][:220] + "...",
             },
             "lora": {
-                "score": round(lora_score, 1),
-                "latency_sec": round(lora_lat, 3),
-                "tok_per_sec": round(lora_tps, 1),
-                "vram_mb": round(lora_vram, 1),
-                "sample_output": lora_out[:220] + "...",
+                "score": round(l_score, 1),
+                "latency_sec": round(l_lat, 3),
+                "tok_per_sec": round(l_tps, 1),
+                "vram_mb": round(l_vram, 1),
+                "sample_output": l_out[:220] + "...",
             },
             "hybrid": {
-                "score": round(hyb_score, 1),
-                "latency_sec": round(hyb_lat, 3),
-                "tok_per_sec": round(hyb_tps, 1),
-                "vram_mb": round(hyb_vram, 1),
-                "sample_output": hyb_out[:220] + "...",
+                "score": round(h_score, 1),
+                "latency_sec": round(h_lat, 3),
+                "tok_per_sec": round(h_tps, 1),
+                "vram_mb": round(h_vram, 1),
+                "sample_output": h_out[:220] + "...",
             },
         }
         results["suite_results"].append(suite_record)
