@@ -1,3 +1,65 @@
+---
+license: mit
+pretty_name: "Russian IT Community Corpus (2.91M Conversations)"
+task_categories:
+  - text-generation
+  - question-answering
+language:
+  - ru
+  - en
+tags:
+  - russian-nlp
+  - sft
+  - dpo
+  - rag
+  - lora
+  - zero-pii
+  - it-community
+  - software-engineering
+size_categories:
+  - 1M<n<10M
+configs:
+  - config_name: full_corpus
+    data_files:
+      - split: train
+        path: data/full_clean_messages.parquet
+    default: true
+  - config_name: sft_dialogues
+    data_files:
+      - split: train
+        path: data/sft_dialogues.parquet
+  - config_name: rag_knowledge_base
+    data_files:
+      - split: train
+        path: data/rag_knowledge_base.parquet
+dataset_info:
+  features:
+    - name: msg_id
+      dtype: int64
+    - name: chat_name
+      dtype: string
+    - name: timestamp
+      dtype: string
+    - name: unixtime
+      dtype: int64
+    - name: author_anon
+      dtype: string
+    - name: text_clean
+      dtype: string
+    - name: domain
+      dtype: string
+    - name: tags
+      sequence: string
+    - name: sentiment_score
+      dtype: int32
+    - name: token_count_approx
+      dtype: int32
+    - name: is_question
+      dtype: bool
+    - name: thread_id
+      dtype: int64
+---
+
 # 📦 Russian IT Community Corpus: Dataset Card & Statistical Analytics
 
 > **Official Hugging Face Hub Dataset:** [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)  
