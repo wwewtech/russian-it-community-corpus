@@ -26,7 +26,7 @@
 > [!TIP]
 > **🤗 Official Hugging Face Hub Integration**:
 > - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2.91M clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
-> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 19 pre-trained adapters for Qwen 2.5, DeepSeek R1, LLaMA 3.2, SmolLM2, and Vikhr NLP.
+> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 44+ pre-trained open adapters + Flagship 7B-8B QLoRA models (Qwen 2.5 Coder 7B, DeepSeek R1 7B, LLaMA 3.1 8B).
 > 
 > ```python
 > from datasets import load_dataset
@@ -251,14 +251,14 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 │   ├── evaluation/             # Benchmark comparator
 │   └── validation/             # PII auditor and domain benchmarks
 ├── dataset_output/             # Parquet datasets and preview samples
-├── reports/                    # Analytical reports, whitepapers, benchmarks
-│   ├── DEEP_ANALYTICAL_REPORT.md      # Statistical and longitudinal report
-│   ├── DATASET_CARD.md                # Hugging Face Dataset Card
-│   ├── MARKET_INTELLIGENCE_RADAR.md   # Industry technology radar
-│   ├── MODEL_BENCHMARK_COMPARISON.md  # Model evaluation results
-│   ├── MONETIZATION_WHITEPAPER.md     # Commercial and legal architecture
-│   ├── domain_benchmark_100.json      # Evaluation benchmark dataset
-│   └── zero_pii_audit_certificate.json# Security audit verification
+├── reports/                    # Analytical reports and academic scientific benchmarks
+│   ├── OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md # OpenAI HumanEval & RuMMLU academic evaluation
+│   ├── ENTERPRISE_PRODUCTION_BENCHMARK_REPORT.md  # 50-Scenario production benchmark across 7 domains
+│   ├── SOTA_EXPERT_SHOWCASE_DIFFS.md              # Side-by-side prompt architectural comparisons
+│   ├── LORA_MODEL_ZOO.md                          # Catalog of all 44+ LoRA adapters & 7B-8B QLoRA
+│   ├── DEEP_ANALYTICAL_REPORT.md                  # Statistical and longitudinal report
+│   ├── DATASET_CARD.md                            # Hugging Face Dataset Card
+│   └── zero_pii_audit_certificate.json            # Security audit verification
 ├── tests/                      # Automated unit tests
 ├── app.py                      # Streamlit Web Data Studio
 ├── demo_walkthrough.py         # Terminal demonstration script
