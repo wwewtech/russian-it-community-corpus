@@ -94,20 +94,40 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 
 ---
 
-## Datasets and Formats
+## 🔗 Official Datasets & Direct Access Links
 
-All datasets are saved in `dataset_output/`:
+The corpus and trained adapters are available both remotely on **Hugging Face Hub** and locally in `dataset_output/`:
 
-| File | Format | Volume | Description |
-|---|---|---|---|
-| `full_clean_messages.parquet` | Parquet with zstd | 2,816,454 rows (189.32 MB) | Full cleaned and categorized corpus |
-| `sft_dialogues.parquet` | Parquet with zstd | 171,533 dialogues (132.25 MB) | Multi-turn dialogues with quality scores |
-| `rag_knowledge_base.parquet` | Parquet with zstd | 325,747 chunks (159.28 MB) | Segmented knowledge base for vector search |
-| `sft_openai_messages.jsonl` | ChatML JSONL | 171,533 dialogues | OpenAI format for Unsloth and TRL |
-| `sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,533 dialogues | Format for Axolotl and LLaMA-Factory |
-| `sft_alpaca_format.jsonl` | Alpaca JSONL | 933,331 pairs | Single-turn instruction and response pairs |
-| `rag_chunks_kb.jsonl` | RAG JSONL | 325,747 chunks | Knowledge documents with titles and metadata |
-| `dpo_preference_pairs.jsonl` | DPO JSONL | 60,900 pairs | Preference pairs with chosen and rejected responses |
+### 🤗 Hugging Face Hub Repositories:
+- 📦 **Dataset Hub (Full Corpus, SFT, RAG)**:  
+  👉 [**`https://huggingface.co/datasets/wwewtech/russian-it-community-corpus`**](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
+  - 📄 [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.81M rows (189 MB)
+  - 💬 [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171.5k multi-turn dialogues (132 MB)
+  - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325.7k knowledge chunks (159 MB)
+  - ⚙️ [Unified Metrics & Audit (JSON)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json) — 322 KB metrics index
+
+- 🦁 **Model Hub (44+ LoRA Adapters & 7B-8B QLoRA)**:  
+  👉 [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
+  - 🥇 [Flagship Qwen 2.5 Coder 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_qwen2.5_coder_7b)
+  - 🥈 [Flagship DeepSeek R1 Distill 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_deepseek_r1_7b)
+  - 🥉 [Flagship Meta LLaMA 3.1 8B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_llama3.1_8b)
+
+---
+
+## 📂 Local Datasets and Formats
+
+All datasets are automatically generated and saved in `dataset_output/`:
+
+| File Path | Format | Volume | Description | Direct Link |
+|---|---|---|---|:---:|
+| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,454 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
+| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,533 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
+| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,747 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
+| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 171,533 dialogues | OpenAI format for Unsloth / TRL | Local / HF |
+| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,533 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
+| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,331 pairs | Single-turn instruction-response pairs | Local / HF |
+| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 325,747 chunks | Segmented technical documents | Local / HF |
+| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 60,900 pairs | Chosen / Rejected alignment pairs | Local / HF |
 
 ---
 
