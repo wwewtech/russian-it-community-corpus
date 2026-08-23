@@ -1,9 +1,9 @@
 {
   "humaneval_pass_at_1": {
-    "base": 25.0,
-    "rag": 75.0,
-    "lora": 25.0,
-    "hybrid": 75.0
+    "base": 12.5,
+    "rag": 12.5,
+    "lora": 12.5,
+    "hybrid": 12.5
   },
   "rummlu_accuracy": {
     "base": 100.0,
