@@ -2,36 +2,51 @@
 Unit tests for CLI subcommands and argument dispatching.
 """
 
+import io
+import unittest
+from contextlib import redirect_stdout
 from unittest.mock import patch
-import pytest
+
 from cli import main
 
 
-class TestCLICommands:
-    def test_cli_help(self, capsys):
+class TestCLICommands(unittest.TestCase):
+    def test_cli_help(self):
+        f = io.StringIO()
         with patch("sys.argv", ["cli.py", "--help"]):
-            with pytest.raises(SystemExit) as exc:
-                main()
-            assert exc.value.code == 0
-        captured = capsys.readouterr()
-        assert "Russian IT Community" in captured.out
-        assert "rag" in captured.out
-        assert "chat" in captured.out
+            with self.assertRaises(SystemExit) as exc:
+                with redirect_stdout(f):
+                    main()
+            self.assertEqual(exc.exception.code, 0)
+        output = f.getvalue()
+        self.assertIn("Russian IT Community", output)
+        self.assertIn("rag", output)
+        self.assertIn("chat", output)
 
-    def test_cli_validate(self, capsys):
+    def test_cli_validate(self):
+        f = io.StringIO()
         with patch("sys.argv", ["cli.py", "validate"]):
-            main()
-        captured = capsys.readouterr()
-        assert "Validating datasets" in captured.out
+            with redirect_stdout(f):
+                main()
+        output = f.getvalue()
+        self.assertIn("Validating datasets", output)
 
-    def test_cli_benchmark(self, capsys):
+    def test_cli_benchmark(self):
+        f = io.StringIO()
         with patch("sys.argv", ["cli.py", "benchmark"]):
-            main()
-        captured = capsys.readouterr()
-        assert "Benchmark saved" in captured.out
+            with redirect_stdout(f):
+                main()
+        output = f.getvalue()
+        self.assertIn("Benchmark saved", output)
 
-    def test_cli_rag_search(self, capsys):
+    def test_cli_rag_search(self):
+        f = io.StringIO()
         with patch("sys.argv", ["cli.py", "rag", "docker nginx reverse proxy", "--top-k", "1"]):
-            main()
-        captured = capsys.readouterr()
-        assert "Top 1 RAG Results" in captured.out
+            with redirect_stdout(f):
+                main()
+        output = f.getvalue()
+        self.assertIn("Top 1 RAG Results", output)
+
+
+if __name__ == "__main__":
+    unittest.main()

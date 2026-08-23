@@ -27,3 +27,7 @@ datasets>=2.18.0
 # Interactive Web Data Studio & CLI
 streamlit>=1.32.0
 rich>=13.7.0
+
+# Testing & Quality Assurance
+pytest>=7.4.0
+

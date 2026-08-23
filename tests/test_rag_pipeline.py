@@ -2,37 +2,41 @@
 Unit tests for LocalRAGPipeline search, ranking, and retrieval.
 """
 
+import unittest
 from pathlib import Path
-import pytest
+
 from src.rag.rag_pipeline import LocalRAGPipeline
 
 
-@pytest.fixture
-def rag_pipeline():
-    kb_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
-    if not kb_path.exists():
-        pytest.skip("RAG parquet knowledge base not generated yet")
-    return LocalRAGPipeline(kb_path)
+class TestRAGPipeline(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.kb_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
+        if not cls.kb_path.exists():
+            raise unittest.SkipTest("RAG parquet knowledge base not generated yet")
+        cls.rag_pipeline = LocalRAGPipeline(cls.kb_path)
 
-
-class TestRAGPipeline:
-    def test_search_returns_results(self, rag_pipeline):
+    def test_search_returns_results(self):
         query = "как настроить kafka idempotent producer"
-        results = rag_pipeline.search(query, top_k=3)
-        assert isinstance(results, list)
-        assert len(results) <= 3
+        results = self.rag_pipeline.search(query, top_k=3)
+        self.assertIsInstance(results, list)
+        self.assertLessEqual(len(results), 3)
         if results:
-            assert "content" in results[0]
-            assert "score" in results[0]
-            assert results[0]["score"] > 0
+            self.assertIn("content", results[0])
+            self.assertIn("score", results[0])
+            self.assertGreater(results[0]["score"], 0)
 
-    def test_empty_query_handling(self, rag_pipeline):
-        results = rag_pipeline.search("", top_k=5)
-        assert isinstance(results, list)
+    def test_empty_query_handling(self):
+        results = self.rag_pipeline.search("", top_k=5)
+        self.assertIsInstance(results, list)
 
-    def test_domain_filtering(self, rag_pipeline):
+    def test_domain_filtering(self):
         query = "kubernetes rolling update deployment zero downtime"
-        results = rag_pipeline.search(query, top_k=5)
-        assert isinstance(results, list)
+        results = self.rag_pipeline.search(query, top_k=5)
+        self.assertIsInstance(results, list)
         for r in results:
-            assert isinstance(r.get("content", ""), str)
+            self.assertIsInstance(r.get("content", ""), str)
+
+
+if __name__ == "__main__":
+    unittest.main()
