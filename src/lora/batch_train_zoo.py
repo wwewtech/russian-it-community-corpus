@@ -116,6 +116,18 @@ ZOO_44_MODELS = [
 
     # --- 15. Base Baseline ---
     {"id": "russian_it_lora", "model_name": "Qwen/Qwen2.5-0.5B-Instruct", "family": "Qwen Baseline", "params": "0.5B", "desc": "Primary Russian IT baseline LoRA adapter"},
+
+    # --- 16. Additional Expanded Architectures (10 models) ---
+    {"id": "qwen1.5_0.5b_chat", "model_name": "Qwen/Qwen1.5-0.5B-Chat", "family": "Qwen 1.5", "params": "0.5B", "desc": "Classic Qwen 1.5 compact chat architecture"},
+    {"id": "qwen1.5_1.8b_chat", "model_name": "Qwen/Qwen1.5-1.8B-Chat", "family": "Qwen 1.5", "params": "1.8B", "desc": "Qwen 1.5 1.8B mid-sized dialogue model"},
+    {"id": "opt_350m", "model_name": "facebook/opt-350m", "family": "Meta OPT", "params": "350M", "desc": "Meta OPT 350M lightweight transformer"},
+    {"id": "opt_125m", "model_name": "facebook/opt-125m", "family": "Meta OPT", "params": "125M", "desc": "Meta OPT 125M ultra-lightweight edge checkpoint"},
+    {"id": "pythia_410m", "model_name": "EleutherAI/pythia-410m-deduped", "family": "EleutherAI Pythia", "params": "410M", "desc": "EleutherAI Pythia 410M research checkpoint"},
+    {"id": "pythia_70m", "model_name": "EleutherAI/pythia-70m-deduped", "family": "EleutherAI Pythia", "params": "70M", "desc": "EleutherAI Pythia 70M micro-parameter model"},
+    {"id": "bloom_560m", "model_name": "bigscience/bloom-560m", "family": "BigScience BLOOM", "params": "560M", "desc": "BigScience multilingual BLOOM 560M model"},
+    {"id": "falcon_rw_1b", "model_name": "tiiuae/falcon-rw-1b", "family": "TII Falcon", "params": "1.0B", "desc": "Technology Innovation Institute Falcon 1B RefinedWeb"},
+    {"id": "gpt2_medium", "model_name": "openai-community/gpt2-medium", "family": "OpenAI GPT-2", "params": "355M", "desc": "Classic GPT-2 Medium 355M generative foundation"},
+    {"id": "gpt2_large", "model_name": "openai-community/gpt2-large", "family": "OpenAI GPT-2", "params": "774M", "desc": "Classic GPT-2 Large 774M generative foundation"},
 ]
 
 
