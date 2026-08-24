@@ -28,9 +28,68 @@ MODEL_REPO_ID = "wwewtech/russian-it-community-lora"
 DATASET_REPO_ID = "wwewtech/russian-it-community-corpus"
 
 
+def upload_dataset(api: huggingface_hub.HfApi):
+    """Upload cleaned parquet files, dataset card, and reports to HF Hub."""
+    logger.info(f"Uploading sanitized dataset artifacts to Hugging Face: {DATASET_REPO_ID}...")
+    
+    # 1. Dataset Card (README.md)
+    dataset_card_path = Path("reports/DATASET_AND_ANALYTICS.md")
+    if dataset_card_path.exists():
+        api.upload_file(
+            path_or_fileobj=str(dataset_card_path),
+            path_in_repo="README.md",
+            repo_id=DATASET_REPO_ID,
+            repo_type="dataset",
+        )
+        logger.info("Uploaded updated dataset card (README.md)")
+
+    # 2. Cleaned Parquet Files
+    parquet_mappings = [
+        ("dataset_output/parquet/full_clean_messages.parquet", "data/full_clean_messages.parquet"),
+        ("dataset_output/parquet/sft_dialogues.parquet", "data/sft_dialogues.parquet"),
+        ("dataset_output/parquet/rag_knowledge_base.parquet", "data/rag_knowledge_base.parquet"),
+    ]
+    for local_path, repo_path in parquet_mappings:
+        p = Path(local_path)
+        if p.exists():
+            logger.info(f"Uploading {local_path} ({p.stat().st_size / (1024*1024):.2f} MB) -> {repo_path}...")
+            api.upload_file(
+                path_or_fileobj=str(p),
+                path_in_repo=repo_path,
+                repo_id=DATASET_REPO_ID,
+                repo_type="dataset",
+            )
+            logger.info(f"Successfully uploaded {repo_path}")
+
+    # 3. Reports and Metadata
+    meta_files = [
+        ("reports/metrics_index.json", "metrics_index.json"),
+        ("reports/domain_benchmark_100.json", "domain_benchmark_100.json"),
+        ("reports/zero_pii_audit_certificate.json", "zero_pii_audit_certificate.json"),
+        ("reports/BENCHMARK_AND_EVALUATION.md", "BENCHMARK_AND_EVALUATION.md"),
+        ("reports/DEEP_ANALYTICAL_REPORT.md", "DEEP_ANALYTICAL_REPORT.md"),
+    ]
+    for local_path, repo_path in meta_files:
+        p = Path(local_path)
+        if p.exists():
+            api.upload_file(
+                path_or_fileobj=str(p),
+                path_in_repo=repo_path,
+                repo_id=DATASET_REPO_ID,
+                repo_type="dataset",
+            )
+            logger.info(f"Uploaded {repo_path}")
+
+
 def main():
-    api = huggingface_hub.HfApi(token=HF_TOKEN)
+    api = huggingface_hub.HfApi(token=HF_TOKEN if HF_TOKEN else None)
     adapters_dir = Path("lora_adapters")
+
+    # Upload dataset files if token is available
+    try:
+        upload_dataset(api)
+    except Exception as e:
+        logger.warning(f"Dataset upload to Hugging Face skipped or failed: {e}")
 
     # 1. Check all local adapters
     local_adapters = sorted([d for d in adapters_dir.iterdir() if d.is_dir() and (d / "adapter_model.safetensors").exists()])
