@@ -53,7 +53,7 @@ def load_markdown_file(file_path: Path) -> str:
 
 # Sidebar Header
 st.sidebar.title("RICC Studio")
-st.sidebar.caption("Russian IT Community Corpus · 2018–2026")
+st.sidebar.caption("Russian IT Community Corpus · 2017–2026")
 st.sidebar.markdown("---")
 
 # Navigation
@@ -74,12 +74,12 @@ nav = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.info(
     "**Метрики RICC:**\n"
-    "- 📩 **1 233 535** чистых сообщений\n"
-    "- 👤 **163 049** участников\n"
-    "- 🧠 **58 185** SFT диалогов\n"
-    "- 📚 **111 659** RAG чанков\n"
-    "- ⚡ **27 056** DPO пар\n"
-    "- 🔒 **Zero-PII** подтвержден"
+    "- 📩 **2 816 454** чистых сообщений\n"
+    "- 👤 **210 890** участников\n"
+    "- 🧠 **171 533** SFT диалогов\n"
+    "- 📚 **325 747** RAG чанков\n"
+    "- ⚡ **60 412** DPO пар\n"
+    "- 🔒 **11 community nodes** анонимизировано"
 )
 
 # =============================================================================
@@ -87,7 +87,7 @@ st.sidebar.info(
 # =============================================================================
 if nav == "📊 Главная и метрики":
     st.title("RICC: Russian IT Community Corpus")
-    st.caption("Платформа подготовки данных и дообучения языковых моделей · 2018–2026")
+    st.caption("Платформа подготовки данных и дообучения языковых моделей · 2017–2026")
     st.markdown(
         "Высокопроизводительный конвейер данных, деидентификации, реконструкции диалогов "
         "и мультиформатной подготовки обучающих выборок для современных LLM."
@@ -95,10 +95,10 @@ if nav == "📊 Главная и метрики":
 
     # Metric Cards
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Всего сообщений (Zero-PII)", "525,864", "+8 лет истории")
-    col2.metric("Уникальных участников", "27,698", "Псевдонимизировано")
-    col3.metric("Объём BPE токенов", "12.86M", "Tiktoken cl100k")
-    col4.metric("Оценка качества датасета", "90 / 100", "Tier-1 Enterprise")
+    col1.metric("Всего сообщений", "2,816,454", "2017–2026")
+    col2.metric("Уникальных участников", "210,890", "Псевдонимизировано")
+    col3.metric("Объём BPE токенов", "49.09M", "Tiktoken / BPE")
+    col4.metric("SFT Диалогов", "171,533", "Multi-turn")
 
     st.markdown("---")
 
@@ -107,14 +107,14 @@ if nav == "📊 Главная и метрики":
         st.subheader("📦 Экспортированные ML датасеты")
         st.markdown(
             """
-            - **`full_clean_messages.parquet`**: 525,864 сообщений (`46.09 MB`)
-            - **`sft_dialogues.parquet`**: 40,042 многоходовых диалогов (`33.89 MB`)
-            - **`rag_knowledge_base.parquet`**: 71,436 чанков базы знаний (`41.12 MB`)
-            - **`sft_openai_messages.jsonl`**: 40,042 диалогов ChatML (`119.29 MB`)
-            - **`sft_alpaca_format.jsonl`**: 175,912 пар инструкций (`112.26 MB`)
-            - **`sft_sharegpt_format.jsonl`**: 40,042 диалогов ShareGPT (`104.80 MB`)
-            - **`rag_chunks_kb.jsonl`**: 71,436 документов для Qdrant/Chroma (`139.57 MB`)
-            - **`dpo_preference_pairs.jsonl`**: 18,494 пар предпочтений (`27.31 MB`)
+            - **`full_clean_messages.parquet`**: 2,816,454 сообщений (`189 MB`)
+            - **`sft_dialogues.parquet`**: 171,533 многоходовых диалогов (`132 MB`)
+            - **`rag_knowledge_base.parquet`**: 325,747 чанков базы знаний (`159 MB`)
+            - **`sft_openai_messages.jsonl`**: 171,533 диалогов ChatML
+            - **`sft_alpaca_format.jsonl`**: 933,331 пар инструкций
+            - **`sft_sharegpt_format.jsonl`**: 171,533 диалогов ShareGPT
+            - **`rag_chunks_kb.jsonl`**: 325,747 документов для Vector DB
+            - **`dpo_preference_pairs.jsonl`**: 60,412 пар предпочтений
             """
         )
 

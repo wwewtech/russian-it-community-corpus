@@ -57,46 +57,43 @@ class ReportGenerator:
         self.data.get("author_signature_phrases", {})
         lda = self.data.get("topic_clusters_lda", [])
         longit = self.data.get("longitudinal_evolution_8_years", {})
+        val = self.data.get("quality_and_readiness") or self.data.get("valuation_and_readiness", {})
         noise = self.data.get("noise_and_quality", {})
-        val = self.data.get("valuation_and_readiness", {})
 
         md_lines = []
-        md_lines.append("# 🔬 ГЛУБОКИЙ АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО ДАТАСЕТУ (v4.0 Enterprise)")
-        md_lines.append("## Russian IT Community Multi-Domain Conversational Corpus (2018–2026)\n")
+        md_lines.append("# 🔬 АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ")
+        md_lines.append("## Russian IT Community Multi-Domain Conversational Corpus (2017–2026)\n")
         md_lines.append(
-            f"> **Дата генерации:** `{self.data.get('report_metadata', {}).get('generated_at', '')}` | **Версия движка:** `4.0.0-Enterprise`\n"
+            f"> **Дата генерации:** `{self.data.get('report_metadata', {}).get('generated_at', '')}` | **Версия аналитического модуля:** `1.0.0-OpenSource`\n"
         )
 
-        # 1. Executive Summary & Valuation
-        md_lines.append("## 🏆 1. ИТОГОВАЯ ОЦЕНКА КАЧЕСТВА И ГОТОВНОСТИ К ОБУЧЕНИЮ LLM")
+        # 1. Executive Summary & Quality Index
+        md_lines.append("## 🏆 1. ОЦЕНКА СТРУКТУРНОГО КАЧЕСТВА ДЛЯ ОБУЧЕНИЯ LLM")
         md_lines.append(
-            f"**Общий балл:** `{val.get('total_score', 0)} / {val.get('max_score', 100)}` | **Категория:** **{val.get('quality_tier', '')}**"
+            f"**Итоговый индекс качества:** `{val.get('total_score', 0)} / {val.get('max_score', 100)}` | **Категория:** **{val.get('quality_tier', '')}**"
         )
         md_lines.append(f"\n*{val.get('tier_description', '')}*\n")
-        md_lines.append(
-            f"💰 **Рекомендуемая коммерческая оценка / эквивалент разработки:** `{val.get('recommended_valuation_range', '')}`\n"
-        )
 
         md_lines.append("| Критерий оценки | Балл | Макс | Статус |")
         md_lines.append("| :--- | :--- | :--- | :--- |")
         breakdown = val.get("score_breakdown", {})
         md_lines.append(
-            f"| **Объём данных (Volume)** | {breakdown.get('volume_score', 0)} | 25 | {'🟢 Отлично' if breakdown.get('volume_score', 0) >= 20 else '🟡 Хорошо'} |"
+            f"| **Объём данных (Volume)** | {breakdown.get('volume_score', 0)} | 25 | {'🟢 Высокий' if breakdown.get('volume_score', 0) >= 20 else '🟡 Базовый'} |"
         )
         md_lines.append(
-            f"| **Разнообразие авторов (Diversity)** | {breakdown.get('author_diversity_score', 0)} | 20 | {'🟢 Отлично' if breakdown.get('author_diversity_score', 0) >= 15 else '🟡 Хорошо'} |"
+            f"| **Разнообразие авторов (Diversity)** | {breakdown.get('author_diversity_score', 0)} | 20 | {'🟢 Высокое' if breakdown.get('author_diversity_score', 0) >= 15 else '🟡 Базовое'} |"
         )
         md_lines.append(
-            f"| **Техническая плотность (Domain Density)** | {breakdown.get('technical_density_score', 0)} | 20 | {'🟢 Отлично' if breakdown.get('technical_density_score', 0) >= 15 else '🟡 Хорошо'} |"
+            f"| **Техническая плотность (Domain Density)** | {breakdown.get('technical_density_score', 0)} | 20 | {'🟢 Высокая' if breakdown.get('technical_density_score', 0) >= 15 else '🟡 Базовая'} |"
         )
         md_lines.append(
-            f"| **Диалоговая связность (Q&A Ratio)** | {breakdown.get('dialogue_continuity_score', 0)} | 15 | 🟢 Отлично |"
+            f"| **Диалоговая связность (Q&A Ratio)** | {breakdown.get('dialogue_continuity_score', 0)} | 15 | 🟢 Норма |"
         )
         md_lines.append(
-            f"| **Лексическое разнообразие (Shannon Diversity)** | {breakdown.get('lexical_diversity_score', 0)} | 10 | 🟢 Отлично |"
+            f"| **Лексическое разнообразие (Shannon Diversity)** | {breakdown.get('lexical_diversity_score', 0)} | 10 | 🟢 Норма |"
         )
         md_lines.append(
-            f"| **Очистка PII и комплаенс** | {breakdown.get('pii_compliance_score', 0)} | 10 | 🟢 100% Cleared |"
+            f"| **Очистка PII (Heuristic / NER Scrubbing)** | {breakdown.get('pii_compliance_score', 0)} | 10 | 🟢 Обработано |"
         )
         md_lines.append("\n---\n")
 
@@ -244,11 +241,11 @@ class ReportGenerator:
         """Print high-contrast rich visualization in terminal."""
         v = self.data.get("volume_statistics", {})
         t = self.data.get("temporal_dynamics", {})
-        val = self.data.get("valuation_and_readiness", {})
+        val = self.data.get("quality_and_readiness") or self.data.get("valuation_and_readiness", {})
         s = self.data.get("domain_slang_analytics", {})
 
         print("\n" + "=" * 80)
-        print("🔬 ГЛУБОКИЙ АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО ДАТАСЕТУ (v4.0 Enterprise)")
+        print("🔬 АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ (RICC)")
         print("=" * 80)
         print("\n📊 ОБЩАЯ СТАТИСТИКА")
         print(f"   Сообщений: {v.get('total_messages', 0):,}")
@@ -276,7 +273,6 @@ class ReportGenerator:
         for dom, info in list(s.get("domain_message_distribution", {}).items())[:6]:
             print(f"   • {dom:<25}: {info.get('count', 0):>6,} ({info.get('percentage', 0):.1f}%)")
 
-        print("\n🏆 ИТОГОВАЯ ОЦЕНКА КАЧЕСТВА ДЛЯ ДООБУЧЕНИЯ LLM")
+        print("\n🏆 ИНДЕКС СТРУКТУРНОГО КАЧЕСТВА ДЛЯ LLM")
         print(f"   Балл: {val.get('total_score', 0)} из 100 ({val.get('quality_tier', '')})")
-        print(f"   💰 Рекомендуемая оценка / эквивалент: {val.get('recommended_valuation_range', '')}")
         print("=" * 80 + "\n")

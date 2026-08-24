@@ -260,10 +260,10 @@ def run_benchmark_experiment_suite(
         # 2. RAG Augmented
         rag_chunks = rag_kb.search(prompt, top_k=2)
         rag_ctx = "\n".join(f"- {str(c.get('content', ''))[:200]}" for c in rag_chunks) if rag_chunks else ""
-        rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}"
+        rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}" if rag_chunks else prompt
         r_out, r_lat, r_tps, r_vram = generate_response(base_model, rag_prompt)
         r_matches = sum(1 for k in kw if k.lower() in r_out.lower())
-        r_score = min(100.0, (r_matches / len(kw)) * 100 + (15.0 if rag_chunks else 0.0))
+        r_score = (r_matches / len(kw)) * 100.0
         rag_evals.append({"score": r_score, "latency": r_lat, "tps": r_tps, "vram": r_vram, "out": r_out})
 
     # Step B: Attach LoRA Adapter and evaluate LoRA and Hybrid
@@ -285,7 +285,7 @@ def run_benchmark_experiment_suite(
         if lora_model:
             l_out, l_lat, l_tps, l_vram = generate_response(lora_model, prompt)
             l_matches = sum(1 for k in kw if k.lower() in l_out.lower())
-            l_score = (l_matches / len(kw)) * 100
+            l_score = (l_matches / len(kw)) * 100.0
         else:
             l_out, l_lat, l_tps, l_vram = base_evals[idx-1]["out"], base_evals[idx-1]["latency"], base_evals[idx-1]["tps"], base_evals[idx-1]["vram"]
             l_score = base_evals[idx-1]["score"]
@@ -293,11 +293,14 @@ def run_benchmark_experiment_suite(
         # 4. Hybrid (LoRA + RAG)
         rag_chunks = rag_kb.search(prompt, top_k=2)
         rag_ctx = "\n".join(f"- {str(c.get('content', ''))[:200]}" for c in rag_chunks) if rag_chunks else ""
-        rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}"
+        rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}" if rag_chunks else prompt
         if lora_model and rag_chunks:
             h_out, h_lat, h_tps, h_vram = generate_response(lora_model, rag_prompt)
             h_matches = sum(1 for k in kw if k.lower() in h_out.lower())
-            h_score = min(100.0, (h_matches / len(kw)) * 100 + 20.0)
+            h_score = (h_matches / len(kw)) * 100.0
+        elif rag_chunks:
+            h_out, h_lat, h_tps, h_vram = rag_evals[idx-1]["out"], rag_evals[idx-1]["latency"], rag_evals[idx-1]["tps"], rag_evals[idx-1]["vram"]
+            h_score = rag_evals[idx-1]["score"]
         else:
             h_out, h_lat, h_tps, h_vram = l_out, l_lat, l_tps, l_vram
             h_score = l_score

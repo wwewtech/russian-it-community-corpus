@@ -359,9 +359,9 @@ def run_official_academic_benchmarks(
     lora_ppl = compute_ppl(lora_model) if lora_model else base_ppl
 
     # -------------------------------------------------------------
-    # 4. ROUGE & BLEU ACADEMIC TEXT SIMILARITY
+    # 4. ROUGE ACADEMIC TEXT SIMILARITY
     # -------------------------------------------------------------
-    logger.info("Running Benchmark 4: Academic ROUGE-1/2/L & BLEU-4 Evaluation...")
+    logger.info("Running Benchmark 4: ROUGE-1/2/L Evaluation...")
     ref_answers = [
         "Для решения проблемы рассинхронизации iptables в Kubernetes настраивается preStop хук со sleep 15 и readinessProbe для плавного завершения соединений без 502 Bad Gateway.",
         "Паттерн Transactional Outbox решает проблему распределенной транзакции путем записи события в локальную таблицу outbox в рамках одной ACID транзакции с последующим чтением через Debezium CDC в Kafka.",
@@ -378,42 +378,42 @@ def run_official_academic_benchmarks(
     lora_rouge = rouge.compute(predictions=lora_preds, references=ref_answers)
 
     # -------------------------------------------------------------
-    # 5. GENERATE RIGOROUS SCIENTIFIC REPORT
+    # 5. GENERATE SCIENTIFIC REPORT
     # -------------------------------------------------------------
     output_md = Path("reports/OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md")
     report_lines = [
-        "# 🎓 Официальный академический отчет: Общепринятые международные и российские научные бенчмарки",
-        f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **GPU:** `{torch.cuda.get_device_name(0)}`",
+        "# 🎓 Отчет об академической оценке (HumanEval Sample, RuMMLU Sample, PPL)",
+        f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **GPU:** `{torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}`",
         f"**Дата проведения:** `{time.strftime('%Y-%m-%dT%H:%M:%S')}`",
         "",
         "---",
         "",
-        "## 🔬 1. Методология и стандарты измерений (Scientific Methodology)",
+        "## 1. Методология измерений (Methodology)",
         "",
-        "В отличие от эвристических проверок ключевых слов, данный отчет использует **общепринятые в академическом сообществе и ведущих лабораториях (OpenAI, DeepMind, Sber AI, HSE) стандарты**:",
+        f"Данный скрипт выполняет детерминированную проверку на контрольной выборке:",
         "",
-        "1. **OpenAI HumanEval (`pass@1`)**: Официальный бенчмарк Chen et al. (2021). Сгенерированный код запускается в изолированном интерпретаторе Python с набором скрытых unit-тестов. Балл вычисляется строго как процент решенных задач: $\\text{pass@1} = \\frac{N_{\\text{passed}}}{N_{\\text{total}}} \\times 100\\%$.",
-        "2. **RuMMLU CS & Architecture (Sber AI / HSE)**: Российская адаптация классического MMLU (Massive Multitask Language Understanding) по направлениям Databases, Networking, Algorithms, OS. Балл — точный процент правильных ответов (Accuracy).",
-        "3. **Информационно-теоретическая перплексия (Perplexity, PPL)**: Фундаментальная метрика языкового моделирования на тестовой выборке: $\\text{PPL} = \\exp\\left(-\\frac{1}{T}\\sum_{t=1}^T \\ln P(w_t \\mid w_{<t})\\right)$. Чем ниже значение, тем увереннее и точнее модель предсказывает профессиональный IT-текст.",
-        "4. **Академические метрики ROUGE и BLEU (Lin 2004, Papineni 2002)**: Вычисление n-граммного пересечения и совпадения самых длинных общих подпоследовательностей (LCS) с верифицированными эталонами главных архитекторов через официальную библиотеку `evaluate`.",
+        f"1. **OpenAI HumanEval subset ({len(HUMANEVAL_TASKS)} задач)**: Сгенерированный код запускается в изолированном интерпретаторе Python с набором unit-тестов. $\\text{pass@1} = \\frac{N_{\\text{passed}}}{N_{\\text{total}}} \\times 100\\%$.",
+        f"2. **RuMMLU CS subset ({len(RUMMLU_CS_QUESTIONS)} вопросов)**: Выборка по направлениям Databases, Networking, Algorithms, OS. Балл — процент правильных ответов (Accuracy).",
+        "3. **Информационно-теоретическая перплексия (PPL)**: $\\text{PPL} = \\exp\\left(-\\frac{1}{T}\\sum_{t=1}^T \\ln P(w_t \\mid w_{<t})\\right)$ на отложенной тестовой выборке диалогов.",
+        "4. **ROUGE-1 / ROUGE-L**: Оценка лексического перекрытия с эталонными ответами через библиотеку `evaluate`.",
         "",
         "---",
         "",
-        "## 🏆 2. Сводные результаты по признанным научным бенчмаркам",
+        "## 2. Сводные результаты",
         "",
-        "| Научный бенчмарк | Метрика | Базовая модель (Base) | Базовая + RAG (325k чанков) | Domain LoRA | Гибрид (LoRA + RAG) |",
+        "| Бенчмарк / Метрика | Метрика | Базовая модель (Base) | Базовая + RAG | Domain LoRA | Гибрид (LoRA + RAG) |",
         "| :--- | :---: | :---: | :---: | :---: | :---: |",
-        f"| **OpenAI HumanEval** | `pass@1 (%)` | **{pass_at_1['base']}%** | **{pass_at_1['rag']}%** | **{pass_at_1['lora']}%** | **{pass_at_1['hybrid']}%** |",
-        f"| **Sber AI RuMMLU CS** | `Accuracy (%)` | **{rummlu_acc['base']}%** | **{rummlu_acc['rag']}%** | **{rummlu_acc['lora']}%** | **{rummlu_acc['hybrid']}%** |",
-        f"| **Test Set Perplexity** | `PPL (ниже = лучше)` | `{base_ppl}` | N/A (Retrieval) | **`{lora_ppl}`** *(улучшение)* | **`{lora_ppl}`** |",
-        f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1']*100, 1)}%` | ~{round(base_rouge['rouge1']*100 + 5, 1)}% | **`{round(lora_rouge['rouge1']*100, 1)}%`** | **`{round(lora_rouge['rouge1']*100 + 6, 1)}%`** |",
-        f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL']*100, 1)}%` | ~{round(base_rouge['rougeL']*100 + 4, 1)}% | **`{round(lora_rouge['rougeL']*100, 1)}%`** | **`{round(lora_rouge['rougeL']*100 + 5, 1)}%`** |",
+        f"| **HumanEval Subset ({len(HUMANEVAL_TASKS)} задач)** | `pass@1 (%)` | **{pass_at_1['base']}%** | **{pass_at_1['rag']}%** | **{pass_at_1['lora']}%** | **{pass_at_1['hybrid']}%** |",
+        f"| **RuMMLU CS Subset ({len(RUMMLU_CS_QUESTIONS)} вопр.)** | `Accuracy (%)` | **{rummlu_acc['base']}%** | **{rummlu_acc['rag']}%** | **{rummlu_acc['lora']}%** | **{rummlu_acc['hybrid']}%** |",
+        f"| **Test Set Perplexity** | `PPL (ниже = лучше)` | `{base_ppl}` | N/A | **`{lora_ppl}`** | **`{lora_ppl}`** |",
+        f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1']*100, 1)}%` | N/A | **`{round(lora_rouge['rouge1']*100, 1)}%`** | **`{round(lora_rouge['rouge1']*100, 1)}%`** |",
+        f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL']*100, 1)}%` | N/A | **`{round(lora_rouge['rougeL']*100, 1)}%`** | **`{round(lora_rouge['rougeL']*100, 1)}%`** |",
         "",
         "---",
         "",
-        "## 📊 3. Детальный разбор выполнения OpenAI HumanEval (`pass@1`)",
+        "## 3. Детальный разбор выполнения HumanEval subset",
         "",
-        "| Задача HumanEval | Входная сигнатура функции | Unit-тесты Base | Unit-тесты LoRA | Unit-тесты Hybrid |",
+        "| Задача HumanEval | Сигнатура функции | Unit-тесты Base | Unit-тесты LoRA | Unit-тесты Hybrid |",
         "| :--- | :--- | :---: | :---: | :---: |",
     ]
 
@@ -429,11 +429,11 @@ def run_official_academic_benchmarks(
         "",
         "---",
         "",
-        "## 💡 4. Научные выводы (Key Scientific Insights)",
+        "## 4. Выводы",
         "",
-        f"1. **Снижение перплексии (PPL {base_ppl} ➔ {lora_ppl})**: Доменный LoRA адаптер существенно снижает кросс-энтропийную потерю на русскоязычном инженерном корпусе, делая предсказания терминов и синтаксиса на порядок более вероятными.",
-        f"2. **OpenAI HumanEval (pass@1 = {pass_at_1['hybrid']}%)**: Исполнение сгенерированного Python-кода подтверждает реальную работоспособность алгоритмов на официальных юнит-тестах OpenAI.",
-        f"3. **RuMMLU Точность ({rummlu_acc['hybrid']}%)**: На детерминированных вопросах по архитектуре БД, сетей и ОС связка LoRA + RAG обеспечивает надежный выбор правильных инженерных решений.",
+        f"1. **Перплексия на доменном тесте (PPL {base_ppl} ➔ {lora_ppl})**: Доменный LoRA адаптер снижает кросс-энтропийную потерю на русскоязычном инженерном тексте.",
+        f"2. **Кодогенерация HumanEval (pass@1 = {pass_at_1['hybrid']}%)**: Проверка работоспособности сгенерированных Python-функций на тестовых ассертах.",
+        f"3. **RuMMLU Точность ({rummlu_acc['hybrid']}%)**: Оценка точности выбора вариантов ответов на контрольных вопросах по архитектуре БД, сетей и ОС.",
     ])
 
     with open(output_md, "w", encoding="utf-8") as f:
@@ -449,7 +449,7 @@ def run_official_academic_benchmarks(
             "rouge": {"base": base_rouge, "lora": lora_rouge},
         }, f, ensure_ascii=False, indent=2)
 
-    logger.info(f"Official Academic Benchmark finished! Report written to {output_md}")
+    logger.info(f"Academic Benchmark evaluation finished! Report written to {output_md}")
 
 
 def main():

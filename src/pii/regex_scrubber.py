@@ -67,6 +67,11 @@ class RegexPIIScrubber:
         # 7. User Mentions (@username)
         self.mention_pattern = re.compile(r"(?<!\w)@([a-zA-Z0-9_]{4,32})\b")
 
+        # 8. Source Community Names Redaction Pattern
+        self.community_names_pattern = re.compile(
+            r"(?i)\b(?:rozetked\s+plus\s+chat|rozetked|wylsacom\s+media|wylsacom|лама\s+ai|лама\s*:\s*комментарии|русский\s+ит\s+бизнес|полезная\s+нагрузка|forgetme\s*\|\s*comms|внутри\s+ai)\b"
+        )
+
     def scrub(self, text: str, mention_map: dict[str, str] = None) -> tuple[str, dict[str, int]]:
         """
         Scrub sensitive PII from text using regex patterns.
@@ -85,6 +90,7 @@ class RegexPIIScrubber:
             "ip_addresses": 0,
             "private_invites": 0,
             "user_mentions": 0,
+            "community_names": 0,
         }
 
         # 1. SSH Keys
@@ -214,5 +220,12 @@ class RegexPIIScrubber:
                 return "@user_anon"
 
             text = self.mention_pattern.sub(_sub_mention_anon, text)
+
+        # 9. Source Community Names Redaction
+        def _sub_community(m):
+            stats["community_names"] += 1
+            return "[COMMUNITY_REDACTED]"
+
+        text = self.community_names_pattern.sub(_sub_community, text)
 
         return text, stats

@@ -144,6 +144,7 @@ class DatasetValidator:
             "unmasked_emails": 0,
             "unmasked_api_keys": 0,
             "unmasked_crypto": 0,
+            "unmasked_community_names": 0,
         }
 
         checked_lines = 0
@@ -162,6 +163,7 @@ class DatasetValidator:
                     leaks["unmasked_emails"] += reg_stats.get("emails", 0)
                     leaks["unmasked_api_keys"] += reg_stats.get("api_keys", 0)
                     leaks["unmasked_crypto"] += reg_stats.get("crypto_wallets", 0)
+                    leaks["unmasked_community_names"] += reg_stats.get("community_names", 0)
                 except Exception:
                     pass
 

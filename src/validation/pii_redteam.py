@@ -1,6 +1,6 @@
 """
-Automated Red-Team PII Penetration Testing & Security Audit Suite.
-Simulates adversarial attacks and evasive PII patterns to verify 100% Zero-PII clearance.
+Automated PII Sanity & Leak Detection Test Suite.
+Verifies regex and morphological NER pattern coverage against synthetic test vectors and dataset samples.
 """
 
 import json
@@ -196,36 +196,51 @@ class RedTeamPIIAuditor:
         scrubber = RegexPIIScrubber()
         leaks = defaultdict(int)
 
-        for text in sample["text_clean"].dropna():
-            _, stats = scrubber.scrub(text)
-            for k, cnt in stats.items():
-                if k not in ("user_mentions", "private_invites"):
-                    leaks[k] += cnt
+        for idx, row in sample.iterrows():
+            text = row.get("text_clean")
+            if pd.notna(text):
+                _, stats = scrubber.scrub(str(text))
+                for k, cnt in stats.items():
+                    if k not in ("user_mentions", "private_invites"):
+                        leaks[k] += cnt
+
+            # Also check that chat_name and chat_id are properly pseudonymized
+            cname = str(row.get("chat_name", ""))
+            if not cname.startswith("community_node_"):
+                leaks["unmasked_community_names"] += 1
+
+            cid = row.get("chat_id")
+            if isinstance(cid, (int, float)) and cid > 100000:
+                leaks["unmasked_community_ids"] += 1
 
         total_leaks = sum(leaks.values())
         return {
             "sampled_messages_audited": len(sample),
             "total_leaks_found": total_leaks,
-            "zero_pii_cleared": total_leaks == 0,
+            "automated_check_passed": total_leaks == 0,
             "leak_breakdown": dict(leaks),
         }
 
     def generate_audit_certificate(self, output_path: Path) -> Path:
-        """Generate official Zero-PII Compliance and Red-Team Audit Certificate."""
+        """Generate automated PII sanity check report (internal verification suite)."""
         adv_res = self.run_adversarial_suite()
         prod_res = self.audit_production_parquet(sample_size=25000)
 
         report = {
-            "audit_certificate": "ZERO-PII COMPLIANCE & PENETRATION AUDIT",
-            "compliance_standards": ["GDPR (Recital 26 / Articles 6, 14, 17)", "EU AI Act (Article 53)", "152-ФЗ РФ"],
+            "report_title": "AUTOMATED PII SANITY & LEAK DETECTION REPORT",
+            "report_type": "Internal Automated Heuristic Verification Suite",
+            "disclaimer": (
+                "This report reflects automated regex and NER pattern checks on synthetic test vectors "
+                "and a 25,000-message sample of the dataset. It does not constitute a third-party legal audit."
+            ),
             "adversarial_suite": adv_res,
             "production_parquet_audit": prod_res,
-            "certified_status": "APPROVED - ZERO PII DETECTED",
+            "verification_status": "PASSED" if (adv_res["adversarial_tests_passed"] == adv_res["total_adversarial_tests"] and prod_res["total_leaks_found"] == 0) else "LEAKS_DETECTED",
         }
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
-        logger.info(f"Saved Zero-PII Audit Certificate to {output_path}")
+        logger.info(f"Saved Automated PII Sanity Report to {output_path}")
         return output_path

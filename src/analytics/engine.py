@@ -577,10 +577,10 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 11. COMMERCIAL READINESS & VALUATION SCORING
     # =========================================================================
-    def compute_valuation_and_readiness_score(self) -> dict[str, Any]:
+    def compute_dataset_quality_score(self) -> dict[str, Any]:
         """
-        Calculates an objective ML readiness and commercial valuation score (0-100)
-        based on data engineering benchmarks.
+        Calculates an objective dataset quality index (0-100) based on
+        volume, author diversity, technical domain density, dialogue ratio, and Shannon entropy.
         """
         score = 0
         breakdown = {}
@@ -645,17 +645,14 @@ class DeepChatAnalyzer:
         total_score = min(100, score)
 
         if total_score >= 85:
-            tier = "Tier-1 Enterprise Grade (Экстра-класс)"
-            desc = "Исключительно ценный специализированный корпус для доменного обучения LLM (SFT, DPO, RAG)."
-            est_value = "$4,500 – $7,500 (при упаковке в Parquet + Dataset Card + LoRA benchmark)"
+            tier = "High Diversity & Coverage (Category A)"
+            desc = "Широкий технический охват и достаточный объем для доменного обучения языковых моделей."
         elif total_score >= 70:
-            tier = "Tier-2 High Quality (Высокое качество)"
-            desc = "Качественный корпус с выраженной технической экспертизой и хорошей связностью."
-            est_value = "$2,500 – $4,500"
+            tier = "Moderate Quality (Category B)"
+            desc = "Умеренный технический объем с выраженной специализацией."
         else:
-            tier = "Tier-3 Standard (Средний уровень)"
-            desc = "Требует дополнительной очистки и фильтрации шума."
-            est_value = "$1,000 – $2,500"
+            tier = "Baseline (Category C)"
+            desc = "Базовый уровень, требуется расширение выборки."
 
         return {
             "total_score": total_score,
@@ -663,7 +660,6 @@ class DeepChatAnalyzer:
             "score_breakdown": breakdown,
             "quality_tier": tier,
             "tier_description": desc,
-            "recommended_valuation_range": est_value,
         }
 
     # =========================================================================
@@ -676,7 +672,7 @@ class DeepChatAnalyzer:
         report = {
             "report_metadata": {
                 "generated_at": datetime.now().isoformat(),
-                "engine_version": "4.0.0-Enterprise",
+                "engine_version": "1.0.0-OpenSource",
                 "total_messages_analyzed": self.total_messages,
             },
             "volume_statistics": self.compute_volume_statistics(),
@@ -689,7 +685,7 @@ class DeepChatAnalyzer:
             "topic_clusters_lda": self.compute_topic_clusters_lda(),
             "longitudinal_evolution_8_years": self.compute_longitudinal_trends(),
             "noise_and_quality": self.compute_noise_and_quality(),
-            "valuation_and_readiness": self.compute_valuation_and_readiness_score(),
+            "quality_and_readiness": self.compute_dataset_quality_score(),
         }
 
         return report

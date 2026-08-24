@@ -43,21 +43,33 @@ class LocalRAGPipeline:
             if df.empty:
                 df = self.df_kb
 
+        import re
+
         # Extract search keywords (min len 3)
         keywords = [w.lower() for w in query.split() if len(w) >= 3]
         if not keywords:
             return []
 
+        # Fast vectorized pre-filter
+        regex_pattern = "|".join(re.escape(kw) for kw in keywords[:10])
+        try:
+            mask = df["content"].str.contains(regex_pattern, case=False, na=False, regex=True)
+            sub_df = df[mask]
+        except Exception:
+            sub_df = df
+
+        if sub_df.empty:
+            return []
+
         scores = []
-        for content in df["content"]:
+        for content in sub_df["content"]:
             c_lower = str(content).lower()
-            # Calculate term match density score
-            match_score = sum(1.5 if kw in c_lower else 0 for kw in keywords)
+            match_score = sum(1.5 for kw in keywords if kw in c_lower)
             scores.append(match_score)
 
-        df_scored = df.copy()
-        df_scored["relevance_score"] = scores
-        top_matches = df_scored.sort_values(by="relevance_score", ascending=False).head(top_k)
+        sub_df = sub_df.copy()
+        sub_df["relevance_score"] = scores
+        top_matches = sub_df.sort_values(by="relevance_score", ascending=False).head(top_k)
 
         results = []
         for _, row in top_matches.iterrows():

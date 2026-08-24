@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this dataset, data curation pipeline, or benchmarks in your research, please cite it as below."
 authors:
   - name: "Russian IT Community Open Research Group"
-title: "RICC (Russian IT Community Corpus): A Curated Zero-PII Dataset for LLM SFT, DPO, and RAG"
+title: "RICC (Russian IT Community Corpus): A Curated Multi-Domain Conversational Dataset for LLM SFT, DPO, and RAG"
 version: 6.0.0
 date-released: 2026-08-22
 url: "https://github.com/wwewtech/russian-it-community-corpus"

@@ -33,7 +33,7 @@
   },
   "enterprise_eval_matrix": {
     "metadata": {
-      "framework": "Enterprise Industrial RU-IT Evaluation Matrix (EIREM v2.0)",
+      "framework": "Russian IT Domain Scenario Benchmark Suite (50 Scenarios)",
       "total_scenarios": 50,
       "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
       "adapter_id": "qwen2.5_1.5b_instruct",

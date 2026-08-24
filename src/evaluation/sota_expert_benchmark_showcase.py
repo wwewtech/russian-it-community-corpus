@@ -274,24 +274,24 @@ def run_sota_showcase(
 
     # Generate Markdown Showcase Diff Report
     md_lines = [
-        "# 🏆 SOTA Expert Enterprise Benchmark & Side-by-Side Diffs",
-        f"**Модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **Генерация:** Senior Principal Architect Prompt (320 max tokens)",
-        f"**Дата аудита:** `{time.strftime('%Y-%m-%dT%H:%M:%S')}`",
+        "# 🔍 Качественное сравнение ответов моделей (Side-by-Side Diffs)",
+        f"**Модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **Генерация:** Архитектурный промпт (320 max tokens)",
+        f"**Дата:** `{time.strftime('%Y-%m-%dT%H:%M:%S')}`",
         "",
         "---",
         "",
-        "## 📊 1. Сводные метрики экспертного аудита",
+        "## 1. Сводные метрики",
         "",
-        "| Конфигурация | Качество решений (Overall) | Глубина концепций | Качество кода (AST) | Проф. IT-лексика |",
+        "| Конфигурация | Качество ответов (Overall) | Полнота концепций | Валидность кода (AST) | Плотность IT-терминов |",
         "| :--- | :---: | :---: | :---: | :---: |",
         f"| **1. Базовая модель (Base)** | **{base_avg:.1f}%** | {float(np.mean([r['base']['scores']['concept_depth'] for r in results])):.1f}% | {float(np.mean([r['base']['scores']['code_quality'] for r in results])):.1f}% | {float(np.mean([r['base']['scores']['ru_tone'] for r in results])):.1f}% |",
         f"| **2. Базовая модель + RAG (325k чанков)** | **{rag_avg:.1f}%** | {float(np.mean([r['rag']['scores']['concept_depth'] for r in results])):.1f}% | {float(np.mean([r['rag']['scores']['code_quality'] for r in results])):.1f}% | {float(np.mean([r['rag']['scores']['ru_tone'] for r in results])):.1f}% |",
         f"| **3. RICC LoRA (Доменный адаптер)** | **{lora_avg:.1f}%** | {float(np.mean([r['lora']['scores']['concept_depth'] for r in results])):.1f}% | {float(np.mean([r['lora']['scores']['code_quality'] for r in results])):.1f}% | {float(np.mean([r['lora']['scores']['ru_tone'] for r in results])):.1f}% |",
-        f"| **4. Гибрид (LoRA + RAG Enterprise)** | **{hyb_avg:.1f}%** | **{float(np.mean([r['hybrid']['scores']['concept_depth'] for r in results])):.1f}%** | **{float(np.mean([r['hybrid']['scores']['code_quality'] for r in results])):.1f}%** | **{float(np.mean([r['hybrid']['scores']['ru_tone'] for r in results])):.1f}%** |",
+        f"| **4. Гибрид (LoRA + RAG)** | **{hyb_avg:.1f}%** | **{float(np.mean([r['hybrid']['scores']['concept_depth'] for r in results])):.1f}%** | **{float(np.mean([r['hybrid']['scores']['code_quality'] for r in results])):.1f}%** | **{float(np.mean([r['hybrid']['scores']['ru_tone'] for r in results])):.1f}%** |",
         "",
         "---",
         "",
-        "## 🔍 2. Качественные Side-by-Side сравнения ответов (Diffs)",
+        "## 2. Качественные Side-by-Side сравнения ответов (Diffs)",
         "",
     ]
 

@@ -27,7 +27,7 @@ def print_section(title: str):
 
 
 def demo_sft_loading():
-    print_section("1. ДЕМОНСТРАЦИЯ ЗАГРУЗКИ SFT ДИАЛОГОВ (40,042 ДИАЛОГА)")
+    print_section("1. ДЕМОНСТРАЦИЯ ЗАГРУЗКИ SFT ДИАЛОГОВ (171.5k ДИАЛОГОВ)")
     sft_path = PARQUET_DIR / "sft_dialogues.parquet"
     if not sft_path.exists():
         print(f"❌ Файл {sft_path} не найден.")
@@ -46,7 +46,7 @@ def demo_sft_loading():
 
 
 def demo_rag_search():
-    print_section("2. ДЕМОНСТРАЦИЯ ПОИСКА ПО БАЗЕ ЗНАНИЙ RAG (71,436 ЧАНКОВ)")
+    print_section("2. ДЕМОНСТРАЦИЯ ПОИСКА ПО БАЗЕ ЗНАНИЙ RAG (325.7k ЧАНКОВ)")
     rag_path = PARQUET_DIR / "rag_knowledge_base.parquet"
     if not rag_path.exists():
         print(f"❌ Файл {rag_path} не найден.")

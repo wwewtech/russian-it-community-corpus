@@ -79,6 +79,35 @@ class BenchmarkComparator:
 
         logger.info(f"Running Benchmark Comparator on {device_name} (VRAM: {vram_mb:.0f} MB)...")
 
+        test_cases_results = []
+        rag_keyword_hits = 0
+        total_keywords = 0
+
+        for tc in BENCHMARK_SAMPLE:
+            # Check RAG context retrieval
+            rag_hits = self.rag.search(tc["query"], top_k=2, domain_filter=tc["domain"])
+            rag_prompt = self.rag.format_rag_prompt(tc["query"], rag_hits)
+
+            # Measure keyword presence in retrieved context
+            combined_context = " ".join(h.get("content", "") for h in rag_hits).lower()
+            kw_hits = [kw for kw in tc["expected_terms"] if kw.lower() in combined_context]
+            rag_keyword_hits += len(kw_hits)
+            total_keywords += len(tc["expected_terms"])
+
+            test_cases_results.append(
+                {
+                    "id": tc["id"],
+                    "domain": tc["domain"],
+                    "query": tc["query"],
+                    "expected_keywords": tc["expected_terms"],
+                    "keywords_retrieved": kw_hits,
+                    "rag_retrieved_chunks_count": len(rag_hits),
+                    "rag_top_chunk_title": rag_hits[0]["title"] if rag_hits else "N/A",
+                }
+            )
+
+        rag_kw_recall = round((rag_keyword_hits / total_keywords * 100.0) if total_keywords else 0.0, 1)
+
         results = {
             "hardware": {
                 "gpu": device_name,
@@ -86,104 +115,56 @@ class BenchmarkComparator:
                 "cuda_available": torch.cuda.is_available(),
             },
             "eval_date": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "test_cases": [],
+            "test_cases": test_cases_results,
             "aggregate_scores": {
-                "base_model": {
-                    "domain_accuracy_pct": 58.4,
-                    "ru_it_terminology_recall_pct": 46.2,
-                    "hallucination_risk_pct": 34.0,
-                    "avg_latency_ms": 420.0,
-                    "vram_usage_mb": 4200.0,
-                    "rating": "3.1 / 5.0 (Базовые общие знания, незнание реалий РФ рынка и актуального сленга)",
-                },
-                "base_with_rag": {
-                    "domain_accuracy_pct": 94.1,
-                    "ru_it_terminology_recall_pct": 93.4,
-                    "hallucination_risk_pct": 4.6,
-                    "avg_latency_ms": 590.0,
-                    "vram_usage_mb": 4500.0,
-                    "rating": "4.85 / 5.0 (Высокая точность с контекстом из 325k базы знаний)",
-                },
-                "lora_finetuned": {
-                    "domain_accuracy_pct": 96.4,
-                    "ru_it_terminology_recall_pct": 97.8,
-                    "hallucination_risk_pct": 3.4,
-                    "avg_latency_ms": 430.0,
-                    "vram_usage_mb": 4350.0,
-                    "rating": "4.95 / 5.0 (Максимальная естественность русского IT-стиля и точность терминологии)",
-                },
+                "rag_retrieval_keyword_recall_pct": rag_kw_recall,
+                "total_test_cases": len(BENCHMARK_SAMPLE),
             },
         }
-
-        for tc in BENCHMARK_SAMPLE:
-            # Check RAG context retrieval
-            rag_hits = self.rag.search(tc["query"], top_k=2, domain_filter=tc["domain"])
-            self.rag.format_rag_prompt(tc["query"], rag_hits)
-
-            results["test_cases"].append(
-                {
-                    "id": tc["id"],
-                    "domain": tc["domain"],
-                    "query": tc["query"],
-                    "expected_keywords": tc["expected_terms"],
-                    "rag_retrieved_chunks_count": len(rag_hits),
-                    "rag_top_chunk_title": rag_hits[0]["title"] if rag_hits else "N/A",
-                    "scores": {
-                        "base_model": {
-                            "precision": 3.0,
-                            "hallucination": "Средняя (устаревшие или абстрактные советы)",
-                        },
-                        "base_with_rag": {"precision": 4.8, "hallucination": "Минимальная (подкреплено кейсами)"},
-                        "lora_finetuned": {
-                            "precision": 4.9,
-                            "hallucination": "Минимальная (экспертный стиль сообщества)",
-                        },
-                    },
-                }
-            )
 
         return results
 
     def generate_markdown_report(self, results: dict[str, Any], output_path: Path) -> Path:
-        """Export comprehensive benchmark comparison report in Markdown."""
-        agg = results["aggregate_scores"]
+        """Export benchmark comparison report in Markdown."""
         hw = results["hardware"]
+        tcs = results["test_cases"]
+        recall = results["aggregate_scores"]["rag_retrieval_keyword_recall_pct"]
 
-        md = f"""# 🏎️ LLM Domain Benchmark & Hardware Comparison Report
-## Сравнительный тест: «Голая» модель vs Base + RAG vs Domain LoRA на {hw["gpu"]} (VRAM: {hw["vram_total_mb"]:.0f} MB)
-
----
-
-## 1. Сводная матрица производительности и качества (Executive Benchmark Matrix)
-
-| Конфигурация модели | Точность доменных ответов (%) | Полнота IT-терминологии (%) | Риск галлюцинаций (%) | Задержка инференса (мс) | VRAM на RTX 3060 (МБ) | Экспертная оценка |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. Base Model («Голая модель»)** | **{agg["base_model"]["domain_accuracy_pct"]}%** | **{agg["base_model"]["ru_it_terminology_recall_pct"]}%** | **{agg["base_model"]["hallucination_risk_pct"]}%** | ~{agg["base_model"]["avg_latency_ms"]} ms | ~{agg["base_model"]["vram_usage_mb"]:.0f} MB | ⭐⭐⭐ (3.1/5) |
-| **2. Base Model + RAG (71k чанков)** | **{agg["base_with_rag"]["domain_accuracy_pct"]}%** | **{agg["base_with_rag"]["ru_it_terminology_recall_pct"]}%** | **{agg["base_with_rag"]["hallucination_risk_pct"]}%** | ~{agg["base_with_rag"]["avg_latency_ms"]} ms | ~{agg["base_with_rag"]["vram_usage_mb"]:.0f} MB | ⭐⭐⭐⭐✨ (4.7/5) |
-| **3. Domain LoRA (40k SFT диалогов)** | **{agg["lora_finetuned"]["domain_accuracy_pct"]}%** | **{agg["lora_finetuned"]["ru_it_terminology_recall_pct"]}%** | **{agg["lora_finetuned"]["hallucination_risk_pct"]}%** | ~{agg["lora_finetuned"]["avg_latency_ms"]} ms | ~{agg["lora_finetuned"]["vram_usage_mb"]:.0f} MB | ⭐⭐⭐⭐⭐ (4.9/5) |
+        md = f"""# 📊 Отчет о сравнительной архитектурной оценке (Base vs RAG vs LoRA vs Hybrid)
+**Устройство:** `{hw["gpu"]}` (VRAM: `{hw["vram_total_mb"]:.0f}` MB) | **Дата:** `{results["eval_date"]}`
 
 ---
 
-## 2. Анализ поведения на практических бизнес- и тех-кейсах
+## 1. Архитектурное сопоставление подходов
 
-### Кейс 1: Прием международных платежей для SaaS из РФ (2024–2026)
-- **Голая модель**: Предлагает стандартный Stripe или PayPal напрямую, не учитывая блокировки счетов РФ и санкционные ограничения (высокий риск галлюцинации).
-- **Base + RAG**: Извлекает реальные обсуждения сообщества по юрисдикциям (Кипр, ОАЭ, Армения, Грузия), решениям Merchant of Record (Paddle, LemonSqueezy) и криптошлюзам (USDT TRC20).
-- **Domain LoRA**: Мгновенно формирует готовый алгоритм действий с учетом актуальных комиссий и требований комплаенса без необходимости подтягивать тяжелые внешние документы.
-
-### Кейс 2: Выбор хостинга и инфраструктуры (Hetzner vs Selectel vs Timeweb)
-- **Голая модель**: Выдает общие рекламные описания с сайтов вендоров.
-- **Base + RAG & LoRA**: Опираются на реальный 8-летний опыт сотен инженеров: проблемы с KYC в Hetzner, требования 152-ФЗ в РФ, реальные задержки каналов и анти-DDoS устойчивость.
+| Архитектура | Механизм | Преимущества | Ограничения |
+| :--- | :--- | :--- | :--- |
+| **Базовая модель (Base)** | Генерация из параметров предобучения | Быстрый инференс, не требует БД | Устаревшие знания, галлюцинации API |
+| **Базовая + RAG** | Извлечение чанков из базы знаний (325k чанков) | Фактическая точность, актуальные версии библиотек | Оверхед на поиск (~150-200 мс) |
+| **Domain LoRA** | Параметрическая адаптация на 171.5k диалогах | Аутентичный русскоязычный IT-лексикон, низкая перплексия | Не заменяет актуальную внешнюю память |
+| **Гибрид (LoRA + RAG)** | Совмещение извлечения контекста и доменного стиля | Максимальная глубина и фактологическая точность | Требует настройки RAG-пайплайна |
 
 ---
 
-## 3. Вывод для бизнеса: Достаточно ли датасета для локальной LoRA?
+## 2. Результаты проверки извлечения контекста (RAG Retrieval Sample)
 
-**Ответ: ДА, БОЛЕЕ ЧЕМ ДОСТАТОЧНО.**
+- **Количество тестовых запросов:** `{len(tcs)}`
+- **Полнота извлечения ключевых сущностей RAG (Keyword Recall):** **`{recall}%`**
 
-- **Объём данных**: 40 042 многоходовых диалогов (175 912 Q&A пар) и 12.86 млн токенов — это **в 2–4 раза превышает типичные объемы академических и коммерческих LoRA датасетов** (например, LIMA состоял всего из 1 000 примеров, а Alpaca — из 52 000).
-- **Аппаратные требования**: На видеокарте **NVIDIA GeForce RTX 3060 (12GB VRAM)** модель класса **Qwen-2.5-7B** или **Llama-3-8B** дообучается методом **QLoRA (4-bit) с rank=16** за 1.5–3 часа, потребляя всего ~6.5–8.0 GB VRAM.
-- **Качество адаптации**: Модель приобретает аутентичный стиль мышления русскоязычного IT-лида/архитектора, точность в терминологии и глубокое понимание реальных бизнес-процессов в РФ и за рубежом.
+| ID | Домен | Запрос | Найдено чанков | Топ-заголовок |
+| :---: | :--- | :--- | :---: | :--- |
+"""
+        for tc in tcs:
+            md += f"| `{tc['id']}` | {tc['domain']} | {tc['query'][:50]}... | {tc['rag_retrieved_chunks_count']} | {tc['rag_top_chunk_title'][:40]}... |\n"
+
+        md += """
+---
+
+## 3. Выводы
+
+1. **LoRA адаптирует язык и структуру**: Дообучение на корпусе снижает перплексию на русскоязычном инженерном тексте и настраивает модель на идиоматичные формулировки.
+2. **RAG закрывает фактологию**: Для конкретных технических параметров (конфигурации Nginx, SQL-схемы, API) извлечение из базы знаний предотвращает фактологические ошибки.
+3. **Совместное использование**: Для производственных ассистентов оптимальна связка легковесного RAG с доменно-адаптированной моделью.
 """
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:

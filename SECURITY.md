@@ -29,6 +29,6 @@ If you identify a security vulnerability in the pipeline code (e.g. arbitrary co
 
 ---
 
-## Zero-PII Guarantee & Audit
+## PII Anonymization & Validation Policy
 
-All dataset releases undergo automated red-team adversarial penetration audits (`make audit`) before publication. The compliance certificate is available in [`reports/zero_pii_audit_certificate.json`](reports/zero_pii_audit_certificate.json).
+All dataset releases undergo automated heuristic pattern checks and NER regression audits before publication. The automated sanity report is available in [`reports/pii_validation_report.json`](reports/pii_validation_report.json).

@@ -74,9 +74,12 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
     return epoch, 0
 
 
-def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[NormalizedMessage]]:
+def load_export_file(
+    file_path: str | Path, node_index: int = 1
+) -> tuple[dict[str, Any], list[NormalizedMessage]]:
     """
     Load a Telegram chat export result.json file and return metadata and normalized messages.
+    Anonymizes chat_name and chat_id to prevent source de-anonymization.
     """
     path = Path(file_path)
     if not path.is_file():
@@ -91,10 +94,13 @@ def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[Normal
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
 
+    anon_chat_name = f"community_node_{node_index:02d}"
+    anon_chat_id = 1000 + node_index
+
     chat_info = {
-        "name": data.get("name", path.parent.name),
+        "name": anon_chat_name,
         "type": data.get("type", "unknown"),
-        "id": int(data.get("id", 0)) if data.get("id") else 0,
+        "id": anon_chat_id,
         "file_path": str(path),
     }
 
@@ -103,8 +109,6 @@ def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[Normal
         raw_msgs = data
 
     normalized_msgs: list[NormalizedMessage] = []
-    chat_id = chat_info["id"]
-    chat_name = chat_info["name"]
 
     for raw in raw_msgs:
         if not isinstance(raw, dict):
@@ -125,6 +129,12 @@ def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[Normal
         author_id = str(raw.get("from_id") or raw.get("actor_id") or raw.get("user_id") or author)
 
         text = extract_raw_text(raw.get("text"))
+
+        # Redact channel creation and title change metadata
+        if is_service and raw.get("title"):
+            raw_title = str(raw.get("title"))
+            if text and raw_title in text:
+                text = text.replace(raw_title, "[COMMUNITY_NAME_REDACTED]")
 
         # Check for media captions
         has_media = bool(
@@ -158,8 +168,8 @@ def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[Normal
 
         norm_msg = NormalizedMessage(
             msg_id=int(msg_id) if msg_id else len(normalized_msgs) + 1,
-            chat_id=chat_id,
-            chat_name=chat_name,
+            chat_id=anon_chat_id,
+            chat_name=anon_chat_name,
             timestamp=ts,
             unixtime=unixtime,
             author_raw=str(author),
@@ -173,14 +183,16 @@ def load_export_file(file_path: str | Path) -> tuple[dict[str, Any], list[Normal
         )
         normalized_msgs.append(norm_msg)
 
-    logger.info(f"Loaded {len(normalized_msgs)} messages from {chat_name}")
+    logger.info(f"Loaded {len(normalized_msgs)} messages from {anon_chat_name}")
     return chat_info, normalized_msgs
 
 
-def merge_multiple_exports(export_dirs: list[str | Path]) -> tuple[list[dict[str, Any]], list[NormalizedMessage]]:
+def merge_multiple_exports(
+    export_dirs: list[str | Path],
+) -> tuple[list[dict[str, Any]], list[NormalizedMessage]]:
     """
     Load and merge multiple Telegram export directories into a single unified stream.
-    Anonymizes chat names to Community Node #XX to preserve privacy.
+    Anonymizes chat names to community_node_XX and assigns synthetic surrogate IDs.
     Sorts all messages chronologically.
     """
     all_chats_info: list[dict[str, Any]] = []
@@ -188,11 +200,7 @@ def merge_multiple_exports(export_dirs: list[str | Path]) -> tuple[list[dict[str
 
     for idx, d in enumerate(export_dirs, 1):
         try:
-            info, msgs = load_export_file(d)
-            anon_cname = f"Community Node #{idx:02d}"
-            info["name"] = anon_cname
-            for m in msgs:
-                m.chat_name = anon_cname
+            info, msgs = load_export_file(d, node_index=idx)
             all_chats_info.append(info)
             all_messages.extend(msgs)
         except Exception as e:

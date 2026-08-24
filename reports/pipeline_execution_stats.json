@@ -1,0 +1,14 @@
+{
+  "execution_time_seconds": 1485.2,
+  "raw_messages_count": 2911754,
+  "cleaned_messages_count": 2816434,
+  "threads_count": 543291,
+  "sft_dialogues_count": 171520,
+  "rag_chunks_count": 325690,
+  "dpo_pairs_count": 60899,
+  "pii_stats": {
+    "total_pii_entities_scrubbed": 184520,
+    "community_names_anonymized": 11
+  },
+  "validation_passed": true
+}

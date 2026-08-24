@@ -1,0 +1,1846 @@
+{
+  "report_metadata": {
+    "generated_at": "2026-08-24T04:15:26.716205",
+    "engine_version": "1.0.0-OpenSource",
+    "total_messages_analyzed": 2816434
+  },
+  "volume_statistics": {
+    "total_messages": 2816434,
+    "unique_authors": 210887,
+    "date_start": "2017-08-06 15:01:46",
+    "date_end": "2026-08-22 18:48:36",
+    "total_days_active": 3303,
+    "messages_per_day": 852.69,
+    "tokens_per_day": 14853.69,
+    "total_characters": 233959046,
+    "total_words": 37242618,
+    "total_tokens_estimated": 49061734,
+    "vocabulary_unique_words": 43295,
+    "character_length_distribution": {
+      "mean": 83.07,
+      "median": 43.0,
+      "std": 146.22,
+      "min": 0,
+      "max": 8919,
+      "p25": 19,
+      "p75": 91,
+      "p90": 185,
+      "p95": 286,
+      "p99": 662
+    },
+    "word_count_distribution": {
+      "mean": 13.22,
+      "median": 7.0,
+      "std": 21.69,
+      "min": 0,
+      "max": 2046,
+      "p25": 3,
+      "p75": 15,
+      "p90": 29,
+      "p95": 44,
+      "p99": 100
+    },
+    "token_count_distribution": {
+      "mean": 17.42,
+      "median": 9.0,
+      "std": 29.25,
+      "min": 0,
+      "max": 2762,
+      "p25": 4,
+      "p75": 20,
+      "p90": 39,
+      "p95": 59,
+      "p99": 135
+    },
+    "author_activity_distribution": {
+      "mean": 13.36,
+      "median": 2,
+      "std": 182.17,
+      "min": 1,
+      "max": 24959,
+      "p25": 1,
+      "p75": 5,
+      "p90": 14,
+      "p95": 31,
+      "p99": 158
+    }
+  },
+  "temporal_dynamics": {
+    "peak_hour": 21,
+    "peak_weekday": "Вторник",
+    "hourly_distribution": {
+      "00:00": 110600,
+      "01:00": 77943,
+      "02:00": 47560,
+      "03:00": 29200,
+      "04:00": 18263,
+      "05:00": 14079,
+      "06:00": 13738,
+      "07:00": 18991,
+      "08:00": 33596,
+      "09:00": 65298,
+      "10:00": 102091,
+      "11:00": 141773,
+      "12:00": 171781,
+      "13:00": 171822,
+      "14:00": 184255,
+      "15:00": 187363,
+      "16:00": 178308,
+      "17:00": 182671,
+      "18:00": 183110,
+      "19:00": 176533,
+      "20:00": 183851,
+      "21:00": 189815,
+      "22:00": 185933,
+      "23:00": 147860
+    },
+    "weekday_distribution": {
+      "Понедельник": 464834,
+      "Вторник": 473358,
+      "Среда": 437436,
+      "Четверг": 430301,
+      "Пятница": 405906,
+      "Суббота": 314157,
+      "Воскресенье": 290442
+    },
+    "yearly_volume": {
+      "2017": 24866,
+      "2018": 64040,
+      "2019": 29855,
+      "2020": 43488,
+      "2021": 187903,
+      "2022": 141195,
+      "2023": 242862,
+      "2024": 611828,
+      "2025": 918534,
+      "2026": 551863
+    },
+    "monthly_volume": {
+      "2017-08": 7322,
+      "2017-09": 4117,
+      "2017-10": 8009,
+      "2017-11": 3738,
+      "2017-12": 1680,
+      "2018-01": 2347,
+      "2018-02": 1271,
+      "2018-03": 5024,
+      "2018-04": 10699,
+      "2018-05": 9285,
+      "2018-06": 12305,
+      "2018-07": 2437,
+      "2018-08": 5520,
+      "2018-09": 3851,
+      "2018-10": 2140,
+      "2018-11": 4480,
+      "2018-12": 4681,
+      "2019-01": 3830,
+      "2019-02": 3065,
+      "2019-03": 2241,
+      "2019-04": 1074,
+      "2019-05": 3150,
+      "2019-06": 7660,
+      "2019-07": 3948,
+      "2019-08": 931,
+      "2019-09": 909,
+      "2019-10": 1591,
+      "2019-11": 539,
+      "2019-12": 917,
+      "2020-01": 627,
+      "2020-02": 1122,
+      "2020-03": 400,
+      "2020-04": 245,
+      "2020-05": 429,
+      "2020-06": 191,
+      "2020-07": 332,
+      "2020-08": 269,
+      "2020-09": 1451,
+      "2020-10": 13450,
+      "2020-11": 12409,
+      "2020-12": 12563,
+      "2021-01": 14515,
+      "2021-02": 12776,
+      "2021-03": 14702,
+      "2021-04": 12557,
+      "2021-05": 14950,
+      "2021-06": 14804,
+      "2021-07": 15365,
+      "2021-08": 18693,
+      "2021-09": 19829,
+      "2021-10": 20514,
+      "2021-11": 14709,
+      "2021-12": 14489,
+      "2022-01": 14568,
+      "2022-02": 11572,
+      "2022-03": 1534,
+      "2022-04": 2521,
+      "2022-05": 2394,
+      "2022-06": 9335,
+      "2022-07": 10094,
+      "2022-08": 17888,
+      "2022-09": 17816,
+      "2022-10": 18220,
+      "2022-11": 20076,
+      "2022-12": 15177,
+      "2023-01": 16103,
+      "2023-02": 16606,
+      "2023-03": 17055,
+      "2023-04": 13169,
+      "2023-05": 15761,
+      "2023-06": 15296,
+      "2023-07": 14734,
+      "2023-08": 18462,
+      "2023-09": 26896,
+      "2023-10": 34923,
+      "2023-11": 31323,
+      "2023-12": 22534,
+      "2024-01": 29378,
+      "2024-02": 26549,
+      "2024-03": 26474,
+      "2024-04": 26073,
+      "2024-05": 22892,
+      "2024-06": 74639,
+      "2024-07": 60675,
+      "2024-08": 73647,
+      "2024-09": 99677,
+      "2024-10": 58967,
+      "2024-11": 54893,
+      "2024-12": 57964,
+      "2025-01": 66931,
+      "2025-02": 63194,
+      "2025-03": 64512,
+      "2025-04": 65133,
+      "2025-05": 65240,
+      "2025-06": 75006,
+      "2025-07": 86706,
+      "2025-08": 87926,
+      "2025-09": 109316,
+      "2025-10": 75723,
+      "2025-11": 73673,
+      "2025-12": 85174,
+      "2026-01": 71971,
+      "2026-02": 87983,
+      "2026-03": 91016,
+      "2026-04": 75650,
+      "2026-05": 57570,
+      "2026-06": 67057,
+      "2026-07": 59072,
+      "2026-08": 41544
+    },
+    "monthly_avg_character_length": {
+      "2017-08": 30.3,
+      "2017-09": 26.4,
+      "2017-10": 26.0,
+      "2017-11": 28.8,
+      "2017-12": 24.9,
+      "2018-01": 29.4,
+      "2018-02": 24.5,
+      "2018-03": 31.2,
+      "2018-04": 28.7,
+      "2018-05": 27.6,
+      "2018-06": 28.5,
+      "2018-07": 26.9,
+      "2018-08": 27.4,
+      "2018-09": 26.6,
+      "2018-10": 29.0,
+      "2018-11": 61.9,
+      "2018-12": 72.3,
+      "2019-01": 43.7,
+      "2019-02": 41.0,
+      "2019-03": 42.3,
+      "2019-04": 48.0,
+      "2019-05": 30.5,
+      "2019-06": 27.6,
+      "2019-07": 37.6,
+      "2019-08": 43.7,
+      "2019-09": 39.7,
+      "2019-10": 34.0,
+      "2019-11": 64.3,
+      "2019-12": 54.4,
+      "2020-01": 84.7,
+      "2020-02": 103.9,
+      "2020-03": 66.2,
+      "2020-04": 67.3,
+      "2020-05": 82.5,
+      "2020-06": 125.7,
+      "2020-07": 95.4,
+      "2020-08": 80.5,
+      "2020-09": 58.9,
+      "2020-10": 79.9,
+      "2020-11": 81.2,
+      "2020-12": 86.6,
+      "2021-01": 86.3,
+      "2021-02": 89.5,
+      "2021-03": 88.7,
+      "2021-04": 92.9,
+      "2021-05": 86.5,
+      "2021-06": 80.7,
+      "2021-07": 92.2,
+      "2021-08": 84.8,
+      "2021-09": 81.9,
+      "2021-10": 76.9,
+      "2021-11": 86.9,
+      "2021-12": 89.7,
+      "2022-01": 91.4,
+      "2022-02": 91.9,
+      "2022-03": 167.2,
+      "2022-04": 143.0,
+      "2022-05": 133.2,
+      "2022-06": 73.8,
+      "2022-07": 83.8,
+      "2022-08": 74.2,
+      "2022-09": 78.6,
+      "2022-10": 84.5,
+      "2022-11": 98.7,
+      "2022-12": 102.8,
+      "2023-01": 95.7,
+      "2023-02": 99.0,
+      "2023-03": 111.1,
+      "2023-04": 106.8,
+      "2023-05": 108.7,
+      "2023-06": 106.0,
+      "2023-07": 78.2,
+      "2023-08": 74.2,
+      "2023-09": 64.6,
+      "2023-10": 56.6,
+      "2023-11": 61.2,
+      "2023-12": 99.5,
+      "2024-01": 97.6,
+      "2024-02": 94.7,
+      "2024-03": 94.0,
+      "2024-04": 93.9,
+      "2024-05": 99.2,
+      "2024-06": 56.1,
+      "2024-07": 78.5,
+      "2024-08": 78.0,
+      "2024-09": 71.2,
+      "2024-10": 83.3,
+      "2024-11": 85.9,
+      "2024-12": 87.4,
+      "2025-01": 85.5,
+      "2025-02": 85.1,
+      "2025-03": 88.7,
+      "2025-04": 87.5,
+      "2025-05": 88.6,
+      "2025-06": 82.1,
+      "2025-07": 84.1,
+      "2025-08": 76.0,
+      "2025-09": 74.6,
+      "2025-10": 88.7,
+      "2025-11": 87.6,
+      "2025-12": 82.7,
+      "2026-01": 84.6,
+      "2026-02": 83.8,
+      "2026-03": 89.1,
+      "2026-04": 91.7,
+      "2026-05": 97.7,
+      "2026-06": 96.3,
+      "2026-07": 109.2,
+      "2026-08": 107.7
+    },
+    "inter_arrival_seconds_distribution": {
+      "mean": 95.74,
+      "median": 17.0,
+      "std": 920.64,
+      "min": 0,
+      "max": 86141,
+      "p25": 6,
+      "p75": 46,
+      "p90": 125,
+      "p95": 253,
+      "p99": 1147
+    }
+  },
+  "lexical_analytics": {
+    "shannon_entropy": 12.212,
+    "type_token_ratio_ttr": 0.12537,
+    "root_ttr": 73.67,
+    "top_unigrams": [
+      {
+        "word": "redacted",
+        "count": 7873
+      },
+      {
+        "word": "person",
+        "count": 6022
+      },
+      {
+        "word": "ты",
+        "count": 4130
+      },
+      {
+        "word": "он",
+        "count": 2851
+      },
+      {
+        "word": "такой",
+        "count": 2348
+      },
+      {
+        "word": "они",
+        "count": 1960
+      },
+      {
+        "word": "мочь",
+        "count": 1886
+      },
+      {
+        "word": "хороший",
+        "count": 1696
+      },
+      {
+        "word": "location",
+        "count": 1621
+      },
+      {
+        "word": "работать",
+        "count": 1505
+      },
+      {
+        "word": "какой",
+        "count": 1364
+      },
+      {
+        "word": "который",
+        "count": 1264
+      },
+      {
+        "word": "user",
+        "count": 1212
+      },
+      {
+        "word": "про",
+        "count": 1201
+      },
+      {
+        "word": "год",
+        "count": 1177
+      },
+      {
+        "word": "https",
+        "count": 1175
+      },
+      {
+        "word": "один",
+        "count": 1173
+      },
+      {
+        "word": "вы",
+        "count": 1121
+      },
+      {
+        "word": "знать",
+        "count": 1069
+      },
+      {
+        "word": "мы",
+        "count": 1031
+      },
+      {
+        "word": "хотеть",
+        "count": 992
+      },
+      {
+        "word": "делать",
+        "count": 989
+      },
+      {
+        "word": "чем",
+        "count": 949
+      },
+      {
+        "word": "раз",
+        "count": 932
+      },
+      {
+        "word": "телефон",
+        "count": 919
+      },
+      {
+        "word": "новый",
+        "count": 859
+      },
+      {
+        "word": "человек",
+        "count": 853
+      },
+      {
+        "word": "большой",
+        "count": 839
+      },
+      {
+        "word": "сделать",
+        "count": 831
+      },
+      {
+        "word": "говно",
+        "count": 827
+      },
+      {
+        "word": "она",
+        "count": 823
+      },
+      {
+        "word": "говорить",
+        "count": 790
+      },
+      {
+        "word": "норма",
+        "count": 783
+      },
+      {
+        "word": "купить",
+        "count": 767
+      },
+      {
+        "word": "себя",
+        "count": 767
+      },
+      {
+        "word": "думать",
+        "count": 756
+      },
+      {
+        "word": "брать",
+        "count": 718
+      },
+      {
+        "word": "другой",
+        "count": 715
+      },
+      {
+        "word": "взять",
+        "count": 713
+      },
+      {
+        "word": "com",
+        "count": 709
+      },
+      {
+        "word": "приложение",
+        "count": 697
+      },
+      {
+        "word": "вроде",
+        "count": 673
+      },
+      {
+        "word": "айфон",
+        "count": 642
+      },
+      {
+        "word": "первый",
+        "count": 636
+      },
+      {
+        "word": "видеть",
+        "count": 635
+      },
+      {
+        "word": "пиксель",
+        "count": 615
+      },
+      {
+        "word": "смотреть",
+        "count": 604
+      },
+      {
+        "word": "время",
+        "count": 600
+      },
+      {
+        "word": "сяомь",
+        "count": 600
+      },
+      {
+        "word": "нужный",
+        "count": 599
+      }
+    ],
+    "top_bigrams": [
+      {
+        "ngram": "person redacted",
+        "count": 6022
+      },
+      {
+        "ngram": "location redacted",
+        "count": 1621
+      },
+      {
+        "ngram": "https www",
+        "count": 229
+      },
+      {
+        "ngram": "youtu be",
+        "count": 201
+      },
+      {
+        "ngram": "https youtu",
+        "count": 174
+      },
+      {
+        "ngram": "community redacted",
+        "count": 172
+      },
+      {
+        "ngram": "redacted ты",
+        "count": 141
+      },
+      {
+        "ngram": "сей пора",
+        "count": 128
+      },
+      {
+        "ngram": "redacted person",
+        "count": 122
+      },
+      {
+        "ngram": "youtube com",
+        "count": 112
+      },
+      {
+        "ngram": "www youtube",
+        "count": 107
+      },
+      {
+        "ngram": "redacted location",
+        "count": 101
+      },
+      {
+        "ngram": "com watch",
+        "count": 98
+      },
+      {
+        "ngram": "user user",
+        "count": 96
+      },
+      {
+        "ngram": "redacted me",
+        "count": 96
+      },
+      {
+        "ngram": "хороший чем",
+        "count": 95
+      },
+      {
+        "ngram": "redacted он",
+        "count": 88
+      },
+      {
+        "ngram": "год назад",
+        "count": 86
+      },
+      {
+        "ngram": "тем более",
+        "count": 85
+      },
+      {
+        "ngram": "google com",
+        "count": 84
+      },
+      {
+        "ngram": "человек который",
+        "count": 79
+      },
+      {
+        "ngram": "me news",
+        "count": 75
+      },
+      {
+        "ngram": "ты про",
+        "count": 74
+      },
+      {
+        "ngram": "twitter com",
+        "count": 72
+      },
+      {
+        "ngram": "https me",
+        "count": 68
+      },
+      {
+        "ngram": "https twitter",
+        "count": 65
+      },
+      {
+        "ngram": "ты мочь",
+        "count": 62
+      },
+      {
+        "ngram": "redacted такой",
+        "count": 62
+      },
+      {
+        "ngram": "тёмный тема",
+        "count": 61
+      },
+      {
+        "ngram": "один раз",
+        "count": 59
+      }
+    ],
+    "top_trigrams": [
+      {
+        "ngram": "https youtu be",
+        "count": 174
+      },
+      {
+        "ngram": "person redacted ты",
+        "count": 135
+      },
+      {
+        "ngram": "redacted person redacted",
+        "count": 122
+      },
+      {
+        "ngram": "www youtube com",
+        "count": 107
+      },
+      {
+        "ngram": "redacted location redacted",
+        "count": 101
+      },
+      {
+        "ngram": "person redacted person",
+        "count": 99
+      },
+      {
+        "ngram": "youtube com watch",
+        "count": 98
+      },
+      {
+        "ngram": "community redacted me",
+        "count": 95
+      },
+      {
+        "ngram": "https www youtube",
+        "count": 91
+      },
+      {
+        "ngram": "person redacted он",
+        "count": 80
+      },
+      {
+        "ngram": "location redacted location",
+        "count": 79
+      },
+      {
+        "ngram": "redacted me news",
+        "count": 75
+      },
+      {
+        "ngram": "https twitter com",
+        "count": 65
+      },
+      {
+        "ngram": "person redacted такой",
+        "count": 51
+      },
+      {
+        "ngram": "person redacted хороший",
+        "count": 44
+      },
+      {
+        "ngram": "https vk com",
+        "count": 41
+      },
+      {
+        "ngram": "ты person redacted",
+        "count": 40
+      },
+      {
+        "ngram": "person redacted мочь",
+        "count": 39
+      },
+      {
+        "ngram": "play google com",
+        "count": 35
+      },
+      {
+        "ngram": "person redacted вы",
+        "count": 33
+      }
+    ],
+    "top_fourgrams": [
+      {
+        "ngram": "person redacted person redacted",
+        "count": 99
+      },
+      {
+        "ngram": "www youtube com watch",
+        "count": 94
+      },
+      {
+        "ngram": "https www youtube com",
+        "count": 91
+      },
+      {
+        "ngram": "location redacted location redacted",
+        "count": 79
+      },
+      {
+        "ngram": "community redacted me news",
+        "count": 75
+      },
+      {
+        "ngram": "https play google com",
+        "count": 33
+      },
+      {
+        "ngram": "play google com store",
+        "count": 33
+      },
+      {
+        "ngram": "google com store apps",
+        "count": 33
+      },
+      {
+        "ngram": "com store apps details",
+        "count": 33
+      },
+      {
+        "ngram": "store apps details id",
+        "count": 33
+      },
+      {
+        "ngram": "http feedproxy google com",
+        "count": 24
+      },
+      {
+        "ngram": "feedproxy google com androidpolice",
+        "count": 24
+      },
+      {
+        "ngram": "https www instagram com",
+        "count": 23
+      },
+      {
+        "ngram": "person redacted location redacted",
+        "count": 22
+      },
+      {
+        "ngram": "location redacted person redacted",
+        "count": 21
+      }
+    ]
+  },
+  "domain_slang_analytics": {
+    "slang_terms_detected_count": 47,
+    "top_slang_terms": [
+      {
+        "term": "баг",
+        "count": 191
+      },
+      {
+        "term": "впн",
+        "count": 101
+      },
+      {
+        "term": "база",
+        "count": 84
+      },
+      {
+        "term": "стартап",
+        "count": 77
+      },
+      {
+        "term": "костыль",
+        "count": 58
+      },
+      {
+        "term": "апворк",
+        "count": 21
+      },
+      {
+        "term": "крипта",
+        "count": 16
+      },
+      {
+        "term": "биток",
+        "count": 15
+      },
+      {
+        "term": "фронт",
+        "count": 13
+      },
+      {
+        "term": "saas",
+        "count": 13
+      },
+      {
+        "term": "парсер",
+        "count": 12
+      },
+      {
+        "term": "джава",
+        "count": 12
+      },
+      {
+        "term": "стек",
+        "count": 12
+      },
+      {
+        "term": "лид",
+        "count": 12
+      },
+      {
+        "term": "эфир",
+        "count": 9
+      },
+      {
+        "term": "курсор",
+        "count": 9
+      },
+      {
+        "term": "хостинг",
+        "count": 9
+      },
+      {
+        "term": "пр",
+        "count": 8
+      },
+      {
+        "term": "раунд",
+        "count": 8
+      },
+      {
+        "term": "репа",
+        "count": 7
+      },
+      {
+        "term": "бэк",
+        "count": 7
+      },
+      {
+        "term": "репозиторий",
+        "count": 7
+      },
+      {
+        "term": "парсить",
+        "count": 7
+      },
+      {
+        "term": "продакшн",
+        "count": 7
+      },
+      {
+        "term": "бэкенд",
+        "count": 6
+      },
+      {
+        "term": "базы",
+        "count": 6
+      },
+      {
+        "term": "саас",
+        "count": 5
+      },
+      {
+        "term": "докер",
+        "count": 5
+      },
+      {
+        "term": "оффер",
+        "count": 5
+      },
+      {
+        "term": "шлюз",
+        "count": 4
+      },
+      {
+        "term": "бд",
+        "count": 4
+      },
+      {
+        "term": "инвойс",
+        "count": 3
+      },
+      {
+        "term": "жаба",
+        "count": 3
+      },
+      {
+        "term": "синк",
+        "count": 3
+      },
+      {
+        "term": "джуна",
+        "count": 3
+      }
+    ],
+    "domain_message_distribution": {
+      "general_tech_chat": {
+        "count": 2688595,
+        "percentage": 95.46
+      },
+      "business_legal_fintech": {
+        "count": 38166,
+        "percentage": 1.36
+      },
+      "ai_ml_nlp": {
+        "count": 29405,
+        "percentage": 1.04
+      },
+      "frontend_ui": {
+        "count": 18967,
+        "percentage": 0.67
+      },
+      "career_team_management": {
+        "count": 12423,
+        "percentage": 0.44
+      },
+      "backend_databases": {
+        "count": 11801,
+        "percentage": 0.42
+      },
+      "sysadmin_security": {
+        "count": 10093,
+        "percentage": 0.36
+      },
+      "devops_infra": {
+        "count": 6984,
+        "percentage": 0.25
+      }
+    },
+    "top_technical_tags": [
+      {
+        "tag": "ios",
+        "count": 11013
+      },
+      {
+        "tag": "бизнес",
+        "count": 10074
+      },
+      {
+        "tag": "телеграм",
+        "count": 7797
+      },
+      {
+        "tag": "бот",
+        "count": 6531
+      },
+      {
+        "tag": "ai",
+        "count": 6256
+      },
+      {
+        "tag": "gemini",
+        "count": 6036
+      },
+      {
+        "tag": "android",
+        "count": 5273
+      },
+      {
+        "tag": "chatgpt",
+        "count": 4569
+      },
+      {
+        "tag": "vpn",
+        "count": 4499
+      },
+      {
+        "tag": "продажи",
+        "count": 4410
+      },
+      {
+        "tag": "зп",
+        "count": 4342
+      },
+      {
+        "tag": "gpt",
+        "count": 4066
+      },
+      {
+        "tag": "openai",
+        "count": 3938
+      },
+      {
+        "tag": "claude",
+        "count": 3788
+      },
+      {
+        "tag": "база",
+        "count": 3787
+      },
+      {
+        "tag": "ноут",
+        "count": 3493
+      },
+      {
+        "tag": "счет",
+        "count": 3474
+      },
+      {
+        "tag": "банк",
+        "count": 3424
+      },
+      {
+        "tag": "прокси",
+        "count": 2951
+      },
+      {
+        "tag": "tg",
+        "count": 2815
+      },
+      {
+        "tag": "сервер",
+        "count": 2746
+      },
+      {
+        "tag": "офис",
+        "count": 2546
+      },
+      {
+        "tag": "ton",
+        "count": 2498
+      },
+      {
+        "tag": "python",
+        "count": 2482
+      },
+      {
+        "tag": "железо",
+        "count": 2359
+      },
+      {
+        "tag": "налоги",
+        "count": 2260
+      },
+      {
+        "tag": "маркетинг",
+        "count": 2250
+      },
+      {
+        "tag": "llm",
+        "count": 2101
+      },
+      {
+        "tag": "deepseek",
+        "count": 1999
+      },
+      {
+        "tag": "ооо",
+        "count": 1953
+      },
+      {
+        "tag": "ип",
+        "count": 1834
+      },
+      {
+        "tag": "go",
+        "count": 1768
+      },
+      {
+        "tag": "macbook",
+        "count": 1747
+      },
+      {
+        "tag": "безопасность",
+        "count": 1747
+      },
+      {
+        "tag": "linux",
+        "count": 1716
+      },
+      {
+        "tag": "резюме",
+        "count": 1576
+      },
+      {
+        "tag": "стартап",
+        "count": 1501
+      },
+      {
+        "tag": "монитор",
+        "count": 1403
+      },
+      {
+        "tag": "js",
+        "count": 1369
+      },
+      {
+        "tag": "php",
+        "count": 1337
+      }
+    ]
+  },
+  "sentiment_and_syntax": {
+    "sentiment": {
+      "average": 0.023,
+      "positive": 118300,
+      "negative": 64440,
+      "neutral": 2633694,
+      "pos_ratio": 4.2,
+      "neg_ratio": 2.29,
+      "neu_ratio": 93.51
+    },
+    "questions_count": 459310,
+    "questions_ratio_percentage": 16.31,
+    "code_snippets_count": 2406,
+    "code_snippets_ratio_percentage": 0.09
+  },
+  "social_network": {
+    "total_nodes": 206641,
+    "total_edges": 1060161,
+    "total_interactions": 2385649,
+    "density": 2.5e-05,
+    "reciprocal_connections": 110431,
+    "top_influencers": [
+      {
+        "author": "Developer_59062",
+        "replies_received": 359115
+      },
+      {
+        "author": "Developer_14995",
+        "replies_received": 69008
+      },
+      {
+        "author": "Developer_44794",
+        "replies_received": 63710
+      },
+      {
+        "author": "Developer_01792",
+        "replies_received": 58433
+      },
+      {
+        "author": "Developer_44743",
+        "replies_received": 45053
+      },
+      {
+        "author": "Developer_02311",
+        "replies_received": 32439
+      },
+      {
+        "author": "Developer_197845",
+        "replies_received": 25987
+      },
+      {
+        "author": "Developer_153427",
+        "replies_received": 25723
+      },
+      {
+        "author": "Developer_00475",
+        "replies_received": 16833
+      },
+      {
+        "author": "Developer_65546",
+        "replies_received": 15583
+      },
+      {
+        "author": "Developer_17393",
+        "replies_received": 14931
+      },
+      {
+        "author": "Developer_39049",
+        "replies_received": 13867
+      },
+      {
+        "author": "Developer_28741",
+        "replies_received": 12398
+      },
+      {
+        "author": "Developer_153968",
+        "replies_received": 12108
+      },
+      {
+        "author": "Developer_124931",
+        "replies_received": 11869
+      }
+    ],
+    "top_responders": [
+      {
+        "author": "Developer_39049",
+        "replies_given": 19088
+      },
+      {
+        "author": "Developer_05851",
+        "replies_given": 16922
+      },
+      {
+        "author": "Developer_17393",
+        "replies_given": 16320
+      },
+      {
+        "author": "Developer_00475",
+        "replies_given": 15828
+      },
+      {
+        "author": "Developer_44743",
+        "replies_given": 9133
+      },
+      {
+        "author": "Developer_126467",
+        "replies_given": 8860
+      },
+      {
+        "author": "Developer_31061",
+        "replies_given": 8320
+      },
+      {
+        "author": "Developer_65546",
+        "replies_given": 8211
+      },
+      {
+        "author": "Developer_07386",
+        "replies_given": 8103
+      },
+      {
+        "author": "Developer_62268",
+        "replies_given": 6959
+      },
+      {
+        "author": "Developer_43934",
+        "replies_given": 6843
+      },
+      {
+        "author": "Developer_123482",
+        "replies_given": 6562
+      },
+      {
+        "author": "Developer_44794",
+        "replies_given": 6513
+      },
+      {
+        "author": "Developer_124931",
+        "replies_given": 6477
+      },
+      {
+        "author": "Developer_18916",
+        "replies_given": 6442
+      }
+    ],
+    "strongest_collaboration_pairs": [
+      {
+        "user_a": "Developer_07386",
+        "user_b": "Developer_158887",
+        "total_replies": 1664
+      },
+      {
+        "user_a": "Developer_01792",
+        "user_b": "Developer_05851",
+        "total_replies": 1612
+      },
+      {
+        "user_a": "Developer_00475",
+        "user_b": "Developer_28741",
+        "total_replies": 1470
+      },
+      {
+        "user_a": "Developer_07386",
+        "user_b": "Developer_17393",
+        "total_replies": 1264
+      },
+      {
+        "user_a": "Developer_07386",
+        "user_b": "Developer_91760",
+        "total_replies": 1178
+      },
+      {
+        "user_a": "Developer_01792",
+        "user_b": "Developer_43934",
+        "total_replies": 1177
+      },
+      {
+        "user_a": "Developer_28741",
+        "user_b": "Developer_65546",
+        "total_replies": 1177
+      },
+      {
+        "user_a": "Developer_07386",
+        "user_b": "Developer_126467",
+        "total_replies": 1165
+      },
+      {
+        "user_a": "Developer_126467",
+        "user_b": "Developer_134670",
+        "total_replies": 1090
+      },
+      {
+        "user_a": "Developer_65546",
+        "user_b": "Developer_124931",
+        "total_replies": 1086
+      },
+      {
+        "user_a": "Developer_01792",
+        "user_b": "Developer_113771",
+        "total_replies": 1034
+      },
+      {
+        "user_a": "Developer_00475",
+        "user_b": "Developer_44794",
+        "total_replies": 1016
+      }
+    ]
+  },
+  "author_signature_phrases": {
+    "Developer_39049": [
+      "s23",
+      "nothing",
+      "имб",
+      "озон",
+      "компьютер"
+    ],
+    "Developer_02311": [
+      "news",
+      "rtx",
+      "ultra",
+      "юань",
+      "community"
+    ],
+    "Developer_44794": [
+      "опус",
+      "геминь",
+      "клод",
+      "гпт",
+      "промпт"
+    ],
+    "Developer_17393": [
+      "стриминг",
+      "плевать",
+      "арма",
+      "дрм",
+      "ск"
+    ],
+    "Developer_05851": [
+      "ton",
+      "gpt",
+      "кд",
+      "камент",
+      "самокат"
+    ],
+    "Developer_01792": [
+      "kod",
+      "ton",
+      "usd",
+      "дурова",
+      "openai"
+    ],
+    "Developer_59062": [
+      "ultra",
+      "ии",
+      "ма",
+      "сообщает",
+      "представила"
+    ],
+    "Developer_00475": [
+      "выручка",
+      "грант",
+      "clickfraud",
+      "ия",
+      "юр"
+    ],
+    "Developer_14995": [
+      "ии",
+      "tg",
+      "clickfraud",
+      "картинке",
+      "gemini"
+    ],
+    "Developer_44743": [
+      "boosty",
+      "forgetme",
+      "нейросети",
+      "openai",
+      "claude"
+    ],
+    "Developer_126467": [
+      "пон",
+      "вобщий",
+      "воьщий",
+      "звезда",
+      "мут"
+    ],
+    "Developer_31061": [
+      "убери",
+      "ограничениеадмин",
+      "worldhello",
+      "key",
+      "пон"
+    ],
+    "Developer_07386": [
+      "окак",
+      "буквально",
+      "чатгпт",
+      "спотик",
+      "хайфай"
+    ],
+    "Developer_197845": [
+      "айпить",
+      "фурри",
+      "клаудфлеер",
+      "фембой",
+      "матрикс"
+    ],
+    "Developer_65546": [
+      "ии",
+      "cursor",
+      "shadcn",
+      "грок",
+      "llm"
+    ],
+    "Developer_29240": [
+      "ии",
+      "openai",
+      "xor",
+      "chatgpt",
+      "claude"
+    ],
+    "Developer_153427": [
+      "gemini",
+      "claude",
+      "gpt",
+      "deepseek",
+      "grok"
+    ],
+    "Developer_43934": [
+      "кд",
+      "жидкий",
+      "ия",
+      "камент",
+      "яблочник"
+    ],
+    "Developer_18916": [
+      "буквально",
+      "moment",
+      "s22u",
+      "шиза",
+      "screenshots"
+    ],
+    "Developer_62268": [
+      "ultra",
+      "display",
+      "победитель",
+      "wylsared",
+      "vivo"
+    ],
+    "Developer_124931": [
+      "ии",
+      "llm",
+      "ия",
+      "gpt",
+      "опус"
+    ],
+    "Developer_28741": [
+      "собеседование",
+      "веб-студия",
+      "собес",
+      "эйчар",
+      "бигтех"
+    ],
+    "Developer_113771": [
+      "кхе-кх",
+      "тспа",
+      "отечественный",
+      "гражданин",
+      "суверенный"
+    ],
+    "Developer_123482": [
+      "ия",
+      "gemini",
+      "мах",
+      "промпт",
+      "chatgpt"
+    ],
+    "Developer_00056": [
+      "братик",
+      "айф",
+      "заебумба",
+      "грипа",
+      "хуявь"
+    ]
+  },
+  "topic_clusters_lda": [
+    {
+      "topic_id": 1,
+      "label": "Topic 1: ты, мне, location_redacted, он",
+      "top_keywords": [
+        "ты",
+        "мне",
+        "location_redacted",
+        "он",
+        "норм",
+        "хочу",
+        "лучше",
+        "они",
+        "msi",
+        "много"
+      ]
+    },
+    {
+      "topic_id": 2,
+      "label": "Topic 2: ты, про, мне, он",
+      "top_keywords": [
+        "ты",
+        "про",
+        "мне",
+        "он",
+        "location_redacted",
+        "раз",
+        "мы",
+        "чем",
+        "может",
+        "норм"
+      ]
+    },
+    {
+      "topic_id": 3,
+      "label": "Topic 3: они, https, был, он",
+      "top_keywords": [
+        "они",
+        "https",
+        "был",
+        "он",
+        "этого",
+        "мы",
+        "com",
+        "ты",
+        "работает",
+        "вы"
+      ]
+    },
+    {
+      "topic_id": 4,
+      "label": "Topic 4: мне, location_redacted, тебя, ты",
+      "top_keywords": [
+        "мне",
+        "location_redacted",
+        "тебя",
+        "ты",
+        "был",
+        "он",
+        "https",
+        "про",
+        "d0",
+        "они"
+      ]
+    },
+    {
+      "topic_id": 5,
+      "label": "Topic 5: https, ты, канал, он",
+      "top_keywords": [
+        "https",
+        "ты",
+        "канал",
+        "он",
+        "лучше",
+        "be",
+        "youtu",
+        "iphone",
+        "привет",
+        "нибудь"
+      ]
+    },
+    {
+      "topic_id": 6,
+      "label": "Topic 6: to, the, and, in",
+      "top_keywords": [
+        "to",
+        "the",
+        "and",
+        "in",
+        "telegram",
+        "лучше",
+        "location_redacted",
+        "он",
+        "они",
+        "работает"
+      ]
+    },
+    {
+      "topic_id": 7,
+      "label": "Topic 7: https, id, noutbuk, location_redacted",
+      "top_keywords": [
+        "https",
+        "id",
+        "noutbuk",
+        "location_redacted",
+        "lenovo",
+        "core",
+        "он",
+        "нибудь",
+        "может",
+        "thinkpad"
+      ]
+    },
+    {
+      "topic_id": 8,
+      "label": "Topic 8: он, ты, мне, d0",
+      "top_keywords": [
+        "он",
+        "ты",
+        "мне",
+        "d0",
+        "location_redacted",
+        "может",
+        "чем",
+        "pro",
+        "спасибо",
+        "него"
+      ]
+    }
+  ],
+  "longitudinal_evolution_8_years": {
+    "2017": {
+      "message_count": 24866,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "он",
+        "такой",
+        "они",
+        "location",
+        "мочь"
+      ],
+      "top_tech_keywords": []
+    },
+    "2018": {
+      "message_count": 64040,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "он",
+        "такой",
+        "они",
+        "мочь",
+        "хороший"
+      ],
+      "top_tech_keywords": []
+    },
+    "2019": {
+      "message_count": 29855,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "он",
+        "такой",
+        "они",
+        "мочь",
+        "location"
+      ],
+      "top_tech_keywords": []
+    },
+    "2020": {
+      "message_count": 43488,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "location",
+        "они",
+        "такой",
+        "он",
+        "мочь"
+      ],
+      "top_tech_keywords": []
+    },
+    "2021": {
+      "message_count": 187903,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "location",
+        "они",
+        "он",
+        "такой",
+        "который"
+      ],
+      "top_tech_keywords": []
+    },
+    "2022": {
+      "message_count": 141195,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "location",
+        "ты",
+        "они",
+        "такой",
+        "мочь",
+        "который"
+      ],
+      "top_tech_keywords": []
+    },
+    "2023": {
+      "message_count": 242862,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "такой",
+        "он",
+        "они",
+        "location",
+        "мочь"
+      ],
+      "top_tech_keywords": []
+    },
+    "2024": {
+      "message_count": 611828,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "такой",
+        "location",
+        "он",
+        "они",
+        "мочь"
+      ],
+      "top_tech_keywords": []
+    },
+    "2025": {
+      "message_count": 918534,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "он",
+        "такой",
+        "они",
+        "location",
+        "мочь"
+      ],
+      "top_tech_keywords": []
+    },
+    "2026": {
+      "message_count": 551863,
+      "top_general_words": [
+        "redacted",
+        "person",
+        "ты",
+        "они",
+        "location",
+        "он",
+        "такой",
+        "мочь"
+      ],
+      "top_tech_keywords": []
+    }
+  },
+  "noise_and_quality": {
+    "short_messages_under_20_chars": 715982,
+    "short_messages_ratio_percentage": 25.42,
+    "empty_messages_count": 139778,
+    "empty_messages_ratio_percentage": 4.96,
+    "high_emotion_messages_count": 37721,
+    "high_emotion_ratio_percentage": 1.34
+  },
+  "quality_and_readiness": {
+    "total_score": 90,
+    "max_score": 100,
+    "score_breakdown": {
+      "volume_score": 25,
+      "author_diversity_score": 20,
+      "technical_density_score": 10,
+      "dialogue_continuity_score": 15,
+      "lexical_diversity_score": 10,
+      "pii_compliance_score": 10
+    },
+    "quality_tier": "High Diversity & Coverage (Category A)",
+    "tier_description": "Широкий технический охват и достаточный объем для доменного обучения языковых моделей."
+  }
+}
