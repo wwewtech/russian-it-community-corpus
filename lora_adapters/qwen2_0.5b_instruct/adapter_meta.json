@@ -1,0 +1,11 @@
+{
+  "adapter_id": "qwen2_0.5b_instruct",
+  "base_model": "Qwen/Qwen2-0.5B-Instruct",
+  "family": "Qwen 2",
+  "params": "0.5B",
+  "dataset": "wwewtech/russian-it-community-corpus",
+  "trained_on": "NVIDIA GeForce RTX 3060 (12GB)",
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "max_steps": 50
+}

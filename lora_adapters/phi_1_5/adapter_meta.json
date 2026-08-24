@@ -1,0 +1,11 @@
+{
+  "adapter_id": "phi_1_5",
+  "base_model": "microsoft/phi-1_5",
+  "family": "Phi 1.5",
+  "params": "1.3B",
+  "dataset": "wwewtech/russian-it-community-corpus",
+  "trained_on": "NVIDIA GeForce RTX 3060 (12GB)",
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "max_steps": 50
+}

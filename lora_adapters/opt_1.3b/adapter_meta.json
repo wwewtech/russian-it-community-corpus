@@ -1,0 +1,11 @@
+{
+  "adapter_id": "opt_1.3b",
+  "base_model": "facebook/opt-1.3b",
+  "family": "Meta OPT",
+  "params": "1.3B",
+  "dataset": "wwewtech/russian-it-community-corpus",
+  "trained_on": "NVIDIA GeForce RTX 3060 (12GB)",
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "max_steps": 50
+}

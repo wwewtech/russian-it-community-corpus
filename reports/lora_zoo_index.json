@@ -1,0 +1,310 @@
+[
+  {
+    "id": "bloom_1b7",
+    "size_mb": 12.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/bloom_1b7",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "bloom_560m",
+    "size_mb": 6.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/bloom_560m",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "deepseek_coder_1.3b_instruct",
+    "size_mb": 152.12,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/deepseek_coder_1.3b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "deepseek_r1_distill_qwen_1.5b",
+    "size_mb": 16.65,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/deepseek_r1_distill_qwen_1.5b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "gemma_2_2b_it",
+    "size_mb": 24.4,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/gemma_2_2b_it",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "gpt2_large",
+    "size_mb": 11.26,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/gpt2_large",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "gpt2_medium",
+    "size_mb": 6.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/gpt2_medium",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "granite_3b_code_instruct",
+    "size_mb": 283.19,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/granite_3b_code_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "heavyweight_deepseek_r1_7b",
+    "size_mb": 154.05,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/heavyweight_deepseek_r1_7b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "heavyweight_llama3.1_8b",
+    "size_mb": 160.06,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/heavyweight_llama3.1_8b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "heavyweight_qwen2.5_coder_7b",
+    "size_mb": 154.05,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/heavyweight_qwen2.5_coder_7b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "llama_3.2_1b_instruct",
+    "size_mb": 13.02,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/llama_3.2_1b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "llama_3.2_3b_instruct",
+    "size_mb": 35.03,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/llama_3.2_3b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "minicpm_2b_dpo",
+    "size_mb": 592.12,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/minicpm_2b_dpo",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "phi_3.5_mini_instruct",
+    "size_mb": 36.02,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/phi_3.5_mini_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "pythia_1.4b",
+    "size_mb": 12.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/pythia_1.4b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "pythia_2.8b",
+    "size_mb": 20.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/pythia_2.8b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "pythia_410m",
+    "size_mb": 6.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/pythia_410m",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "pythia_70m",
+    "size_mb": 0.75,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/pythia_70m",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen1.5_0.5b_chat",
+    "size_mb": 318.11,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen1.5_0.5b_chat",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen1.5_1.8b_chat",
+    "size_mb": 626.92,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen1.5_1.8b_chat",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_0.5b_instruct",
+    "size_mb": 8.27,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_0.5b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_1.5b_instruct",
+    "size_mb": 16.65,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_1.5b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_3b_instruct",
+    "size_mb": 28.16,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_3b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_coder_0.5b_instruct",
+    "size_mb": 8.27,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_coder_0.5b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_coder_1.5b_instruct",
+    "size_mb": 16.65,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_coder_1.5b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_coder_3b_instruct",
+    "size_mb": 28.16,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_coder_3b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "qwen2.5_math_1.5b_instruct",
+    "size_mb": 471.15,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/qwen2.5_math_1.5b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "rugpt3_large",
+    "size_mb": 9.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/rugpt3_large",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "rugpt3_medium",
+    "size_mb": 6.01,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/rugpt3_medium",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "rugpt3_small",
+    "size_mb": 2.25,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/rugpt3_small",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "russian_it_lora",
+    "size_mb": 8.27,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/russian_it_lora",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "smollm2_1.7b_instruct",
+    "size_mb": 24.02,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/smollm2_1.7b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "smollm2_135m_instruct",
+    "size_mb": 7.06,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/smollm2_135m_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "smollm2_360m_instruct",
+    "size_mb": 12.53,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/smollm2_360m_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "smollm_1.7b_instruct",
+    "size_mb": 219.15,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/smollm_1.7b_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "smollm_135m_instruct",
+    "size_mb": 64.1,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/smollm_135m_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "smollm_360m_instruct",
+    "size_mb": 105.59,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/smollm_360m_instruct",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "stablelm_2_1_6b_chat",
+    "size_mb": 422.27,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/stablelm_2_1_6b_chat",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "stablelm_2_zephyr_1_6b",
+    "size_mb": 422.27,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/stablelm_2_zephyr_1_6b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "tinyllama_1.1b_chat",
+    "size_mb": 17.21,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/tinyllama_1.1b_chat",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "vikhr_llama_3.2_1b",
+    "size_mb": 13.02,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/vikhr_llama_3.2_1b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "vikhr_qwen_2.5_0.5b",
+    "size_mb": 8.27,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/vikhr_qwen_2.5_0.5b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  },
+  {
+    "id": "vikhr_qwen_2.5_1.5b",
+    "size_mb": 16.65,
+    "status": "SUCCESS",
+    "adapter_dir": "lora_adapters/vikhr_qwen_2.5_1.5b",
+    "hf_model_repo": "wwewtech/russian-it-community-lora"
+  }
+]

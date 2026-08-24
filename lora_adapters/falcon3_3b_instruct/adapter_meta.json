@@ -1,0 +1,11 @@
+{
+  "adapter_id": "falcon3_3b_instruct",
+  "base_model": "tiiuae/Falcon3-3B-Instruct",
+  "family": "Falcon 3",
+  "params": "3.0B",
+  "dataset": "wwewtech/russian-it-community-corpus",
+  "trained_on": "NVIDIA GeForce RTX 3060 (12GB)",
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "max_steps": 50
+}
