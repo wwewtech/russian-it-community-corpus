@@ -1,22 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 76" width="520" height="76">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 80" width="540" height="80">
   <!-- Minimalist Perfectly Centered Wordmark (Dark Theme) -->
-  <g transform="translate(32, 10)">
-    <!-- Diamond Glyph -->
-    <g transform="translate(0, 0)">
-      <polygon points="23,1 45,23 23,45 1,23" fill="none" stroke="#fafafa" stroke-width="4.5" stroke-linejoin="round" />
-      <polygon points="23,11 33,21 23,31 13,21" fill="#fafafa" />
+  <g transform="translate(20, 0)">
+    <!-- Standardized Diamond Glyph (100% matches logo_dark.svg) -->
+    <g transform="translate(0, 8) scale(0.75)">
+      <polygon points="32,6 58,32 32,58 6,32" fill="none" stroke="#fafafa" stroke-width="5" stroke-linejoin="round" />
+      <polygon points="32,18 46,32 32,46 18,32" fill="#fafafa" />
     </g>
 
     <!-- Bold Monolithic RICC -->
-    <text x="64" y="38" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', Roboto, Helvetica, sans-serif" font-size="42" font-weight="900" fill="#fafafa" letter-spacing="-1.5">
+    <text x="64" y="46" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', Roboto, Helvetica, sans-serif" font-size="42" font-weight="900" fill="#fafafa" letter-spacing="-1.5">
       RICC
     </text>
 
     <!-- Vertical Hairline Divider -->
-    <line x1="184" y1="6" x2="184" y2="42" stroke="#3f3f46" stroke-width="1.5" />
+    <line x1="184" y1="16" x2="184" y2="52" stroke="#3f3f46" stroke-width="1.5" />
 
     <!-- Subtitle Lockup -->
-    <text x="200" y="22" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#fafafa" letter-spacing="0.5">RUSSIAN IT COMMUNITY CORPUS</text>
-    <text x="200" y="39" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="10" font-weight="500" fill="#a1a1aa" letter-spacing="0.2">2.91M MSGS · 2017–2026</text>
+    <text x="200" y="31" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#fafafa" letter-spacing="0.5">RUSSIAN IT COMMUNITY CORPUS</text>
+    <text x="200" y="48" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="10" font-weight="500" fill="#a1a1aa" letter-spacing="0.2">2.91M MSGS · 2017–2026</text>
   </g>
 </svg>
