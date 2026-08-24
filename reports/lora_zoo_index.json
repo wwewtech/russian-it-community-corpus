@@ -1,310 +1,442 @@
 [
   {
     "id": "bloom_1b7",
-    "size_mb": 12.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/bloom_1b7",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "bigscience/bloom-1b7",
+    "family": "BigScience BLOOM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "bloom_1b7"
   },
   {
     "id": "bloom_560m",
-    "size_mb": 6.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/bloom_560m",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "bigscience/bloom-560m",
+    "family": "BigScience BLOOM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "bloom_560m"
   },
   {
     "id": "deepseek_coder_1.3b_instruct",
-    "size_mb": 152.12,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/deepseek_coder_1.3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
+    "family": "DeepSeek",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "deepseek_coder_1.3b_instruct"
   },
   {
     "id": "deepseek_r1_distill_qwen_1.5b",
-    "size_mb": 16.65,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/deepseek_r1_distill_qwen_1.5b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    "family": "DeepSeek",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "deepseek_r1_distill_qwen_1.5b"
+  },
+  {
+    "id": "falcon3_1b_instruct",
+    "base_model": "tiiuae/Falcon3-1B-Instruct",
+    "family": "TII Falcon",
+    "params": "1.0B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "falcon3_1b_instruct"
+  },
+  {
+    "id": "falcon3_3b_instruct",
+    "base_model": "tiiuae/Falcon3-3B-Instruct",
+    "family": "TII Falcon",
+    "params": "3.0B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "falcon3_3b_instruct"
   },
   {
     "id": "gemma_2_2b_it",
-    "size_mb": 24.4,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/gemma_2_2b_it",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "unsloth/gemma-2-2b-it",
+    "family": "Open Weights",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "gemma_2_2b_it"
   },
   {
     "id": "gpt2_large",
-    "size_mb": 11.26,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/gpt2_large",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "openai-community/gpt2-large",
+    "family": "Generative GPT-2 / RuGPT",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "gpt2_large"
   },
   {
     "id": "gpt2_medium",
-    "size_mb": 6.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/gpt2_medium",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "openai-community/gpt2-medium",
+    "family": "Generative GPT-2 / RuGPT",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "gpt2_medium"
   },
   {
     "id": "granite_3b_code_instruct",
-    "size_mb": 283.19,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/granite_3b_code_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "ibm-granite/granite-3b-code-instruct",
+    "family": "Open Weights",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "granite_3b_code_instruct"
   },
   {
     "id": "heavyweight_deepseek_r1_7b",
-    "size_mb": 154.05,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/heavyweight_deepseek_r1_7b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "unsloth/DeepSeek-R1-Distill-Qwen-7B-bnb-4bit",
+    "family": "DeepSeek",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "heavyweight_deepseek_r1_7b"
   },
   {
     "id": "heavyweight_llama3.1_8b",
-    "size_mb": 160.06,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/heavyweight_llama3.1_8b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+    "family": "Meta LLaMA",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "heavyweight_llama3.1_8b"
   },
   {
     "id": "heavyweight_qwen2.5_coder_7b",
-    "size_mb": 154.05,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/heavyweight_qwen2.5_coder_7b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit",
+    "family": "Qwen 2.5 Coder",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "heavyweight_qwen2.5_coder_7b"
   },
   {
     "id": "llama_3.2_1b_instruct",
-    "size_mb": 13.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/llama_3.2_1b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "unsloth/Llama-3.2-1B-Instruct",
+    "family": "Meta LLaMA",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "llama_3.2_1b_instruct"
   },
   {
     "id": "llama_3.2_3b_instruct",
-    "size_mb": 35.03,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/llama_3.2_3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "unsloth/Llama-3.2-3B-Instruct",
+    "family": "Meta LLaMA",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "llama_3.2_3b_instruct"
   },
   {
     "id": "minicpm_2b_dpo",
-    "size_mb": 592.12,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/minicpm_2b_dpo",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "openbmb/MiniCPM-2B-dpo-bf16",
+    "family": "Open Weights",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "minicpm_2b_dpo"
+  },
+  {
+    "id": "opt_1.3b",
+    "base_model": "facebook/opt-1.3b",
+    "family": "Meta OPT",
+    "params": "1.3B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "opt_1.3b"
+  },
+  {
+    "id": "opt_125m",
+    "base_model": "facebook/opt-125m",
+    "family": "Meta OPT",
+    "params": "125M",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "opt_125m"
+  },
+  {
+    "id": "opt_2.7b",
+    "base_model": "facebook/opt-2.7b",
+    "family": "Meta OPT",
+    "params": "2.7B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "opt_2.7b"
+  },
+  {
+    "id": "opt_350m",
+    "base_model": "facebook/opt-350m",
+    "family": "Meta OPT",
+    "params": "350M",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "opt_350m"
+  },
+  {
+    "id": "phi_1_5",
+    "base_model": "microsoft/phi-1_5",
+    "family": "Microsoft Phi",
+    "params": "1.3B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "phi_1_5"
+  },
+  {
+    "id": "phi_2",
+    "base_model": "microsoft/phi-2",
+    "family": "Microsoft Phi",
+    "params": "2.7B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "phi_2"
   },
   {
     "id": "phi_3.5_mini_instruct",
-    "size_mb": 36.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/phi_3.5_mini_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "microsoft/Phi-3.5-mini-instruct",
+    "family": "Microsoft Phi",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "phi_3.5_mini_instruct"
+  },
+  {
+    "id": "phi_3_mini_4k_instruct",
+    "base_model": "microsoft/Phi-3-mini-4k-instruct",
+    "family": "Microsoft Phi",
+    "params": "3.8B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "phi_3_mini_4k_instruct"
   },
   {
     "id": "pythia_1.4b",
-    "size_mb": 12.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/pythia_1.4b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "EleutherAI/pythia-1.4b-deduped",
+    "family": "EleutherAI Pythia",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "pythia_1.4b"
   },
   {
     "id": "pythia_2.8b",
-    "size_mb": 20.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/pythia_2.8b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "EleutherAI/pythia-2.8b-deduped",
+    "family": "EleutherAI Pythia",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "pythia_2.8b"
   },
   {
     "id": "pythia_410m",
-    "size_mb": 6.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/pythia_410m",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "EleutherAI/pythia-410m-deduped",
+    "family": "EleutherAI Pythia",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "pythia_410m"
   },
   {
     "id": "pythia_70m",
-    "size_mb": 0.75,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/pythia_70m",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "EleutherAI/pythia-70m-deduped",
+    "family": "EleutherAI Pythia",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "pythia_70m"
   },
   {
     "id": "qwen1.5_0.5b_chat",
-    "size_mb": 318.11,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen1.5_0.5b_chat",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen1.5-0.5B-Chat",
+    "family": "Qwen 1.5",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen1.5_0.5b_chat"
   },
   {
     "id": "qwen1.5_1.8b_chat",
-    "size_mb": 626.92,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen1.5_1.8b_chat",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen1.5-1.8B-Chat",
+    "family": "Qwen 1.5",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen1.5_1.8b_chat"
   },
   {
     "id": "qwen2.5_0.5b_instruct",
-    "size_mb": 8.27,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_0.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_0.5b_instruct"
   },
   {
     "id": "qwen2.5_1.5b_instruct",
-    "size_mb": 16.65,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_1.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_1.5b_instruct"
   },
   {
     "id": "qwen2.5_3b_instruct",
-    "size_mb": 28.16,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-3B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_3b_instruct"
   },
   {
     "id": "qwen2.5_coder_0.5b_instruct",
-    "size_mb": 8.27,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_coder_0.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_coder_0.5b_instruct"
   },
   {
     "id": "qwen2.5_coder_1.5b_instruct",
-    "size_mb": 16.65,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_coder_1.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_coder_1.5b_instruct"
   },
   {
     "id": "qwen2.5_coder_3b_instruct",
-    "size_mb": 28.16,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_coder_3b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-Coder-3B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_coder_3b_instruct"
   },
   {
     "id": "qwen2.5_math_1.5b_instruct",
-    "size_mb": 471.15,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/qwen2.5_math_1.5b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2.5_math_1.5b_instruct"
+  },
+  {
+    "id": "qwen2_0.5b_instruct",
+    "base_model": "Qwen/Qwen2-0.5B-Instruct",
+    "family": "Qwen 2",
+    "params": "0.5B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2_0.5b_instruct"
+  },
+  {
+    "id": "qwen2_1.5b_instruct",
+    "base_model": "Qwen/Qwen2-1.5B-Instruct",
+    "family": "Qwen 2",
+    "params": "1.5B",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "qwen2_1.5b_instruct"
   },
   {
     "id": "rugpt3_large",
-    "size_mb": 9.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/rugpt3_large",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "ai-forever/rugpt3large_based_on_gpt2",
+    "family": "Generative GPT-2 / RuGPT",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "rugpt3_large"
   },
   {
     "id": "rugpt3_medium",
-    "size_mb": 6.01,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/rugpt3_medium",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "ai-forever/rugpt3medium_based_on_gpt2",
+    "family": "Generative GPT-2 / RuGPT",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "rugpt3_medium"
   },
   {
     "id": "rugpt3_small",
-    "size_mb": 2.25,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/rugpt3_small",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "ai-forever/rugpt3small_based_on_gpt2",
+    "family": "Generative GPT-2 / RuGPT",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "rugpt3_small"
   },
   {
     "id": "russian_it_lora",
-    "size_mb": 8.27,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/russian_it_lora",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "family": "Open Weights",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "russian_it_lora"
   },
   {
     "id": "smollm2_1.7b_instruct",
-    "size_mb": 24.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm2_1.7b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "family": "SmolLM2",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "smollm2_1.7b_instruct"
   },
   {
     "id": "smollm2_135m_instruct",
-    "size_mb": 7.06,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm2_135m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "family": "SmolLM2",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "smollm2_135m_instruct"
   },
   {
     "id": "smollm2_360m_instruct",
-    "size_mb": 12.53,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm2_360m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "HuggingFaceTB/SmolLM2-360M-Instruct",
+    "family": "SmolLM2",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "smollm2_360m_instruct"
   },
   {
     "id": "smollm_1.7b_instruct",
-    "size_mb": 219.15,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm_1.7b_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "HuggingFaceTB/SmolLM-1.7B-Instruct",
+    "family": "SmolLM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "smollm_1.7b_instruct"
   },
   {
     "id": "smollm_135m_instruct",
-    "size_mb": 64.1,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm_135m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "HuggingFaceTB/SmolLM-135M-Instruct",
+    "family": "SmolLM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "smollm_135m_instruct"
   },
   {
     "id": "smollm_360m_instruct",
-    "size_mb": 105.59,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/smollm_360m_instruct",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "HuggingFaceTB/SmolLM-360M-Instruct",
+    "family": "SmolLM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "smollm_360m_instruct"
   },
   {
     "id": "stablelm_2_1_6b_chat",
-    "size_mb": 422.27,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/stablelm_2_1_6b_chat",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "stabilityai/stablelm-2-1_6b-chat",
+    "family": "Stability AI StableLM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "stablelm_2_1_6b_chat"
   },
   {
     "id": "stablelm_2_zephyr_1_6b",
-    "size_mb": 422.27,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/stablelm_2_zephyr_1_6b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "stabilityai/stablelm-2-zephyr-1_6b",
+    "family": "Stability AI StableLM",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "stablelm_2_zephyr_1_6b"
   },
   {
     "id": "tinyllama_1.1b_chat",
-    "size_mb": 17.21,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/tinyllama_1.1b_chat",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "family": "Open Weights",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "tinyllama_1.1b_chat"
   },
   {
     "id": "vikhr_llama_3.2_1b",
-    "size_mb": 13.02,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/vikhr_llama_3.2_1b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Vikhrmodels/Vikhr-Llama-3.2-1B-instruct",
+    "family": "Meta LLaMA",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "vikhr_llama_3.2_1b"
   },
   {
     "id": "vikhr_qwen_2.5_0.5b",
-    "size_mb": 8.27,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/vikhr_qwen_2.5_0.5b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-0.5B-Instruct",
+    "family": "Vikhr Russian NLP",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "vikhr_qwen_2.5_0.5b"
   },
   {
     "id": "vikhr_qwen_2.5_1.5b",
-    "size_mb": 16.65,
-    "status": "SUCCESS",
-    "adapter_dir": "lora_adapters/vikhr_qwen_2.5_1.5b",
-    "hf_model_repo": "wwewtech/russian-it-community-lora"
+    "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+    "family": "Vikhr Russian NLP",
+    "params": "N/A",
+    "repo": "wwewtech/russian-it-community-lora",
+    "subfolder": "vikhr_qwen_2.5_1.5b"
   }
 ]

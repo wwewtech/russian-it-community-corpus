@@ -1,81 +1,90 @@
-# 🦁 Russian IT Community LoRA Model Zoo
+# 🦁 Russian IT Community LoRA Model Zoo (55 Foundation Models)
 
-**Официальный каталог 44 предварительно обученных LoRA-адаптеров**, дообученных на корпусе **RICC (2.91M сообщений, 171.5k диалогов)** для русскоязычного IT-дискурса, бэкенда, DevOps, AI/ML и инфраструктуры.
-
-Все адаптеры доступны на Hugging Face Hub: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora).
-
----
-
-## 📊 Доступные LoRA-адаптеры
-
-| # | Идентификатор модели | Размер весов | Каталог адаптера | Hugging Face Hub |
-| :---: | :--- | :---: | :--- | :--- |
-| 1 | **`bloom_1b7`** | **12.01 MB** | [`lora_adapters/bloom_1b7/`](file:///D:/project_x/lora_adapters/bloom_1b7/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 2 | **`bloom_560m`** | **6.01 MB** | [`lora_adapters/bloom_560m/`](file:///D:/project_x/lora_adapters/bloom_560m/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 3 | **`deepseek_coder_1.3b_instruct`** | **152.12 MB** | [`lora_adapters/deepseek_coder_1.3b_instruct/`](file:///D:/project_x/lora_adapters/deepseek_coder_1.3b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 4 | **`deepseek_r1_distill_qwen_1.5b`** | **16.65 MB** | [`lora_adapters/deepseek_r1_distill_qwen_1.5b/`](file:///D:/project_x/lora_adapters/deepseek_r1_distill_qwen_1.5b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 5 | **`gemma_2_2b_it`** | **24.4 MB** | [`lora_adapters/gemma_2_2b_it/`](file:///D:/project_x/lora_adapters/gemma_2_2b_it/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 6 | **`gpt2_large`** | **11.26 MB** | [`lora_adapters/gpt2_large/`](file:///D:/project_x/lora_adapters/gpt2_large/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 7 | **`gpt2_medium`** | **6.01 MB** | [`lora_adapters/gpt2_medium/`](file:///D:/project_x/lora_adapters/gpt2_medium/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 8 | **`granite_3b_code_instruct`** | **283.19 MB** | [`lora_adapters/granite_3b_code_instruct/`](file:///D:/project_x/lora_adapters/granite_3b_code_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 9 | **`heavyweight_deepseek_r1_7b`** | **154.05 MB** | [`lora_adapters/heavyweight_deepseek_r1_7b/`](file:///D:/project_x/lora_adapters/heavyweight_deepseek_r1_7b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 10 | **`heavyweight_llama3.1_8b`** | **160.06 MB** | [`lora_adapters/heavyweight_llama3.1_8b/`](file:///D:/project_x/lora_adapters/heavyweight_llama3.1_8b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 11 | **`heavyweight_qwen2.5_coder_7b`** | **154.05 MB** | [`lora_adapters/heavyweight_qwen2.5_coder_7b/`](file:///D:/project_x/lora_adapters/heavyweight_qwen2.5_coder_7b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 12 | **`llama_3.2_1b_instruct`** | **13.02 MB** | [`lora_adapters/llama_3.2_1b_instruct/`](file:///D:/project_x/lora_adapters/llama_3.2_1b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 13 | **`llama_3.2_3b_instruct`** | **35.03 MB** | [`lora_adapters/llama_3.2_3b_instruct/`](file:///D:/project_x/lora_adapters/llama_3.2_3b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 14 | **`minicpm_2b_dpo`** | **592.12 MB** | [`lora_adapters/minicpm_2b_dpo/`](file:///D:/project_x/lora_adapters/minicpm_2b_dpo/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 15 | **`phi_3.5_mini_instruct`** | **36.02 MB** | [`lora_adapters/phi_3.5_mini_instruct/`](file:///D:/project_x/lora_adapters/phi_3.5_mini_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 16 | **`pythia_1.4b`** | **12.01 MB** | [`lora_adapters/pythia_1.4b/`](file:///D:/project_x/lora_adapters/pythia_1.4b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 17 | **`pythia_2.8b`** | **20.01 MB** | [`lora_adapters/pythia_2.8b/`](file:///D:/project_x/lora_adapters/pythia_2.8b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 18 | **`pythia_410m`** | **6.01 MB** | [`lora_adapters/pythia_410m/`](file:///D:/project_x/lora_adapters/pythia_410m/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 19 | **`pythia_70m`** | **0.75 MB** | [`lora_adapters/pythia_70m/`](file:///D:/project_x/lora_adapters/pythia_70m/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 20 | **`qwen1.5_0.5b_chat`** | **318.11 MB** | [`lora_adapters/qwen1.5_0.5b_chat/`](file:///D:/project_x/lora_adapters/qwen1.5_0.5b_chat/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 21 | **`qwen1.5_1.8b_chat`** | **626.92 MB** | [`lora_adapters/qwen1.5_1.8b_chat/`](file:///D:/project_x/lora_adapters/qwen1.5_1.8b_chat/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 22 | **`qwen2.5_0.5b_instruct`** | **8.27 MB** | [`lora_adapters/qwen2.5_0.5b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_0.5b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 23 | **`qwen2.5_1.5b_instruct`** | **16.65 MB** | [`lora_adapters/qwen2.5_1.5b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_1.5b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 24 | **`qwen2.5_3b_instruct`** | **28.16 MB** | [`lora_adapters/qwen2.5_3b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_3b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 25 | **`qwen2.5_coder_0.5b_instruct`** | **8.27 MB** | [`lora_adapters/qwen2.5_coder_0.5b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_coder_0.5b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 26 | **`qwen2.5_coder_1.5b_instruct`** | **16.65 MB** | [`lora_adapters/qwen2.5_coder_1.5b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_coder_1.5b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 27 | **`qwen2.5_coder_3b_instruct`** | **28.16 MB** | [`lora_adapters/qwen2.5_coder_3b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_coder_3b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 28 | **`qwen2.5_math_1.5b_instruct`** | **471.15 MB** | [`lora_adapters/qwen2.5_math_1.5b_instruct/`](file:///D:/project_x/lora_adapters/qwen2.5_math_1.5b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 29 | **`rugpt3_large`** | **9.01 MB** | [`lora_adapters/rugpt3_large/`](file:///D:/project_x/lora_adapters/rugpt3_large/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 30 | **`rugpt3_medium`** | **6.01 MB** | [`lora_adapters/rugpt3_medium/`](file:///D:/project_x/lora_adapters/rugpt3_medium/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 31 | **`rugpt3_small`** | **2.25 MB** | [`lora_adapters/rugpt3_small/`](file:///D:/project_x/lora_adapters/rugpt3_small/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 32 | **`russian_it_lora`** | **8.27 MB** | [`lora_adapters/russian_it_lora/`](file:///D:/project_x/lora_adapters/russian_it_lora/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 33 | **`smollm2_1.7b_instruct`** | **24.02 MB** | [`lora_adapters/smollm2_1.7b_instruct/`](file:///D:/project_x/lora_adapters/smollm2_1.7b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 34 | **`smollm2_135m_instruct`** | **7.06 MB** | [`lora_adapters/smollm2_135m_instruct/`](file:///D:/project_x/lora_adapters/smollm2_135m_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 35 | **`smollm2_360m_instruct`** | **12.53 MB** | [`lora_adapters/smollm2_360m_instruct/`](file:///D:/project_x/lora_adapters/smollm2_360m_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 36 | **`smollm_1.7b_instruct`** | **219.15 MB** | [`lora_adapters/smollm_1.7b_instruct/`](file:///D:/project_x/lora_adapters/smollm_1.7b_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 37 | **`smollm_135m_instruct`** | **64.1 MB** | [`lora_adapters/smollm_135m_instruct/`](file:///D:/project_x/lora_adapters/smollm_135m_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 38 | **`smollm_360m_instruct`** | **105.59 MB** | [`lora_adapters/smollm_360m_instruct/`](file:///D:/project_x/lora_adapters/smollm_360m_instruct/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 39 | **`stablelm_2_1_6b_chat`** | **422.27 MB** | [`lora_adapters/stablelm_2_1_6b_chat/`](file:///D:/project_x/lora_adapters/stablelm_2_1_6b_chat/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 40 | **`stablelm_2_zephyr_1_6b`** | **422.27 MB** | [`lora_adapters/stablelm_2_zephyr_1_6b/`](file:///D:/project_x/lora_adapters/stablelm_2_zephyr_1_6b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 41 | **`tinyllama_1.1b_chat`** | **17.21 MB** | [`lora_adapters/tinyllama_1.1b_chat/`](file:///D:/project_x/lora_adapters/tinyllama_1.1b_chat/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 42 | **`vikhr_llama_3.2_1b`** | **13.02 MB** | [`lora_adapters/vikhr_llama_3.2_1b/`](file:///D:/project_x/lora_adapters/vikhr_llama_3.2_1b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 43 | **`vikhr_qwen_2.5_0.5b`** | **8.27 MB** | [`lora_adapters/vikhr_qwen_2.5_0.5b/`](file:///D:/project_x/lora_adapters/vikhr_qwen_2.5_0.5b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
-| 44 | **`vikhr_qwen_2.5_1.5b`** | **16.65 MB** | [`lora_adapters/vikhr_qwen_2.5_1.5b/`](file:///D:/project_x/lora_adapters/vikhr_qwen_2.5_1.5b/) | [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) |
+> **Official Hugging Face Hub Repository:** [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora)  
+> **Total Pre-trained Adapters:** 55 Domain Adapters  
+> **Training Corpus:** 171.5k Curated SFT Multi-Turn Dialogues (Russian IT Community Corpus)  
+> **Hardware Target:** Optimized for NVIDIA GeForce RTX 3060 (12GB VRAM) & consumer GPUs  
 
 ---
 
-## 🚀 Быстрый старт: Запуск любого адаптера в 3 строки кода
+## ⚡ Quick Start: 3-Line Inference
 
 ```python
+import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# 1. Выберите любой адаптер из каталога выше
-adapter_id = "qwen2.5_1.5b_instruct"
-model_hub_path = f"wwewtech/russian-it-community-lora"
+model_id = "Qwen/Qwen2.5-1.5B-Instruct"
+adapter_id = "wwewtech/russian-it-community-lora"
+subfolder = "qwen2.5_1.5b_instruct"  # Choose from 55 adapters below
 
-# 2. Загрузка весов напрямую с Hugging Face Hub
-tokenizer = AutoTokenizer.from_pretrained(model_hub_path, subfolder=adapter_id)
-base_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto")
-model = PeftModel.from_pretrained(base_model, model_hub_path, subfolder=adapter_id)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")
+model = PeftModel.from_pretrained(base_model, adapter_id, subfolder=subfolder)
 
-# 3. Инференс
-prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"
-messages = [{"role": "user", "content": prompt}]
-inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")
+inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL в Kubernetes?<|assistant|>\n", return_tensors="pt").to(model.device)
 outputs = model.generate(**inputs, max_new_tokens=256)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
+
+---
+
+## 📚 Full Catalog of 55 Pre-Trained Adapters
+
+| # | Adapter Subfolder | Base Model | Architecture Family | Hugging Face Subfolder Link |
+| :---: | :--- | :--- | :--- | :--- |
+| **01** | `bloom_1b7` | `bigscience/bloom-1b7` | BigScience BLOOM | [`bloom_1b7`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/bloom_1b7) |
+| **02** | `bloom_560m` | `bigscience/bloom-560m` | BigScience BLOOM | [`bloom_560m`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/bloom_560m) |
+| **03** | `deepseek_coder_1.3b_instruct` | `deepseek-ai/deepseek-coder-1.3b-instruct` | DeepSeek | [`deepseek_coder_1.3b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/deepseek_coder_1.3b_instruct) |
+| **04** | `deepseek_r1_distill_qwen_1.5b` | `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` | DeepSeek | [`deepseek_r1_distill_qwen_1.5b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/deepseek_r1_distill_qwen_1.5b) |
+| **05** | `falcon3_1b_instruct` | `tiiuae/Falcon3-1B-Instruct` | TII Falcon | [`falcon3_1b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/falcon3_1b_instruct) |
+| **06** | `falcon3_3b_instruct` | `tiiuae/Falcon3-3B-Instruct` | TII Falcon | [`falcon3_3b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/falcon3_3b_instruct) |
+| **07** | `gemma_2_2b_it` | `unsloth/gemma-2-2b-it` | Open Weights | [`gemma_2_2b_it`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gemma_2_2b_it) |
+| **08** | `gpt2_large` | `openai-community/gpt2-large` | Generative GPT-2 / RuGPT | [`gpt2_large`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gpt2_large) |
+| **09** | `gpt2_medium` | `openai-community/gpt2-medium` | Generative GPT-2 / RuGPT | [`gpt2_medium`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gpt2_medium) |
+| **10** | `granite_3b_code_instruct` | `ibm-granite/granite-3b-code-instruct` | Open Weights | [`granite_3b_code_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/granite_3b_code_instruct) |
+| **11** | `heavyweight_deepseek_r1_7b` | `unsloth/DeepSeek-R1-Distill-Qwen-7B-bnb-4bit` | DeepSeek | [`heavyweight_deepseek_r1_7b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/heavyweight_deepseek_r1_7b) |
+| **12** | `heavyweight_llama3.1_8b` | `unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit` | Meta LLaMA | [`heavyweight_llama3.1_8b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/heavyweight_llama3.1_8b) |
+| **13** | `heavyweight_qwen2.5_coder_7b` | `unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit` | Qwen 2.5 Coder | [`heavyweight_qwen2.5_coder_7b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/heavyweight_qwen2.5_coder_7b) |
+| **14** | `llama_3.2_1b_instruct` | `unsloth/Llama-3.2-1B-Instruct` | Meta LLaMA | [`llama_3.2_1b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/llama_3.2_1b_instruct) |
+| **15** | `llama_3.2_3b_instruct` | `unsloth/Llama-3.2-3B-Instruct` | Meta LLaMA | [`llama_3.2_3b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/llama_3.2_3b_instruct) |
+| **16** | `minicpm_2b_dpo` | `openbmb/MiniCPM-2B-dpo-bf16` | Open Weights | [`minicpm_2b_dpo`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/minicpm_2b_dpo) |
+| **17** | `opt_1.3b` | `facebook/opt-1.3b` | Meta OPT | [`opt_1.3b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_1.3b) |
+| **18** | `opt_125m` | `facebook/opt-125m` | Meta OPT | [`opt_125m`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_125m) |
+| **19** | `opt_2.7b` | `facebook/opt-2.7b` | Meta OPT | [`opt_2.7b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_2.7b) |
+| **20** | `opt_350m` | `facebook/opt-350m` | Meta OPT | [`opt_350m`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_350m) |
+| **21** | `phi_1_5` | `microsoft/phi-1_5` | Microsoft Phi | [`phi_1_5`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_1_5) |
+| **22** | `phi_2` | `microsoft/phi-2` | Microsoft Phi | [`phi_2`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_2) |
+| **23** | `phi_3.5_mini_instruct` | `microsoft/Phi-3.5-mini-instruct` | Microsoft Phi | [`phi_3.5_mini_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_3.5_mini_instruct) |
+| **24** | `phi_3_mini_4k_instruct` | `microsoft/Phi-3-mini-4k-instruct` | Microsoft Phi | [`phi_3_mini_4k_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_3_mini_4k_instruct) |
+| **25** | `pythia_1.4b` | `EleutherAI/pythia-1.4b-deduped` | EleutherAI Pythia | [`pythia_1.4b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_1.4b) |
+| **26** | `pythia_2.8b` | `EleutherAI/pythia-2.8b-deduped` | EleutherAI Pythia | [`pythia_2.8b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_2.8b) |
+| **27** | `pythia_410m` | `EleutherAI/pythia-410m-deduped` | EleutherAI Pythia | [`pythia_410m`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_410m) |
+| **28** | `pythia_70m` | `EleutherAI/pythia-70m-deduped` | EleutherAI Pythia | [`pythia_70m`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_70m) |
+| **29** | `qwen1.5_0.5b_chat` | `Qwen/Qwen1.5-0.5B-Chat` | Qwen 1.5 | [`qwen1.5_0.5b_chat`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen1.5_0.5b_chat) |
+| **30** | `qwen1.5_1.8b_chat` | `Qwen/Qwen1.5-1.8B-Chat` | Qwen 1.5 | [`qwen1.5_1.8b_chat`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen1.5_1.8b_chat) |
+| **31** | `qwen2.5_0.5b_instruct` | `Qwen/Qwen2.5-0.5B-Instruct` | Qwen 2.5 | [`qwen2.5_0.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_0.5b_instruct) |
+| **32** | `qwen2.5_1.5b_instruct` | `Qwen/Qwen2.5-1.5B-Instruct` | Qwen 2.5 | [`qwen2.5_1.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_1.5b_instruct) |
+| **33** | `qwen2.5_3b_instruct` | `Qwen/Qwen2.5-3B-Instruct` | Qwen 2.5 | [`qwen2.5_3b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_3b_instruct) |
+| **34** | `qwen2.5_coder_0.5b_instruct` | `Qwen/Qwen2.5-Coder-0.5B-Instruct` | Qwen 2.5 Coder | [`qwen2.5_coder_0.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_0.5b_instruct) |
+| **35** | `qwen2.5_coder_1.5b_instruct` | `Qwen/Qwen2.5-Coder-1.5B-Instruct` | Qwen 2.5 Coder | [`qwen2.5_coder_1.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_1.5b_instruct) |
+| **36** | `qwen2.5_coder_3b_instruct` | `Qwen/Qwen2.5-Coder-3B-Instruct` | Qwen 2.5 Coder | [`qwen2.5_coder_3b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_3b_instruct) |
+| **37** | `qwen2.5_math_1.5b_instruct` | `Qwen/Qwen2.5-Math-1.5B-Instruct` | Qwen 2.5 | [`qwen2.5_math_1.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_math_1.5b_instruct) |
+| **38** | `qwen2_0.5b_instruct` | `Qwen/Qwen2-0.5B-Instruct` | Qwen 2 | [`qwen2_0.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2_0.5b_instruct) |
+| **39** | `qwen2_1.5b_instruct` | `Qwen/Qwen2-1.5B-Instruct` | Qwen 2 | [`qwen2_1.5b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2_1.5b_instruct) |
+| **40** | `rugpt3_large` | `ai-forever/rugpt3large_based_on_gpt2` | Generative GPT-2 / RuGPT | [`rugpt3_large`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/rugpt3_large) |
+| **41** | `rugpt3_medium` | `ai-forever/rugpt3medium_based_on_gpt2` | Generative GPT-2 / RuGPT | [`rugpt3_medium`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/rugpt3_medium) |
+| **42** | `rugpt3_small` | `ai-forever/rugpt3small_based_on_gpt2` | Generative GPT-2 / RuGPT | [`rugpt3_small`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/rugpt3_small) |
+| **43** | `russian_it_lora` | `Qwen/Qwen2.5-0.5B-Instruct` | Open Weights | [`russian_it_lora`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/russian_it_lora) |
+| **44** | `smollm2_1.7b_instruct` | `HuggingFaceTB/SmolLM2-1.7B-Instruct` | SmolLM2 | [`smollm2_1.7b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm2_1.7b_instruct) |
+| **45** | `smollm2_135m_instruct` | `HuggingFaceTB/SmolLM2-135M-Instruct` | SmolLM2 | [`smollm2_135m_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm2_135m_instruct) |
+| **46** | `smollm2_360m_instruct` | `HuggingFaceTB/SmolLM2-360M-Instruct` | SmolLM2 | [`smollm2_360m_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm2_360m_instruct) |
+| **47** | `smollm_1.7b_instruct` | `HuggingFaceTB/SmolLM-1.7B-Instruct` | SmolLM | [`smollm_1.7b_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm_1.7b_instruct) |
+| **48** | `smollm_135m_instruct` | `HuggingFaceTB/SmolLM-135M-Instruct` | SmolLM | [`smollm_135m_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm_135m_instruct) |
+| **49** | `smollm_360m_instruct` | `HuggingFaceTB/SmolLM-360M-Instruct` | SmolLM | [`smollm_360m_instruct`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm_360m_instruct) |
+| **50** | `stablelm_2_1_6b_chat` | `stabilityai/stablelm-2-1_6b-chat` | Stability AI StableLM | [`stablelm_2_1_6b_chat`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/stablelm_2_1_6b_chat) |
+| **51** | `stablelm_2_zephyr_1_6b` | `stabilityai/stablelm-2-zephyr-1_6b` | Stability AI StableLM | [`stablelm_2_zephyr_1_6b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/stablelm_2_zephyr_1_6b) |
+| **52** | `tinyllama_1.1b_chat` | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | Open Weights | [`tinyllama_1.1b_chat`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/tinyllama_1.1b_chat) |
+| **53** | `vikhr_llama_3.2_1b` | `Vikhrmodels/Vikhr-Llama-3.2-1B-instruct` | Meta LLaMA | [`vikhr_llama_3.2_1b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_llama_3.2_1b) |
+| **54** | `vikhr_qwen_2.5_0.5b` | `Vikhrmodels/Vikhr-Qwen-2.5-0.5B-Instruct` | Vikhr Russian NLP | [`vikhr_qwen_2.5_0.5b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_qwen_2.5_0.5b) |
+| **55** | `vikhr_qwen_2.5_1.5b` | `Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct` | Vikhr Russian NLP | [`vikhr_qwen_2.5_1.5b`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_qwen_2.5_1.5b) |
