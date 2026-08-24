@@ -1,0 +1,752 @@
+[
+  {
+    "id": "pythia_70m",
+    "base_model": "EleutherAI/pythia-70m",
+    "family": "Pythia",
+    "params": "70M",
+    "type": "base",
+    "base_ppl_stats": {
+      "mean": 64.1,
+      "median": 31.28,
+      "std": 102.29,
+      "min": 9.37,
+      "max": 435.06,
+      "raw_samples": [
+        17.11,
+        12.82,
+        24.17,
+        435.06,
+        31.28,
+        25.58,
+        114.17,
+        9.37
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 62.69,
+      "median": 32.16,
+      "std": 97.54,
+      "min": 10.4,
+      "max": 417.43,
+      "raw_samples": [
+        17.65,
+        13.96,
+        26.24,
+        417.43,
+        32.16,
+        24.59,
+        103.77,
+        10.4
+      ]
+    },
+    "mean_ppl_change_pct": 2.19,
+    "sample_generation_q1": {
+      "base": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant",
+      "lora": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant"
+    },
+    "sample_generation_q2": {
+      "base": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant",
+      "lora": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant"
+    }
+  },
+  {
+    "id": "opt_125m",
+    "base_model": "facebook/opt-125m",
+    "family": "OPT",
+    "params": "125M",
+    "type": "base",
+    "base_ppl_stats": {
+      "mean": 27.96,
+      "median": 14.12,
+      "std": 38.16,
+      "min": 7.52,
+      "max": 164.71,
+      "raw_samples": [
+        8.88,
+        7.52,
+        13.23,
+        164.71,
+        20.37,
+        21.85,
+        38.71,
+        9.22
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 9.91,
+      "median": 4.96,
+      "std": 15.14,
+      "min": 2.15,
+      "max": 64.64,
+      "raw_samples": [
+        2.15,
+        2.45,
+        2.94,
+        64.64,
+        4.69,
+        15.68,
+        9.22,
+        2.55
+      ]
+    },
+    "mean_ppl_change_pct": 64.57,
+    "sample_generation_q1": {
+      "base": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие парамет",
+      "lora": "Почему в какой-то причину отставания репликации и какие параметры postgresql.conf нуж"
+    },
+    "sample_generation_q2": {
+      "base": "<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>",
+      "lora": "В котором пришло в конце пришло в конце пришло в конце пришло в конце п"
+    }
+  },
+  {
+    "id": "bloom_560m",
+    "base_model": "bigscience/bloom-560m",
+    "family": "BLOOM",
+    "params": "560M",
+    "type": "base",
+    "base_ppl_stats": {
+      "mean": 29.49,
+      "median": 23.65,
+      "std": 28.4,
+      "min": 5.44,
+      "max": 125.63,
+      "raw_samples": [
+        10.29,
+        8.63,
+        12.75,
+        125.63,
+        17.24,
+        48.47,
+        38.46,
+        5.44
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 28.86,
+      "median": 23.15,
+      "std": 27.3,
+      "min": 5.42,
+      "max": 120.99,
+      "raw_samples": [
+        10.35,
+        8.36,
+        12.52,
+        120.99,
+        17.33,
+        47.16,
+        37.95,
+        5.42
+      ]
+    },
+    "mean_ppl_change_pct": 2.13,
+    "sample_generation_q1": {
+      "base": "Привет, если вопрос не понятно, то вопрос вопросы.",
+      "lora": "Привет, если вопрос не понятно, то вопрос вопроса.<|assistant|>\nПривет, если вопрос не понятно, то вопрос вопроса.<|assistant|>\nПривет, если вопрос не понятно, то воп"
+    },
+    "sample_generation_q2": {
+      "base": "При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс. Как сделать, чтобы создавать следующее класс, не было ошибка OOMKilled (",
+      "lora": "При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс.<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>"
+    }
+  },
+  {
+    "id": "gpt2_medium",
+    "base_model": "openai-community/gpt2-medium",
+    "family": "GPT-2",
+    "params": "355M",
+    "type": "base",
+    "base_ppl_stats": {
+      "mean": 24.82,
+      "median": 14.42,
+      "std": 29.82,
+      "min": 8.28,
+      "max": 131.58,
+      "raw_samples": [
+        8.28,
+        8.58,
+        11.78,
+        131.58,
+        18.9,
+        14.42,
+        34.17,
+        14.95
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 24.72,
+      "median": 14.2,
+      "std": 29.51,
+      "min": 8.36,
+      "max": 130.26,
+      "raw_samples": [
+        8.36,
+        8.57,
+        11.81,
+        130.26,
+        19.29,
+        14.2,
+        34.06,
+        14.64
+      ]
+    },
+    "mean_ppl_change_pct": 0.39,
+    "sample_generation_q1": {
+      "base": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметр",
+      "lora": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметр"
+    },
+    "sample_generation_q2": {
+      "base": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто дел",
+      "lora": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто дел"
+    }
+  },
+  {
+    "id": "rugpt3_small",
+    "base_model": "ai-forever/rugpt3small_based_on_gpt2",
+    "family": "RuGPT3",
+    "params": "125M",
+    "type": "base",
+    "base_ppl_stats": {
+      "mean": 21.06,
+      "median": 19.47,
+      "std": 11.86,
+      "min": 6.26,
+      "max": 53.85,
+      "raw_samples": [
+        9.76,
+        16.63,
+        15.24,
+        53.85,
+        19.47,
+        9.85,
+        25.15,
+        6.26
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 21.4,
+      "median": 19.91,
+      "std": 11.82,
+      "min": 6.51,
+      "max": 53.86,
+      "raw_samples": [
+        10.01,
+        17.39,
+        15.69,
+        53.86,
+        19.91,
+        9.97,
+        25.77,
+        6.51
+      ]
+    },
+    "mean_ppl_change_pct": -1.62,
+    "sample_generation_q1": {
+      "base": "Как в PostgreSQL настроить проверку репликации (replica lag) и какие параметры postgresql.conf нужно проверить?<|assistant|>\nКак в PostgreSQL настроить проверку репликации (replica lag) и какие параметры postgresql.conf нужно проверить?<|assist",
+      "lora": ""
+    },
+    "sample_generation_q2": {
+      "base": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если под в Kubernet",
+      "lora": ""
+    }
+  },
+  {
+    "id": "tinyllama_1.1b_chat",
+    "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "family": "TinyLlama",
+    "params": "1.1B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 14.47,
+      "median": 12.26,
+      "std": 10.8,
+      "min": 3.65,
+      "max": 47.08,
+      "raw_samples": [
+        7.13,
+        6.84,
+        8.93,
+        47.08,
+        16.07,
+        6.87,
+        23.36,
+        3.65
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 10.23,
+      "median": 7.53,
+      "std": 8.69,
+      "min": 2.89,
+      "max": 36.79,
+      "raw_samples": [
+        4.32,
+        3.92,
+        5.22,
+        36.79,
+        8.34,
+        5.96,
+        17.18,
+        2.89
+      ]
+    },
+    "mean_ppl_change_pct": 29.27,
+    "sample_generation_q1": {
+      "base": "1. В PostgreSQL диагностировать причину отставания репликации (replica lag) можно с помощью команды `pg_stat_replication`.\n\n   ```\n   SELECT * FROM pg_stat_replication;\n   ```\n\n   В результате вы увидите таблицу `pg_stat_replication",
+      "lora": "1. Скорость репликации (replication_delay)\n2. Скорость доступа к реплике (replication_wal_delay)\n3. Скорость доступа к реплике (replication_wal_delay_offset)\n4. Скорость доступа к реплике (replication_wal_"
+    },
+    "sample_generation_q2": {
+      "base": "1. Убедитесь, что вы используете версию Kubernetes, которая поддерживает ошибку OOMKilled.\n\n2. Если ошибка не исправляется, проверьте, что вы используете правильные параметры для контейнера, например, количество CPU и памяти.",
+      "lora": "1. Оценить причину ошибки:\n\n- Ошибка OOMKilled может быть вызвана неправильным использованием ресурсов, например, неправильным использованием памяти или ресурсов CPU.\n- Ошибка OOMKilled может быть вызвана неправильным использованием ре"
+    }
+  },
+  {
+    "id": "smollm2_1.7b_instruct",
+    "base_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "family": "SmolLM2",
+    "params": "1.7B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 16.67,
+      "median": 8.77,
+      "std": 20.5,
+      "min": 5.23,
+      "max": 89.13,
+      "raw_samples": [
+        6.17,
+        5.85,
+        8.07,
+        89.13,
+        10.67,
+        7.13,
+        27.14,
+        7.79
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 15.46,
+      "median": 8.35,
+      "std": 18.56,
+      "min": 4.98,
+      "max": 81.17,
+      "raw_samples": [
+        6.07,
+        5.63,
+        7.93,
+        81.17,
+        10.34,
+        6.79,
+        25.32,
+        7.62
+      ]
+    },
+    "mean_ppl_change_pct": 7.23,
+    "sample_generation_q1": {
+      "base": "Для диагностирования причины отставания репликации (replica lag) в PostgreSQL можно использовать следующие способы:\n\n1. Пр",
+      "lora": "Диагностировать причину отставания репликации (replica lag) в PostgreSQL можно с помощью программы pg_stat_statements и просто проверять"
+    },
+    "sample_generation_q2": {
+      "base": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|user|>\nЧто делать, если под в Kubernetes постоя",
+      "lora": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|user|>\nЧто делать, если под в Kubernetes постоя"
+    }
+  },
+  {
+    "id": "llama_3.2_1b_instruct",
+    "base_model": "unsloth/Llama-3.2-1B-Instruct",
+    "family": "LLaMA 3.2",
+    "params": "1.0B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 73.09,
+      "median": 60.97,
+      "std": 54.56,
+      "min": 19.4,
+      "max": 242.69,
+      "raw_samples": [
+        34.22,
+        19.4,
+        38.45,
+        242.69,
+        87.91,
+        60.97,
+        106.19,
+        19.97
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 64.69,
+      "median": 57.5,
+      "std": 40.45,
+      "min": 18.07,
+      "max": 184.46,
+      "raw_samples": [
+        32.27,
+        20.84,
+        36.58,
+        184.46,
+        73.68,
+        56.73,
+        95.85,
+        18.07
+      ]
+    },
+    "mean_ppl_change_pct": 11.49,
+    "sample_generation_q1": {
+      "base": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?\n\nОтвет: \nЧтобы диагностировать причину отставания репликации, можно использовать следующие параметры postgresql.conf:\n\n* `autovacuum_vacuum_scale_factor`: настройка для отслеживания размера внешнего",
+      "lora": "Отставление репликации (replica lag) в PostgreSQL может быть caused bởi разные факторы, включая настройки postgresql.conf. В этой статье мы рассмотрим несколько возможных причин и параметры, которые можно использовать для диагностики и решения проблемы.\n\n### 1. Неправильные настройки postgresql.conf\n\nПоскольку postgresql.conf — это"
+    },
+    "sample_generation_q2": {
+      "base": "Окончательный ответ: Важно сначала проверить, что все необходимые компоненты и приложения работают correctamente, а затем troubleshoot, чтобы найти и устранить проблему.\n\nОкончательный ответ: Важно сначала проверить, что все необходимые компоненты и приложения работают correctamente, а затем troubleshoot, чтобы найти и",
+      "lora": "Окончательный ответ: Важно понимать, что OOMKilled — это не просто ошибка, а это о том, что Kubernetes не может выжить из-за ограниченного ресурсов. Это означает, что в Kubernetesе не хватает ресурсов, чтобы поддерживать все приложения, которые вы запустили. Важ"
+    }
+  },
+  {
+    "id": "deepseek_coder_1.3b_instruct",
+    "base_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
+    "family": "DeepSeek Coder",
+    "params": "1.3B",
+    "type": "coder",
+    "base_ppl_stats": {
+      "mean": 21.28,
+      "median": 15.49,
+      "std": 16.0,
+      "min": 8.54,
+      "max": 59.53,
+      "raw_samples": [
+        10.32,
+        8.54,
+        11.72,
+        59.53,
+        15.49,
+        53.47,
+        43.11,
+        9.77
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 19.6,
+      "median": 15.1,
+      "std": 14.23,
+      "min": 7.79,
+      "max": 56.35,
+      "raw_samples": [
+        10.06,
+        7.79,
+        12.5,
+        56.35,
+        15.59,
+        45.34,
+        38.74,
+        9.22
+      ]
+    },
+    "mean_ppl_change_pct": 7.9,
+    "sample_generation_q1": {
+      "base": "PostgreSQL репликация используется для обеспечения высокой доступности и возможности восстановления данных. Однако, если репликация отстает, это может привести к непредсказу",
+      "lora": "1. Выяснить, что происходит с репликой и какие параметры нужно проверить.\n2. Выяснить, что происходит с репликой и какие параметры нужно проверит"
+    },
+    "sample_generation_q2": {
+      "base": "<|user|>\n(1) Удаление неиспользуемых ресурсов.\n<|assistant|>\n\n<|user|>\n(2) Устранение OOMKilled (Exit Code 137)\n<|assistant|>\n\n<|user|>\n(3)",
+      "lora": "1. Увеличить количество ресурсов в Kubernetes.\n2. Увеличить количество памяти, CPU, дисков и т.д.\n3. Увеличить количество вычислительных ресурсов.\n4. Увеличи"
+    }
+  },
+  {
+    "id": "falcon3_1b_instruct",
+    "base_model": "tiiuae/Falcon3-1B-Instruct",
+    "family": "Falcon 3",
+    "params": "1.0B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 142.09,
+      "median": 51.1,
+      "std": 184.08,
+      "min": 20.83,
+      "max": 730.9,
+      "raw_samples": [
+        51.1,
+        24.81,
+        28.11,
+        730.9,
+        125.1,
+        27.86,
+        324.58,
+        102.14
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 13.41,
+      "median": 7.31,
+      "std": 22.3,
+      "min": 2.3,
+      "max": 94.68,
+      "raw_samples": [
+        2.3,
+        2.71,
+        3.34,
+        94.68,
+        5.7,
+        9.57,
+        17.64,
+        3.13
+      ]
+    },
+    "mean_ppl_change_pct": 90.56,
+    "sample_generation_q1": {
+      "base": "**Проблема:**\n\nПричина отставания репликации (replica lag) в PostgreSQL может быть отличным от других возможн",
+      "lora": "### Причины отставания репликации\n\nПричины отставания репликации могут быть высокими или непрерыв�"
+    },
+    "sample_generation_q2": {
+      "base": "Под в Kubernetes, ошибка \"OOMKilled\" (Exit Code 137) означает, что ошибка вызова выражения `kubectl exec -it <service_name> -p",
+      "lora": "<|assistant|>\nЧтобы помочь, вот не только на ваш вопрос, но и на вашем вопросе на вашем в"
+    }
+  },
+  {
+    "id": "qwen2.5_0.5b_instruct",
+    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "0.5B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 54.06,
+      "median": 46.18,
+      "std": 41.31,
+      "min": 13.7,
+      "max": 155.22,
+      "raw_samples": [
+        16.17,
+        18.55,
+        23.05,
+        155.22,
+        47.31,
+        81.24,
+        138.55,
+        13.7
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 41.86,
+      "median": 34.25,
+      "std": 34.05,
+      "min": 11.11,
+      "max": 134.8,
+      "raw_samples": [
+        12.96,
+        13.52,
+        16.81,
+        134.8,
+        34.25,
+        69.73,
+        101.58,
+        11.11
+      ]
+    },
+    "mean_ppl_change_pct": 22.57,
+    "sample_generation_q1": {
+      "base": "Диагностика причин отставания репликации (Replica Lag) в PostgreSQL может быть сложной задачей, но есть несколько шагов, которые помогут вам лучше понять ситуацию:\n\n1. **Проверьте статус репликации**: В PostgreSQL можно увидеть статус репликации для каждого пользователя или группы пользоват",
+      "lora": "В PostgreSQL, чтобы диагностировать причину отставания репликации (Replica lag), вы можете использовать следующие команды:\n\n1. **Проверка на наличие ошибок:**\n   ```sql\n   EXPLAIN ANALYZE SELECT * FROM your_table;\n   ```\n\n2. **Проверка на наличие ошибок в таблице:**\n   ```"
+    },
+    "sample_generation_q2": {
+      "base": "При определенных условиях, когда Kubernetes падает из-за остановки процесса, вызванных осколочками или другими причинами, вы можете столкнуться с ошибкой \"OOMKilled\" (Exit Code 137). Это означает, что процесс был остановлен из-за слишком большого количества пам",
+      "lora": "Для решения проблемы OOMKilled (Exit Code 137) можно использовать следующие методы:\n\n1. **Установка Docker Compose**:\n   - Если вы используете Docker Compose для управления Kubernetes, убедитесь, что ваш docker-compose.yml файл правильно определен и запущен.\n\n2. **Управление процессами**:\n   -"
+    }
+  },
+  {
+    "id": "qwen2.5_1.5b_instruct",
+    "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "family": "Qwen 2.5",
+    "params": "1.5B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 41.37,
+      "median": 35.62,
+      "std": 36.87,
+      "min": 9.32,
+      "max": 140.92,
+      "raw_samples": [
+        18.47,
+        11.23,
+        16.39,
+        140.92,
+        32.56,
+        55.34,
+        115.98,
+        9.32
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 32.82,
+      "median": 27.93,
+      "std": 30.59,
+      "min": 8.64,
+      "max": 126.08,
+      "raw_samples": [
+        12.64,
+        9.47,
+        12.8,
+        126.08,
+        25.56,
+        45.33,
+        80.62,
+        8.64
+      ]
+    },
+    "mean_ppl_change_pct": 20.67,
+    "sample_generation_q1": {
+      "base": "Диагностика причины отставания репликации в PostgreSQL обычно начинается с определения, что именно происходит. Вот несколько шагов, которые помогут вам найти причину:\n\n1. **Проверьте статус репликации:**\n   ```sql\n   SELECT * FROM pg_stat_replication;\n   ```\n   Этот запрос покажет текущ",
+      "lora": "Для диагностики причины отставания репликации в PostgreSQL можно выполнить следующие шаги:\n\n1. Проверьте состояние репликации:\n   ```\n   SELECT * FROM pg_stat_replication;\n   ```\n\n2. Проверьте статус реплицируемого сервера:\n   ```\n   SHOW replica_enabled;\n   ```"
+    },
+    "sample_generation_q2": {
+      "base": "Если у вас возникает ошибка \"OOMKilled\" при работе с Kubernetes, это обычно указывает на то, что ваш кластер стал слишком загружен и не может удовлетворить потребности всех контейнеров. Вот несколько шагов, которые вы можете предпринять для решения этой проблемы:\n\n1. **Увеличение ресурсного",
+      "lora": "Когда у вас возникает ошибка \"OOMKilled\" при работе с Kubernetes, это обычно указывает на то, что ваш кластер стал слишком загружен и не может удовлетворить потребности всех контейнеров. Вот несколько шагов, которые вы можете предпринять:\n\n1. **Проверьте нагрузку**: Убедитесь, что все"
+    }
+  },
+  {
+    "id": "qwen2.5_coder_1.5b_instruct",
+    "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "family": "Qwen 2.5 Coder",
+    "params": "1.5B",
+    "type": "coder",
+    "base_ppl_stats": {
+      "mean": 42.21,
+      "median": 38.64,
+      "std": 31.3,
+      "min": 11.16,
+      "max": 112.69,
+      "raw_samples": [
+        14.04,
+        12.67,
+        17.21,
+        112.69,
+        47.8,
+        72.12,
+        105.12,
+        11.16
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 29.53,
+      "median": 29.7,
+      "std": 22.24,
+      "min": 8.22,
+      "max": 86.31,
+      "raw_samples": [
+        9.32,
+        8.22,
+        11.1,
+        86.31,
+        29.73,
+        52.64,
+        64.94,
+        8.25
+      ]
+    },
+    "mean_ppl_change_pct": 30.04,
+    "sample_generation_q1": {
+      "base": "Для диагностики причины отставания репликации в PostgreSQL можно использовать следующие команды:\n\n1. **Просмотр логов**: Проверьте логи PostgreSQL для получения информации о проблемах с репликацией. Логи обычно хранятся в директории `/var/log/postgresql/`.\n\n2. **Использование",
+      "lora": "Для диагностики отставания репликации в PostgreSQL можно использовать следующие команды:\n\n1. Просмотреть статистику репликации:\n```sql\nSELECT * FROM pg_stat_replication;\n```\n\n2. Просмотреть логи репликации:\n```bash\ntail -f /var/log/postgresql/"
+    },
+    "sample_generation_q2": {
+      "base": "Если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137), это означает, что система выделила слишком мало памяти для вашего приложения. Вот несколько шагов, которые вы можете выполнить:\n\n1. **Увеличить количество ресурсов**:\n   - Измените ограничения CPU и",
+      "lora": "Вот несколько советов по решению этой проблемы:\n\n1. Проверьте, что у вас есть достаточное количество ресурсов для запуска вашего приложения. Это может быть связано с ограничением CPU или RAM.\n\n2. Убедитесь, что ваше приложение не использует слишком много ресурсов. Например, если вы используете би"
+    }
+  },
+  {
+    "id": "vikhr_qwen_2.5_1.5b",
+    "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+    "family": "Vikhr Russian",
+    "params": "1.5B",
+    "type": "instruct",
+    "base_ppl_stats": {
+      "mean": 24.68,
+      "median": 16.76,
+      "std": 27.63,
+      "min": 5.66,
+      "max": 119.53,
+      "raw_samples": [
+        7.23,
+        5.66,
+        9.73,
+        119.53,
+        12.26,
+        41.46,
+        37.14,
+        5.91
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 22.94,
+      "median": 16.55,
+      "std": 25.44,
+      "min": 5.36,
+      "max": 110.53,
+      "raw_samples": [
+        6.47,
+        5.36,
+        9.07,
+        110.53,
+        11.89,
+        37.12,
+        34.75,
+        5.82
+      ]
+    },
+    "mean_ppl_change_pct": 7.07,
+    "sample_generation_q1": {
+      "base": "Для диагностики причины отставания репликации в PostgreSQL можно использовать несколько методов. Вот некоторые из них:\n\n1. **Использование команды `pg_stat_replication`**:\n   Вы можете использовать команду `pg_stat_replication`, чтобы получить информацию о состоянии репликации, включая время последнего обновления данных на р",
+      "lora": "Отставание репликации может быть вызвано различными факторами, такими как задержки сети, проблемы с сетевым трафиком, неправильные настройки брандмауэра или конфигурационные ошибки. Чтобы диагностировать проблему, можно выполнить следующие шаги:\n\n1"
+    },
+    "sample_generation_q2": {
+      "base": "Если вы сталкиваетесь с ошибкой \"OOMKilled\" (Exit Code 137) в Kubernetes, это означает, что ваша приложение потребовало больше ресурсов, чем доступно на кластере. Вот несколько шагов, которые помогут вам решить эту проблему:\n\n1. **Проверка логов**",
+      "lora": "Пользователь\nИспользуй русский язык"
+    }
+  },
+  {
+    "id": "deepseek_r1_distill_qwen_1.5b",
+    "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    "family": "DeepSeek R1",
+    "params": "1.5B",
+    "type": "reasoning",
+    "base_ppl_stats": {
+      "mean": 153.67,
+      "median": 100.9,
+      "std": 200.54,
+      "min": 10.89,
+      "max": 791.47,
+      "raw_samples": [
+        27.16,
+        16.44,
+        40.8,
+        791.47,
+        65.82,
+        100.9,
+        150.13,
+        10.89
+      ]
+    },
+    "lora_ppl_stats": {
+      "mean": 91.22,
+      "median": 68.95,
+      "std": 94.07,
+      "min": 9.36,
+      "max": 371.47,
+      "raw_samples": [
+        22.29,
+        13.33,
+        32.58,
+        371.47,
+        52.08,
+        85.97,
+        107.23,
+        9.36
+      ]
+    },
+    "mean_ppl_change_pct": 40.64,
+    "sample_generation_q1": {
+      "base": "</think>\n\nДля диагностирования причин отставания реплики (replica lag) в PostgreSQL можно использовать несколько методов и параметры, которые можно проверить в `postgres.conf`:\n\n### 1. **Параметры, связанные с репликой:**\n   - `replication_factor`: Это определяет, сколько реплиок",
+      "lora": "Хорошо, я вижу, что пользователь спрашивает о diagonologii отставания реплики (replica lag) в PostgreSQL и как проверить параметры PostgreSQL.conf. Я думаю, что стоит разбить вопрос на два: поиска причин и по проверке параметров.\n\nПервым делом, я должен понять,"
+    },
+    "sample_generation_q2": {
+      "base": "</think>\n\nЕсли в Kubernetes падает с ошибкой `OM killed` (Это означает `Exit Code 137`), это может быть связано с several reasons:\n\n1. **Неправильные параметры в команде**: Если ваша команда включает неправильные параметры, такие как `--timeout` или `--",
+      "lora": "</think>\n\nЕсли в Kubernetes падает с ошибкой `OMKilled` (.exit код 137), это означает, что при attemptе к удалению подытла или подытла с подытла, вы получаете ошибку. Это может быть связано с проблемами с подытлами, их обработкой или их"
+    }
+  }
+]
