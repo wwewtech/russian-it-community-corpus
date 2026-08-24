@@ -1,0 +1,11 @@
+{
+  "adapter_id": "tiny_starcoder_py",
+  "base_model": "bigcode/tiny_starcoder_py",
+  "family": "BigCode StarCoder",
+  "params": "164M",
+  "dataset": "wwewtech/russian-it-community-corpus",
+  "trained_on": "NVIDIA GeForce RTX 3060 (12GB)",
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "max_steps": 40
+}
