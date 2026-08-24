@@ -104,20 +104,19 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 ## 🏗️ Data Curation Pipeline
 
-```mermaid
-flowchart TD
-    A["11 Community Nodes<br/><b>2.91M Raw Messages (2017–2026)</b>"] --> B["Multi-Source Ingestion<br/><i>Node pseudonymization: community_node_01..11</i>"]
-    B --> C["Deep Anonymization Engine<br/><i>Natasha NER + 6 Russian grammatical cases + Regex pattern scrubbing</i>"]
-    C --> D["MinHash LSH & Exact Deduplication<br/><i>128 permutations, Jaccard threshold = 0.80</i>"]
-    D --> E["8-Domain Taxonomy Classifier<br/><i>Multi-label keyword extraction & scoring</i>"]
-    E --> F["Conversation Thread DAG Reconstructor<br/><i>Reply-tree traversal & temporal clustering</i>"]
-    
-    F --> G1["Apache Parquet<br/><b>full, sft, rag</b><br/><i>zstd compressed</i>"]
-    F --> G2["Multi-Turn JSONL<br/><b>ShareGPT, ChatML</b><br/><i>171.5k dialogues</i>"]
-    F --> G3["Instruction JSONL<br/><b>Alpaca Format</b><br/><i>933k pairs</i>"]
-    F --> G4["Vector KB Chunks<br/><b>RAG Knowledge Base</b><br/><i>325.7k chunks</i>"]
-    F --> G5["Alignment Pairs<br/><b>DPO Preference Sets</b><br/><i>60.4k pairs</i>"]
-```
+<div align="center">
+
+<img src="https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/resolve/main/assets/pipeline_architecture.svg" alt="RICC Pipeline Architecture" width="100%" />
+
+</div>
+
+| Stage | Processing Module | Description & Output |
+| :---: | :--- | :--- |
+| **1. Ingestion** | Multi-Source Export Ingestion | Merging 11 community nodes (`community_node_01`..`11`) across 2017–2026 into 2.91M unified records. |
+| **2. Anonymization** | Natasha NER & Case-Aware Scrubber | Inflection across 6 Russian cases, Telegram handle mapping, and regex scrubbing for phones, crypto, keys. |
+| **3. Deduplication** | MinHash LSH (128 Permutations) | Duplicate and spam removal at 0.80 Jaccard threshold + 8-domain taxonomy classification. |
+| **4. DAG Reconstruction**| Thread Builder & Extractor | Reconstructing reply trees, extracting 171.5k SFT dialogues ($\ge 3.0$ score) and 325.7k RAG chunks. |
+| **5. Multi-Split Export**| Parquet & JSONL Exporters | Generating zstd Parquet (`full`, `sft`, `rag`) and JSONL splits (`ShareGPT`, `Alpaca`, `ChatML`, `DPO`). |
 
 ---
 

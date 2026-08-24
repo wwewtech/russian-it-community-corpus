@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 320" width="100%" height="100%" style="background: #09090b; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#121215" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="36" fill="#f4f4f5" font-size="15" font-weight="600" letter-spacing="0.05em" text-anchor="middle">DATA CURATION &amp; ZERO-PII PROCESSING PIPELINE</text>
+
+  <!-- Step 1: Ingestion -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="60" width="160" height="100" rx="8" fill="url(#cardGrad)" stroke="#27272a" stroke-width="1.5" />
+    <circle cx="50" cy="80" r="8" fill="#3b82f6" />
+    <text x="50" y="84" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">1</text>
+    <text x="66" y="84" fill="#f4f4f5" font-size="12" font-weight="600">Ingestion</text>
+    <text x="50" y="108" fill="#a1a1aa" font-size="10">• 11 Community Nodes</text>
+    <text x="50" y="124" fill="#a1a1aa" font-size="10">• 2.91M Raw Messages</text>
+    <text x="50" y="140" fill="#a1a1aa" font-size="10">• 2017–2026 Timeline</text>
+  </g>
+
+  <!-- Arrow 1 -->
+  <path d="M 195 110 L 215 110" stroke="#3f3f46" stroke-width="2" fill="none" />
+  <polygon points="215,106 223,110 215,114" fill="#71717a" />
+
+  <!-- Step 2: Anonymization -->
+  <g filter="url(#shadow)">
+    <rect x="225" y="60" width="160" height="100" rx="8" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.5" />
+    <circle cx="245" cy="80" r="8" fill="#10b981" />
+    <text x="245" y="84" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">2</text>
+    <text x="261" y="84" fill="#f4f4f5" font-size="12" font-weight="600">Anonymization</text>
+    <text x="245" y="108" fill="#a1a1aa" font-size="10">• Morphological NER</text>
+    <text x="245" y="124" fill="#a1a1aa" font-size="10">• 6 Grammatical Cases</text>
+    <text x="245" y="140" fill="#a1a1aa" font-size="10">• Deterministic Regex</text>
+  </g>
+
+  <!-- Arrow 2 -->
+  <path d="M 390 110 L 410 110" stroke="#3f3f46" stroke-width="2" fill="none" />
+  <polygon points="410,106 418,110 410,114" fill="#71717a" />
+
+  <!-- Step 3: Deduplication & Taxonomy -->
+  <g filter="url(#shadow)">
+    <rect x="420" y="60" width="160" height="100" rx="8" fill="url(#cardGrad)" stroke="#27272a" stroke-width="1.5" />
+    <circle cx="440" cy="80" r="8" fill="#8b5cf6" />
+    <text x="440" y="84" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">3</text>
+    <text x="456" y="84" fill="#f4f4f5" font-size="12" font-weight="600">Deduplication</text>
+    <text x="440" y="108" fill="#a1a1aa" font-size="10">• MinHash LSH (128p)</text>
+    <text x="440" y="124" fill="#a1a1aa" font-size="10">• Exact Hash Dedup</text>
+    <text x="440" y="140" fill="#a1a1aa" font-size="10">• 8-Domain Classifier</text>
+  </g>
+
+  <!-- Arrow 3 -->
+  <path d="M 585 110 L 605 110" stroke="#3f3f46" stroke-width="2" fill="none" />
+  <polygon points="605,106 613,110 605,114" fill="#71717a" />
+
+  <!-- Step 4: Thread DAG Reconstruction -->
+  <g filter="url(#shadow)">
+    <rect x="615" y="60" width="160" height="100" rx="8" fill="url(#cardGrad)" stroke="#f59e0b" stroke-width="1.5" />
+    <circle cx="635" cy="80" r="8" fill="#f59e0b" />
+    <text x="635" y="84" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">4</text>
+    <text x="651" y="84" fill="#f4f4f5" font-size="12" font-weight="600">Thread DAG</text>
+    <text x="635" y="108" fill="#a1a1aa" font-size="10">• Reply Tree Traversal</text>
+    <text x="635" y="124" fill="#a1a1aa" font-size="10">• Temporal Clustering</text>
+    <text x="635" y="140" fill="#a1a1aa" font-size="10">• Quality Scored SFT</text>
+  </g>
+
+  <!-- Arrow 4 -->
+  <path d="M 780 110 L 800 110" stroke="#3f3f46" stroke-width="2" fill="none" />
+  <polygon points="800,106 808,110 800,114" fill="#71717a" />
+
+  <!-- Step 5: Final Multi-Format Splits -->
+  <g filter="url(#shadow)">
+    <rect x="810" y="60" width="120" height="100" rx="8" fill="url(#cardGrad)" stroke="#06b6d4" stroke-width="1.5" />
+    <circle cx="830" cy="80" r="8" fill="#06b6d4" />
+    <text x="830" y="84" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">5</text>
+    <text x="846" y="84" fill="#f4f4f5" font-size="12" font-weight="600">Outputs</text>
+    <text x="830" y="108" fill="#a1a1aa" font-size="10">• Parquet (zstd)</text>
+    <text x="830" y="124" fill="#a1a1aa" font-size="10">• SFT / DPO JSONL</text>
+    <text x="830" y="140" fill="#a1a1aa" font-size="10">• Vector RAG KB</text>
+  </g>
+
+  <!-- Bottom Badges / Metrics Row -->
+  <g transform="translate(0, 185)">
+    <rect x="30" y="0" width="280" height="95" rx="8" fill="#18181b" stroke="#27272a" />
+    <text x="50" y="32" fill="#3b82f6" font-size="18" font-weight="700">2,816,454</text>
+    <text x="50" y="52" fill="#f4f4f5" font-size="12" font-weight="600">Clean Messages</text>
+    <text x="50" y="74" fill="#71717a" font-size="11">11 nodes • 210k pseudonymous authors</text>
+
+    <rect x="340" y="0" width="280" height="95" rx="8" fill="#18181b" stroke="#27272a" />
+    <text x="360" y="32" fill="#10b981" font-size="18" font-weight="700">171,520</text>
+    <text x="360" y="52" fill="#f4f4f5" font-size="12" font-weight="600">SFT Multi-Turn Dialogues</text>
+    <text x="360" y="74" fill="#71717a" font-size="11">Curated conversations • ChatML / ShareGPT</text>
+
+    <rect x="650" y="0" width="280" height="95" rx="8" fill="#18181b" stroke="#27272a" />
+    <text x="670" y="32" fill="#f59e0b" font-size="18" font-weight="700">325,690</text>
+    <text x="670" y="52" fill="#f4f4f5" font-size="12" font-weight="600">RAG Knowledge Chunks</text>
+    <text x="670" y="74" fill="#71717a" font-size="11">Dense context chunks for vector search</text>
+  </g>
+</svg>
