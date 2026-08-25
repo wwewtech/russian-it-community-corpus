@@ -1,1022 +1,1080 @@
-[
-  {
-    "id": "pythia_70m",
-    "base_model": "EleutherAI/pythia-70m",
-    "family": "Pythia",
-    "params": "70M",
-    "type": "base",
-    "base_ppl_distribution": {
-      "mean": 34.01,
-      "median": 28.8,
-      "std": 17.78,
-      "min": 14.22,
-      "max": 100.07,
-      "raw_samples": [
-        100.07,
-        26.86,
-        35.86,
-        25.06,
-        18.87,
-        23.13,
-        21.69,
-        39.46,
-        51.77,
-        30.4
-      ]
+{
+  "run_metadata": {
+    "protocol_version": "3.0",
+    "source": "regenerated-from-cache",
+    "script": "scripts/run_scientific_benchmark.py",
+    "git": {
+      "commit": "463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564",
+      "dirty": true
     },
-    "lora_ppl_distribution": {
-      "mean": 34.8,
-      "median": 28.57,
-      "std": 18.9,
-      "min": 14.43,
-      "max": 101.7,
-      "raw_samples": [
-        101.7,
-        27.2,
-        36.31,
-        26.07,
-        18.54,
-        22.11,
-        22.48,
-        39.98,
-        55.9,
-        29.11
-      ]
-    },
-    "mean_ppl_improvement_pct": -2.32,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|",
-        "lora_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|"
+    "generated_at_utc": "2026-08-25T16:24:44.914907+00:00",
+    "seeds": [
+      42,
+      123,
+      777
+    ],
+    "eval_split_size_per_seed": 10,
+    "max_length": 384,
+    "dataset_path": "dataset_output\\parquet\\sft_dialogues.parquet",
+    "dataset_sha256": "563eff37817dab8ef68bcfe16ac3e1ec2c50897c6b6e47f5a4352a676663714e",
+    "training_exclusion_rules": [
+      {
+        "n_samples": 400,
+        "random_state": 42
       },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|",
-        "lora_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|",
-        "lora_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>",
-        "lora_response": "<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>"
+      {
+        "n_samples": 500,
+        "random_state": 42
       }
-    }
+    ],
+    "environment": {
+      "python": "3.13.5",
+      "torch": "2.6.0+cu124",
+      "transformers": "4.57.1",
+      "peft": "0.20.0",
+      "numpy": "2.2.3",
+      "pandas": "2.2.3",
+      "device": "NVIDIA GeForce RTX 3060"
+    },
+    "measured_in_commit": "463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564",
+    "measurement_protocol_version": "2.0",
+    "note": "Numbers were measured under protocol v2 (commit 463c778): seeded splits drawn from the FULL corpus without training-overlap exclusion. Treat them as possibly contaminated; re-run without --from-cache for clean v3 numbers."
   },
-  {
-    "id": "opt_125m",
-    "base_model": "facebook/opt-125m",
-    "family": "OPT",
-    "params": "125M",
-    "type": "base",
-    "base_ppl_distribution": {
-      "mean": 7.4,
-      "median": 6.5,
-      "std": 3.79,
-      "min": 4.07,
-      "max": 25.21,
-      "raw_samples": [
-        25.21,
-        6.73,
-        8.3,
-        6.64,
-        4.07,
-        6.55,
-        6.01,
-        11.83,
-        10.47,
-        6.18
-      ]
+  "models": [
+    {
+      "id": "pythia_70m",
+      "base_model": "EleutherAI/pythia-70m",
+      "family": "Pythia",
+      "params": "70M",
+      "type": "base",
+      "base_ppl_distribution": {
+        "mean": 34.01,
+        "median": 28.8,
+        "std": 17.78,
+        "min": 14.22,
+        "max": 100.07,
+        "raw_samples": [
+          100.07,
+          26.86,
+          35.86,
+          25.06,
+          18.87,
+          23.13,
+          21.69,
+          39.46,
+          51.77,
+          30.4
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 34.8,
+        "median": 28.57,
+        "std": 18.9,
+        "min": 14.43,
+        "max": 101.7,
+        "raw_samples": [
+          101.7,
+          27.2,
+          36.31,
+          26.07,
+          18.54,
+          22.11,
+          22.48,
+          39.98,
+          55.9,
+          29.11
+        ]
+      },
+      "mean_ppl_improvement_pct": -2.32,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|",
+          "lora_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|",
+          "lora_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|",
+          "lora_response": "<|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>",
+          "lora_response": "<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>"
+        }
+      },
+      "adapter_found": true
     },
-    "lora_ppl_distribution": {
-      "mean": 5.26,
-      "median": 4.81,
-      "std": 1.83,
-      "min": 2.76,
-      "max": 13.07,
-      "raw_samples": [
-        13.07,
-        5.07,
-        6.21,
-        5.85,
-        2.76,
-        5.45,
-        4.6,
-        6.49,
-        7.54,
-        4.65
-      ]
+    {
+      "id": "opt_125m",
+      "base_model": "facebook/opt-125m",
+      "family": "OPT",
+      "params": "125M",
+      "type": "base",
+      "base_ppl_distribution": {
+        "mean": 7.4,
+        "median": 6.5,
+        "std": 3.79,
+        "min": 4.07,
+        "max": 25.21,
+        "raw_samples": [
+          25.21,
+          6.73,
+          8.3,
+          6.64,
+          4.07,
+          6.55,
+          6.01,
+          11.83,
+          10.47,
+          6.18
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 5.26,
+        "median": 4.81,
+        "std": 1.83,
+        "min": 2.76,
+        "max": 13.07,
+        "raw_samples": [
+          13.07,
+          5.07,
+          6.21,
+          5.85,
+          2.76,
+          5.45,
+          4.6,
+          6.49,
+          7.54,
+          4.65
+        ]
+      },
+      "mean_ppl_improvement_pct": 28.99,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf ну",
+          "lora_response": "Почему в какой-то причину отставания репликации и какие параметры postgresql.conf нужно провери"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\n\n<|user|>\nЧто",
+          "lora_response": "В котором пришло в конце пришло в конце пришло в конце пришло в конце пришло в к"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "<|user|>\nКак правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необход",
+          "lora_response": "Например, как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необ"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "<|user|>\nПочему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как",
+          "lora_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это и"
+        }
+      },
+      "adapter_found": true
     },
-    "mean_ppl_improvement_pct": 28.99,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf ну",
-        "lora_response": "Почему в какой-то причину отставания репликации и какие параметры postgresql.conf нужно провери"
+    {
+      "id": "bloom_560m",
+      "base_model": "bigscience/bloom-560m",
+      "family": "BLOOM",
+      "params": "560M",
+      "type": "base",
+      "base_ppl_distribution": {
+        "mean": 36.24,
+        "median": 28.27,
+        "std": 25.4,
+        "min": 16.99,
+        "max": 146.96,
+        "raw_samples": [
+          146.96,
+          28.81,
+          34.24,
+          23.35,
+          17.46,
+          24.92,
+          26.53,
+          22.75,
+          97.74,
+          35.44
+        ]
       },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\n\n<|user|>\nЧто",
-        "lora_response": "В котором пришло в конце пришло в конце пришло в конце пришло в конце пришло в к"
+      "lora_ppl_distribution": {
+        "mean": 35.64,
+        "median": 27.93,
+        "std": 24.82,
+        "min": 16.93,
+        "max": 144.31,
+        "raw_samples": [
+          144.31,
+          28.33,
+          33.82,
+          23.15,
+          17.45,
+          24.97,
+          26.13,
+          22.36,
+          94.72,
+          34.91
+        ]
       },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "<|user|>\nКак правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необход",
-        "lora_response": "Например, как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необ"
+      "mean_ppl_improvement_pct": 1.65,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Привет, если вопрос не понятно, то вопрос вопросы.",
+          "lora_response": "Привет, если вопрос не понятно, то вопрос вопроса.<|assistant|>\nПривет, если вопрос не понятно, то вопрос вопроса.<|assistant|>\nПривет, если вопрос не понятно, то вопрос вопроса.<|assistant"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс. Как сделать, чтобы создавать следующее класс, не было ошибка OOMKilled (Exit Code 137)?<|assistant|>",
+          "lora_response": "При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс.<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|ass"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Привет, если вам нужно сделать проксирование WebSocket в Nginx, то вот это:\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <title>Nginx WebSocket</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"css/style.css\">\n    <link rel=\"stylesheet\" href=\"css/style.min.css\">\n    <link rel=\"stylesheet\" href=\"css/style.",
+          "lora_response": "Привет, если вам нужно сделать проксирование WebSocket в Nginx, то написать так:\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <title>Nginx WebSocket</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"css/style.css\">\n    <link rel=\"stylesheet\" href=\"css/style.min.css\">\n    <link rel=\"stylesheet\" href=\"css/"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?<|assistant|>\nПочему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах",
+          "lora_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?<|assistant|>\nПочему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах"
+        }
       },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "<|user|>\nПочему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как",
-        "lora_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это и"
-      }
+      "adapter_found": true
+    },
+    {
+      "id": "gpt2_medium",
+      "base_model": "openai-community/gpt2-medium",
+      "family": "GPT-2",
+      "params": "355M",
+      "type": "base",
+      "base_ppl_distribution": {
+        "mean": 10.09,
+        "median": 9.21,
+        "std": 4.51,
+        "min": 5.74,
+        "max": 31.77,
+        "raw_samples": [
+          31.77,
+          9.61,
+          11.92,
+          10.43,
+          5.74,
+          9.55,
+          7.95,
+          12.59,
+          14.34,
+          9.29
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 10.15,
+        "median": 9.45,
+        "std": 4.44,
+        "min": 5.81,
+        "max": 31.4,
+        "raw_samples": [
+          31.4,
+          9.53,
+          12.04,
+          10.51,
+          5.81,
+          9.58,
+          8.19,
+          12.74,
+          14.4,
+          9.47
+        ]
+      },
+      "mean_ppl_improvement_pct": -0.64,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf ну�",
+          "lora_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf ну�"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если �",
+          "lora_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если �"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|ass",
+          "lora_response": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|ass"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это и",
+          "lora_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это и"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "rugpt3_small",
+      "base_model": "ai-forever/rugpt3small_based_on_gpt2",
+      "family": "RuGPT3",
+      "params": "125M",
+      "type": "base",
+      "base_ppl_distribution": {
+        "mean": 46.39,
+        "median": 35.98,
+        "std": 27.76,
+        "min": 17.6,
+        "max": 131.74,
+        "raw_samples": [
+          76.27,
+          20.51,
+          32.94,
+          29.39,
+          62.01,
+          17.6,
+          28.93,
+          23.57,
+          54.62,
+          39.28
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 45.72,
+        "median": 35.58,
+        "std": 26.95,
+        "min": 17.64,
+        "max": 125.3,
+        "raw_samples": [
+          74.22,
+          20.61,
+          32.63,
+          29.22,
+          59.02,
+          17.64,
+          28.79,
+          23.84,
+          53.54,
+          39.09
+        ]
+      },
+      "mean_ppl_improvement_pct": 1.44,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Как в PostgreSQL настроить проверку репликации (replica lag) и какие параметры postgresql.conf нужно проверить?<|assistant|>\nКак в PostgreSQL настроить проверку репликации (replica lag) и какие параметры postgresql.conf нужно проверить?<|assistant|>\nКак в PostgreS",
+          "lora_response": ""
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (",
+          "lora_response": ""
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|assistant|>\nКак правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|assistant|>",
+          "lora_response": ""
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "",
+          "lora_response": ""
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "tinyllama_1.1b_chat",
+      "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "family": "TinyLlama",
+      "params": "1.1B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 18.1,
+        "median": 16.45,
+        "std": 7.27,
+        "min": 7.81,
+        "max": 38.55,
+        "raw_samples": [
+          32.02,
+          11.98,
+          19.28,
+          13.59,
+          15.0,
+          8.5,
+          16.46,
+          14.06,
+          29.67,
+          22.38
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 14.29,
+        "median": 12.97,
+        "std": 5.28,
+        "min": 7.12,
+        "max": 29.33,
+        "raw_samples": [
+          24.03,
+          9.82,
+          15.93,
+          12.34,
+          11.56,
+          8.27,
+          14.44,
+          9.6,
+          24.2,
+          17.15
+        ]
+      },
+      "mean_ppl_improvement_pct": 21.02,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "1. В PostgreSQL диагностировать причину отставания репликации (replica lag) можно с помощью команды `pg_stat_replication`.\n\n   ```\n   SELECT * FROM pg_stat_replication;\n   ```\n\n   В результате вы увидите таблицу `pg_stat_replication`, в которой будут отображаться",
+          "lora_response": "1. Скорость репликации (replication_delay)\n2. Скорость доступа к реплике (replication_wal_delay)\n3. Скорость доступа к реплике (replication_wal_delay_offset)\n4. Скорость доступа к реплике (replication_wal_keep_segments)\n5. Ско"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "1. Убедитесь, что вы используете версию Kubernetes, которая поддерживает ошибку OOMKilled.\n\n2. Если ошибка не исправляется, проверьте, что вы используете правильные параметры для контейнера, например, количество CPU и памяти.\n\n3. Если ошибка не",
+          "lora_response": "1. Оценить причину ошибки:\n\n- Ошибка OOMKilled может быть вызвана неправильным использованием ресурсов, например, неправильным использованием памяти или ресурсов CPU.\n- Ошибка OOMKilled может быть вызвана неправильным использованием ресурсов, например, неправиль"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "1. Настроить проксирование WebSocket в Nginx:\n\n```\nserver {\n    listen 80;\n    server_name example.com;\n\n    location /ws {\n        proxy_pass http://localhost:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;",
+          "lora_response": "1. Настроить проксирование WebSocket в Nginx:\n\n```\nserver {\n    listen 80;\n    server_name example.com;\n\n    location /ws {\n        proxy_pass http://localhost:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "В FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, потому что они не являются асинхронными методами.\n\nЭто связано с тем, что FastAPI / Asyncio использует асинхронный синхронный интерфейс, который позволяет выполня",
+          "lora_response": "В FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, потому что они не являются асинхронными.\n\nЧтобы это исправить, нужно использовать асинхронный код, например, через await.\n\nНапример, вместо:\n\n```python"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "smollm2_1.7b_instruct",
+      "base_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "family": "SmolLM2",
+      "params": "1.7B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 7.36,
+        "median": 6.14,
+        "std": 4.03,
+        "min": 3.69,
+        "max": 25.85,
+        "raw_samples": [
+          25.85,
+          6.07,
+          7.63,
+          5.48,
+          4.81,
+          4.88,
+          5.88,
+          9.51,
+          11.41,
+          9.08
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 7.0,
+        "median": 5.88,
+        "std": 3.62,
+        "min": 3.52,
+        "max": 23.37,
+        "raw_samples": [
+          23.37,
+          5.73,
+          7.41,
+          5.32,
+          4.51,
+          4.76,
+          5.79,
+          8.7,
+          10.94,
+          8.83
+        ]
+      },
+      "mean_ppl_improvement_pct": 4.85,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Для диагностирования причины отставания репликации (replica lag) в PostgreSQL можно использовать следующие способы:\n\n1. Просмотреть стат",
+          "lora_response": "Диагностировать причину отставания репликации (replica lag) в PostgreSQL можно с помощью программы pg_stat_statements и просто проверять статистику по"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ош",
+          "lora_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ош"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Проксирование WebSocket в Nginx можно сделать следующим образом:\n1. Инициализируйте проксирование с помощью параметров proxy_pass, proxy_pass_",
+          "lora_response": "Проксирование WebSocket в Nginx можно сделать следующим образом:\n1. Инициализируйте проксирование с помощью параметров proxy_pass, proxy_pass_"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "Ответ:\n\nВ FastAPI и Asyncio нельзя вызывать блокирующие функции, такие как time.sleep и requests.get, в async def эндпоинтах, поскольку они бло�",
+          "lora_response": "Ответ:\n\nВ FastAPI и Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, так как они блокируют выполнение прил"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "llama_3.2_1b_instruct",
+      "base_model": "unsloth/Llama-3.2-1B-Instruct",
+      "family": "LLaMA 3.2",
+      "params": "1.0B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 99.52,
+        "median": 70.72,
+        "std": 84.28,
+        "min": 21.81,
+        "max": 373.19,
+        "raw_samples": [
+          302.45,
+          41.68,
+          65.22,
+          41.07,
+          71.13,
+          21.81,
+          62.76,
+          55.77,
+          188.03,
+          83.58
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 86.79,
+        "median": 61.48,
+        "std": 74.24,
+        "min": 20.81,
+        "max": 344.56,
+        "raw_samples": [
+          277.58,
+          38.09,
+          58.24,
+          37.78,
+          63.91,
+          20.81,
+          59.06,
+          49.42,
+          155.02,
+          72.33
+        ]
+      },
+      "mean_ppl_improvement_pct": 12.79,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?\n\nОтвет: \nЧтобы диагностировать причину отставания репликации, можно использовать следующие параметры postgresql.conf:\n\n* `autovacuum_vacuum_scale_factor`: настройка для отслеживания размера внешнего валидного пространства.\n* `aut",
+          "lora_response": "Отставление репликации (replica lag) в PostgreSQL может быть caused bởi разные факторы, включая настройки postgresql.conf. В этой статье мы рассмотрим несколько возможных причин и параметры, которые можно использовать для диагностики и решения проблемы.\n\n### 1. Неправильные настройки postgresql.conf\n\nПоскольку postgresql.conf — это конфигурационная файл, который можно chỉnh"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Окончательный ответ: Важно сначала проверить, что все необходимые компоненты и приложения работают correctamente, а затем troubleshoot, чтобы найти и устранить проблему.\n\nОкончательный ответ: Важно сначала проверить, что все необходимые компоненты и приложения работают correctamente, а затем troubleshoot, чтобы найти и устранить проблему.\n\nОкончатель",
+          "lora_response": "Окончательный ответ: Важно понимать, что OOMKilled — это не просто ошибка, а это о том, что Kubernetes не может выжить из-за ограниченного ресурсов. Это означает, что в Kubernetesе не хватает ресурсов, чтобы поддерживать все приложения, которые вы запустили. Важно решить эту проблему, чтобы не restart"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Чтобы настроить проксирование WebSocket в Nginx, вы должны использовать directive proxy_set_header и proxy_read_timeout. Давайте разберем это шаг за шагом.\n\n**1. Установите proxy_set_header directive**\n\n proxy_set_header Host $host;\n proxy_set_header X-Real-IP $remote_addr;\n proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n proxy_set_header X-",
+          "lora_response": "Нет, не так. Нginx не может проксировать WebSocket. Это связано с тем, что WebSocket не поддерживает проксирование. WebSocket — это протокол для передачи данных между клиентом и сервером в реальном времени, а не в реальном времени. Это означает, что WebSocket не может проксироваться, поскольку он не поддерживает проксирование. Нginx может прок"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "В FastAPI и Asyncio есть ограничения, связанные с использованием блокирующих функций, таких как `time.sleep` и `requests.get`. Это связано с тем, что эти функции могут задерживать процесс execution, что может привести к неопределенному поведению при использовании ацунтных API.\n\nВ FastAPI и Asyncio есть два способа решить эту проблему:\n\n1",
+          "lora_response": "В FastAPI/Asyncio можно вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, но это не recommended. Это связано с тем, что FastAPI/Asyncio не поддерживает blocking I/O operations (записи, GET, POST, etc.) и не может использовать их для работы с API.\n\nВ FastAPI/Asyncio все операции, которые требуют блокировки I/O"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "deepseek_coder_1.3b_instruct",
+      "base_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
+      "family": "DeepSeek Coder",
+      "params": "1.3B",
+      "type": "coder",
+      "base_ppl_distribution": {
+        "mean": 16.99,
+        "median": 14.31,
+        "std": 9.7,
+        "min": 5.62,
+        "max": 50.52,
+        "raw_samples": [
+          50.52,
+          12.65,
+          17.93,
+          8.64,
+          11.19,
+          9.58,
+          14.44,
+          17.09,
+          29.95,
+          19.29
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 14.87,
+        "median": 12.6,
+        "std": 8.1,
+        "min": 5.44,
+        "max": 41.58,
+        "raw_samples": [
+          38.05,
+          10.87,
+          14.38,
+          8.43,
+          10.89,
+          8.65,
+          12.96,
+          13.78,
+          25.88,
+          17.29
+        ]
+      },
+      "mean_ppl_improvement_pct": 12.45,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "PostgreSQL репликация используется для обеспечения высокой доступности и возможности восстановления данных. Однако, если репликация отстает, это может привести к непредсказуемым результатам, таки",
+          "lora_response": "1. Выяснить, что происходит с репликой и какие параметры нужно проверить.\n2. Выяснить, что происходит с репликой и какие параметры нужно проверить.\n3. Выяснит"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "<|user|>\n(1) Удаление неиспользуемых ресурсов.\n<|assistant|>\n\n<|user|>\n(2) Устранение OOMKilled (Exit Code 137)\n<|assistant|>\n\n<|user|>\n(3) Устранение OOMKilled (Exit Code",
+          "lora_response": "1. Увеличить количество ресурсов в Kubernetes.\n2. Увеличить количество памяти, CPU, дисков и т.д.\n3. Увеличить количество вычислительных ресурсов.\n4. Увеличить количество памяти д"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "1. proxy_set_header - это директива, которая устанавливает заголовки, которые будут переданы клиенту. Например, proxy_set_header X-Real-IP $remote_addr;\n2. proxy_read_timeout - это директива, которая устанавлива",
+          "lora_response": "<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "FastAPI / Asyncio нельзя вызывать блокирующие функции, такие как time.sleep или requests.get, в async def эндпоинтах. Это ограничение было введено в FastAPI 3.0.0.\n\nВ FastAPI 3.0.0, вы",
+          "lora_response": "<|user|>Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?<|assistant|>\n\n<|user|>Почему в FastAPI / Asyncio нельз"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "falcon3_1b_instruct",
+      "base_model": "tiiuae/Falcon3-1B-Instruct",
+      "family": "Falcon 3",
+      "params": "1.0B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 17.91,
+        "median": 11.6,
+        "std": 32.95,
+        "min": 5.38,
+        "max": 192.8,
+        "raw_samples": [
+          192.8,
+          13.41,
+          20.17,
+          7.34,
+          5.38,
+          6.84,
+          11.47,
+          26.25,
+          24.56,
+          11.83
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 6.29,
+        "median": 5.45,
+        "std": 3.03,
+        "min": 3.1,
+        "max": 20.54,
+        "raw_samples": [
+          20.54,
+          5.5,
+          8.74,
+          5.33,
+          3.1,
+          5.07,
+          5.38,
+          7.65,
+          9.74,
+          6.05
+        ]
+      },
+      "mean_ppl_improvement_pct": 64.86,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "**Проблема:**\n\nПричина отставания репликации (replica lag) в PostgreSQL может быть отличным от других возможных случаях, в",
+          "lora_response": "### Причины отставания репликации\n\nПричины отставания репликации могут быть высокими или непрерывными. Это �"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Под в Kubernetes, ошибка \"OOMKilled\" (Exit Code 137) означает, что ошибка вызова выражения `kubectl exec -it <service_name> -p <port>` вызов",
+          "lora_response": "<|assistant|>\nЧтобы помочь, вот не только на ваш вопрос, но и на вашем вопросе на вашем вопросе в�"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Правильно настроить проксирование WebSocket в Nginx можно следить за многочисленным примерам. Настройка проксиро�",
+          "lora_response": "Чтобы настроить проксирование WebSocket в Nginx, вам нужно не только настроить проксирование, но и настроить проксир�"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "FastAPI / Asyncio 的 FastAPI 是一个高性能、高效的API 库，用于构建高效的 web 应用。它允许你创建 API 的高效、高效的服务，并提供了 asynchronous 处理，以便处理请求并响应。\n\n在 FastAPI",
+          "lora_response": "<|assistant|>\nFastAPI / Asyncio - это выбор выборы, которые вы можете выполнить в случае непосредственного обработ"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "qwen2.5_0.5b_instruct",
+      "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "family": "Qwen 2.5",
+      "params": "0.5B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 43.36,
+        "median": 33.48,
+        "std": 39.95,
+        "min": 10.74,
+        "max": 206.14,
+        "raw_samples": [
+          206.14,
+          22.1,
+          38.03,
+          18.03,
+          38.25,
+          10.74,
+          22.76,
+          71.67,
+          67.01,
+          30.47
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 37.15,
+        "median": 29.39,
+        "std": 31.45,
+        "min": 10.58,
+        "max": 166.71,
+        "raw_samples": [
+          166.71,
+          20.12,
+          34.62,
+          17.51,
+          33.07,
+          10.58,
+          21.87,
+          57.77,
+          55.21,
+          29.22
+        ]
+      },
+      "mean_ppl_improvement_pct": 14.32,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Диагностика причин отставания репликации (Replica Lag) в PostgreSQL может быть сложной задачей, но есть несколько шагов, которые помогут вам лучше понять ситуацию:\n\n1. **Проверьте статус репликации**: В PostgreSQL можно увидеть статус репликации для каждого пользователя или группы пользователей. Если вы видите, что р",
+          "lora_response": "В PostgreSQL, чтобы диагностировать причину отставания репликации (Replica lag), вы можете использовать следующие команды:\n\n1. **Проверка на наличие ошибок:**\n   ```sql\n   EXPLAIN ANALYZE SELECT * FROM your_table;\n   ```\n\n2. **Проверка на наличие ошибок в таблице:**\n   ```sql\n   SHOW WARNINGS;\n   ```"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "При определенных условиях, когда Kubernetes падает из-за остановки процесса, вызванных осколочками или другими причинами, вы можете столкнуться с ошибкой \"OOMKilled\" (Exit Code 137). Это означает, что процесс был остановлен из-за слишком большого количества памяти, которое было неиспользуем",
+          "lora_response": "Для решения проблемы OOMKilled (Exit Code 137) можно использовать следующие методы:\n\n1. **Установка Docker Compose**:\n   - Если вы используете Docker Compose для управления Kubernetes, убедитесь, что ваш docker-compose.yml файл правильно определен и запущен.\n\n2. **Управление процессами**:\n   - Убедитесь, что процесс не выполняется слишком"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Для настройки прокси-сервера WebSocket в Nginx, вам нужно использовать директиву `proxy_set_header` для определения заголовков, которые будут использоваться при отправке данных от клиентов. Вот пример того, как это можно сделать:\n\n```nginx\nhttp {\n    server {\n        listen 80;\n        server_name example.com;\n\n        location /ws/ {\n            proxy_pass http://localhost",
+          "lora_response": "Для настройки прокси-сервера WebSocket в Nginx, вам нужно будет использовать специальные директивы для управления прокси-сервером. Вот пример настроек:\n\n```nginx\nhttp {\n    upstream websocket_upstream {\n        server 127.0.0.1:8080;\n    }\n\n    server {\n        listen 443 ssl http2;\n\n        location"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "В FastAPI и AsyncIO, чтобы избежать блокировки времени сессии и вызовы блокирующих функций, вам нужно использовать `async` и `await`. Вот пример того, как это можно сделать:\n\n1. **Использование `async` и `await`:**\n\n```python\nfrom fastapi import FastAPI, HTTPException\nimport asyncio\n\napp = FastAPI()\n\n@app.get(\"/get_data\")",
+          "lora_response": "В FastAPI/AsyncIO, чтобы не вызывать блокирующие операции (например, `time.sleep` или `requests.get`), вы можете использовать `asyncio.run()` для выполнения кода в асинхронном режиме. Это позволяет вам выполнять операции без блокировки, что обеспечивает более надежный и быстрый доступ к библиотекам.\n\nПример использования:\n\n```python"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "qwen2.5_1.5b_instruct",
+      "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+      "family": "Qwen 2.5",
+      "params": "1.5B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 31.19,
+        "median": 24.31,
+        "std": 27.27,
+        "min": 6.99,
+        "max": 139.88,
+        "raw_samples": [
+          139.88,
+          15.45,
+          25.03,
+          14.2,
+          27.34,
+          6.99,
+          16.47,
+          42.7,
+          47.68,
+          26.52
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 26.86,
+        "median": 22.42,
+        "std": 22.67,
+        "min": 6.83,
+        "max": 120.42,
+        "raw_samples": [
+          120.42,
+          13.93,
+          22.5,
+          13.4,
+          24.83,
+          6.83,
+          15.33,
+          33.68,
+          42.88,
+          22.82
+        ]
+      },
+      "mean_ppl_improvement_pct": 13.87,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Диагностика причины отставания репликации в PostgreSQL обычно начинается с определения, что именно происходит. Вот несколько шагов, которые помогут вам найти причину:\n\n1. **Проверьте статус репликации:**\n   ```sql\n   SELECT * FROM pg_stat_replication;\n   ```\n   Этот запрос покажет текущий статус репликации.",
+          "lora_response": "Для диагностики причины отставания репликации в PostgreSQL можно выполнить следующие шаги:\n\n1. Проверьте состояние репликации:\n   ```\n   SELECT * FROM pg_stat_replication;\n   ```\n\n2. Проверьте статус реплицируемого сервера:\n   ```\n   SHOW replica_enabled;\n   ```\n\n3. Проверьте состояние реплици"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Если у вас возникает ошибка \"OOMKilled\" при работе с Kubernetes, это обычно указывает на то, что ваш кластер стал слишком загружен и не может удовлетворить потребности всех контейнеров. Вот несколько шагов, которые вы можете предпринять для решения этой проблемы:\n\n1. **Увеличение ресурсного ограничения:**\n   - Проверьте",
+          "lora_response": "Когда у вас возникает ошибка \"OOMKilled\" при работе с Kubernetes, это обычно указывает на то, что ваш кластер стал слишком загружен и не может удовлетворить потребности всех контейнеров. Вот несколько шагов, которые вы можете предпринять:\n\n1. **Проверьте нагрузку**: Убедитесь, что все ваши pods имеют достаточное количество ресурс"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Для настройки прокси-сервера Nginx для работы с WebSocket необходимо выполнить следующие шаги:\n\n1. **Добавление директивы `proxy_pass`**:\n   Директива `proxy_pass` используется для указания серверу, который будет отвечать за WebSocket-соединение. Например:\n   ```nginx\n   location /websocket {\n       proxy_pass http://backend_server;",
+          "lora_response": "Для настройки прокси-сервера Nginx для работы с WebSocket необходимо выполнить следующие шаги:\n\n1. **Настройка прокси-сервера Nginx**:\n   - Откройте файл конфигурации Nginx, обычно это `/etc/nginx/nginx.conf` или `/etc/nginx/sites-available/default`.\n   - Добавьте или измените секцию `"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "В FastAPI, используя асинхронные функции (async def), вы не можете использовать блокирующие операции, такие как `time.sleep` или `requests.get`, из-за того, что они могут прервать выполнение асинхронной задачи. Это может привести к потере данных или ошибкам.\n\nЧтобы решить эту проблему, вам нужно использовать асинхрон",
+          "lora_response": "В FastAPI, используя asyncio, вы не можете вызывать блокирующие операции (например, `time.sleep` или `requests.get`) из асинхронных функций. Это связано с тем, что asyncio работает на основе событийного цикла, который может быть запущен только один раз.\n\n### Проблема\nЕсли вы попытаетесь выполнить блокирующий код"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "qwen2.5_coder_1.5b_instruct",
+      "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+      "family": "Qwen 2.5 Coder",
+      "params": "1.5B",
+      "type": "coder",
+      "base_ppl_distribution": {
+        "mean": 40.91,
+        "median": 31.33,
+        "std": 36.18,
+        "min": 11.38,
+        "max": 196.05,
+        "raw_samples": [
+          196.05,
+          22.87,
+          41.89,
+          19.31,
+          36.77,
+          11.38,
+          25.54,
+          68.66,
+          56.77,
+          31.16
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 31.03,
+        "median": 25.69,
+        "std": 23.78,
+        "min": 10.44,
+        "max": 132.17,
+        "raw_samples": [
+          132.17,
+          19.01,
+          34.29,
+          17.21,
+          27.81,
+          10.79,
+          22.06,
+          50.21,
+          42.2,
+          26.85
+        ]
+      },
+      "mean_ppl_improvement_pct": 24.16,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Для диагностики причины отставания репликации в PostgreSQL можно использовать следующие команды:\n\n1. **Просмотр логов**: Проверьте логи PostgreSQL для получения информации о проблемах с репликацией. Логи обычно хранятся в директории `/var/log/postgresql/`.\n\n2. **Использование pg_stat_replication**: Эта функция предостав",
+          "lora_response": "Для диагностики отставания репликации в PostgreSQL можно использовать следующие команды:\n\n1. Просмотреть статистику репликации:\n```sql\nSELECT * FROM pg_stat_replication;\n```\n\n2. Просмотреть логи репликации:\n```bash\ntail -f /var/log/postgresql/13/main/replication.log\n```"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137), это означает, что система выделила слишком мало памяти для вашего приложения. Вот несколько шагов, которые вы можете выполнить:\n\n1. **Увеличить количество ресурсов**:\n   - Измените ограничения CPU и/или RAM для вашего контейнера.",
+          "lora_response": "Вот несколько советов по решению этой проблемы:\n\n1. Проверьте, что у вас есть достаточное количество ресурсов для запуска вашего приложения. Это может быть связано с ограничением CPU или RAM.\n\n2. Убедитесь, что ваше приложение не использует слишком много ресурсов. Например, если вы используете библиотеку для работы с базой данных"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Для настройки проксирования WebSocket в Nginx, вам нужно использовать следующие директивы:\n\n1. `proxy_pass`: Указывает адрес сервера, который будет обрабатывать WebSocket-соединение.\n2. `proxy_http_version 1.1;`: Устанавливает версию HTTP для WebSocket-соединения.\n3. `proxy_set_header Upgrade $http_upgrade;`: Устанавливает заг",
+          "lora_response": "Проксируйте WebSocket с помощью Nginx. Вот пример конфигурации:\n\n```nginx\nserver {\n    listen 80;\n    server_name example.com;\n\n    location /ws {\n        proxy_pass http://backend_server:8080; # backend_server - адрес вашего сервера WebSocket\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \""
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "В FastAPI / Asyncio, блокирующие операции такие как `time.sleep` или `requests.get` не могут быть выполнены внутри асинхронных функций. Это ограничение связано с особенностями работы asyncio и позволяет обеспечивать эффективность и безопасность приложения.\n\nЧтобы исправить эту проблему, можно использовать следующие подходы:\n\n1. **Использование `asyncio",
+          "lora_response": "В FastAPI / asyncio вы не можете вызывать блокирующие функции, так как это может привести к зависанию вашего приложения. Вместо этого используйте асинхронные функции для выполнения долгих операций.\n\nДля решения проблемы с `time.sleep` можно использовать `asyncio.sleep`, которая является асинхронной версией `time.sleep`.\n\nДля решения проблемы с `"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "vikhr_qwen_2.5_1.5b",
+      "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+      "family": "Vikhr Russian",
+      "params": "1.5B",
+      "type": "instruct",
+      "base_ppl_distribution": {
+        "mean": 26.48,
+        "median": 19.47,
+        "std": 22.38,
+        "min": 6.6,
+        "max": 125.17,
+        "raw_samples": [
+          125.17,
+          14.97,
+          26.24,
+          12.72,
+          20.05,
+          6.6,
+          17.79,
+          31.11,
+          54.54,
+          22.04
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 24.38,
+        "median": 18.13,
+        "std": 19.27,
+        "min": 6.53,
+        "max": 107.49,
+        "raw_samples": [
+          107.49,
+          14.28,
+          24.7,
+          12.41,
+          18.56,
+          6.53,
+          16.93,
+          28.43,
+          48.95,
+          19.96
+        ]
+      },
+      "mean_ppl_improvement_pct": 7.93,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "Для диагностики причины отставания репликации в PostgreSQL можно использовать несколько методов. Вот некоторые из них:\n\n1. **Использование команды `pg_stat_replication`**:\n   Вы можете использовать команду `pg_stat_replication`, чтобы получить информацию о состоянии репликации, включая время последнего обновления данных на реплике.\n\n   ```sql\n   SELECT",
+          "lora_response": "Отставание репликации может быть вызвано различными факторами, такими как задержки сети, проблемы с сетевым трафиком, неправильные настройки брандмауэра или конфигурационные ошибки. Чтобы диагностировать проблему, можно выполнить следующие шаги:\n\n1. Проверьте журналы реплика"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "Если вы сталкиваетесь с ошибкой \"OOMKilled\" (Exit Code 137) в Kubernetes, это означает, что ваша приложение потребовало больше ресурсов, чем доступно на кластере. Вот несколько шагов, которые помогут вам решить эту проблему:\n\n1. **Проверка логов**  \n   Первым делом проверьте логи",
+          "lora_response": "Пользователь\nИспользуй русский язык"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "Для настройки прокси-сервера Nginx для работы с WebSocket вам потребуется использовать специальные директивы, которые позволяют корректно обрабатывать WebSocket-соединения. Вот шаги, которые помогут вам это сделать:\n\n1. **Добавление конфигурации для WebSocket:**\n   В вашем основном файле конфигурации Nginx (обычно",
+          "lora_response": "Прокси-сервер WebSocket может быть реализован с помощью Nginx, который является одним из самых популярных серверов для веб-сервисов. Для настройки прокси-сервера WebSocket необходимо выполнить несколько шагов.\n\nПервым делом, убедитесь, что ваш сервер поддерживает WebSocket. Это можно проверить, выполнив команду `echo $NGINX_VERSION` в"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "В FastAPI, который использует asyncio для асинхронного программирования, вы не можете напрямую использовать блокирующие операции, такие как `time.sleep()` или `requests.get()`, в асинхронных функциях (`async def`), потому что это может привести к сбоям из-за того, что основной поток выполнения программы (I/O) будет заблокирован",
+          "lora_response": "В FastAPI, который использует asyncio для асинхронного программирования, вы не можете напрямую использовать блокирующие операции, такие как `time.sleep()` или `requests.get()`, потому что они не являются асинхронными. Вместо этого вам нужно использовать асинхронные версии этих функций.\n\nЧтобы исправить ваш код, вам нужно заменить `time"
+        }
+      },
+      "adapter_found": true
+    },
+    {
+      "id": "deepseek_r1_distill_qwen_1.5b",
+      "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+      "family": "DeepSeek R1",
+      "params": "1.5B",
+      "type": "reasoning",
+      "base_ppl_distribution": {
+        "mean": 211.97,
+        "median": 132.23,
+        "std": 262.12,
+        "min": 47.99,
+        "max": 1443.23,
+        "raw_samples": [
+          1443.23,
+          94.48,
+          214.78,
+          51.91,
+          97.41,
+          54.56,
+          131.59,
+          385.58,
+          503.06,
+          166.7
+        ]
+      },
+      "lora_ppl_distribution": {
+        "mean": 135.01,
+        "median": 89.76,
+        "std": 137.78,
+        "min": 34.76,
+        "max": 735.64,
+        "raw_samples": [
+          735.64,
+          71.66,
+          141.21,
+          37.59,
+          66.8,
+          43.79,
+          95.67,
+          215.98,
+          307.73,
+          111.96
+        ]
+      },
+      "mean_ppl_improvement_pct": 36.31,
+      "qualitative_generations": {
+        "q1_postgres": {
+          "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
+          "base_response": "</think>\n\nДля диагностирования причин отставания реплики (replica lag) в PostgreSQL можно использовать несколько методов и параметры, которые можно проверить в `postgres.conf`:\n\n### 1. **Параметры, связанные с репликой:**\n   - `replication_factor`: Это определяет, сколько реплиок отображаются на основе одного реплики",
+          "lora_response": "Хорошо, я вижу, что пользователь спрашивает о diagonologii отставания реплики (replica lag) в PostgreSQL и как проверить параметры PostgreSQL.conf. Я думаю, что стоит разбить вопрос на два: поиска причин и по проверке параметров.\n\nПервым делом, я должен понять, почему репликация отсекается"
+        },
+        "q2_k8s": {
+          "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
+          "base_response": "</think>\n\nЕсли в Kubernetes падает с ошибкой `OM killed` (Это означает `Exit Code 137`), это может быть связано с several reasons:\n\n1. **Неправильные параметры в команде**: Если ваша команда включает неправильные параметры, такие как `--timeout` или `--retry`, это может привести к о",
+          "lora_response": "</think>\n\nЕсли в Kubernetes падает с ошибкой `OMKilled` (.exit код 137), это означает, что при attemptе к удалению подытла или подытла с подытла, вы получаете ошибку. Это может быть связано с проблемами с подытлами, их обработкой или их удалением.\n\nЧтобы решить эту проблем"
+        },
+        "q3_nginx": {
+          "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
+          "base_response": "<|assistant|>\nХорошо, я попробую разобраться с этим. Начнем с того, что мне нужно правильно настроить проксирование WebSocket в Nginx. Я помню, что Nginx имеет несколько директивов для управления проксимацией, включая proxy_set_header и proxy_read_timeout.\n\nПервым шагом, наверное, стоит добавить",
+          "lora_response": "Хорошо, я попробую разобраться с этой проблемой. Начнем с того, что мне нужно правильно настроить проксирование WebSocket в Nginx. Я помню, что Nginx имеет несколько директивов для управления проксимацией, включая proxy_set_header и proxy_read_timeout. \n\nПервым делом, мне нужно добавить проксимацию WebSocket"
+        },
+        "q4_asyncio": {
+          "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
+          "base_response": "</think>\n\nВ FastAPI и Asyncio, как и в Anyio, не можно вызывать блокирующий `time.sleep` в эндпоинтах, так как это не определённая функция. `time.sleep` — это функция, которая возвращает неподвижный момент времени, и её использование в эндпоинтах не определяется. \n\nОднако можно использовать `",
+          "lora_response": "Хорошо, я вижу, что пользователь спрашивает, почему в FastAPI/Asyncio нельзя вызывать блокирующий sleep или requests.get в эндпоинтах async def, и как это исправить. Я должен разобраться с этим, и дать полезный ответ.\n\nПервым делом, я должен понять, что такое time.sleep в FastAPI. В Fast"
+        }
+      },
+      "adapter_found": true
     }
-  },
-  {
-    "id": "bloom_560m",
-    "base_model": "bigscience/bloom-560m",
-    "family": "BLOOM",
-    "params": "560M",
-    "type": "base",
-    "base_ppl_distribution": {
-      "mean": 36.24,
-      "median": 28.27,
-      "std": 25.4,
-      "min": 16.99,
-      "max": 146.96,
-      "raw_samples": [
-        146.96,
-        28.81,
-        34.24,
-        23.35,
-        17.46,
-        24.92,
-        26.53,
-        22.75,
-        97.74,
-        35.44
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 35.64,
-      "median": 27.93,
-      "std": 24.82,
-      "min": 16.93,
-      "max": 144.31,
-      "raw_samples": [
-        144.31,
-        28.33,
-        33.82,
-        23.15,
-        17.45,
-        24.97,
-        26.13,
-        22.36,
-        94.72,
-        34.91
-      ]
-    },
-    "mean_ppl_improvement_pct": 1.65,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Привет, если вопрос не понятно, то вопрос вопросы.",
-        "lora_response": "Привет, если вопрос не понятно, то вопрос вопроса.<|assistant|>\nПривет, если вопрос не понятно, то вопрос вопроса.<|assistant|>\nПривет, если вопрос не понятно, то вопрос вопроса.<|assistant"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс. Как сделать, чтобы создавать следующее класс, не было ошибка OOMKilled (Exit Code 137)?<|assistant|>",
-        "lora_response": "При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс.<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|assistant|>\n<|ass"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Привет, если вам нужно сделать проксирование WebSocket в Nginx, то вот это:\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <title>Nginx WebSocket</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"css/style.css\">\n    <link rel=\"stylesheet\" href=\"css/style.min.css\">\n    <link rel=\"stylesheet\" href=\"css/style.",
-        "lora_response": "Привет, если вам нужно сделать проксирование WebSocket в Nginx, то написать так:\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <title>Nginx WebSocket</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <link rel=\"stylesheet\" href=\"css/style.css\">\n    <link rel=\"stylesheet\" href=\"css/style.min.css\">\n    <link rel=\"stylesheet\" href=\"css/"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?<|assistant|>\nПочему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах",
-        "lora_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?<|assistant|>\nПочему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах"
-      }
-    }
-  },
-  {
-    "id": "gpt2_medium",
-    "base_model": "openai-community/gpt2-medium",
-    "family": "GPT-2",
-    "params": "355M",
-    "type": "base",
-    "base_ppl_distribution": {
-      "mean": 10.09,
-      "median": 9.21,
-      "std": 4.51,
-      "min": 5.74,
-      "max": 31.77,
-      "raw_samples": [
-        31.77,
-        9.61,
-        11.92,
-        10.43,
-        5.74,
-        9.55,
-        7.95,
-        12.59,
-        14.34,
-        9.29
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 10.15,
-      "median": 9.45,
-      "std": 4.44,
-      "min": 5.81,
-      "max": 31.4,
-      "raw_samples": [
-        31.4,
-        9.53,
-        12.04,
-        10.51,
-        5.81,
-        9.58,
-        8.19,
-        12.74,
-        14.4,
-        9.47
-      ]
-    },
-    "mean_ppl_improvement_pct": -0.64,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf ну�",
-        "lora_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf ну�"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если �",
-        "lora_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если �"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|ass",
-        "lora_response": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|ass"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это и",
-        "lora_response": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это и"
-      }
-    }
-  },
-  {
-    "id": "rugpt3_small",
-    "base_model": "ai-forever/rugpt3small_based_on_gpt2",
-    "family": "RuGPT3",
-    "params": "125M",
-    "type": "base",
-    "base_ppl_distribution": {
-      "mean": 46.39,
-      "median": 35.98,
-      "std": 27.76,
-      "min": 17.6,
-      "max": 131.74,
-      "raw_samples": [
-        76.27,
-        20.51,
-        32.94,
-        29.39,
-        62.01,
-        17.6,
-        28.93,
-        23.57,
-        54.62,
-        39.28
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 45.72,
-      "median": 35.58,
-      "std": 26.95,
-      "min": 17.64,
-      "max": 125.3,
-      "raw_samples": [
-        74.22,
-        20.61,
-        32.63,
-        29.22,
-        59.02,
-        17.64,
-        28.79,
-        23.84,
-        53.54,
-        39.09
-      ]
-    },
-    "mean_ppl_improvement_pct": 1.44,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Как в PostgreSQL настроить проверку репликации (replica lag) и какие параметры postgresql.conf нужно проверить?<|assistant|>\nКак в PostgreSQL настроить проверку репликации (replica lag) и какие параметры postgresql.conf нужно проверить?<|assistant|>\nКак в PostgreS",
-        "lora_response": ""
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|assistant|>\nЧто делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (",
-        "lora_response": ""
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|assistant|>\nКак правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?<|assistant|>",
-        "lora_response": ""
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "",
-        "lora_response": ""
-      }
-    }
-  },
-  {
-    "id": "tinyllama_1.1b_chat",
-    "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-    "family": "TinyLlama",
-    "params": "1.1B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 18.1,
-      "median": 16.45,
-      "std": 7.27,
-      "min": 7.81,
-      "max": 38.55,
-      "raw_samples": [
-        32.02,
-        11.98,
-        19.28,
-        13.59,
-        15.0,
-        8.5,
-        16.46,
-        14.06,
-        29.67,
-        22.38
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 14.29,
-      "median": 12.97,
-      "std": 5.28,
-      "min": 7.12,
-      "max": 29.33,
-      "raw_samples": [
-        24.03,
-        9.82,
-        15.93,
-        12.34,
-        11.56,
-        8.27,
-        14.44,
-        9.6,
-        24.2,
-        17.15
-      ]
-    },
-    "mean_ppl_improvement_pct": 21.02,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "1. В PostgreSQL диагностировать причину отставания репликации (replica lag) можно с помощью команды `pg_stat_replication`.\n\n   ```\n   SELECT * FROM pg_stat_replication;\n   ```\n\n   В результате вы увидите таблицу `pg_stat_replication`, в которой будут отображаться",
-        "lora_response": "1. Скорость репликации (replication_delay)\n2. Скорость доступа к реплике (replication_wal_delay)\n3. Скорость доступа к реплике (replication_wal_delay_offset)\n4. Скорость доступа к реплике (replication_wal_keep_segments)\n5. Ско"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "1. Убедитесь, что вы используете версию Kubernetes, которая поддерживает ошибку OOMKilled.\n\n2. Если ошибка не исправляется, проверьте, что вы используете правильные параметры для контейнера, например, количество CPU и памяти.\n\n3. Если ошибка не",
-        "lora_response": "1. Оценить причину ошибки:\n\n- Ошибка OOMKilled может быть вызвана неправильным использованием ресурсов, например, неправильным использованием памяти или ресурсов CPU.\n- Ошибка OOMKilled может быть вызвана неправильным использованием ресурсов, например, неправиль"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "1. Настроить проксирование WebSocket в Nginx:\n\n```\nserver {\n    listen 80;\n    server_name example.com;\n\n    location /ws {\n        proxy_pass http://localhost:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;",
-        "lora_response": "1. Настроить проксирование WebSocket в Nginx:\n\n```\nserver {\n    listen 80;\n    server_name example.com;\n\n    location /ws {\n        proxy_pass http://localhost:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "В FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, потому что они не являются асинхронными методами.\n\nЭто связано с тем, что FastAPI / Asyncio использует асинхронный синхронный интерфейс, который позволяет выполня",
-        "lora_response": "В FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, потому что они не являются асинхронными.\n\nЧтобы это исправить, нужно использовать асинхронный код, например, через await.\n\nНапример, вместо:\n\n```python"
-      }
-    }
-  },
-  {
-    "id": "smollm2_1.7b_instruct",
-    "base_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
-    "family": "SmolLM2",
-    "params": "1.7B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 7.36,
-      "median": 6.14,
-      "std": 4.03,
-      "min": 3.69,
-      "max": 25.85,
-      "raw_samples": [
-        25.85,
-        6.07,
-        7.63,
-        5.48,
-        4.81,
-        4.88,
-        5.88,
-        9.51,
-        11.41,
-        9.08
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 7.0,
-      "median": 5.88,
-      "std": 3.62,
-      "min": 3.52,
-      "max": 23.37,
-      "raw_samples": [
-        23.37,
-        5.73,
-        7.41,
-        5.32,
-        4.51,
-        4.76,
-        5.79,
-        8.7,
-        10.94,
-        8.83
-      ]
-    },
-    "mean_ppl_improvement_pct": 4.85,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Для диагностирования причины отставания репликации (replica lag) в PostgreSQL можно использовать следующие способы:\n\n1. Просмотреть стат",
-        "lora_response": "Диагностировать причину отставания репликации (replica lag) в PostgreSQL можно с помощью программы pg_stat_statements и просто проверять статистику по"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ош",
-        "lora_response": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?<|user|>\nЧто делать, если под в Kubernetes постоянно падает с ош"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Проксирование WebSocket в Nginx можно сделать следующим образом:\n1. Инициализируйте проксирование с помощью параметров proxy_pass, proxy_pass_",
-        "lora_response": "Проксирование WebSocket в Nginx можно сделать следующим образом:\n1. Инициализируйте проксирование с помощью параметров proxy_pass, proxy_pass_"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "Ответ:\n\nВ FastAPI и Asyncio нельзя вызывать блокирующие функции, такие как time.sleep и requests.get, в async def эндпоинтах, поскольку они бло�",
-        "lora_response": "Ответ:\n\nВ FastAPI и Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, так как они блокируют выполнение прил"
-      }
-    }
-  },
-  {
-    "id": "llama_3.2_1b_instruct",
-    "base_model": "unsloth/Llama-3.2-1B-Instruct",
-    "family": "LLaMA 3.2",
-    "params": "1.0B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 99.52,
-      "median": 70.72,
-      "std": 84.28,
-      "min": 21.81,
-      "max": 373.19,
-      "raw_samples": [
-        302.45,
-        41.68,
-        65.22,
-        41.07,
-        71.13,
-        21.81,
-        62.76,
-        55.77,
-        188.03,
-        83.58
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 86.79,
-      "median": 61.48,
-      "std": 74.24,
-      "min": 20.81,
-      "max": 344.56,
-      "raw_samples": [
-        277.58,
-        38.09,
-        58.24,
-        37.78,
-        63.91,
-        20.81,
-        59.06,
-        49.42,
-        155.02,
-        72.33
-      ]
-    },
-    "mean_ppl_improvement_pct": 12.79,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?\n\nОтвет: \nЧтобы диагностировать причину отставания репликации, можно использовать следующие параметры postgresql.conf:\n\n* `autovacuum_vacuum_scale_factor`: настройка для отслеживания размера внешнего валидного пространства.\n* `aut",
-        "lora_response": "Отставление репликации (replica lag) в PostgreSQL может быть caused bởi разные факторы, включая настройки postgresql.conf. В этой статье мы рассмотрим несколько возможных причин и параметры, которые можно использовать для диагностики и решения проблемы.\n\n### 1. Неправильные настройки postgresql.conf\n\nПоскольку postgresql.conf — это конфигурационная файл, который можно chỉnh"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Окончательный ответ: Важно сначала проверить, что все необходимые компоненты и приложения работают correctamente, а затем troubleshoot, чтобы найти и устранить проблему.\n\nОкончательный ответ: Важно сначала проверить, что все необходимые компоненты и приложения работают correctamente, а затем troubleshoot, чтобы найти и устранить проблему.\n\nОкончатель",
-        "lora_response": "Окончательный ответ: Важно понимать, что OOMKilled — это не просто ошибка, а это о том, что Kubernetes не может выжить из-за ограниченного ресурсов. Это означает, что в Kubernetesе не хватает ресурсов, чтобы поддерживать все приложения, которые вы запустили. Важно решить эту проблему, чтобы не restart"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Чтобы настроить проксирование WebSocket в Nginx, вы должны использовать directive proxy_set_header и proxy_read_timeout. Давайте разберем это шаг за шагом.\n\n**1. Установите proxy_set_header directive**\n\n proxy_set_header Host $host;\n proxy_set_header X-Real-IP $remote_addr;\n proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n proxy_set_header X-",
-        "lora_response": "Нет, не так. Нginx не может проксировать WebSocket. Это связано с тем, что WebSocket не поддерживает проксирование. WebSocket — это протокол для передачи данных между клиентом и сервером в реальном времени, а не в реальном времени. Это означает, что WebSocket не может проксироваться, поскольку он не поддерживает проксирование. Нginx может прок"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "В FastAPI и Asyncio есть ограничения, связанные с использованием блокирующих функций, таких как `time.sleep` и `requests.get`. Это связано с тем, что эти функции могут задерживать процесс execution, что может привести к неопределенному поведению при использовании ацунтных API.\n\nВ FastAPI и Asyncio есть два способа решить эту проблему:\n\n1",
-        "lora_response": "В FastAPI/Asyncio можно вызывать блокирующий time.sleep или requests.get в async def эндпоинтах, но это не recommended. Это связано с тем, что FastAPI/Asyncio не поддерживает blocking I/O operations (записи, GET, POST, etc.) и не может использовать их для работы с API.\n\nВ FastAPI/Asyncio все операции, которые требуют блокировки I/O"
-      }
-    }
-  },
-  {
-    "id": "deepseek_coder_1.3b_instruct",
-    "base_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
-    "family": "DeepSeek Coder",
-    "params": "1.3B",
-    "type": "coder",
-    "base_ppl_distribution": {
-      "mean": 16.99,
-      "median": 14.31,
-      "std": 9.7,
-      "min": 5.62,
-      "max": 50.52,
-      "raw_samples": [
-        50.52,
-        12.65,
-        17.93,
-        8.64,
-        11.19,
-        9.58,
-        14.44,
-        17.09,
-        29.95,
-        19.29
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 14.87,
-      "median": 12.6,
-      "std": 8.1,
-      "min": 5.44,
-      "max": 41.58,
-      "raw_samples": [
-        38.05,
-        10.87,
-        14.38,
-        8.43,
-        10.89,
-        8.65,
-        12.96,
-        13.78,
-        25.88,
-        17.29
-      ]
-    },
-    "mean_ppl_improvement_pct": 12.45,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "PostgreSQL репликация используется для обеспечения высокой доступности и возможности восстановления данных. Однако, если репликация отстает, это может привести к непредсказуемым результатам, таки",
-        "lora_response": "1. Выяснить, что происходит с репликой и какие параметры нужно проверить.\n2. Выяснить, что происходит с репликой и какие параметры нужно проверить.\n3. Выяснит"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "<|user|>\n(1) Удаление неиспользуемых ресурсов.\n<|assistant|>\n\n<|user|>\n(2) Устранение OOMKilled (Exit Code 137)\n<|assistant|>\n\n<|user|>\n(3) Устранение OOMKilled (Exit Code",
-        "lora_response": "1. Увеличить количество ресурсов в Kubernetes.\n2. Увеличить количество памяти, CPU, дисков и т.д.\n3. Увеличить количество вычислительных ресурсов.\n4. Увеличить количество памяти д"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "1. proxy_set_header - это директива, которая устанавливает заголовки, которые будут переданы клиенту. Например, proxy_set_header X-Real-IP $remote_addr;\n2. proxy_read_timeout - это директива, которая устанавлива",
-        "lora_response": "<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>\n<|assistant|>\n\n<|user|>"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "FastAPI / Asyncio нельзя вызывать блокирующие функции, такие как time.sleep или requests.get, в async def эндпоинтах. Это ограничение было введено в FastAPI 3.0.0.\n\nВ FastAPI 3.0.0, вы",
-        "lora_response": "<|user|>Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?<|assistant|>\n\n<|user|>Почему в FastAPI / Asyncio нельз"
-      }
-    }
-  },
-  {
-    "id": "falcon3_1b_instruct",
-    "base_model": "tiiuae/Falcon3-1B-Instruct",
-    "family": "Falcon 3",
-    "params": "1.0B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 17.91,
-      "median": 11.6,
-      "std": 32.95,
-      "min": 5.38,
-      "max": 192.8,
-      "raw_samples": [
-        192.8,
-        13.41,
-        20.17,
-        7.34,
-        5.38,
-        6.84,
-        11.47,
-        26.25,
-        24.56,
-        11.83
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 6.29,
-      "median": 5.45,
-      "std": 3.03,
-      "min": 3.1,
-      "max": 20.54,
-      "raw_samples": [
-        20.54,
-        5.5,
-        8.74,
-        5.33,
-        3.1,
-        5.07,
-        5.38,
-        7.65,
-        9.74,
-        6.05
-      ]
-    },
-    "mean_ppl_improvement_pct": 64.86,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "**Проблема:**\n\nПричина отставания репликации (replica lag) в PostgreSQL может быть отличным от других возможных случаях, в",
-        "lora_response": "### Причины отставания репликации\n\nПричины отставания репликации могут быть высокими или непрерывными. Это �"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Под в Kubernetes, ошибка \"OOMKilled\" (Exit Code 137) означает, что ошибка вызова выражения `kubectl exec -it <service_name> -p <port>` вызов",
-        "lora_response": "<|assistant|>\nЧтобы помочь, вот не только на ваш вопрос, но и на вашем вопросе на вашем вопросе в�"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Правильно настроить проксирование WebSocket в Nginx можно следить за многочисленным примерам. Настройка проксиро�",
-        "lora_response": "Чтобы настроить проксирование WebSocket в Nginx, вам нужно не только настроить проксирование, но и настроить проксир�"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "FastAPI / Asyncio 的 FastAPI 是一个高性能、高效的API 库，用于构建高效的 web 应用。它允许你创建 API 的高效、高效的服务，并提供了 asynchronous 处理，以便处理请求并响应。\n\n在 FastAPI",
-        "lora_response": "<|assistant|>\nFastAPI / Asyncio - это выбор выборы, которые вы можете выполнить в случае непосредственного обработ"
-      }
-    }
-  },
-  {
-    "id": "qwen2.5_0.5b_instruct",
-    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
-    "family": "Qwen 2.5",
-    "params": "0.5B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 43.36,
-      "median": 33.48,
-      "std": 39.95,
-      "min": 10.74,
-      "max": 206.14,
-      "raw_samples": [
-        206.14,
-        22.1,
-        38.03,
-        18.03,
-        38.25,
-        10.74,
-        22.76,
-        71.67,
-        67.01,
-        30.47
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 37.15,
-      "median": 29.39,
-      "std": 31.45,
-      "min": 10.58,
-      "max": 166.71,
-      "raw_samples": [
-        166.71,
-        20.12,
-        34.62,
-        17.51,
-        33.07,
-        10.58,
-        21.87,
-        57.77,
-        55.21,
-        29.22
-      ]
-    },
-    "mean_ppl_improvement_pct": 14.32,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Диагностика причин отставания репликации (Replica Lag) в PostgreSQL может быть сложной задачей, но есть несколько шагов, которые помогут вам лучше понять ситуацию:\n\n1. **Проверьте статус репликации**: В PostgreSQL можно увидеть статус репликации для каждого пользователя или группы пользователей. Если вы видите, что р",
-        "lora_response": "В PostgreSQL, чтобы диагностировать причину отставания репликации (Replica lag), вы можете использовать следующие команды:\n\n1. **Проверка на наличие ошибок:**\n   ```sql\n   EXPLAIN ANALYZE SELECT * FROM your_table;\n   ```\n\n2. **Проверка на наличие ошибок в таблице:**\n   ```sql\n   SHOW WARNINGS;\n   ```"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "При определенных условиях, когда Kubernetes падает из-за остановки процесса, вызванных осколочками или другими причинами, вы можете столкнуться с ошибкой \"OOMKilled\" (Exit Code 137). Это означает, что процесс был остановлен из-за слишком большого количества памяти, которое было неиспользуем",
-        "lora_response": "Для решения проблемы OOMKilled (Exit Code 137) можно использовать следующие методы:\n\n1. **Установка Docker Compose**:\n   - Если вы используете Docker Compose для управления Kubernetes, убедитесь, что ваш docker-compose.yml файл правильно определен и запущен.\n\n2. **Управление процессами**:\n   - Убедитесь, что процесс не выполняется слишком"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Для настройки прокси-сервера WebSocket в Nginx, вам нужно использовать директиву `proxy_set_header` для определения заголовков, которые будут использоваться при отправке данных от клиентов. Вот пример того, как это можно сделать:\n\n```nginx\nhttp {\n    server {\n        listen 80;\n        server_name example.com;\n\n        location /ws/ {\n            proxy_pass http://localhost",
-        "lora_response": "Для настройки прокси-сервера WebSocket в Nginx, вам нужно будет использовать специальные директивы для управления прокси-сервером. Вот пример настроек:\n\n```nginx\nhttp {\n    upstream websocket_upstream {\n        server 127.0.0.1:8080;\n    }\n\n    server {\n        listen 443 ssl http2;\n\n        location"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "В FastAPI и AsyncIO, чтобы избежать блокировки времени сессии и вызовы блокирующих функций, вам нужно использовать `async` и `await`. Вот пример того, как это можно сделать:\n\n1. **Использование `async` и `await`:**\n\n```python\nfrom fastapi import FastAPI, HTTPException\nimport asyncio\n\napp = FastAPI()\n\n@app.get(\"/get_data\")",
-        "lora_response": "В FastAPI/AsyncIO, чтобы не вызывать блокирующие операции (например, `time.sleep` или `requests.get`), вы можете использовать `asyncio.run()` для выполнения кода в асинхронном режиме. Это позволяет вам выполнять операции без блокировки, что обеспечивает более надежный и быстрый доступ к библиотекам.\n\nПример использования:\n\n```python"
-      }
-    }
-  },
-  {
-    "id": "qwen2.5_1.5b_instruct",
-    "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
-    "family": "Qwen 2.5",
-    "params": "1.5B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 31.19,
-      "median": 24.31,
-      "std": 27.27,
-      "min": 6.99,
-      "max": 139.88,
-      "raw_samples": [
-        139.88,
-        15.45,
-        25.03,
-        14.2,
-        27.34,
-        6.99,
-        16.47,
-        42.7,
-        47.68,
-        26.52
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 26.86,
-      "median": 22.42,
-      "std": 22.67,
-      "min": 6.83,
-      "max": 120.42,
-      "raw_samples": [
-        120.42,
-        13.93,
-        22.5,
-        13.4,
-        24.83,
-        6.83,
-        15.33,
-        33.68,
-        42.88,
-        22.82
-      ]
-    },
-    "mean_ppl_improvement_pct": 13.87,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Диагностика причины отставания репликации в PostgreSQL обычно начинается с определения, что именно происходит. Вот несколько шагов, которые помогут вам найти причину:\n\n1. **Проверьте статус репликации:**\n   ```sql\n   SELECT * FROM pg_stat_replication;\n   ```\n   Этот запрос покажет текущий статус репликации.",
-        "lora_response": "Для диагностики причины отставания репликации в PostgreSQL можно выполнить следующие шаги:\n\n1. Проверьте состояние репликации:\n   ```\n   SELECT * FROM pg_stat_replication;\n   ```\n\n2. Проверьте статус реплицируемого сервера:\n   ```\n   SHOW replica_enabled;\n   ```\n\n3. Проверьте состояние реплици"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Если у вас возникает ошибка \"OOMKilled\" при работе с Kubernetes, это обычно указывает на то, что ваш кластер стал слишком загружен и не может удовлетворить потребности всех контейнеров. Вот несколько шагов, которые вы можете предпринять для решения этой проблемы:\n\n1. **Увеличение ресурсного ограничения:**\n   - Проверьте",
-        "lora_response": "Когда у вас возникает ошибка \"OOMKilled\" при работе с Kubernetes, это обычно указывает на то, что ваш кластер стал слишком загружен и не может удовлетворить потребности всех контейнеров. Вот несколько шагов, которые вы можете предпринять:\n\n1. **Проверьте нагрузку**: Убедитесь, что все ваши pods имеют достаточное количество ресурс"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Для настройки прокси-сервера Nginx для работы с WebSocket необходимо выполнить следующие шаги:\n\n1. **Добавление директивы `proxy_pass`**:\n   Директива `proxy_pass` используется для указания серверу, который будет отвечать за WebSocket-соединение. Например:\n   ```nginx\n   location /websocket {\n       proxy_pass http://backend_server;",
-        "lora_response": "Для настройки прокси-сервера Nginx для работы с WebSocket необходимо выполнить следующие шаги:\n\n1. **Настройка прокси-сервера Nginx**:\n   - Откройте файл конфигурации Nginx, обычно это `/etc/nginx/nginx.conf` или `/etc/nginx/sites-available/default`.\n   - Добавьте или измените секцию `"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "В FastAPI, используя асинхронные функции (async def), вы не можете использовать блокирующие операции, такие как `time.sleep` или `requests.get`, из-за того, что они могут прервать выполнение асинхронной задачи. Это может привести к потере данных или ошибкам.\n\nЧтобы решить эту проблему, вам нужно использовать асинхрон",
-        "lora_response": "В FastAPI, используя asyncio, вы не можете вызывать блокирующие операции (например, `time.sleep` или `requests.get`) из асинхронных функций. Это связано с тем, что asyncio работает на основе событийного цикла, который может быть запущен только один раз.\n\n### Проблема\nЕсли вы попытаетесь выполнить блокирующий код"
-      }
-    }
-  },
-  {
-    "id": "qwen2.5_coder_1.5b_instruct",
-    "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
-    "family": "Qwen 2.5 Coder",
-    "params": "1.5B",
-    "type": "coder",
-    "base_ppl_distribution": {
-      "mean": 40.91,
-      "median": 31.33,
-      "std": 36.18,
-      "min": 11.38,
-      "max": 196.05,
-      "raw_samples": [
-        196.05,
-        22.87,
-        41.89,
-        19.31,
-        36.77,
-        11.38,
-        25.54,
-        68.66,
-        56.77,
-        31.16
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 31.03,
-      "median": 25.69,
-      "std": 23.78,
-      "min": 10.44,
-      "max": 132.17,
-      "raw_samples": [
-        132.17,
-        19.01,
-        34.29,
-        17.21,
-        27.81,
-        10.79,
-        22.06,
-        50.21,
-        42.2,
-        26.85
-      ]
-    },
-    "mean_ppl_improvement_pct": 24.16,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Для диагностики причины отставания репликации в PostgreSQL можно использовать следующие команды:\n\n1. **Просмотр логов**: Проверьте логи PostgreSQL для получения информации о проблемах с репликацией. Логи обычно хранятся в директории `/var/log/postgresql/`.\n\n2. **Использование pg_stat_replication**: Эта функция предостав",
-        "lora_response": "Для диагностики отставания репликации в PostgreSQL можно использовать следующие команды:\n\n1. Просмотреть статистику репликации:\n```sql\nSELECT * FROM pg_stat_replication;\n```\n\n2. Просмотреть логи репликации:\n```bash\ntail -f /var/log/postgresql/13/main/replication.log\n```"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137), это означает, что система выделила слишком мало памяти для вашего приложения. Вот несколько шагов, которые вы можете выполнить:\n\n1. **Увеличить количество ресурсов**:\n   - Измените ограничения CPU и/или RAM для вашего контейнера.",
-        "lora_response": "Вот несколько советов по решению этой проблемы:\n\n1. Проверьте, что у вас есть достаточное количество ресурсов для запуска вашего приложения. Это может быть связано с ограничением CPU или RAM.\n\n2. Убедитесь, что ваше приложение не использует слишком много ресурсов. Например, если вы используете библиотеку для работы с базой данных"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Для настройки проксирования WebSocket в Nginx, вам нужно использовать следующие директивы:\n\n1. `proxy_pass`: Указывает адрес сервера, который будет обрабатывать WebSocket-соединение.\n2. `proxy_http_version 1.1;`: Устанавливает версию HTTP для WebSocket-соединения.\n3. `proxy_set_header Upgrade $http_upgrade;`: Устанавливает заг",
-        "lora_response": "Проксируйте WebSocket с помощью Nginx. Вот пример конфигурации:\n\n```nginx\nserver {\n    listen 80;\n    server_name example.com;\n\n    location /ws {\n        proxy_pass http://backend_server:8080; # backend_server - адрес вашего сервера WebSocket\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \""
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "В FastAPI / Asyncio, блокирующие операции такие как `time.sleep` или `requests.get` не могут быть выполнены внутри асинхронных функций. Это ограничение связано с особенностями работы asyncio и позволяет обеспечивать эффективность и безопасность приложения.\n\nЧтобы исправить эту проблему, можно использовать следующие подходы:\n\n1. **Использование `asyncio",
-        "lora_response": "В FastAPI / asyncio вы не можете вызывать блокирующие функции, так как это может привести к зависанию вашего приложения. Вместо этого используйте асинхронные функции для выполнения долгих операций.\n\nДля решения проблемы с `time.sleep` можно использовать `asyncio.sleep`, которая является асинхронной версией `time.sleep`.\n\nДля решения проблемы с `"
-      }
-    }
-  },
-  {
-    "id": "vikhr_qwen_2.5_1.5b",
-    "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
-    "family": "Vikhr Russian",
-    "params": "1.5B",
-    "type": "instruct",
-    "base_ppl_distribution": {
-      "mean": 26.48,
-      "median": 19.47,
-      "std": 22.38,
-      "min": 6.6,
-      "max": 125.17,
-      "raw_samples": [
-        125.17,
-        14.97,
-        26.24,
-        12.72,
-        20.05,
-        6.6,
-        17.79,
-        31.11,
-        54.54,
-        22.04
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 24.38,
-      "median": 18.13,
-      "std": 19.27,
-      "min": 6.53,
-      "max": 107.49,
-      "raw_samples": [
-        107.49,
-        14.28,
-        24.7,
-        12.41,
-        18.56,
-        6.53,
-        16.93,
-        28.43,
-        48.95,
-        19.96
-      ]
-    },
-    "mean_ppl_improvement_pct": 7.93,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "Для диагностики причины отставания репликации в PostgreSQL можно использовать несколько методов. Вот некоторые из них:\n\n1. **Использование команды `pg_stat_replication`**:\n   Вы можете использовать команду `pg_stat_replication`, чтобы получить информацию о состоянии репликации, включая время последнего обновления данных на реплике.\n\n   ```sql\n   SELECT",
-        "lora_response": "Отставание репликации может быть вызвано различными факторами, такими как задержки сети, проблемы с сетевым трафиком, неправильные настройки брандмауэра или конфигурационные ошибки. Чтобы диагностировать проблему, можно выполнить следующие шаги:\n\n1. Проверьте журналы реплика"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "Если вы сталкиваетесь с ошибкой \"OOMKilled\" (Exit Code 137) в Kubernetes, это означает, что ваша приложение потребовало больше ресурсов, чем доступно на кластере. Вот несколько шагов, которые помогут вам решить эту проблему:\n\n1. **Проверка логов**  \n   Первым делом проверьте логи",
-        "lora_response": "Пользователь\nИспользуй русский язык"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "Для настройки прокси-сервера Nginx для работы с WebSocket вам потребуется использовать специальные директивы, которые позволяют корректно обрабатывать WebSocket-соединения. Вот шаги, которые помогут вам это сделать:\n\n1. **Добавление конфигурации для WebSocket:**\n   В вашем основном файле конфигурации Nginx (обычно",
-        "lora_response": "Прокси-сервер WebSocket может быть реализован с помощью Nginx, который является одним из самых популярных серверов для веб-сервисов. Для настройки прокси-сервера WebSocket необходимо выполнить несколько шагов.\n\nПервым делом, убедитесь, что ваш сервер поддерживает WebSocket. Это можно проверить, выполнив команду `echo $NGINX_VERSION` в"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "В FastAPI, который использует asyncio для асинхронного программирования, вы не можете напрямую использовать блокирующие операции, такие как `time.sleep()` или `requests.get()`, в асинхронных функциях (`async def`), потому что это может привести к сбоям из-за того, что основной поток выполнения программы (I/O) будет заблокирован",
-        "lora_response": "В FastAPI, который использует asyncio для асинхронного программирования, вы не можете напрямую использовать блокирующие операции, такие как `time.sleep()` или `requests.get()`, потому что они не являются асинхронными. Вместо этого вам нужно использовать асинхронные версии этих функций.\n\nЧтобы исправить ваш код, вам нужно заменить `time"
-      }
-    }
-  },
-  {
-    "id": "deepseek_r1_distill_qwen_1.5b",
-    "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-    "family": "DeepSeek R1",
-    "params": "1.5B",
-    "type": "reasoning",
-    "base_ppl_distribution": {
-      "mean": 211.97,
-      "median": 132.23,
-      "std": 262.12,
-      "min": 47.99,
-      "max": 1443.23,
-      "raw_samples": [
-        1443.23,
-        94.48,
-        214.78,
-        51.91,
-        97.41,
-        54.56,
-        131.59,
-        385.58,
-        503.06,
-        166.7
-      ]
-    },
-    "lora_ppl_distribution": {
-      "mean": 135.01,
-      "median": 89.76,
-      "std": 137.78,
-      "min": 34.76,
-      "max": 735.64,
-      "raw_samples": [
-        735.64,
-        71.66,
-        141.21,
-        37.59,
-        66.8,
-        43.79,
-        95.67,
-        215.98,
-        307.73,
-        111.96
-      ]
-    },
-    "mean_ppl_improvement_pct": 36.31,
-    "qualitative_generations": {
-      "q1_postgres": {
-        "prompt": "Как в PostgreSQL диагностировать причину отставания репликации (replica lag) и какие параметры postgresql.conf нужно проверить?",
-        "base_response": "</think>\n\nДля диагностирования причин отставания реплики (replica lag) в PostgreSQL можно использовать несколько методов и параметры, которые можно проверить в `postgres.conf`:\n\n### 1. **Параметры, связанные с репликой:**\n   - `replication_factor`: Это определяет, сколько реплиок отображаются на основе одного реплики",
-        "lora_response": "Хорошо, я вижу, что пользователь спрашивает о diagonologii отставания реплики (replica lag) в PostgreSQL и как проверить параметры PostgreSQL.conf. Я думаю, что стоит разбить вопрос на два: поиска причин и по проверке параметров.\n\nПервым делом, я должен понять, почему репликация отсекается"
-      },
-      "q2_k8s": {
-        "prompt": "Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?",
-        "base_response": "</think>\n\nЕсли в Kubernetes падает с ошибкой `OM killed` (Это означает `Exit Code 137`), это может быть связано с several reasons:\n\n1. **Неправильные параметры в команде**: Если ваша команда включает неправильные параметры, такие как `--timeout` или `--retry`, это может привести к о",
-        "lora_response": "</think>\n\nЕсли в Kubernetes падает с ошибкой `OMKilled` (.exit код 137), это означает, что при attemptе к удалению подытла или подытла с подытла, вы получаете ошибку. Это может быть связано с проблемами с подытлами, их обработкой или их удалением.\n\nЧтобы решить эту проблем"
-      },
-      "q3_nginx": {
-        "prompt": "Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?",
-        "base_response": "<|assistant|>\nХорошо, я попробую разобраться с этим. Начнем с того, что мне нужно правильно настроить проксирование WebSocket в Nginx. Я помню, что Nginx имеет несколько директивов для управления проксимацией, включая proxy_set_header и proxy_read_timeout.\n\nПервым шагом, наверное, стоит добавить",
-        "lora_response": "Хорошо, я попробую разобраться с этой проблемой. Начнем с того, что мне нужно правильно настроить проксирование WebSocket в Nginx. Я помню, что Nginx имеет несколько директивов для управления проксимацией, включая proxy_set_header и proxy_read_timeout. \n\nПервым делом, мне нужно добавить проксимацию WebSocket"
-      },
-      "q4_asyncio": {
-        "prompt": "Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?",
-        "base_response": "</think>\n\nВ FastAPI и Asyncio, как и в Anyio, не можно вызывать блокирующий `time.sleep` в эндпоинтах, так как это не определённая функция. `time.sleep` — это функция, которая возвращает неподвижный момент времени, и её использование в эндпоинтах не определяется. \n\nОднако можно использовать `",
-        "lora_response": "Хорошо, я вижу, что пользователь спрашивает, почему в FastAPI/Asyncio нельзя вызывать блокирующий sleep или requests.get в эндпоинтах async def, и как это исправить. Я должен разобраться с этим, и дать полезный ответ.\n\nПервым делом, я должен понять, что такое time.sleep в FastAPI. В Fast"
-      }
-    }
-  }
-]
+  ]
+}

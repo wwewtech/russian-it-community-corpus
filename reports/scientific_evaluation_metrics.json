@@ -1,167 +1,225 @@
-[
-  {
-    "model_id": "pythia_70m",
-    "family": "Pythia",
-    "params": "70M",
-    "type": "base",
-    "base_ppl": 34.01,
-    "lora_ppl": 34.8,
-    "ppl_delta_pct": -2.32,
-    "base_ppl_std": 17.78,
-    "lora_ppl_std": 18.9
+{
+  "run_metadata": {
+    "protocol_version": "3.0",
+    "source": "regenerated-from-cache",
+    "script": "scripts/run_scientific_benchmark.py",
+    "git": {
+      "commit": "463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564",
+      "dirty": true
+    },
+    "generated_at_utc": "2026-08-25T16:24:44.914907+00:00",
+    "seeds": [
+      42,
+      123,
+      777
+    ],
+    "eval_split_size_per_seed": 10,
+    "max_length": 384,
+    "dataset_path": "dataset_output\\parquet\\sft_dialogues.parquet",
+    "dataset_sha256": "563eff37817dab8ef68bcfe16ac3e1ec2c50897c6b6e47f5a4352a676663714e",
+    "training_exclusion_rules": [
+      {
+        "n_samples": 400,
+        "random_state": 42
+      },
+      {
+        "n_samples": 500,
+        "random_state": 42
+      }
+    ],
+    "environment": {
+      "python": "3.13.5",
+      "torch": "2.6.0+cu124",
+      "transformers": "4.57.1",
+      "peft": "0.20.0",
+      "numpy": "2.2.3",
+      "pandas": "2.2.3",
+      "device": "NVIDIA GeForce RTX 3060"
+    },
+    "measured_in_commit": "463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564",
+    "measurement_protocol_version": "2.0",
+    "note": "Numbers were measured under protocol v2 (commit 463c778): seeded splits drawn from the FULL corpus without training-overlap exclusion. Treat them as possibly contaminated; re-run without --from-cache for clean v3 numbers."
   },
-  {
-    "model_id": "opt_125m",
-    "family": "OPT",
-    "params": "125M",
-    "type": "base",
-    "base_ppl": 7.4,
-    "lora_ppl": 5.26,
-    "ppl_delta_pct": 28.99,
-    "base_ppl_std": 3.79,
-    "lora_ppl_std": 1.83
-  },
-  {
-    "model_id": "bloom_560m",
-    "family": "BLOOM",
-    "params": "560M",
-    "type": "base",
-    "base_ppl": 36.24,
-    "lora_ppl": 35.64,
-    "ppl_delta_pct": 1.65,
-    "base_ppl_std": 25.4,
-    "lora_ppl_std": 24.82
-  },
-  {
-    "model_id": "gpt2_medium",
-    "family": "GPT-2",
-    "params": "355M",
-    "type": "base",
-    "base_ppl": 10.09,
-    "lora_ppl": 10.15,
-    "ppl_delta_pct": -0.64,
-    "base_ppl_std": 4.51,
-    "lora_ppl_std": 4.44
-  },
-  {
-    "model_id": "rugpt3_small",
-    "family": "RuGPT3",
-    "params": "125M",
-    "type": "base",
-    "base_ppl": 46.39,
-    "lora_ppl": 45.72,
-    "ppl_delta_pct": 1.44,
-    "base_ppl_std": 27.76,
-    "lora_ppl_std": 26.95
-  },
-  {
-    "model_id": "tinyllama_1.1b_chat",
-    "family": "TinyLlama",
-    "params": "1.1B",
-    "type": "instruct",
-    "base_ppl": 18.1,
-    "lora_ppl": 14.29,
-    "ppl_delta_pct": 21.02,
-    "base_ppl_std": 7.27,
-    "lora_ppl_std": 5.28
-  },
-  {
-    "model_id": "smollm2_1.7b_instruct",
-    "family": "SmolLM2",
-    "params": "1.7B",
-    "type": "instruct",
-    "base_ppl": 7.36,
-    "lora_ppl": 7.0,
-    "ppl_delta_pct": 4.85,
-    "base_ppl_std": 4.03,
-    "lora_ppl_std": 3.62
-  },
-  {
-    "model_id": "llama_3.2_1b_instruct",
-    "family": "LLaMA 3.2",
-    "params": "1.0B",
-    "type": "instruct",
-    "base_ppl": 99.52,
-    "lora_ppl": 86.79,
-    "ppl_delta_pct": 12.79,
-    "base_ppl_std": 84.28,
-    "lora_ppl_std": 74.24
-  },
-  {
-    "model_id": "deepseek_coder_1.3b_instruct",
-    "family": "DeepSeek Coder",
-    "params": "1.3B",
-    "type": "coder",
-    "base_ppl": 16.99,
-    "lora_ppl": 14.87,
-    "ppl_delta_pct": 12.45,
-    "base_ppl_std": 9.7,
-    "lora_ppl_std": 8.1
-  },
-  {
-    "model_id": "falcon3_1b_instruct",
-    "family": "Falcon 3",
-    "params": "1.0B",
-    "type": "instruct",
-    "base_ppl": 17.91,
-    "lora_ppl": 6.29,
-    "ppl_delta_pct": 64.86,
-    "base_ppl_std": 32.95,
-    "lora_ppl_std": 3.03
-  },
-  {
-    "model_id": "qwen2.5_0.5b_instruct",
-    "family": "Qwen 2.5",
-    "params": "0.5B",
-    "type": "instruct",
-    "base_ppl": 43.36,
-    "lora_ppl": 37.15,
-    "ppl_delta_pct": 14.32,
-    "base_ppl_std": 39.95,
-    "lora_ppl_std": 31.45
-  },
-  {
-    "model_id": "qwen2.5_1.5b_instruct",
-    "family": "Qwen 2.5",
-    "params": "1.5B",
-    "type": "instruct",
-    "base_ppl": 31.19,
-    "lora_ppl": 26.86,
-    "ppl_delta_pct": 13.87,
-    "base_ppl_std": 27.27,
-    "lora_ppl_std": 22.67
-  },
-  {
-    "model_id": "qwen2.5_coder_1.5b_instruct",
-    "family": "Qwen 2.5 Coder",
-    "params": "1.5B",
-    "type": "coder",
-    "base_ppl": 40.91,
-    "lora_ppl": 31.03,
-    "ppl_delta_pct": 24.16,
-    "base_ppl_std": 36.18,
-    "lora_ppl_std": 23.78
-  },
-  {
-    "model_id": "vikhr_qwen_2.5_1.5b",
-    "family": "Vikhr Russian",
-    "params": "1.5B",
-    "type": "instruct",
-    "base_ppl": 26.48,
-    "lora_ppl": 24.38,
-    "ppl_delta_pct": 7.93,
-    "base_ppl_std": 22.38,
-    "lora_ppl_std": 19.27
-  },
-  {
-    "model_id": "deepseek_r1_distill_qwen_1.5b",
-    "family": "DeepSeek R1",
-    "params": "1.5B",
-    "type": "reasoning",
-    "base_ppl": 211.97,
-    "lora_ppl": 135.01,
-    "ppl_delta_pct": 36.31,
-    "base_ppl_std": 262.12,
-    "lora_ppl_std": 137.78
-  }
-]
+  "metrics": [
+    {
+      "model_id": "pythia_70m",
+      "family": "Pythia",
+      "params": "70M",
+      "type": "base",
+      "adapter_found": true,
+      "base_ppl": 34.01,
+      "lora_ppl": 34.8,
+      "ppl_delta_pct": -2.32,
+      "base_ppl_std": 17.78,
+      "lora_ppl_std": 18.9
+    },
+    {
+      "model_id": "opt_125m",
+      "family": "OPT",
+      "params": "125M",
+      "type": "base",
+      "adapter_found": true,
+      "base_ppl": 7.4,
+      "lora_ppl": 5.26,
+      "ppl_delta_pct": 28.99,
+      "base_ppl_std": 3.79,
+      "lora_ppl_std": 1.83
+    },
+    {
+      "model_id": "bloom_560m",
+      "family": "BLOOM",
+      "params": "560M",
+      "type": "base",
+      "adapter_found": true,
+      "base_ppl": 36.24,
+      "lora_ppl": 35.64,
+      "ppl_delta_pct": 1.65,
+      "base_ppl_std": 25.4,
+      "lora_ppl_std": 24.82
+    },
+    {
+      "model_id": "gpt2_medium",
+      "family": "GPT-2",
+      "params": "355M",
+      "type": "base",
+      "adapter_found": true,
+      "base_ppl": 10.09,
+      "lora_ppl": 10.15,
+      "ppl_delta_pct": -0.64,
+      "base_ppl_std": 4.51,
+      "lora_ppl_std": 4.44
+    },
+    {
+      "model_id": "rugpt3_small",
+      "family": "RuGPT3",
+      "params": "125M",
+      "type": "base",
+      "adapter_found": true,
+      "base_ppl": 46.39,
+      "lora_ppl": 45.72,
+      "ppl_delta_pct": 1.44,
+      "base_ppl_std": 27.76,
+      "lora_ppl_std": 26.95
+    },
+    {
+      "model_id": "tinyllama_1.1b_chat",
+      "family": "TinyLlama",
+      "params": "1.1B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 18.1,
+      "lora_ppl": 14.29,
+      "ppl_delta_pct": 21.02,
+      "base_ppl_std": 7.27,
+      "lora_ppl_std": 5.28
+    },
+    {
+      "model_id": "smollm2_1.7b_instruct",
+      "family": "SmolLM2",
+      "params": "1.7B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 7.36,
+      "lora_ppl": 7.0,
+      "ppl_delta_pct": 4.85,
+      "base_ppl_std": 4.03,
+      "lora_ppl_std": 3.62
+    },
+    {
+      "model_id": "llama_3.2_1b_instruct",
+      "family": "LLaMA 3.2",
+      "params": "1.0B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 99.52,
+      "lora_ppl": 86.79,
+      "ppl_delta_pct": 12.79,
+      "base_ppl_std": 84.28,
+      "lora_ppl_std": 74.24
+    },
+    {
+      "model_id": "deepseek_coder_1.3b_instruct",
+      "family": "DeepSeek Coder",
+      "params": "1.3B",
+      "type": "coder",
+      "adapter_found": true,
+      "base_ppl": 16.99,
+      "lora_ppl": 14.87,
+      "ppl_delta_pct": 12.45,
+      "base_ppl_std": 9.7,
+      "lora_ppl_std": 8.1
+    },
+    {
+      "model_id": "falcon3_1b_instruct",
+      "family": "Falcon 3",
+      "params": "1.0B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 17.91,
+      "lora_ppl": 6.29,
+      "ppl_delta_pct": 64.86,
+      "base_ppl_std": 32.95,
+      "lora_ppl_std": 3.03
+    },
+    {
+      "model_id": "qwen2.5_0.5b_instruct",
+      "family": "Qwen 2.5",
+      "params": "0.5B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 43.36,
+      "lora_ppl": 37.15,
+      "ppl_delta_pct": 14.32,
+      "base_ppl_std": 39.95,
+      "lora_ppl_std": 31.45
+    },
+    {
+      "model_id": "qwen2.5_1.5b_instruct",
+      "family": "Qwen 2.5",
+      "params": "1.5B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 31.19,
+      "lora_ppl": 26.86,
+      "ppl_delta_pct": 13.87,
+      "base_ppl_std": 27.27,
+      "lora_ppl_std": 22.67
+    },
+    {
+      "model_id": "qwen2.5_coder_1.5b_instruct",
+      "family": "Qwen 2.5 Coder",
+      "params": "1.5B",
+      "type": "coder",
+      "adapter_found": true,
+      "base_ppl": 40.91,
+      "lora_ppl": 31.03,
+      "ppl_delta_pct": 24.16,
+      "base_ppl_std": 36.18,
+      "lora_ppl_std": 23.78
+    },
+    {
+      "model_id": "vikhr_qwen_2.5_1.5b",
+      "family": "Vikhr Russian",
+      "params": "1.5B",
+      "type": "instruct",
+      "adapter_found": true,
+      "base_ppl": 26.48,
+      "lora_ppl": 24.38,
+      "ppl_delta_pct": 7.93,
+      "base_ppl_std": 22.38,
+      "lora_ppl_std": 19.27
+    },
+    {
+      "model_id": "deepseek_r1_distill_qwen_1.5b",
+      "family": "DeepSeek R1",
+      "params": "1.5B",
+      "type": "reasoning",
+      "adapter_found": true,
+      "base_ppl": 211.97,
+      "lora_ppl": 135.01,
+      "ppl_delta_pct": 36.31,
+      "base_ppl_std": 262.12,
+      "lora_ppl_std": 137.78
+    }
+  ]
+}

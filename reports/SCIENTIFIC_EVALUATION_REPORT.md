@@ -1,14 +1,18 @@
 # 🔬 Scientific Evaluation & Multi-Seed Reproducibility Audit: LoRA Domain Adaptation
 
+> **Protocol version**: 3.0 · **Git commit**: `463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564` (dirty: True) · **Generated (UTC)**: 2026-08-25T16:24:44.914907+00:00
+> **Dataset fingerprint (SHA-256)**: `563eff37817dab8ef68bcfe16ac3e1ec2c50897c6b6e47f5a4352a676663714e`
+>
 > **Methodology & Verification Protocol**:
-> 1. **Empirical Intrinsic Loss & Perplexity ($PPL = \exp(\text{loss})$)**: Measured per-sample on 30 held-out dialogues across **3 independent random seeds** ($S \in \{42, 123, 777\}$).
-> 2. **Multi-Seed Stability Audit**: Testing whether the direction of change ($\Delta PPL$) and variance ($\sigma$) replicate consistently without artificial smoothing.
-> 3. **4-Domain Qualitative Generation Sandbox**: Verbatim greedy generation across PostgreSQL, Kubernetes, Nginx, and Asyncio Python tasks.
-> 4. **Hardware**: NVIDIA GeForce RTX 3060 (12GB VRAM), PyTorch 2.6 CUDA FP16.
+> 1. **⚠️ MEASUREMENT PROVENANCE**: the numbers below were measured under **protocol v2.0** (commit `463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564`): seeded splits drawn from the **full** corpus, *without* training-overlap exclusion. They are preserved verbatim for history; re-run `scripts/run_scientific_benchmark.py` (without `--from-cache`) for clean v3.0 numbers on the exclusion-filtered pool.
+> 2. **Sign convention**: $\Delta PPL = (PPL_{base} - PPL_{lora}) / PPL_{base} \times 100\%$ — **positive = improvement** (LoRA lowers perplexity), negative = regression.
+> 3. **Multi-Seed Stability Audit**: whether the sign of $\Delta PPL$ replicates across seeds.
+> 4. **4-Domain Qualitative Generation Sandbox**: verbatim greedy generation across PostgreSQL, Kubernetes, Nginx, and Asyncio Python tasks.
+> 5. **Environment**: NVIDIA GeForce RTX 3060, torch 2.6.0+cu124, transformers 4.57.1, peft 0.20.0.
 
 ---
 
-## 📊 1. Multi-Seed Reproducibility & Distribution Table (15 Diverse Models)
+## 📊 1. Multi-Seed Reproducibility & Distribution Table (15 Models)
 
 | Architecture Class | Model ID | Params | Base PPL (Mean ± σ) | LoRA PPL (Mean ± σ) | Full Range [Min .. Max] | Seed 42 (Δ%) | Seed 123 (Δ%) | Seed 777 (Δ%) | Overall Δ PPL |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -707,11 +711,25 @@ server {
 
 ---
 
-## 💡 3. Empirical Findings & Scientific Conclusions
+## 💡 3. Empirical Findings (generated from the measured data)
 
-1. **Architectural Divergence (No Flat Smoothing)**:
-   - **Micro Base Models (70M–355M)**: Models like `pythia_70m`, `gpt2_medium`, and `rugpt3_small` exhibit near-zero or slightly negative adaptation (Δ = -2% to +1.6%), confirming that sub-1B base models cannot learn conversational instruction-following via lightweight low-rank projections alone.
-   - **Zero-Cyrillic Base Pretrains**: Models such as `opt_125m` and `falcon3_1b_instruct` display radical drops in cross-entropy loss (Δ = -60% to -90%) because their base pre-training vocabulary had virtually zero Russian token exposure; LoRA immediately aligns their representation to Cyrillic technical tokens.
-   - **Modern 1B–1.5B Instruct / Coder Architectures**: Architectures like `qwen2.5_coder_1.5b`, `qwen2.5_1.5b`, and `tinyllama_1.1b` demonstrate steady, reproducible ~20% to ~30% PPL reductions across all independent random seeds.
-2. **Cross-Seed Reproducibility**: Across Seeds 42, 123, and 777, the sign of the gain ($\Delta$) is strictly preserved across all model families, and the variance ($\sigma$) reflects genuine sample heterogeneity without artificial smoothing.
-3. **Formatting & Syntax Precision**: Qualitative outputs demonstrate that LoRA fine-tuning converts generic textual descriptions into structured configuration directives (`SELECT * FROM pg_stat_replication;`, `proxy_set_header Upgrade $http_upgrade;`, `asyncio.to_thread`).
+1. **Top improvements (overall Δ PPL)**: `falcon3_1b_instruct` **+64.9%**; `deepseek_r1_distill_qwen_1.5b` **+36.3%**; `opt_125m` **+29.0%**.
+2. **Honest negative results**: `pythia_70m` -2.3%; `gpt2_medium` -0.6% — LoRA *raised* perplexity for these models on this split.
+3. **Cross-seed sign stability**: 15/15 models keep the same sign of $\Delta$ across all three seeds.
+4. **Effect by model class**: base: mean Δ +5.8% (n=5); coder: mean Δ +18.3% (n=2); instruct: mean Δ +19.9% (n=7); reasoning: mean Δ +36.3% (n=1).
+
+## ⚠️ 4. Scope & Limitations
+
+- This audit covers **15 of 55** zoo adapters. Conclusions MUST NOT be extrapolated to the unevaluated adapters without re-running this script on them.
+- Each seed split contains 10 dialogues (30 measurements per model in total). This is a **sanity check, not an academic leaderboard**; absolute PPL values depend on split composition and max_length.
+- Knowledge-retention probes (HumanEval/RuMMLU micro-subsets of 8 items) reported elsewhere in this repository are **8-item subsets**, not the full benchmarks, and are labelled as such in `reports/BENCHMARK_AND_EVALUATION.md`.
+
+## 🧾 5. Methodology Changelog (why old numbers are NOT comparable)
+
+| Protocol | Commit | Eval set | max_length | Notes |
+| :--- | :--- | :--- | :---: | :--- |
+| v1 | `d99aee3` (superseded) | `df.tail(15)` of the full corpus | 512 | Single unseeded split; possible train/eval overlap; script `comprehensive_scientific_audit.py` **removed** — it overwrote the canonical output file with a different methodology. |
+| v2 | `463c778` | 3 seeded splits of 10 from the full corpus | 384 | Multi-seed, but training dialogues were NOT excluded. |
+| v3 | `463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564` | 3 seeded splits of 10 from a pool excluding all training dialogues (manifest-fingerprinted) | 384 | Current canonical protocol. |
+
+Absolute PPL values from different protocol rows measure different text sets and **must never be compared row-by-row**. Within one protocol row, all figures are reproducible from `reports/eval_split_manifest.json` plus this script.

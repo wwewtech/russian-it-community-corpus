@@ -1,527 +1,585 @@
 {
-  "pythia_70m": {
-    "base_model": "EleutherAI/pythia-70m",
-    "family": "Pythia",
-    "params": "70M",
-    "type": "base",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 37.32,
-        "base_ppl_std": 22.9,
-        "lora_ppl_mean": 37.94,
-        "lora_ppl_std": 23.65,
-        "delta_ppl_pct": -1.67
-      },
-      "seed_123": {
-        "base_ppl_mean": 38.1,
-        "base_ppl_std": 15.82,
-        "lora_ppl_mean": 39.73,
-        "lora_ppl_std": 17.74,
-        "delta_ppl_pct": -4.3
-      },
-      "seed_777": {
-        "base_ppl_mean": 26.62,
-        "base_ppl_std": 9.57,
-        "lora_ppl_mean": 26.72,
-        "lora_ppl_std": 9.88,
-        "delta_ppl_pct": -0.4
-      }
+  "run_metadata": {
+    "protocol_version": "3.0",
+    "source": "regenerated-from-cache",
+    "script": "scripts/run_scientific_benchmark.py",
+    "git": {
+      "commit": "463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564",
+      "dirty": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 34.01,
-      "lora_ppl_mean": 34.8,
-      "delta_pct": -2.32,
-      "is_stable_sign": true
-    }
+    "generated_at_utc": "2026-08-25T16:24:44.914907+00:00",
+    "seeds": [
+      42,
+      123,
+      777
+    ],
+    "eval_split_size_per_seed": 10,
+    "max_length": 384,
+    "dataset_path": "dataset_output\\parquet\\sft_dialogues.parquet",
+    "dataset_sha256": "563eff37817dab8ef68bcfe16ac3e1ec2c50897c6b6e47f5a4352a676663714e",
+    "training_exclusion_rules": [
+      {
+        "n_samples": 400,
+        "random_state": 42
+      },
+      {
+        "n_samples": 500,
+        "random_state": 42
+      }
+    ],
+    "environment": {
+      "python": "3.13.5",
+      "torch": "2.6.0+cu124",
+      "transformers": "4.57.1",
+      "peft": "0.20.0",
+      "numpy": "2.2.3",
+      "pandas": "2.2.3",
+      "device": "NVIDIA GeForce RTX 3060"
+    },
+    "measured_in_commit": "463c778ddd8a8bd6c4c304ccf1cf974c7e1d6564",
+    "measurement_protocol_version": "2.0",
+    "note": "Numbers were measured under protocol v2 (commit 463c778): seeded splits drawn from the FULL corpus without training-overlap exclusion. Treat them as possibly contaminated; re-run without --from-cache for clean v3 numbers."
   },
-  "opt_125m": {
-    "base_model": "facebook/opt-125m",
-    "family": "OPT",
-    "params": "125M",
-    "type": "base",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 9.2,
-        "base_ppl_std": 5.75,
-        "lora_ppl_mean": 6.17,
-        "lora_ppl_std": 2.6,
-        "delta_ppl_pct": 32.94
+  "models": {
+    "pythia_70m": {
+      "base_model": "EleutherAI/pythia-70m",
+      "family": "Pythia",
+      "params": "70M",
+      "type": "base",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 37.32,
+          "base_ppl_std": 22.9,
+          "lora_ppl_mean": 37.94,
+          "lora_ppl_std": 23.65,
+          "delta_ppl_pct": -1.67
+        },
+        "seed_123": {
+          "base_ppl_mean": 38.1,
+          "base_ppl_std": 15.82,
+          "lora_ppl_mean": 39.73,
+          "lora_ppl_std": 17.74,
+          "delta_ppl_pct": -4.3
+        },
+        "seed_777": {
+          "base_ppl_mean": 26.62,
+          "base_ppl_std": 9.57,
+          "lora_ppl_mean": 26.72,
+          "lora_ppl_std": 9.88,
+          "delta_ppl_pct": -0.4
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 7.07,
-        "base_ppl_std": 1.77,
-        "lora_ppl_mean": 5.11,
-        "lora_ppl_std": 1.23,
-        "delta_ppl_pct": 27.69
+      "overall_summary": {
+        "base_ppl_mean": 34.01,
+        "lora_ppl_mean": 34.8,
+        "delta_pct": -2.32,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 5.94,
-        "base_ppl_std": 1.13,
-        "lora_ppl_mean": 4.49,
-        "lora_ppl_std": 0.61,
-        "delta_ppl_pct": 24.42
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 7.4,
-      "lora_ppl_mean": 5.26,
-      "delta_pct": 28.99,
-      "is_stable_sign": true
-    }
-  },
-  "bloom_560m": {
-    "base_model": "bigscience/bloom-560m",
-    "family": "BLOOM",
-    "params": "560M",
-    "type": "base",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 45.82,
-        "base_ppl_std": 40.13,
-        "lora_ppl_mean": 45.01,
-        "lora_ppl_std": 39.17,
-        "delta_ppl_pct": 1.76
+    "opt_125m": {
+      "base_model": "facebook/opt-125m",
+      "family": "OPT",
+      "params": "125M",
+      "type": "base",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 9.2,
+          "base_ppl_std": 5.75,
+          "lora_ppl_mean": 6.17,
+          "lora_ppl_std": 2.6,
+          "delta_ppl_pct": 32.94
+        },
+        "seed_123": {
+          "base_ppl_mean": 7.07,
+          "base_ppl_std": 1.77,
+          "lora_ppl_mean": 5.11,
+          "lora_ppl_std": 1.23,
+          "delta_ppl_pct": 27.69
+        },
+        "seed_777": {
+          "base_ppl_mean": 5.94,
+          "base_ppl_std": 1.13,
+          "lora_ppl_mean": 4.49,
+          "lora_ppl_std": 0.61,
+          "delta_ppl_pct": 24.42
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 35.97,
-        "base_ppl_std": 10.4,
-        "lora_ppl_mean": 35.45,
-        "lora_ppl_std": 10.24,
-        "delta_ppl_pct": 1.46
+      "overall_summary": {
+        "base_ppl_mean": 7.4,
+        "lora_ppl_mean": 5.26,
+        "delta_pct": 28.99,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 26.91,
-        "base_ppl_std": 6.14,
-        "lora_ppl_mean": 26.45,
-        "lora_ppl_std": 5.99,
-        "delta_ppl_pct": 1.72
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 36.24,
-      "lora_ppl_mean": 35.64,
-      "delta_pct": 1.65,
-      "is_stable_sign": true
-    }
-  },
-  "gpt2_medium": {
-    "base_model": "openai-community/gpt2-medium",
-    "family": "GPT-2",
-    "params": "355M",
-    "type": "base",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 12.32,
-        "base_ppl_std": 6.88,
-        "lora_ppl_mean": 12.37,
-        "lora_ppl_std": 6.74,
-        "delta_ppl_pct": -0.42
+    "bloom_560m": {
+      "base_model": "bigscience/bloom-560m",
+      "family": "BLOOM",
+      "params": "560M",
+      "type": "base",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 45.82,
+          "base_ppl_std": 40.13,
+          "lora_ppl_mean": 45.01,
+          "lora_ppl_std": 39.17,
+          "delta_ppl_pct": 1.76
+        },
+        "seed_123": {
+          "base_ppl_mean": 35.97,
+          "base_ppl_std": 10.4,
+          "lora_ppl_mean": 35.45,
+          "lora_ppl_std": 10.24,
+          "delta_ppl_pct": 1.46
+        },
+        "seed_777": {
+          "base_ppl_mean": 26.91,
+          "base_ppl_std": 6.14,
+          "lora_ppl_mean": 26.45,
+          "lora_ppl_std": 5.99,
+          "delta_ppl_pct": 1.72
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 9.45,
-        "base_ppl_std": 1.78,
-        "lora_ppl_mean": 9.52,
-        "lora_ppl_std": 1.75,
-        "delta_ppl_pct": -0.76
+      "overall_summary": {
+        "base_ppl_mean": 36.24,
+        "lora_ppl_mean": 35.64,
+        "delta_pct": 1.65,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 8.49,
-        "base_ppl_std": 1.66,
-        "lora_ppl_mean": 8.56,
-        "lora_ppl_std": 1.66,
-        "delta_ppl_pct": -0.84
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 10.09,
-      "lora_ppl_mean": 10.15,
-      "delta_pct": -0.64,
-      "is_stable_sign": true
-    }
-  },
-  "rugpt3_small": {
-    "base_model": "ai-forever/rugpt3small_based_on_gpt2",
-    "family": "RuGPT3",
-    "params": "125M",
-    "type": "base",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 38.51,
-        "base_ppl_std": 18.51,
-        "lora_ppl_mean": 37.86,
-        "lora_ppl_std": 17.62,
-        "delta_ppl_pct": 1.69
+    "gpt2_medium": {
+      "base_model": "openai-community/gpt2-medium",
+      "family": "GPT-2",
+      "params": "355M",
+      "type": "base",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 12.32,
+          "base_ppl_std": 6.88,
+          "lora_ppl_mean": 12.37,
+          "lora_ppl_std": 6.74,
+          "delta_ppl_pct": -0.42
+        },
+        "seed_123": {
+          "base_ppl_mean": 9.45,
+          "base_ppl_std": 1.78,
+          "lora_ppl_mean": 9.52,
+          "lora_ppl_std": 1.75,
+          "delta_ppl_pct": -0.76
+        },
+        "seed_777": {
+          "base_ppl_mean": 8.49,
+          "base_ppl_std": 1.66,
+          "lora_ppl_mean": 8.56,
+          "lora_ppl_std": 1.66,
+          "delta_ppl_pct": -0.84
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 50.03,
-        "base_ppl_std": 32.47,
-        "lora_ppl_mean": 49.05,
-        "lora_ppl_std": 30.72,
-        "delta_ppl_pct": 1.97
+      "overall_summary": {
+        "base_ppl_mean": 10.09,
+        "lora_ppl_mean": 10.15,
+        "delta_pct": -0.64,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 50.62,
-        "base_ppl_std": 28.67,
-        "lora_ppl_mean": 50.25,
-        "lora_ppl_std": 28.82,
-        "delta_ppl_pct": 0.74
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 46.39,
-      "lora_ppl_mean": 45.72,
-      "delta_pct": 1.44,
-      "is_stable_sign": true
-    }
-  },
-  "tinyllama_1.1b_chat": {
-    "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-    "family": "TinyLlama",
-    "params": "1.1B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 18.29,
-        "base_ppl_std": 7.25,
-        "lora_ppl_mean": 14.73,
-        "lora_ppl_std": 5.4,
-        "delta_ppl_pct": 19.46
+    "rugpt3_small": {
+      "base_model": "ai-forever/rugpt3small_based_on_gpt2",
+      "family": "RuGPT3",
+      "params": "125M",
+      "type": "base",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 38.51,
+          "base_ppl_std": 18.51,
+          "lora_ppl_mean": 37.86,
+          "lora_ppl_std": 17.62,
+          "delta_ppl_pct": 1.69
+        },
+        "seed_123": {
+          "base_ppl_mean": 50.03,
+          "base_ppl_std": 32.47,
+          "lora_ppl_mean": 49.05,
+          "lora_ppl_std": 30.72,
+          "delta_ppl_pct": 1.97
+        },
+        "seed_777": {
+          "base_ppl_mean": 50.62,
+          "base_ppl_std": 28.67,
+          "lora_ppl_mean": 50.25,
+          "lora_ppl_std": 28.82,
+          "delta_ppl_pct": 0.74
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 19.74,
-        "base_ppl_std": 7.61,
-        "lora_ppl_mean": 15.53,
-        "lora_ppl_std": 5.43,
-        "delta_ppl_pct": 21.31
+      "overall_summary": {
+        "base_ppl_mean": 46.39,
+        "lora_ppl_mean": 45.72,
+        "delta_pct": 1.44,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 16.26,
-        "base_ppl_std": 6.48,
-        "lora_ppl_mean": 12.61,
-        "lora_ppl_std": 4.54,
-        "delta_ppl_pct": 22.44
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 18.1,
-      "lora_ppl_mean": 14.29,
-      "delta_pct": 21.02,
-      "is_stable_sign": true
-    }
-  },
-  "smollm2_1.7b_instruct": {
-    "base_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
-    "family": "SmolLM2",
-    "params": "1.7B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 9.06,
-        "base_ppl_std": 5.97,
-        "lora_ppl_mean": 8.54,
-        "lora_ppl_std": 5.32,
-        "delta_ppl_pct": 5.79
+    "tinyllama_1.1b_chat": {
+      "base_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "family": "TinyLlama",
+      "params": "1.1B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 18.29,
+          "base_ppl_std": 7.25,
+          "lora_ppl_mean": 14.73,
+          "lora_ppl_std": 5.4,
+          "delta_ppl_pct": 19.46
+        },
+        "seed_123": {
+          "base_ppl_mean": 19.74,
+          "base_ppl_std": 7.61,
+          "lora_ppl_mean": 15.53,
+          "lora_ppl_std": 5.43,
+          "delta_ppl_pct": 21.31
+        },
+        "seed_777": {
+          "base_ppl_mean": 16.26,
+          "base_ppl_std": 6.48,
+          "lora_ppl_mean": 12.61,
+          "lora_ppl_std": 4.54,
+          "delta_ppl_pct": 22.44
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 7.13,
-        "base_ppl_std": 2.15,
-        "lora_ppl_mean": 6.83,
-        "lora_ppl_std": 2.0,
-        "delta_ppl_pct": 4.1
+      "overall_summary": {
+        "base_ppl_mean": 18.1,
+        "lora_ppl_mean": 14.29,
+        "delta_pct": 21.02,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 5.88,
-        "base_ppl_std": 1.78,
-        "lora_ppl_mean": 5.63,
-        "lora_ppl_std": 1.66,
-        "delta_ppl_pct": 4.33
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 7.36,
-      "lora_ppl_mean": 7.0,
-      "delta_pct": 4.85,
-      "is_stable_sign": true
-    }
-  },
-  "llama_3.2_1b_instruct": {
-    "base_model": "unsloth/Llama-3.2-1B-Instruct",
-    "family": "LLaMA 3.2",
-    "params": "1.0B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 93.35,
-        "base_ppl_std": 81.81,
-        "lora_ppl_mean": 83.23,
-        "lora_ppl_std": 73.33,
-        "delta_ppl_pct": 10.85
+    "smollm2_1.7b_instruct": {
+      "base_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "family": "SmolLM2",
+      "params": "1.7B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 9.06,
+          "base_ppl_std": 5.97,
+          "lora_ppl_mean": 8.54,
+          "lora_ppl_std": 5.32,
+          "delta_ppl_pct": 5.79
+        },
+        "seed_123": {
+          "base_ppl_mean": 7.13,
+          "base_ppl_std": 2.15,
+          "lora_ppl_mean": 6.83,
+          "lora_ppl_std": 2.0,
+          "delta_ppl_pct": 4.1
+        },
+        "seed_777": {
+          "base_ppl_mean": 5.88,
+          "base_ppl_std": 1.78,
+          "lora_ppl_mean": 5.63,
+          "lora_ppl_std": 1.66,
+          "delta_ppl_pct": 4.33
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 113.17,
-        "base_ppl_std": 95.01,
-        "lora_ppl_mean": 100.82,
-        "lora_ppl_std": 87.59,
-        "delta_ppl_pct": 10.92
+      "overall_summary": {
+        "base_ppl_mean": 7.36,
+        "lora_ppl_mean": 7.0,
+        "delta_pct": 4.85,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 92.03,
-        "base_ppl_std": 72.86,
-        "lora_ppl_mean": 76.32,
-        "lora_ppl_std": 56.27,
-        "delta_ppl_pct": 17.07
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 99.52,
-      "lora_ppl_mean": 86.79,
-      "delta_pct": 12.79,
-      "is_stable_sign": true
-    }
-  },
-  "deepseek_coder_1.3b_instruct": {
-    "base_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
-    "family": "DeepSeek Coder",
-    "params": "1.3B",
-    "type": "coder",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 19.13,
-        "base_ppl_std": 11.98,
-        "lora_ppl_mean": 16.12,
-        "lora_ppl_std": 8.75,
-        "delta_ppl_pct": 15.74
+    "llama_3.2_1b_instruct": {
+      "base_model": "unsloth/Llama-3.2-1B-Instruct",
+      "family": "LLaMA 3.2",
+      "params": "1.0B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 93.35,
+          "base_ppl_std": 81.81,
+          "lora_ppl_mean": 83.23,
+          "lora_ppl_std": 73.33,
+          "delta_ppl_pct": 10.85
+        },
+        "seed_123": {
+          "base_ppl_mean": 113.17,
+          "base_ppl_std": 95.01,
+          "lora_ppl_mean": 100.82,
+          "lora_ppl_std": 87.59,
+          "delta_ppl_pct": 10.92
+        },
+        "seed_777": {
+          "base_ppl_mean": 92.03,
+          "base_ppl_std": 72.86,
+          "lora_ppl_mean": 76.32,
+          "lora_ppl_std": 56.27,
+          "delta_ppl_pct": 17.07
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 17.83,
-        "base_ppl_std": 9.4,
-        "lora_ppl_mean": 15.95,
-        "lora_ppl_std": 9.19,
-        "delta_ppl_pct": 10.55
+      "overall_summary": {
+        "base_ppl_mean": 99.52,
+        "lora_ppl_mean": 86.79,
+        "delta_pct": 12.79,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 14.01,
-        "base_ppl_std": 6.01,
-        "lora_ppl_mean": 12.55,
-        "lora_ppl_std": 5.27,
-        "delta_ppl_pct": 10.38
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 16.99,
-      "lora_ppl_mean": 14.87,
-      "delta_pct": 12.45,
-      "is_stable_sign": true
-    }
-  },
-  "falcon3_1b_instruct": {
-    "base_model": "tiiuae/Falcon3-1B-Instruct",
-    "family": "Falcon 3",
-    "params": "1.0B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 32.01,
-        "base_ppl_std": 54.05,
-        "lora_ppl_mean": 7.71,
-        "lora_ppl_std": 4.66,
-        "delta_ppl_pct": 75.91
+    "deepseek_coder_1.3b_instruct": {
+      "base_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
+      "family": "DeepSeek Coder",
+      "params": "1.3B",
+      "type": "coder",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 19.13,
+          "base_ppl_std": 11.98,
+          "lora_ppl_mean": 16.12,
+          "lora_ppl_std": 8.75,
+          "delta_ppl_pct": 15.74
+        },
+        "seed_123": {
+          "base_ppl_mean": 17.83,
+          "base_ppl_std": 9.4,
+          "lora_ppl_mean": 15.95,
+          "lora_ppl_std": 9.19,
+          "delta_ppl_pct": 10.55
+        },
+        "seed_777": {
+          "base_ppl_mean": 14.01,
+          "base_ppl_std": 6.01,
+          "lora_ppl_mean": 12.55,
+          "lora_ppl_std": 5.27,
+          "delta_ppl_pct": 10.38
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 12.41,
-        "base_ppl_std": 4.73,
-        "lora_ppl_mean": 6.12,
-        "lora_ppl_std": 1.16,
-        "delta_ppl_pct": 50.72
+      "overall_summary": {
+        "base_ppl_mean": 16.99,
+        "lora_ppl_mean": 14.87,
+        "delta_pct": 12.45,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 9.31,
-        "base_ppl_std": 3.26,
-        "lora_ppl_mean": 5.05,
-        "lora_ppl_std": 0.95,
-        "delta_ppl_pct": 45.73
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 17.91,
-      "lora_ppl_mean": 6.29,
-      "delta_pct": 64.86,
-      "is_stable_sign": true
-    }
-  },
-  "qwen2.5_0.5b_instruct": {
-    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
-    "family": "Qwen 2.5",
-    "params": "0.5B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 52.52,
-        "base_ppl_std": 54.61,
-        "lora_ppl_mean": 44.67,
-        "lora_ppl_std": 43.21,
-        "delta_ppl_pct": 14.95
+    "falcon3_1b_instruct": {
+      "base_model": "tiiuae/Falcon3-1B-Instruct",
+      "family": "Falcon 3",
+      "params": "1.0B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 32.01,
+          "base_ppl_std": 54.05,
+          "lora_ppl_mean": 7.71,
+          "lora_ppl_std": 4.66,
+          "delta_ppl_pct": 75.91
+        },
+        "seed_123": {
+          "base_ppl_mean": 12.41,
+          "base_ppl_std": 4.73,
+          "lora_ppl_mean": 6.12,
+          "lora_ppl_std": 1.16,
+          "delta_ppl_pct": 50.72
+        },
+        "seed_777": {
+          "base_ppl_mean": 9.31,
+          "base_ppl_std": 3.26,
+          "lora_ppl_mean": 5.05,
+          "lora_ppl_std": 0.95,
+          "delta_ppl_pct": 45.73
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 44.62,
-        "base_ppl_std": 36.21,
-        "lora_ppl_mean": 38.18,
-        "lora_ppl_std": 27.81,
-        "delta_ppl_pct": 14.43
+      "overall_summary": {
+        "base_ppl_mean": 17.91,
+        "lora_ppl_mean": 6.29,
+        "delta_pct": 64.86,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 32.94,
-        "base_ppl_std": 17.35,
-        "lora_ppl_mean": 28.61,
-        "lora_ppl_std": 14.0,
-        "delta_ppl_pct": 13.16
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 43.36,
-      "lora_ppl_mean": 37.15,
-      "delta_pct": 14.32,
-      "is_stable_sign": true
-    }
-  },
-  "qwen2.5_1.5b_instruct": {
-    "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
-    "family": "Qwen 2.5",
-    "params": "1.5B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 36.23,
-        "base_ppl_std": 36.57,
-        "lora_ppl_mean": 31.66,
-        "lora_ppl_std": 31.22,
-        "delta_ppl_pct": 12.6
+    "qwen2.5_0.5b_instruct": {
+      "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+      "family": "Qwen 2.5",
+      "params": "0.5B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 52.52,
+          "base_ppl_std": 54.61,
+          "lora_ppl_mean": 44.67,
+          "lora_ppl_std": 43.21,
+          "delta_ppl_pct": 14.95
+        },
+        "seed_123": {
+          "base_ppl_mean": 44.62,
+          "base_ppl_std": 36.21,
+          "lora_ppl_mean": 38.18,
+          "lora_ppl_std": 27.81,
+          "delta_ppl_pct": 14.43
+        },
+        "seed_777": {
+          "base_ppl_mean": 32.94,
+          "base_ppl_std": 17.35,
+          "lora_ppl_mean": 28.61,
+          "lora_ppl_std": 14.0,
+          "delta_ppl_pct": 13.16
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 32.86,
-        "base_ppl_std": 25.46,
-        "lora_ppl_mean": 27.9,
-        "lora_ppl_std": 19.84,
-        "delta_ppl_pct": 15.11
+      "overall_summary": {
+        "base_ppl_mean": 43.36,
+        "lora_ppl_mean": 37.15,
+        "delta_pct": 14.32,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 24.48,
-        "base_ppl_std": 13.14,
-        "lora_ppl_mean": 21.03,
-        "lora_ppl_std": 10.76,
-        "delta_ppl_pct": 14.07
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 31.19,
-      "lora_ppl_mean": 26.86,
-      "delta_pct": 13.87,
-      "is_stable_sign": true
-    }
-  },
-  "qwen2.5_coder_1.5b_instruct": {
-    "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
-    "family": "Qwen 2.5 Coder",
-    "params": "1.5B",
-    "type": "coder",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 51.04,
-        "base_ppl_std": 51.07,
-        "lora_ppl_mean": 38.26,
-        "lora_ppl_std": 33.26,
-        "delta_ppl_pct": 25.04
+    "qwen2.5_1.5b_instruct": {
+      "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+      "family": "Qwen 2.5",
+      "params": "1.5B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 36.23,
+          "base_ppl_std": 36.57,
+          "lora_ppl_mean": 31.66,
+          "lora_ppl_std": 31.22,
+          "delta_ppl_pct": 12.6
+        },
+        "seed_123": {
+          "base_ppl_mean": 32.86,
+          "base_ppl_std": 25.46,
+          "lora_ppl_mean": 27.9,
+          "lora_ppl_std": 19.84,
+          "delta_ppl_pct": 15.11
+        },
+        "seed_777": {
+          "base_ppl_mean": 24.48,
+          "base_ppl_std": 13.14,
+          "lora_ppl_mean": 21.03,
+          "lora_ppl_std": 10.76,
+          "delta_ppl_pct": 14.07
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 39.91,
-        "base_ppl_std": 28.43,
-        "lora_ppl_mean": 30.59,
-        "lora_ppl_std": 18.76,
-        "delta_ppl_pct": 23.35
+      "overall_summary": {
+        "base_ppl_mean": 31.19,
+        "lora_ppl_mean": 26.86,
+        "delta_pct": 13.87,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 31.79,
-        "base_ppl_std": 18.02,
-        "lora_ppl_mean": 24.24,
-        "lora_ppl_std": 11.85,
-        "delta_ppl_pct": 23.76
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 40.91,
-      "lora_ppl_mean": 31.03,
-      "delta_pct": 24.16,
-      "is_stable_sign": true
-    }
-  },
-  "vikhr_qwen_2.5_1.5b": {
-    "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
-    "family": "Vikhr Russian",
-    "params": "1.5B",
-    "type": "instruct",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 33.12,
-        "base_ppl_std": 33.11,
-        "lora_ppl_mean": 29.82,
-        "lora_ppl_std": 28.11,
-        "delta_ppl_pct": 9.96
+    "qwen2.5_coder_1.5b_instruct": {
+      "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+      "family": "Qwen 2.5 Coder",
+      "params": "1.5B",
+      "type": "coder",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 51.04,
+          "base_ppl_std": 51.07,
+          "lora_ppl_mean": 38.26,
+          "lora_ppl_std": 33.26,
+          "delta_ppl_pct": 25.04
+        },
+        "seed_123": {
+          "base_ppl_mean": 39.91,
+          "base_ppl_std": 28.43,
+          "lora_ppl_mean": 30.59,
+          "lora_ppl_std": 18.76,
+          "delta_ppl_pct": 23.35
+        },
+        "seed_777": {
+          "base_ppl_mean": 31.79,
+          "base_ppl_std": 18.02,
+          "lora_ppl_mean": 24.24,
+          "lora_ppl_std": 11.85,
+          "delta_ppl_pct": 23.76
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 26.2,
-        "base_ppl_std": 14.7,
-        "lora_ppl_mean": 24.64,
-        "lora_ppl_std": 13.45,
-        "delta_ppl_pct": 5.95
+      "overall_summary": {
+        "base_ppl_mean": 40.91,
+        "lora_ppl_mean": 31.03,
+        "delta_pct": 24.16,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 20.1,
-        "base_ppl_std": 10.28,
-        "lora_ppl_mean": 18.66,
-        "lora_ppl_std": 8.94,
-        "delta_ppl_pct": 7.15
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 26.48,
-      "lora_ppl_mean": 24.38,
-      "delta_pct": 7.93,
-      "is_stable_sign": true
-    }
-  },
-  "deepseek_r1_distill_qwen_1.5b": {
-    "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-    "family": "DeepSeek R1",
-    "params": "1.5B",
-    "type": "reasoning",
-    "seeds": {
-      "seed_42": {
-        "base_ppl_mean": 314.33,
-        "base_ppl_std": 401.49,
-        "lora_ppl_mean": 182.8,
-        "lora_ppl_std": 200.72,
-        "delta_ppl_pct": 41.84
+    "vikhr_qwen_2.5_1.5b": {
+      "base_model": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+      "family": "Vikhr Russian",
+      "params": "1.5B",
+      "type": "instruct",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 33.12,
+          "base_ppl_std": 33.11,
+          "lora_ppl_mean": 29.82,
+          "lora_ppl_std": 28.11,
+          "delta_ppl_pct": 9.96
+        },
+        "seed_123": {
+          "base_ppl_mean": 26.2,
+          "base_ppl_std": 14.7,
+          "lora_ppl_mean": 24.64,
+          "lora_ppl_std": 13.45,
+          "delta_ppl_pct": 5.95
+        },
+        "seed_777": {
+          "base_ppl_mean": 20.1,
+          "base_ppl_std": 10.28,
+          "lora_ppl_mean": 18.66,
+          "lora_ppl_std": 8.94,
+          "delta_ppl_pct": 7.15
+        }
       },
-      "seed_123": {
-        "base_ppl_mean": 195.43,
-        "base_ppl_std": 151.18,
-        "lora_ppl_mean": 135.34,
-        "lora_ppl_std": 101.62,
-        "delta_ppl_pct": 30.75
+      "overall_summary": {
+        "base_ppl_mean": 26.48,
+        "lora_ppl_mean": 24.38,
+        "delta_pct": 7.93,
+        "is_stable_sign": true
       },
-      "seed_777": {
-        "base_ppl_mean": 126.14,
-        "base_ppl_std": 62.88,
-        "lora_ppl_mean": 86.89,
-        "lora_ppl_std": 41.61,
-        "delta_ppl_pct": 31.12
-      }
+      "adapter_found": true
     },
-    "overall_summary": {
-      "base_ppl_mean": 211.97,
-      "lora_ppl_mean": 135.01,
-      "delta_pct": 36.31,
-      "is_stable_sign": true
+    "deepseek_r1_distill_qwen_1.5b": {
+      "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+      "family": "DeepSeek R1",
+      "params": "1.5B",
+      "type": "reasoning",
+      "seeds": {
+        "seed_42": {
+          "base_ppl_mean": 314.33,
+          "base_ppl_std": 401.49,
+          "lora_ppl_mean": 182.8,
+          "lora_ppl_std": 200.72,
+          "delta_ppl_pct": 41.84
+        },
+        "seed_123": {
+          "base_ppl_mean": 195.43,
+          "base_ppl_std": 151.18,
+          "lora_ppl_mean": 135.34,
+          "lora_ppl_std": 101.62,
+          "delta_ppl_pct": 30.75
+        },
+        "seed_777": {
+          "base_ppl_mean": 126.14,
+          "base_ppl_std": 62.88,
+          "lora_ppl_mean": 86.89,
+          "lora_ppl_std": 41.61,
+          "delta_ppl_pct": 31.12
+        }
+      },
+      "overall_summary": {
+        "base_ppl_mean": 211.97,
+        "lora_ppl_mean": 135.01,
+        "delta_pct": 36.31,
+        "is_stable_sign": true
+      },
+      "adapter_found": true
     }
   }
 }

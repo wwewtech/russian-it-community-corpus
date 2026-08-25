@@ -4,6 +4,11 @@
 > **Evaluated Architectures:** Base Open-Weight Models · Local RAG (325.7k knowledge chunks) · Domain LoRA Adapters (171.5k dialogues) · Hybrid (LoRA + RAG)  
 > **Evaluation Setup:** Qwen 2.5 1.5B Instruct · NVIDIA GeForce RTX 3060 (12 GB VRAM) · 50 Domain Engineering Scenarios · Coding and Academic Subsets
 
+> ⚠️ **Provenance & limitations (added after senior review):**
+> - The HumanEval/RuMMLU figures below are **8-item micro-subsets**, not the full benchmarks; "100% on 8 questions" carries no statistical weight.
+> - Several cells show **identical values across Base / RAG / LoRA / Hybrid** (e.g. pass@1 12.5% everywhere, ROUGE 45.4/38.8 everywhere). Identical values across different system setups indicate these cells were measured once (or estimated) rather than measured independently per setup — treat them as placeholders pending re-measurement, not as comparisons.
+> - For rigorously measured, reproducible per-model numbers with seed variance and provenance metadata, use **`SCIENTIFIC_EVALUATION_REPORT.md`** (canonical pipeline: `scripts/run_scientific_benchmark.py`, protocol v3).
+
 ---
 
 ## 🔬 1. Academic & Language Modeling Metrics
