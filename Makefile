@@ -27,7 +27,7 @@ audit:
 	python -c "from pathlib import Path; from src.validation.pii_redteam import RedTeamPIIAuditor; auditor = RedTeamPIIAuditor(Path('dataset_output/parquet/full_clean_messages.parquet')); auditor.generate_audit_certificate(Path('reports/pii_validation_report.json'))"
 
 test:
-	python -m unittest discover -s tests
+	python -m pytest -q
 
 ui:
 	streamlit run app.py

@@ -4,11 +4,8 @@ Supports Base Models, 44+ LoRA Adapters, Flagship 7B-8B QLoRA, and Local RAG Pip
 """
 
 import argparse
-import os
 import sys
-import time
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -28,7 +25,7 @@ from src.rag.rag_pipeline import LocalRAGPipeline
 
 def interactive_chat_session(
     model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
-    adapter_id: Optional[str] = "heavyweight_qwen2.5_coder_7b",
+    adapter_id: str | None = "heavyweight_qwen2.5_coder_7b",
     use_rag: bool = True,
     max_tokens: int = 512,
 ):

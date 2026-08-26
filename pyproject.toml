@@ -99,3 +99,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["."]
 addopts = "-p no:asyncio"
+markers = [
+    "integration: tests that require locally generated dataset artifacts (deselected by default when combined with -m 'not integration')",
+]

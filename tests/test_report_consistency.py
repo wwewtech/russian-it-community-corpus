@@ -84,7 +84,7 @@ class TestReportConsistency(unittest.TestCase):
         rows = re.findall(r"^\| \*\*.+?\*\* \(\w+\) \| `([^`]+)` \|[^\n]*$", self.md, flags=re.MULTILINE)
         self.assertTrue(rows, "no model rows parsed from the Markdown table")
         for model_id in rows:
-            line = next(l for l in self.md.splitlines() if f"`{model_id}`" in l and l.startswith("| **"))
+            line = next(ln for ln in self.md.splitlines() if f"`{model_id}`" in ln and ln.startswith("| **"))
             cells = [c.strip() for c in line.split("|")]
             base_cell = cells[4]  # "Base PPL (Mean ± σ)" -> "34.01 ± 17.8"
             base_mean = float(base_cell.split("±")[0].strip())

@@ -10,7 +10,6 @@ Maximally pushes 12GB RTX 3060 to its hardware limits using 4-bit NF4 QLoRA:
 
 import argparse
 import gc
-import json
 import logging
 import os
 import sys
@@ -35,7 +34,6 @@ if sys.platform == "win32":
 import pandas as pd
 import torch
 from datasets import Dataset
-from huggingface_hub import HfApi
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoModelForCausalLM,

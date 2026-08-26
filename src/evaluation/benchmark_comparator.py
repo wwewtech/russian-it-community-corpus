@@ -86,7 +86,6 @@ class BenchmarkComparator:
         for tc in BENCHMARK_SAMPLE:
             # Check RAG context retrieval
             rag_hits = self.rag.search(tc["query"], top_k=2, domain_filter=tc["domain"])
-            rag_prompt = self.rag.format_rag_prompt(tc["query"], rag_hits)
 
             # Measure keyword presence in retrieved context
             combined_context = " ".join(h.get("content", "") for h in rag_hits).lower()

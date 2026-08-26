@@ -2,7 +2,6 @@
 Final synchronization script for 40+ LoRA models across Hugging Face and GitHub.
 """
 
-import gc
 import json
 import logging
 import os
@@ -31,7 +30,7 @@ DATASET_REPO_ID = "wwewtech/russian-it-community-corpus"
 def upload_dataset(api: huggingface_hub.HfApi):
     """Upload cleaned parquet files, dataset card, and reports to HF Hub."""
     logger.info(f"Uploading sanitized dataset artifacts to Hugging Face: {DATASET_REPO_ID}...")
-    
+
     # 1. Dataset Card (README.md)
     dataset_card_path = Path("reports/DATASET_AND_ANALYTICS.md")
     if dataset_card_path.exists():

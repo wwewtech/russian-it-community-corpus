@@ -4,7 +4,6 @@ Compares Base Models, Vector RAG (325k chunks), Domain LoRA, and Hybrid Architec
 """
 
 import argparse
-import gc
 import json
 import logging
 import os
@@ -13,7 +12,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
@@ -177,10 +175,10 @@ def run_benchmark_experiment_suite(
 ) -> dict[str, Any]:
     """Execute all 16 benchmark suites across Base, RAG, LoRA, and Hybrid."""
     logger.info(f"=== Initializing 16-Suite Deep Empirical Benchmark for {model_name} ===")
-    
+
     # 1. Load RAG Knowledge Base
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
-    
+
     # 2. Load Base Model & Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
@@ -193,7 +191,7 @@ def run_benchmark_experiment_suite(
         device_map="auto" if torch.cuda.is_available() else None,
         trust_remote_code=True,
     )
-    
+
     results = {
         "metadata": {
             "model_name": model_name,

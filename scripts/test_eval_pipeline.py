@@ -1,8 +1,8 @@
-import os
 import math
-import gc
-import torch
+import os
+
 import pandas as pd
+import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -24,7 +24,7 @@ def test():
     tok = AutoTokenizer.from_pretrained(base_name)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    
+
     base_model = AutoModelForCausalLM.from_pretrained(base_name, torch_dtype=torch.float16, device_map="cuda")
     base_model.eval()
 
@@ -34,8 +34,8 @@ def test():
             enc = tok(t, return_tensors="pt", max_length=256, truncation=True).input_ids.to(base_model.device)
             if enc.shape[1] < 4:
                 continue
-            l = base_model(enc, labels=enc).loss.item()
-            base_losses.append(l)
+            loss = base_model(enc, labels=enc).loss.item()
+            base_losses.append(loss)
 
     lora_model = PeftModel.from_pretrained(base_model, adapter_path)
     lora_model.eval()
@@ -46,8 +46,8 @@ def test():
             enc = tok(t, return_tensors="pt", max_length=256, truncation=True).input_ids.to(lora_model.device)
             if enc.shape[1] < 4:
                 continue
-            l = lora_model(enc, labels=enc).loss.item()
-            lora_losses.append(l)
+            loss = lora_model(enc, labels=enc).loss.item()
+            lora_losses.append(loss)
 
     base_ppl = [math.exp(x) for x in base_losses]
     lora_ppl = [math.exp(x) for x in lora_losses]

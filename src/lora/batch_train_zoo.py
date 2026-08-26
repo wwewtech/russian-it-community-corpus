@@ -204,10 +204,10 @@ def train_and_upload_single_model(
         if len(raw_ds) > 400:
             raw_ds = raw_ds.select(range(400))
 
-        def format_dialogue(example):
+        def format_dialogue(example, _tokenizer=tokenizer):
             msgs = example.get("messages", [])
             try:
-                txt = tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
+                txt = _tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
             except Exception:
                 parts = []
                 for m in msgs:
@@ -215,7 +215,7 @@ def train_and_upload_single_model(
                     content = m.get("content", "")
                     parts.append(f"[{role.upper()}]: {content}")
                 txt = "\n".join(parts)
-            tok = tokenizer(txt, max_length=max_seq_length, truncation=True, padding=False)
+            tok = _tokenizer(txt, max_length=max_seq_length, truncation=True, padding=False)
             tok["labels"] = tok["input_ids"].copy()
             return tok
 

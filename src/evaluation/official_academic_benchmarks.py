@@ -8,8 +8,7 @@ Evaluates models against real, established international & Russian scientific st
 """
 
 import argparse
-import ast
-import gc
+import concurrent.futures
 import json
 import logging
 import math
@@ -163,9 +162,6 @@ RUMMLU_CS_QUESTIONS = [
 ]
 
 
-import concurrent.futures
-
-
 def _safe_exec(code_str: str) -> bool:
     scope = {}
     exec(code_str, scope)
@@ -175,10 +171,7 @@ def _safe_exec(code_str: str) -> bool:
 def execute_humaneval_code(generated_code: str, task: dict, timeout_sec: float = 2.0) -> bool:
     """Execute generated Python code against standard test assertions in a timeout-safe sandbox."""
     code_match = re.search(r"```(?:python|py)?\n(.*?)```", generated_code, re.DOTALL)
-    if code_match:
-        code_to_exec = code_match.group(1).strip()
-    else:
-        code_to_exec = generated_code.strip()
+    code_to_exec = code_match.group(1).strip() if code_match else generated_code.strip()
 
     if task["entry_point"] not in code_to_exec:
         code_to_exec = task["prompt"] + "\n" + code_to_exec
@@ -200,7 +193,6 @@ def run_official_academic_benchmarks(
     logger.info(f"=== 🎓 Running Official Academic Scientific Benchmarks for {model_name} ===")
 
     rouge = evaluate.load("rouge")
-    bleu = evaluate.load("bleu")
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
@@ -390,9 +382,9 @@ def run_official_academic_benchmarks(
         "",
         "## 1. Методология измерений (Methodology)",
         "",
-        f"Данный скрипт выполняет детерминированную проверку на контрольной выборке:",
+        "Данный скрипт выполняет детерминированную проверку на контрольной выборке:",
         "",
-        f"1. **OpenAI HumanEval subset ({len(HUMANEVAL_TASKS)} задач)**: Сгенерированный код запускается в изолированном интерпретаторе Python с набором unit-тестов. $\\text{pass@1} = \\frac{N_{\\text{passed}}}{N_{\\text{total}}} \\times 100\\%$.",
+        f"1. **OpenAI HumanEval subset ({len(HUMANEVAL_TASKS)} задач)**: Сгенерированный код запускается в изолированном интерпретаторе Python с набором unit-тестов. $\\text{{pass@1}} = \\frac{{N_{{\\text{{passed}}}}}}{{N_{{\\text{{total}}}}}} \\times 100\\%$.",
         f"2. **RuMMLU CS subset ({len(RUMMLU_CS_QUESTIONS)} вопросов)**: Выборка по направлениям Databases, Networking, Algorithms, OS. Балл — процент правильных ответов (Accuracy).",
         "3. **Информационно-теоретическая перплексия (PPL)**: $\\text{PPL} = \\exp\\left(-\\frac{1}{T}\\sum_{t=1}^T \\ln P(w_t \\mid w_{<t})\\right)$ на отложенной тестовой выборке диалогов.",
         "4. **ROUGE-1 / ROUGE-L**: Оценка лексического перекрытия с эталонными ответами через библиотеку `evaluate`.",

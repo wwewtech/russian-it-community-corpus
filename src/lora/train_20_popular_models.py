@@ -3,13 +3,12 @@ Extended 20 Popular LLMs LoRA Fine-Tuning & Model Hub Synchronizer.
 Trains PEFT LoRA domain adapters on NVIDIA GeForce RTX 3060 and uploads to Hugging Face Model Hub.
 """
 
-import argparse
+import contextlib
 import gc
 import json
 import logging
 import os
 import sys
-import time
 from pathlib import Path
 from typing import Any
 
@@ -135,10 +134,8 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
             )
 
         if hasattr(model, "gradient_checkpointing_enable"):
-            try:
+            with contextlib.suppress(Exception):
                 model.gradient_checkpointing_enable()
-            except Exception:
-                pass
 
         # 3. LoRA Configuration
         target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
@@ -158,7 +155,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
         peft_model = get_peft_model(model, peft_config)
 
         # 4. Tokenization Function
-        def format_chat(example):
+        def format_chat(example, _tokenizer=tokenizer):
             msgs = example.get("messages", [])
             text_blocks = []
             for m in msgs:
@@ -166,7 +163,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
                 c = m.get("content", "")
                 text_blocks.append(f"<|{r}|>\n{c}")
             full_text = "\n".join(text_blocks)
-            tokens = tokenizer(full_text, truncation=True, max_length=512, padding=False)
+            tokens = _tokenizer(full_text, truncation=True, max_length=512, padding=False)
             tokens["labels"] = tokens["input_ids"].copy()
             return tokens
 

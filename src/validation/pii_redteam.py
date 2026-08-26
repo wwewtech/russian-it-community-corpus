@@ -196,7 +196,7 @@ class RedTeamPIIAuditor:
         scrubber = RegexPIIScrubber()
         leaks = defaultdict(int)
 
-        for idx, row in sample.iterrows():
+        for _, row in sample.iterrows():
             text = row.get("text_clean")
             if pd.notna(text):
                 _, stats = scrubber.scrub(str(text))

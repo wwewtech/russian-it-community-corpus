@@ -36,9 +36,9 @@ import os
 import platform
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 if sys.platform == "win32":
     try:
@@ -136,7 +136,7 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def get_git_revision() -> Dict[str, Any]:
+def get_git_revision() -> dict[str, Any]:
     """Return the REAL current git revision. Never hand-write commit hashes."""
     try:
         commit = subprocess.run(
@@ -153,7 +153,7 @@ def get_git_revision() -> Dict[str, Any]:
         return {"commit": "unknown", "dirty": None}
 
 
-def build_run_metadata(dataset_sha256: str, source: str) -> Dict[str, Any]:
+def build_run_metadata(dataset_sha256: str, source: str) -> dict[str, Any]:
     import peft as peft_lib
     import transformers as tf_lib
 
@@ -162,7 +162,7 @@ def build_run_metadata(dataset_sha256: str, source: str) -> Dict[str, Any]:
         "source": source,
         "script": "scripts/run_scientific_benchmark.py",
         "git": get_git_revision(),
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "seeds": SEEDS,
         "eval_split_size_per_seed": EVAL_SPLIT_SIZE,
         "max_length": MAX_LEN,
@@ -188,7 +188,7 @@ def dialogue_to_text(row: pd.Series) -> str:
     return "\n".join([f"<|{m.get('role', 'user')}|>\n{m.get('content', '')}" for m in msgs])
 
 
-def build_eval_splits(df: pd.DataFrame) -> Dict[str, Any]:
+def build_eval_splits(df: pd.DataFrame) -> dict[str, Any]:
     """Build seeded evaluation splits from a pool that excludes training data."""
     excluded_indices = set()
     for n, seed in TRAINING_SAMPLING_RULES:
@@ -200,8 +200,8 @@ def build_eval_splits(df: pd.DataFrame) -> Dict[str, Any]:
         f"({len(excluded_indices)} excluded as possible training data)."
     )
 
-    splits: Dict[int, List[str]] = {}
-    manifest_seeds: Dict[str, Any] = {}
+    splits: dict[int, list[str]] = {}
+    manifest_seeds: dict[str, Any] = {}
     for s in SEEDS:
         sample_df = pool.sample(n=EVAL_SPLIT_SIZE, random_state=s).reset_index(drop=True)
         texts = [dialogue_to_text(row) for _, row in sample_df.iterrows()]
@@ -215,7 +215,7 @@ def build_eval_splits(df: pd.DataFrame) -> Dict[str, Any]:
     return {"splits": splits, "pool_size": len(pool), "excluded_count": len(excluded_indices), "seeds": manifest_seeds}
 
 
-def compute_sample_ppls(model, tokenizer, texts: List[str], max_len: int = MAX_LEN) -> List[float]:
+def compute_sample_ppls(model, tokenizer, texts: list[str], max_len: int = MAX_LEN) -> list[float]:
     losses = []
     with torch.no_grad():
         for t in texts:
@@ -225,7 +225,7 @@ def compute_sample_ppls(model, tokenizer, texts: List[str], max_len: int = MAX_L
             loss = model(enc, labels=enc).loss.item()
             if not math.isnan(loss) and not math.isinf(loss):
                 losses.append(loss)
-    return [math.exp(l) for l in losses]
+    return [math.exp(loss) for loss in losses]
 
 
 # ---------------------------------------------------------------------------
@@ -242,12 +242,12 @@ def run_benchmark() -> None:
 
     dataset_sha = sha256_file(DATASET_PATH)
     split_info = build_eval_splits(df_sft)
-    seed_splits: Dict[int, List[str]] = split_info["splits"]
+    seed_splits: dict[int, list[str]] = split_info["splits"]
 
     metadata = build_run_metadata(dataset_sha, source="full-gpu-run")
 
-    full_matrix_results: List[Dict[str, Any]] = []
-    reproducibility_results: Dict[str, Any] = {}
+    full_matrix_results: list[dict[str, Any]] = []
+    reproducibility_results: dict[str, Any] = {}
 
     for m_idx, m_info in enumerate(EVAL_MODELS, 1):
         m_id = m_info["id"]
@@ -306,8 +306,8 @@ def run_benchmark() -> None:
                 lora_generations = {}
 
             seed_comparison = {}
-            all_base_ppls: List[float] = []
-            all_lora_ppls: List[float] = []
+            all_base_ppls: list[float] = []
+            all_lora_ppls: list[float] = []
             for s in SEEDS:
                 b_p = base_seed_ppls[s]
                 l_p = lora_seed_ppls.get(s, [])
@@ -395,7 +395,7 @@ def run_benchmark() -> None:
                     q["id"]: {
                         "prompt": q["prompt"],
                         "base_response": base_generations.get(q["id"], ""),
-                        "lora_response": lora_generations.get(q["id"], None),
+                        "lora_response": lora_generations.get(q["id"]),
                     }
                     for q in QUALITATIVE_PROMPTS
                 },
@@ -428,10 +428,10 @@ def run_benchmark() -> None:
 # ---------------------------------------------------------------------------
 
 def write_artifacts(
-    matrix: List[Dict[str, Any]],
-    repro: Dict[str, Any],
-    metadata: Dict[str, Any],
-    split_info: Dict[str, Any] | None,
+    matrix: list[dict[str, Any]],
+    repro: dict[str, Any],
+    metadata: dict[str, Any],
+    split_info: dict[str, Any] | None,
 ) -> None:
     Path("reports").mkdir(exist_ok=True)
 
@@ -475,7 +475,7 @@ def write_artifacts(
 # Markdown report — narrative is DERIVED from the measured numbers
 # ---------------------------------------------------------------------------
 
-def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any], metadata: Dict[str, Any]) -> None:
+def generate_markdown_report(matrix: list[dict[str, Any]], repro: dict[str, Any], metadata: dict[str, Any]) -> None:
     measured = [m for m in matrix if m.get("mean_ppl_improvement_pct") is not None]
     missing = [m for m in matrix if not m.get("adapter_found", True)]
 
@@ -517,13 +517,13 @@ def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any]
     md.append("| Architecture Class | Model ID | Params | Base PPL (Mean ± σ) | LoRA PPL (Mean ± σ) | Full Range [Min .. Max] | Seed 42 (Δ%) | Seed 123 (Δ%) | Seed 777 (Δ%) | Overall Δ PPL |")
     md.append("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
 
+    def _fmt_seed(seed_key: str, seed_map: dict) -> str:
+        v = seed_map.get(seed_key, {}).get("delta_ppl_pct")
+        return f"{v:+.1f}%" if v is not None else "n/a"
+
     for item in matrix:
         m_id = item["id"]
-        r = repro.get(m_id, {}).get("seeds", {})
-
-        def _fmt_seed(seed_key: str) -> str:
-            v = r.get(seed_key, {}).get("delta_ppl_pct")
-            return f"{v:+.1f}%" if v is not None else "n/a"
+        seeds = repro.get(m_id, {}).get("seeds", {})
 
         b_dist = item["base_ppl_distribution"]
         l_dist = item["lora_ppl_distribution"]
@@ -534,7 +534,7 @@ def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any]
                 f"| **{item['family']}** ({item['type']}) | `{m_id}` | {item['params']} | "
                 f"{b_dist['mean']:.2f} ± {b_dist['std']:.1f} | adapter missing | "
                 f"[{b_dist['min']:.1f}..{b_dist['max']:.1f}] → n/a | "
-                f"{_fmt_seed('seed_42')} | {_fmt_seed('seed_123')} | {_fmt_seed('seed_777')} | n/a |"
+                f"{_fmt_seed('seed_42', seeds)} | {_fmt_seed('seed_123', seeds)} | {_fmt_seed('seed_777', seeds)} | n/a |"
             )
             continue
 
@@ -544,7 +544,7 @@ def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any]
             f"| **{item['family']}** ({item['type']}) | `{m_id}` | {item['params']} | "
             f"{b_dist['mean']:.2f} ± {b_dist['std']:.1f} | **{l_dist['mean']:.2f} ± {l_dist['std']:.1f}** | "
             f"[{b_dist['min']:.1f}..{b_dist['max']:.1f}] → [{l_dist['min']:.1f}..{l_dist['max']:.1f}] | "
-            f"{_fmt_seed('seed_42')} | {_fmt_seed('seed_123')} | {_fmt_seed('seed_777')} | {delta_str} |"
+            f"{_fmt_seed('seed_42', seeds)} | {_fmt_seed('seed_123', seeds)} | {_fmt_seed('seed_777', seeds)} | {delta_str} |"
         )
 
     md.append("")
@@ -558,7 +558,7 @@ def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any]
         gens = item.get("qualitative_generations", {})
         md.append(f"### 🤖 `{m_id}` ({item['family']} {item['params']})")
         md.append("")
-        for q_id, q_data in gens.items():
+        for q_data in gens.values():
             md.append(f"**Prompt**: *{q_data['prompt']}*")
             md.append(f"- **Base Model**: {q_data['base_response']}")
             lora_resp = q_data.get("lora_response")
@@ -575,17 +575,17 @@ def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any]
         regressions = [m for m in measured if m["mean_ppl_improvement_pct"] < 0]
         stable = [m for m in measured if repro.get(m["id"], {}).get("overall_summary", {}).get("is_stable_sign")]
 
-        md.append(f"1. **Top improvements (overall Δ PPL)**: "
+        md.append("1. **Top improvements (overall Δ PPL)**: "
                   + "; ".join(f"`{m['id']}` **{m['mean_ppl_improvement_pct']:+.1f}%**" for m in ranked[:3]) + ".")
         if regressions:
-            md.append(f"2. **Honest negative results**: "
+            md.append("2. **Honest negative results**: "
                       + "; ".join(f"`{m['id']}` {m['mean_ppl_improvement_pct']:+.1f}%" for m in regressions)
                       + " — LoRA *raised* perplexity for these models on this split.")
         else:
             md.append("2. **No regressions** measured on this split (Δ ≥ 0 for every evaluated model).")
         md.append(f"3. **Cross-seed sign stability**: {len(stable)}/{len(measured)} models keep the same "
                   "sign of $\\Delta$ across all three seeds.")
-        by_type: Dict[str, List[float]] = {}
+        by_type: dict[str, list[float]] = {}
         for m in measured:
             by_type.setdefault(m["type"], []).append(m["mean_ppl_improvement_pct"])
         type_summary = "; ".join(
@@ -596,7 +596,7 @@ def generate_markdown_report(matrix: List[Dict[str, Any]], repro: Dict[str, Any]
         md.append("_No LoRA adapters were evaluated; the table contains base-model measurements only._")
 
     if missing:
-        md.append(f"5. **Not evaluated (adapter missing, no numbers fabricated)**: "
+        md.append("5. **Not evaluated (adapter missing, no numbers fabricated)**: "
                   + ", ".join(f"`{m['id']}`" for m in missing) + ".")
 
     md.append("")
@@ -676,7 +676,7 @@ def regenerate_from_cache() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Canonical scientific benchmark (protocol v%s)" % PROTOCOL_VERSION)
+    parser = argparse.ArgumentParser(description=f"Canonical scientific benchmark (protocol v{PROTOCOL_VERSION})")
     parser.add_argument(
         "--from-cache",
         action="store_true",

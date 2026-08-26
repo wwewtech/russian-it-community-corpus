@@ -5,11 +5,9 @@ evaluating AST syntax, architectural completeness, Russian engineering jargon, a
 """
 
 import argparse
-import ast
 import json
 import logging
 import os
-import re
 import sys
 import time
 from pathlib import Path
@@ -300,8 +298,8 @@ def run_sota_showcase(
             f"### Сценарий #{idx}: {r['title']}",
             f"**Запрос:** *\"{r['prompt']}\"*",
             "",
-            f"| Конфигурация | Балл | Ключевые особенности генерации |",
-            f"| :--- | :---: | :--- |",
+            "| Конфигурация | Балл | Ключевые особенности генерации |",
+            "| :--- | :---: | :--- |",
             f"| **Base Model** | `{r['base']['scores']['overall']}%` | Общий поверхностный ответ, абстрактные рекомендации без точных параметров. |",
             f"| **RAG Augmented** | `{r['rag']['scores']['overall']}%` | Подтянуты точные параметры и факты из базы знаний. |",
             f"| **Domain LoRA** | `{r['lora']['scores']['overall']}%` | Аутентичный тон ведущего архитектора, нативное использование профессионального сленга. |",

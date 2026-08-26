@@ -6,7 +6,6 @@ FinTech, High-Load, SRE, PostgreSQL DBA, Sanctions Compliance 2026, DevSecOps, a
 
 import argparse
 import ast
-import gc
 import json
 import logging
 import os
@@ -556,7 +555,7 @@ def evaluate_enterprise_production_matrix(
     base_results = []
     rag_results = []
     logger.info("Executing Phase A: Base Model and RAG Evaluations...")
-    for idx, sc in enumerate(scenarios, 1):
+    for sc in scenarios:
         prompt = sc["prompt"]
         req = sc["required_concepts"]
 
