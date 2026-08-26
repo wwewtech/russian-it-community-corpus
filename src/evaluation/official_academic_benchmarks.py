@@ -277,6 +277,17 @@ def run_official_academic_benchmarks(
             torch.cuda.empty_cache()
         return text.strip()
 
+    def base_generate(prompt_str: str, max_tokens: int = 256) -> str:
+        """Generate with the LoRA adapter DISABLED -> true base-model behaviour.
+
+        Fixes the in-place-injection bug: ``PeftModel.from_pretrained(base, ...)``
+        wraps the *same* model object, so without explicitly disabling the adapter
+        the \"Base\" column silently measured the adapter-active model (identical to
+        LoRA byte-for-byte). See _tmp_probe2.py / _probe2_results.json.
+        """
+        with lora_model.disable_adapter():
+            return generate_fn(lora_model, prompt_str, max_tokens=max_tokens)
+
     # -------------------------------------------------------------
     # 1. EVALUATION ON OPENAI HUMANEVAL (pass@1 Deterministic Code Execution)
     # -------------------------------------------------------------
@@ -285,16 +296,16 @@ def run_official_academic_benchmarks(
     task_exec_records = []
 
     for task in HUMANEVAL_TASKS:
-        # Base
-        base_code = generate_fn(base_model, task["prompt"], max_tokens=150)
+        # Base (adapter disabled)
+        base_code = base_generate(task["prompt"], max_tokens=150)
         b_ok = execute_humaneval_code(base_code, task)
         if b_ok:
             humaneval_results["base"] += 1
 
-        # RAG
+        # RAG (adapter disabled, base + context)
         rag_hits = rag_kb.search(task["prompt"], top_k=1)
         rag_ctx = rag_hits[0].get("content", "")[:150] if rag_hits else ""
-        rag_code = generate_fn(base_model, f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
+        rag_code = base_generate(f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
         r_ok = execute_humaneval_code(rag_code, task)
         if r_ok:
             humaneval_results["rag"] += 1
@@ -329,15 +340,15 @@ def run_official_academic_benchmarks(
     for q in RUMMLU_CS_QUESTIONS:
         prompt_q = f"Вопрос: {q['question']}\nВарианты ответа:\n" + "\n".join(q["options"]) + "\nУкажи только одну букву правильного ответа (A, B, C или D):"
 
-        # Base
-        b_ans = generate_fn(base_model, prompt_q, max_tokens=10)
+        # Base (adapter disabled)
+        b_ans = base_generate(prompt_q, max_tokens=10)
         if parse_mc_answer(b_ans) == q["answer"]:
             rummlu_results["base"] += 1
 
-        # RAG
+        # RAG (adapter disabled, base + context)
         rag_hits = rag_kb.search(q["question"], top_k=1)
         rag_ctx = rag_hits[0].get("content", "")[:200] if rag_hits else ""
-        r_ans = generate_fn(base_model, f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
+        r_ans = base_generate(f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
         if parse_mc_answer(r_ans) == q["answer"]:
             rummlu_results["rag"] += 1
 
@@ -363,7 +374,9 @@ def run_official_academic_benchmarks(
     # "None None", which made base and LoRA perplexities identical.
     test_texts = []
     for _, row in test_df.iterrows():
-        turns = row.get("messages") or []
+        turns = row.get("messages")
+        if turns is None:
+            continue
         text = " ".join(
             f"{t.get('role', '')}: {t.get('content', '')}" for t in turns if isinstance(t, dict)
         )
@@ -386,7 +399,12 @@ def run_official_academic_benchmarks(
         mean_nll = float(np.mean(nlls)) if nlls else 2.5
         return round(float(math.exp(mean_nll)), 2)
 
-    base_ppl = compute_ppl(base_model)
+    def compute_base_ppl() -> float:
+        """PPL on the true base model (adapter disabled, see base_generate)."""
+        with lora_model.disable_adapter():
+            return compute_ppl(lora_model)
+
+    base_ppl = compute_base_ppl()
     lora_ppl = compute_ppl(lora_model) if lora_model else base_ppl
 
     # -------------------------------------------------------------
@@ -402,7 +420,7 @@ def run_official_academic_benchmarks(
         "Как устроен Transactional Outbox Pattern в PostgreSQL и Kafka?",
     ]
 
-    base_preds = [generate_fn(base_model, p, max_tokens=80) for p in eval_prompts]
+    base_preds = [base_generate(p, max_tokens=80) for p in eval_prompts]
     lora_preds = [generate_fn(lora_model, p, max_tokens=80) for p in eval_prompts]
 
     base_rouge = rouge.compute(predictions=base_preds, references=ref_answers)

@@ -45,5 +45,17 @@ checkpoints/
 .DS_Store
 Thumbs.db
 
+# Local research helpers / launchers (contain local paths & HF token; not for VCS)
+_finish_research.bat
+_launch*.ps1
+_launch*.bat
+_run_bench.bat
+_tmp_probe2.py
+_tmp_env_check.py
+_tmp_probe.py
+_tmp_tail.py
+_tmp_ver.py
+_tail_bench.py
+_probe*_results.json
 # AI
 prompt.md_commit_msg.txt  

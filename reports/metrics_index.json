@@ -1,31 +1,31 @@
 {
   "_status_warning": {
-    "academic_scientific_benchmarks_matrix": "WITHDRAWN pending re-run: harness defects confirmed by code audit (substring MCQ scoring, PPL computed on wrong/empty columns, silent Base->LoRA result copying). Values below are invalid until re-measured with the fixed harness. See reports/BENCHMARK_AND_EVALUATION.md for details.",
+    "academic_scientific_benchmarks_matrix": "RE-MEASURED 2026-08-26 with the fixed harness (Base/RAG now run with LoRA disabled via lora_model.disable_adapter()). Root cause of the earlier 'no adapter effect': PeftModel.from_pretrained wraps the base model in-place, so the Base column silently measured the adapter-active model. Values below reflect true base-model behaviour. See reports/ADAPTER_EFFECT_RESEARCH.md.",
     "enterprise_eval_matrix": "Rubric-based heuristic scores (concept overlap + AST parseability), not execution-verified model capability."
   },
   "academic_scientific_benchmarks_matrix": {
     "humaneval_pass_at_1": {
-      "base": 12.5,
+      "base": 0.0,
       "rag": 12.5,
       "lora": 12.5,
-      "hybrid": 12.5
+      "hybrid": 0.0
     },
     "rummlu_accuracy": {
-      "base": 100.0,
+      "base": 87.5,
       "rag": 100.0,
       "lora": 100.0,
       "hybrid": 100.0
     },
     "perplexity": {
-      "base": 12.18,
-      "lora": 12.18
+      "base": 35.44,
+      "lora": 32.19
     },
     "rouge": {
       "base": {
-        "rouge1": 0.45416666666666666,
-        "rouge2": 0.29670329670329676,
-        "rougeL": 0.3875,
-        "rougeLsum": 0.3875
+        "rouge1": 0.4264705882352941,
+        "rouge2": 0.20952380952380956,
+        "rougeL": 0.3639705882352941,
+        "rougeLsum": 0.3639705882352941
       },
       "lora": {
         "rouge1": 0.45416666666666666,
