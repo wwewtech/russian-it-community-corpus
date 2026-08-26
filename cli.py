@@ -12,7 +12,7 @@ if sys.platform == "win32":
 
 from src.analytics.engine import DeepChatAnalyzer
 from src.analytics.report_generator import ReportGenerator
-from src.config import OUTPUT_DIR, RAW_EXPORT_DIRS, REPORTS_DIR
+from src.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, RAW_EXPORT_DIRS, REPORTS_DIR
 from src.ingestion.loader import merge_multiple_exports
 from src.pipeline import MasterDataPipeline
 from src.validation.benchmark import BenchmarkRunner
@@ -59,7 +59,7 @@ def main():
 
     elif args.command == "analyze":
         print("🔬 Loading messages for analytical profiling...")
-        clean_parquet_path = Path("D:/project_x/dataset_output/parquet/full_clean_messages.parquet")
+        clean_parquet_path = PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
         from src.ingestion.schema import CleanedMessage
 
         if clean_parquet_path.exists():
