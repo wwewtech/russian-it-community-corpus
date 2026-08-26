@@ -57,5 +57,8 @@ _tmp_tail.py
 _tmp_ver.py
 _tail_bench.py
 _probe*_results.json
-# AI
-prompt.md_commit_msg.txt  
+# AI & scratch files
+prompt.md
+_commit_msg.txt
+info.txt
+
