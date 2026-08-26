@@ -9,9 +9,8 @@ Writes:
 """
 
 import json
-from pathlib import Path
-
 import sys
+from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -22,8 +21,13 @@ OUT_MD = ROOT / "reports" / "ADAPTER_EFFECT_RESEARCH.md"
 OUT_JSON = ROOT / "reports" / "academic_findings_summary.json"
 OLD_MD = ROOT / "reports" / "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md"
 
-matrix = json.load(open(MATRIX, encoding="utf-8"))
-probe2 = json.load(open(PROBE2, encoding="utf-8")) if PROBE2.exists() else {}
+with open(MATRIX, encoding="utf-8") as f:
+    matrix = json.load(f)
+if PROBE2.exists():
+    with open(PROBE2, encoding="utf-8") as f:
+        probe2 = json.load(f)
+else:
+    probe2 = {}
 
 hum = matrix["humaneval_pass_at_1"]
 rum = matrix["rummlu_accuracy"]
@@ -54,7 +58,7 @@ else:
 
 lines = []
 lines.append("# Итоги исследования: влияет ли LoRA-адаптер на поведение модели?\n")
-lines.append(f"**Исследование:** сравнение `Qwen/Qwen2.5-1.5B-Instruct` (base) против доменного LoRA-адаптера `qwen2.5_1.5b_instruct`.")
+lines.append("**Исследование:** сравнение `Qwen/Qwen2.5-1.5B-Instruct` (base) против доменного LoRA-адаптера `qwen2.5_1.5b_instruct`.")
 lines.append("Дата фиксации результатов: (генерируется при полном прогоне)\n")
 lines.append("---\n")
 lines.append("## 0. Краткий вердикт\n")
@@ -68,7 +72,7 @@ lines.append(f"> **{verdict}**\n")
 lines.append("---\n")
 lines.append("## 1. Корневая причина «нулевого эффекта» в предыдущем бенчмарке\n")
 lines.append("Предыдущее издание бенчмарка показывало побайтово одинаковые Base и LoRA (PPL 32.19 == 32.19, идентичный ROUGE, идентичные генерации).")
-lines.append(f"Диагностический прооб (`_tmp_probe2.py`) доказал причину: `PeftModel.from_pretrained(base, ...)` оборачивает **тот же объект модели in-place**, поэтому колонка «Base» на самом деле измеряла модель с уже активным адаптером.")
+lines.append("Диагностический прооб (`_tmp_probe2.py`) доказал причину: `PeftModel.from_pretrained(base, ...)` оборачивает **тот же объект модели in-place**, поэтому колонка «Base» на самом деле измеряла модель с уже активным адаптером.")
 lines.append("")
 lines.append(f"- `same_model_object = {inplace_bug}` — Base и LoRA делят один и тот же объект модели.")
 lines.append(f"- Адаптер **реально изменяет** выход: max |Δ logits| = **{logit_diff}**; PPL на внутреннем прообе base **{ppl_before_attach}** → LoRA **{ppl_probe_lora}**.")
