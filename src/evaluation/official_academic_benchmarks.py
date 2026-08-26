@@ -21,7 +21,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+os.environ.setdefault("HF_HOME", str(Path(__file__).resolve().parents[2] / ".hf_cache"))
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -168,6 +168,35 @@ def _safe_exec(code_str: str) -> bool:
     return True
 
 
+# Cyrillic homoglyphs that map onto Latin multiple-choice letters.
+_CYRILLIC_TO_LATIN = str.maketrans({"А": "A", "В": "B", "С": "C"})
+
+# A valid MC answer letter must be surrounded by non-word characters (or
+# string boundaries). This prevents false positives such as the "C" inside
+# "Compose" or a Cyrillic "с" inside a Russian word.
+_MC_LETTER_RE = re.compile(
+    r"(?:^|(?<=[^\w]))([ABCDАВС])(?=$|[^\w])"
+)
+
+
+def parse_mc_answer(response: str, valid_letters: str = "ABCD") -> str | None:
+    """
+    Strictly extract a standalone multiple-choice letter from a model response.
+
+    Fixes the false-positive bug where ``key in response[:10]`` matched any
+    occurrence of the letter anywhere (e.g. "Docker..." counted as answer "D").
+    Returns the letter only if one of A-D appears as a standalone token;
+    Cyrillic homoglyphs (А/В/С) are normalized when standalone.
+    """
+    if not response:
+        return None
+    match = _MC_LETTER_RE.search(response.strip().upper())
+    if not match:
+        return None
+    letter = match.group(1).translate(_CYRILLIC_TO_LATIN)
+    return letter if letter in valid_letters else None
+
+
 def execute_humaneval_code(generated_code: str, task: dict, timeout_sec: float = 2.0) -> bool:
     """Execute generated Python code against standard test assertions in a timeout-safe sandbox."""
     code_match = re.search(r"```(?:python|py)?\n(.*?)```", generated_code, re.DOTALL)
@@ -217,6 +246,13 @@ def run_official_academic_benchmarks(
         except Exception as e:
             logger.warning(f"Could not load LoRA: {e}")
 
+    if lora_model is None:
+        raise RuntimeError(
+            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
+            "Refusing to run comparative benchmarks: previously this branch silently copied "
+            "base-model results into the LoRA/hybrid columns, producing identical fake metrics."
+        )
+
     def generate_fn(model, prompt_str: str, max_tokens: int = 256) -> str:
         messages = [{"role": "user", "content": prompt_str}]
         try:
@@ -263,22 +299,16 @@ def run_official_academic_benchmarks(
         if r_ok:
             humaneval_results["rag"] += 1
 
-        # LoRA & Hybrid
-        if lora_model:
-            lora_code = generate_fn(lora_model, task["prompt"], max_tokens=150)
-            l_ok = execute_humaneval_code(lora_code, task)
-            if l_ok:
-                humaneval_results["lora"] += 1
+        # LoRA & Hybrid (lora_model is guaranteed non-None by the fail-fast check above)
+        lora_code = generate_fn(lora_model, task["prompt"], max_tokens=150)
+        l_ok = execute_humaneval_code(lora_code, task)
+        if l_ok:
+            humaneval_results["lora"] += 1
 
-            hyb_code = generate_fn(lora_model, f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
-            h_ok = execute_humaneval_code(hyb_code, task)
-            if h_ok:
-                humaneval_results["hybrid"] += 1
-        else:
-            l_ok = b_ok
-            h_ok = r_ok
-            humaneval_results["lora"] = humaneval_results["base"]
-            humaneval_results["hybrid"] = humaneval_results["rag"]
+        hyb_code = generate_fn(lora_model, f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
+        h_ok = execute_humaneval_code(hyb_code, task)
+        if h_ok:
+            humaneval_results["hybrid"] += 1
 
         task_exec_records.append({
             "task_id": task["task_id"],
@@ -301,28 +331,24 @@ def run_official_academic_benchmarks(
 
         # Base
         b_ans = generate_fn(base_model, prompt_q, max_tokens=10)
-        if q["answer"] in b_ans[:10].upper():
+        if parse_mc_answer(b_ans) == q["answer"]:
             rummlu_results["base"] += 1
 
         # RAG
         rag_hits = rag_kb.search(q["question"], top_k=1)
         rag_ctx = rag_hits[0].get("content", "")[:200] if rag_hits else ""
         r_ans = generate_fn(base_model, f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
-        if q["answer"] in r_ans[:10].upper():
+        if parse_mc_answer(r_ans) == q["answer"]:
             rummlu_results["rag"] += 1
 
         # LoRA & Hybrid
-        if lora_model:
-            l_ans = generate_fn(lora_model, prompt_q, max_tokens=10)
-            if q["answer"] in l_ans[:10].upper():
-                rummlu_results["lora"] += 1
+        l_ans = generate_fn(lora_model, prompt_q, max_tokens=10)
+        if parse_mc_answer(l_ans) == q["answer"]:
+            rummlu_results["lora"] += 1
 
-            h_ans = generate_fn(lora_model, f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
-            if q["answer"] in h_ans[:10].upper():
-                rummlu_results["hybrid"] += 1
-        else:
-            rummlu_results["lora"] = rummlu_results["base"]
-            rummlu_results["hybrid"] = rummlu_results["rag"]
+        h_ans = generate_fn(lora_model, f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
+        if parse_mc_answer(h_ans) == q["answer"]:
+            rummlu_results["hybrid"] += 1
 
     rummlu_acc = {k: round((v / len(RUMMLU_CS_QUESTIONS)) * 100.0, 1) for k, v in rummlu_results.items() if k != "total"}
 
@@ -331,7 +357,20 @@ def run_official_academic_benchmarks(
     # -------------------------------------------------------------
     logger.info("Running Benchmark 3: Mathematical Perplexity (PPL) on Held-Out Test Set...")
     test_df = pd.read_parquet("dataset_output/parquet/sft_dialogues.parquet").sample(n=50, random_state=42)
-    test_texts = [str(r.get("query", "")) + " " + str(r.get("response", "")) for _, r in test_df.iterrows()][:30]
+    # NOTE: the SFT parquet schema stores dialogues in a `messages` column of
+    # role/content dicts. The previous implementation read non-existent
+    # `query`/`response` columns and computed PPL on the constant string
+    # "None None", which made base and LoRA perplexities identical.
+    test_texts = []
+    for _, row in test_df.iterrows():
+        turns = row.get("messages") or []
+        text = " ".join(
+            f"{t.get('role', '')}: {t.get('content', '')}" for t in turns if isinstance(t, dict)
+        )
+        if text.strip():
+            test_texts.append(text)
+        if len(test_texts) >= 30:
+            break
 
     def compute_ppl(model_to_eval) -> float:
         nlls = []
@@ -364,7 +403,7 @@ def run_official_academic_benchmarks(
     ]
 
     base_preds = [generate_fn(base_model, p, max_tokens=80) for p in eval_prompts]
-    lora_preds = [generate_fn(lora_model, p, max_tokens=80) for p in eval_prompts] if lora_model else base_preds
+    lora_preds = [generate_fn(lora_model, p, max_tokens=80) for p in eval_prompts]
 
     base_rouge = rouge.compute(predictions=base_preds, references=ref_answers)
     lora_rouge = rouge.compute(predictions=lora_preds, references=ref_answers)

@@ -4,10 +4,11 @@
 > **Evaluated Architectures:** Base Open-Weight Models · Local RAG (325.7k knowledge chunks) · Domain LoRA Adapters (171.5k dialogues) · Hybrid (LoRA + RAG)  
 > **Evaluation Setup:** Qwen 2.5 1.5B Instruct · NVIDIA GeForce RTX 3060 (12 GB VRAM) · 50 Domain Engineering Scenarios · Coding and Academic Subsets
 
-> ⚠️ **Provenance & limitations (added after senior review):**
-> - The HumanEval/RuMMLU figures below are **8-item micro-subsets**, not the full benchmarks; "100% on 8 questions" carries no statistical weight.
-> - Several cells show **identical values across Base / RAG / LoRA / Hybrid** (e.g. pass@1 12.5% everywhere, ROUGE 45.4/38.8 everywhere). Identical values across different system setups indicate these cells were measured once (or estimated) rather than measured independently per setup — treat them as placeholders pending re-measurement, not as comparisons.
-> - For rigorously measured, reproducible per-model numbers with seed variance and provenance metadata, use **`SCIENTIFIC_EVALUATION_REPORT.md`** (canonical pipeline: `scripts/run_scientific_benchmark.py`, protocol v3).
+> 🚫 **WITHDRAWN — do not cite the academic metrics below (code audit found measurement defects):**
+> - **RuMMLU accuracy was inflated by a scoring bug.** The harness used substring matching (`key in answer[:10]`), so any letter A–D occurring anywhere in a reply counted as correct (e.g. "Docker..." scored as answer "D"). This explains the implausible `100.0%`. Fixed via strict standalone-letter parsing (`parse_mc_answer`) with unit-test coverage (`tests/test_academic_benchmark_parsing.py`).
+> - **PPL was computed on garbage input.** The script read non-existent `query`/`response` columns from the SFT parquet (actual schema stores dialogues in `messages`), so both base and LoRA perplexity were evaluated on the constant string `"None None"` — hence identical `12.18`. Fixed to read real dialogue content.
+> - **Silent result copying.** When the LoRA adapter failed to load, its results (and hybrid's) were silently replaced by Base/RAG values across all benchmarks. The harness now fails fast instead of publishing fake comparisons.
+> - Consequence: every HumanEval / RuMMLU / PPL / ROUGE value below is **invalid until re-measured** on GPU with the fixed harness. The 50-scenario domain scores are rubric-based heuristic judgments (concept overlap + AST parseability), **not** execution-verified model capability — interpret them accordingly.
 
 ---
 
@@ -38,10 +39,12 @@ Evaluation on 50 practical engineering scenarios spanning backend development, d
 
 | Architectural Setup | Total Score (0-100) | AST Code Validity | Latency (P50) | Gain over Base |
 | :--- | :---: | :---: | :---: | :---: |
-| **1. Base Model (Baseline)** | **32.9%** | 65.0% | ~410 ms | Baseline |
-| **2. Base Model + RAG (325k chunks)** | **44.0%** | 78.0% | ~580 ms | **+11.1%** |
-| **3. Domain LoRA (171.5k dialogues)** | **34.5%** | 70.0% | ~415 ms | **+1.6%** |
+| **1. Base Model (Baseline)** | **32.9%** | 69.0% | ~410 ms | Baseline |
+| **2. Base Model + RAG (325k chunks)** | **44.0%** | 71.0% | ~580 ms | **+11.1%** |
+| **3. Domain LoRA (171.5k dialogues)** | **34.5%** | 72.2% | ~415 ms | **+1.6%** |
 | **4. Hybrid (LoRA + RAG)** | **48.6%** | **73.0%** | ~590 ms | **+15.7%** |
+
+*(AST validity = mean of per-scenario `ast_score` in `metrics_index.json`; earlier drafts of this table quoted unverified values.)*
 
 ### Domain Breakdown Across 7 Engineering Areas:
 

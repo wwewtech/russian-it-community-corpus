@@ -1,0 +1,25 @@
+fix(evaluation): repair benchmark harness defects, reconcile published numbers, honest cards
+
+Root causes found by code audit of src/evaluation/official_academic_benchmarks.py:
+- RuMMLU scored via substring match (any letter A-D anywhere counted) -> implausible 100%.
+  Replaced with strict standalone-letter parser (parse_mc_answer) + unit tests.
+- PPL read non-existent query/response columns -> both models evaluated on "None None",
+  identical 12.18. Now reads real messages content.
+- Silent copying of Base/RAG results into LoRA/Hybrid when adapter failed to load.
+  Harness now fails fast instead of publishing fake comparisons.
+- Hardcoded D:/project_x HF cache path replaced with repo-relative default.
+
+Number reconciliation (ground truth = live HF API / machine-readable JSON):
+- Adapter count unified to 58 across README, dataset card, model zoo catalog
+  (was: 44+ GitHub / 55 HF card / 41+ dataset card).
+- Catalog regenerated from Hub file tree: reports/LORA_MODEL_ZOO.md, HF_MODEL_CARD.md
+  (with YAML front-matter: license/language/library/tags), lora_zoo_index.json.
+- AST parse rates corrected to means over 50 scenarios in metrics_index.json
+  (69.0/71.0/72.2/73.0; MD tables previously quoted unverified values).
+- metrics_index.json gains _status_warning marking academic matrix WITHDRAWN pending re-run.
+
+Honest dataset card (reports/DATASET_AND_ANALYTICS.md):
+- New section with real SFT composition stats (97.1% general_tech_chat,
+  only 283/171520 pass strict QA filter) and usage limitations.
+
+Tooling: scripts/regenerate_model_catalog.py, scripts/upload_hf_cards.py.

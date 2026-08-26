@@ -26,7 +26,7 @@
 > [!TIP]
 > **🤗 Official Hugging Face Hub Integration**:
 > - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2.91M clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
-> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 44+ pre-trained open adapters + Flagship 7B-8B QLoRA models (Qwen 2.5 Coder 7B, DeepSeek R1 7B, LLaMA 3.1 8B).
+> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 pre-trained open adapters + Flagship 7B-8B QLoRA models (Qwen 2.5 Coder 7B, DeepSeek R1 7B, LLaMA 3.1 8B).
 > 
 > ```python
 > from datasets import load_dataset
@@ -106,7 +106,7 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
   - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325.7k knowledge chunks (159 MB)
   - ⚙️ [Unified Metrics & Audit (JSON)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json) — 322 KB metrics index
 
-- 🦁 **Model Hub (44+ LoRA Adapters & 7B-8B QLoRA)**:  
+- 🦁 **Model Hub (58 LoRA Adapters & 7B-8B QLoRA Flagships)**:  
   👉 [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
   - 🥇 [Flagship Qwen 2.5 Coder 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_qwen2.5_coder_7b)
   - 🥈 [Flagship DeepSeek R1 Distill 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_deepseek_r1_7b)

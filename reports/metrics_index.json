@@ -1,4 +1,8 @@
 {
+  "_status_warning": {
+    "academic_scientific_benchmarks_matrix": "WITHDRAWN pending re-run: harness defects confirmed by code audit (substring MCQ scoring, PPL computed on wrong/empty columns, silent Base->LoRA result copying). Values below are invalid until re-measured with the fixed harness. See reports/BENCHMARK_AND_EVALUATION.md for details.",
+    "enterprise_eval_matrix": "Rubric-based heuristic scores (concept overlap + AST parseability), not execution-verified model capability."
+  },
   "academic_scientific_benchmarks_matrix": {
     "humaneval_pass_at_1": {
       "base": 12.5,

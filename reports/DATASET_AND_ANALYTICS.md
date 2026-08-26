@@ -198,18 +198,61 @@ Chunked technical discussions formatted for dense embedding indexing (Qdrant, Ch
 
 ---
 
-## 🔬 Empirical Model Evaluation
+## 📊 SFT Subset — Real Composition & Known Limitations
 
-Empirical benchmark comparing foundation models, domain LoRA parameter adaptation, and local vector RAG across 50 production engineering scenarios:
+Computed directly from `data/sft_dialogues.parquet` (171,520 dialogues):
 
-| Architecture Setup | 50 Domain Scenarios | HumanEval (`pass@1`, 8-task sample) | RuMMLU CS (8-task sample) | Test Set PPL | Latency (P50) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Base Model** (Qwen 2.5 1.5B) | 32.9% | 12.5% | 100.0% | 12.18 | ~410 ms |
-| **Base Model + RAG** (325k chunks) | 44.0% | 12.5% | 100.0% | N/A (Retrieval) | ~580 ms |
-| **Domain LoRA** (171.5k dialogues) | 34.5% | 12.5% | 100.0% | **12.18** (Lower cross-entropy) | ~415 ms |
-| **Hybrid** (LoRA + RAG) | **48.6%** | **12.5%** | **100.0%** | **12.18** | ~590 ms |
+| Property | Value |
+| :--- | :--- |
+| Dialogues whose first turn contains an actual question | 20.6% (35,402) |
+| Dialogues classified as `general_tech_chat` (no specific domain) | **97.1%** (166,624) |
+| Dialogues in a concrete technical domain | 2.9% (4,896) |
+| …of those, passing a strict QA filter (question-first opener + every turn ≥100 chars) | **283** |
+| Median heuristic `quality_score` (≈1 trivial → 4+ substantive) | 2.36 (p25 1.97 / p75 2.96) |
 
-> Pre-trained LoRA adapters for 41+ base models are available in the [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora).
+**Known limitations — read before training on this subset:**
+- This is reconstructed **community chat**, not curated instruction data. Many "assistant" turns are opinionated chat replies rather than expert answers.
+- The `quality_score` heuristic rewards length and code markers; it does **not** measure factual correctness.
+- For serious SFT runs, filter aggressively: exclude `general_tech_chat`, require question-first openers and multi-turn substantive answers. That leaves ~283–4,900 dialogues depending on strictness — small but much cleaner than the full set.
+
+A representative technical exchange that does pass the filter (`thread_id` 30449, `business_legal_fintech`):
+
+```json
+{
+  "role": "user",
+  "content": "От map(filter(...)) уже тошнит? Серьезно, когда вы видите вот это, то хочется плакать:
+              result = list(map(lambda x: x * 2, filter(lambda x: x % 2 == 0, arr)))
+              А ведь можно проще..."
+},
+{
+  "role": "assistant",
+  "content": "В этом месте JS выглядит читаемее чем Python
+              users.filter(user => user.gender === gender)
+                .map(user => user.age)
+                .reduce((acc, age, index, arr) => acc + age / arr.length, 0);"
+}
+```
+
+---
+
+## 🔬 Empirical Evaluation — Honest Status
+
+> 🚫 **Academic metrics (HumanEval / RuMMLU / PPL / ROUGE) published earlier have been WITHDRAWN.**
+> A code audit of the benchmark harness (`src/evaluation/official_academic_benchmarks.py`) found three defects that produced invalid numbers: substring-based MCQ scoring (inflated RuMMLU to an implausible 100%), PPL computed on empty placeholder strings due to wrong column names (identical base/LoRA values), and silent copying of Base results into LoRA/Hybrid columns when the adapter failed to load. All three are fixed in code with unit tests; the numbers will be republished only after a fresh GPU re-run.
+
+What remains interpretable today — **rubric-based heuristic scores** on 50 engineering scenarios
+(concept-overlap + AST-parseability judged programmatically; *not* execution-verified capability):
+
+| Architecture Setup | Heuristic Score | AST Parse Rate |
+| :--- | :---: | :---: |
+| Base Model (Qwen 2.5 1.5B) | 32.9 | 69.0% |
+| Base Model + RAG (325k chunks) | 44.0 | 71.0% |
+| Domain LoRA (171.5k dialogues) | 34.5 | 72.2% |
+| Hybrid (LoRA + RAG) | **48.6** | **73.0%** |
+
+*(AST rates recomputed as means over all 50 per-scenario `ast_score` values in `metrics_index.json`; an earlier version of this card quoted different numbers that did not match the machine-readable data.)*
+
+Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora).
 
 ---
 
