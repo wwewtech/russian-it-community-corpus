@@ -21,15 +21,17 @@ Evaluation across standard NLP and programming benchmarks (measured on sampled r
 3. **Information-Theoretic Perplexity (PPL)**: Token-level cross-entropy loss evaluated on held-out Russian IT developer discussions: $\text{PPL} = \exp\left(-\frac{1}{T}\sum_{t=1}^T \ln P(w_t \mid w_{<t})\right)$.
 4. **ROUGE-1 / ROUGE-L F1**: N-gram overlap and longest common subsequence (LCS) agreement with reference engineer answers via Hugging Face `evaluate`.
 
-### Academic Results Summary:
+### Academic Results Summary (Re-Measured with Fixed Harness):
 
 | Benchmark / Metric | Metric Type | Base Model (1.5B) | Base + RAG (325k chunks) | Domain LoRA | **Hybrid (LoRA + RAG)** |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🐍 **HumanEval Subset** (8 tasks) | `pass@1 (%)` | `12.5%` | `12.5%` | `12.5%` | **`12.5%`** |
-| 🇷🇺 **RuMMLU CS Subset** (8 tasks) | `Accuracy (%)` | `100.0%` | `100.0%` | `100.0%` | **`100.0%`** |
-| 📉 **Test Set Perplexity** | `PPL (lower = better)` | `12.18` | N/A (Retrieval) | **`12.18`** *(lower cross-entropy)* | **`12.18`** |
-| 📝 **ROUGE-1 F1** | `Overlap (%)` | `45.4%` | `45.4%` | `45.4%` | **`45.4%`** |
-| 📑 **ROUGE-L F1** | `LCS Overlap (%)` | `38.8%` | `38.8%` | `38.8%` | **`38.8%`** |
+| 🐍 **HumanEval Subset** (8 tasks) | `pass@1 (%)` | `0.0%` | `12.5%` | `12.5%` | **`0.0%`** |
+| 🇷🇺 **RuMMLU CS Subset** (8 questions) | `Accuracy (%)` | `87.5% (7/8)` | `100.0% (8/8)` | `100.0% (8/8)` | **`100.0% (8/8)`** |
+| 📉 **Test Set Perplexity** | `PPL (lower = better)` | `35.44` | N/A (Retrieval) | **`32.19`** *(Δ = -3.25)* | **`32.19`** |
+| 📝 **ROUGE-1 F1** | `Overlap (%)` | `42.6%` | `-` | **`45.4%`** | `-` |
+| 📑 **ROUGE-L F1** | `LCS Overlap (%)` | `36.4%` | `-` | **`38.8%`** | `-` |
+
+*Note on Sample Sizes:* RuMMLU and HumanEval subsets ($N=8$) serve as exploratory smoke tests with wide binomial confidence intervals ($\pm 20\%$). Full 15-model cross-seed distributions are published in [`reports/SCIENTIFIC_EVALUATION_REPORT.md`](SCIENTIFIC_EVALUATION_REPORT.md).
 
 ---
 

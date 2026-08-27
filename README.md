@@ -45,7 +45,7 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 |---|---|---|
 | Privacy & Anonymization | Multi-pass Regex + Natasha NER + case declension | 11 community nodes anonymized (`community_node_01`..`11`) |
 | Deduplication | MinHash LSH (128 permutations, 0.80 Jaccard threshold) | 95,300+ duplicate / spam messages removed |
-| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,533 curated dialogues |
+| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues |
 | Local LoRA execution | PEFT QLoRA adaptation on consumer hardware | ~4.35 GB VRAM on RTX 3060 (12GB) |
 
 ---
@@ -101,9 +101,9 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
 ### 🤗 Hugging Face Hub Repositories:
 - 📦 **Dataset Hub (Full Corpus, SFT, RAG)**:  
   👉 [**`https://huggingface.co/datasets/wwewtech/russian-it-community-corpus`**](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
-  - 📄 [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.81M rows (189 MB)
-  - 💬 [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171.5k multi-turn dialogues (132 MB)
-  - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325.7k knowledge chunks (159 MB)
+  - 📄 [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows (2,816,434 records, 189 MB)
+  - 💬 [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171,520 multi-turn dialogues (132 MB)
+  - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
   - ⚙️ [Unified Metrics & Audit (JSON)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json) — 322 KB metrics index
 
 - 🦁 **Model Hub (58 LoRA Adapters & 7B-8B QLoRA Flagships)**:  
@@ -120,14 +120,14 @@ All datasets are automatically generated and saved in `dataset_output/`:
 
 | File Path | Format | Volume | Description | Direct Link |
 |---|---|---|---|:---:|
-| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,454 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
-| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,533 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
-| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,747 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
-| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 171,533 dialogues | OpenAI format for Unsloth / TRL | Local / HF |
-| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,533 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
+| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,434 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
+| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
+| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
+| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 171,520 dialogues | OpenAI format for Unsloth / TRL | Local / HF |
+| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,520 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
 | `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,331 pairs | Single-turn instruction-response pairs | Local / HF |
-| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 325,747 chunks | Segmented technical documents | Local / HF |
-| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 60,900 pairs | Chosen / Rejected alignment pairs | Local / HF |
+| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 325,690 chunks | Segmented technical documents | Local / HF |
+| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 60,412 pairs | Chosen / Rejected alignment pairs | Local / HF |
 
 ---
 
@@ -135,19 +135,20 @@ All datasets are automatically generated and saved in `dataset_output/`:
 
 Evaluations across domain engineering scenarios, coding tasks, and language modeling metrics:
 
-| Setup | 50 Domain Scenarios | HumanEval (`pass@1`, 8-task sample) | RuMMLU CS (8-task sample) | PPL on Test Set | Latency (P50) | VRAM on RTX 3060 |
+| Setup | 50 Domain Scenarios (Heuristic Overlap & AST) | HumanEval (`pass@1`, 8-task sample) | RuMMLU CS (8-question exploratory sample) | PPL on Held-out Russian IT Corpus | Latency (P50) | VRAM on RTX 3060 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Base Model** (Qwen 2.5 1.5B) | 32.9% | 25.0% | 100.0% | 12.18 | ~410 ms | ~4.20 GB |
-| **Base Model + RAG** (325k chunks) | 44.0% | 75.0% | 100.0% | N/A (Retrieval) | ~580 ms | ~4.50 GB |
-| **Domain LoRA** (171.5k dialogues) | 34.5% | 25.0% | 100.0% | 12.18 (Lower cross-entropy) | ~415 ms | ~4.35 GB |
-| **Hybrid** (LoRA + RAG) | **48.6%** | **75.0%** | **100.0%** | 12.18 | ~590 ms | ~4.65 GB |
+| **Base Model** (Qwen 2.5 1.5B) | 32.9% | 0.0% | 87.5% (7/8) | 35.44 | ~410 ms | ~4.20 GB |
+| **Base Model + RAG** (325k chunks) | 44.0% | 12.5% | 100.0% (8/8) | N/A (Retrieval) | ~580 ms | ~4.50 GB |
+| **Domain LoRA** (171.5k dialogues) | 34.5% | 12.5% | 100.0% (8/8) | **32.19** *(Δ = -3.25)* | ~415 ms | ~4.35 GB |
+| **Hybrid** (LoRA + RAG) | **48.6%** | 0.0% | 100.0% (8/8) | **32.19** | ~590 ms | ~4.65 GB |
 
-> **Key Architectural Takeaways:**
-> - **LoRA Parameter Adaptation**: Primarily adjusts the conversational register, terminology frequency, and domain phrasing, lowering cross-entropy loss on developer speech.
-> - **RAG Context Retrieval**: Provides precise factual grounding (specific configuration keys, API signatures, library parameters) needed to avoid hallucinating technical arguments.
-> - **Hybrid Composition**: Combines the domain-adapted style of LoRA with verified facts retrieved via RAG for optimal performance.
-
-Detailed evaluation breakdown: [`reports/BENCHMARK_AND_EVALUATION.md`](reports/BENCHMARK_AND_EVALUATION.md).
+> [!NOTE]
+> **Methodological Retraction & Empirical Audit:**
+> Early project drafts contained inflated benchmark figures (e.g. 75% HumanEval under RAG due to substring matching on test cases, and identical 12.18 PPL caused by evaluating on empty strings and in-place `PeftModel` wrapping). These were audited, retracted with root-cause post-mortems in commits `539225a`, `40f47ba`, and `f71e9c3`. The re-measured empirical findings demonstrate that:
+> - **LoRA Domain Adaptation** measurably reduces perplexity on Russian technical discourse ($35.44 \to 32.19$, a $-3.25$ drop), adapting the conversational register and technical vocabulary.
+> - **RAG Retrieval** grounds responses with exact configuration parameters, command flags, and library APIs.
+> - **RuMMLU sample ($N=8$)** serves as an exploratory smoke test with wide confidence intervals ($\pm 20\%$) rather than an exhaustive benchmark.
+> - Full audit & diagnostic logs: [`reports/ADAPTER_EFFECT_RESEARCH.md`](reports/ADAPTER_EFFECT_RESEARCH.md) and [`reports/BENCHMARK_AND_EVALUATION.md`](reports/BENCHMARK_AND_EVALUATION.md).
 
 ---
 
@@ -182,7 +183,7 @@ full_ds = load_dataset(
 )
 ```
 
-### LoRA Model Zoo (18+ Pre-Trained Adapters)
+### LoRA Model Zoo (58 Pre-Trained Adapters & 7B–8B Flagships)
 
 Pre-trained adapters fine-tuned on RICC dataset are available in [`lora_adapters/`](lora_adapters/) and on Hugging Face: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora). See full catalog in [`reports/LORA_MODEL_ZOO.md`](reports/LORA_MODEL_ZOO.md).
 
@@ -279,7 +280,7 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 ├── dataset_output/             # Parquet datasets and preview samples
 ├── reports/                    # Consolidated reports and scientific benchmarks
 │   ├── DATASET_AND_ANALYTICS.md   # Dataset Card, 2017-2026 Analytics, and Zero-PII Protocol
-│   ├── LORA_MODEL_ZOO.md          # Full Catalog of 44+ LoRA Adapters & Flagship 7B-8B QLoRA
+│   ├── LORA_MODEL_ZOO.md          # Full Catalog of 58 LoRA Adapters & Flagship 7B-8B QLoRA
 │   ├── BENCHMARK_AND_EVALUATION.md# OpenAI HumanEval pass@1, RuMMLU CS, PPL, and 50 Scenarios
 │   └── metrics_index.json         # Unified machine-readable telemetry and audit matrices
 ├── tests/                      # Automated unit tests

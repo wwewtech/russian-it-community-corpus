@@ -124,7 +124,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 | Metric | Verified Value | Description |
 | :--- | :--- | :--- |
-| **Clean Messages** | `2,816,454` | Deduplicated and anonymized messages |
+| **Clean Messages** | `2,816,434` | Deduplicated and anonymized messages |
 | **Unique Participants** | `210,890` | Pseudonymized author identifiers (`Developer_XXXXX`) |
 | **Date Range** | `Aug 06, 2017 — Aug 22, 2026` | 3,303 continuous days of community history |
 | **Total Words** | `37,260,192` | Technical Russian and mixed English terminology |
