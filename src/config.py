@@ -3,6 +3,7 @@ Global Configuration for IT Community Data Engineering & Curation Pipeline
 """
 
 from pathlib import Path
+from typing import Any
 
 # Base Directories
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -219,7 +220,7 @@ STOPWORDS_RU: set[str] = {
 }
 
 # Domain Taxonomy & Keywords mapping
-DOMAIN_TAXONOMY: dict[str, dict[str, any]] = {
+DOMAIN_TAXONOMY: dict[str, dict[str, Any]] = {
     "ai_ml_nlp": {
         "title": "AI, Machine Learning & NLP",
         "keywords": [

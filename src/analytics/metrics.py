@@ -6,15 +6,17 @@ import math
 import re
 import statistics
 from collections import Counter
+from collections.abc import Sequence
 from typing import Any
 
 import tiktoken
+from tiktoken import Encoding
 
 from src.config import SENTIMENT_DICT
 
 # Try to initialize tiktoken cl100k_base for precise BPE token metrics
 try:
-    TIKTOKEN_ENC = tiktoken.get_encoding("cl100k_base")
+    TIKTOKEN_ENC: Encoding | None = tiktoken.get_encoding("cl100k_base")
 except Exception:
     TIKTOKEN_ENC = None
 
@@ -44,7 +46,7 @@ def compute_shannon_entropy(word_counts: Counter) -> float:
     return round(entropy, 3)
 
 
-def compute_percentiles(values: list[float]) -> dict[str, float]:
+def compute_percentiles(values: Sequence[float]) -> dict[str, float]:
     """Compute standard percentiles (p25, p50, p75, p90, p95, p99) and statistics."""
     if not values:
         return {

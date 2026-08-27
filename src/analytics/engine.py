@@ -336,9 +336,9 @@ class DeepChatAnalyzer:
         top_unigrams = self.word_freq.most_common(50)
 
         # Bigrams
-        bigrams = Counter()
-        trigrams = Counter()
-        fourgrams = Counter()
+        bigrams: Counter[str] = Counter()
+        trigrams: Counter[str] = Counter()
+        fourgrams: Counter[str] = Counter()
 
         for tokens in self.tokenized_corpus:
             n = len(tokens)
@@ -373,14 +373,14 @@ class DeepChatAnalyzer:
     # =========================================================================
     def compute_domain_slang_analytics(self) -> dict[str, Any]:
         """Detect and quantify authentic Russian IT slang and technology keywords."""
-        slang_counts = Counter()
+        slang_counts: Counter[str] = Counter()
         for w, c in self.word_freq.items():
             if w in RUSSIAN_IT_SLANG_TERMS:
                 slang_counts[w] = c
 
         # Domain breakdown
         domain_counts = Counter(m.domain for m in self.messages)
-        tag_counts = Counter()
+        tag_counts: Counter[str] = Counter()
         for m in self.messages:
             for t in m.tags:
                 tag_counts[t] += 1
