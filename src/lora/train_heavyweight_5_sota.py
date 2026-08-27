@@ -12,28 +12,16 @@ import argparse
 import gc
 import logging
 import os
-import sys
 import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from src.bootstrap import setup_runtime_env
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+setup_runtime_env(pytorch_alloc_conf=True)
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
-
-import pandas as pd
-import torch
+import pandas as pd  # noqa: E402
+import torch  # noqa: E402
 from datasets import Dataset
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (

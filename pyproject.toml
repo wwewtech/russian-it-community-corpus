@@ -106,6 +106,21 @@ ignore_missing_imports = true
 # Slow-mode rollout: strict checks only for the modules listed in
 # `make typecheck-strict`; extend module-by-module, not all of src/ at once.
 
+# GPU/eval modules are excluded from type checking for now: they rely on
+# untyped dict payloads from model outputs and torch/peft stubs. Re-enable
+# module-by-module as they get typed (see `make typecheck-strict`).
+[[tool.mypy.overrides]]
+module = [
+    "src.evaluation.*",
+    "src.lora.*",
+    "src.inference",
+    "src.pipeline",
+    "src.analytics.engine",
+    "src.graph.*",
+    "src.exporter.finalize_sync_all",
+]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

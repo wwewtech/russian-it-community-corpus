@@ -7,32 +7,20 @@ evaluating AST syntax, architectural completeness, Russian engineering jargon, a
 import argparse
 import json
 import logging
-import os
-import sys
 import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from src.bootstrap import setup_runtime_env
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+setup_runtime_env()
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
-import numpy as np
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-from src.rag.rag_pipeline import LocalRAGPipeline
+from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("SOTAShowcase")

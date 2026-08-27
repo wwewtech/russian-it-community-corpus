@@ -12,35 +12,23 @@ import concurrent.futures
 import json
 import logging
 import math
-import os
 import re
-import sys
 import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from src.bootstrap import setup_runtime_env
 
-os.environ.setdefault("HF_HOME", str(Path(__file__).resolve().parents[2] / ".hf_cache"))
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+setup_runtime_env(pytorch_alloc_conf=True)
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
+import evaluate  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import torch  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
-import evaluate
-import numpy as np
-import pandas as pd
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-from src.rag.rag_pipeline import LocalRAGPipeline
+from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("AcademicBenchmark")

@@ -12,9 +12,9 @@ from src.bootstrap import setup_runtime_env
 setup_runtime_env(pytorch_alloc_conf=True)
 
 import torch  # noqa: E402
-from datasets import load_dataset
-from peft import LoraConfig, TaskType, get_peft_model
-from transformers import (
+from datasets import load_dataset  # noqa: E402
+from peft import LoraConfig, TaskType, get_peft_model  # noqa: E402
+from transformers import (  # noqa: E402
     AutoModelForCausalLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,

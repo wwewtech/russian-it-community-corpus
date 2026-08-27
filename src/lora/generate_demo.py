@@ -4,24 +4,14 @@ Run: python src/lora/generate_demo.py --prompt "Как настроить при
 """
 
 import argparse
-import os
-import sys
-from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+from src.bootstrap import setup_runtime_env
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+setup_runtime_env()
 
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
 
 def generate_answer(

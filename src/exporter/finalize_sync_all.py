@@ -5,18 +5,14 @@ Final synchronization script for 40+ LoRA models across Hugging Face and GitHub.
 import json
 import logging
 import os
-import sys
 import time
 from pathlib import Path
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
+from src.bootstrap import setup_runtime_env
 
-import huggingface_hub
+setup_runtime_env()
+
+import huggingface_hub  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("FinalizeSync")

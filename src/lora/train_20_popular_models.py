@@ -8,26 +8,16 @@ import gc
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
+from src.bootstrap import setup_runtime_env
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+setup_runtime_env(pytorch_alloc_conf=True)
 
-import huggingface_hub
-import pandas as pd
-import torch
+import huggingface_hub  # noqa: E402
+import pandas as pd  # noqa: E402
+import torch  # noqa: E402
 from datasets import Dataset
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (

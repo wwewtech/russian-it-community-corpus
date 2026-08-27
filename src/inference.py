@@ -4,23 +4,17 @@ Supports Base Models, 44+ LoRA Adapters, Flagship 7B-8B QLoRA, and Local RAG Pip
 """
 
 import argparse
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.bootstrap import setup_runtime_env
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
+setup_runtime_env()
 
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
+import torch  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer  # noqa: E402
 
-from src.rag.rag_pipeline import LocalRAGPipeline
+from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 
 
 def interactive_chat_session(
