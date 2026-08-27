@@ -1,4 +1,4 @@
-.PHONY: all run analyze validate benchmark audit test ui docker-build docker-up clean help
+.PHONY: all run analyze validate benchmark audit test coverage typecheck typecheck-strict ui docker-build docker-up clean help
 
 help:
 	@echo "Russian IT Community Data Platform — Command Shortcuts:"
@@ -7,7 +7,11 @@ help:
 	@echo "  make validate   - Validate dataset schema & zero-PII leak"
 	@echo "  make benchmark  - Export and run 100-question domain benchmark"
 	@echo "  make audit      - Run Red-Team adversarial PII penetration audit"
-	@echo "  make test       - Run unit test suite (unittest)"
+	@echo "  make test       - Run unit test suite (pytest + coverage gate)"
+	@echo "  make coverage   - Run tests with detailed coverage report"
+	@echo "  make typecheck  - Run mypy over src/ (slow-mode rollout)"
+	@echo "  make typecheck-strict - Run mypy --strict on fully-typed modules"
+	@echo "  make reports    - Regenerate markdown reports from JSON sources"
 	@echo "  make ui         - Launch Streamlit Web Data Studio"
 	@echo "  make docker-up  - Launch via Docker Compose"
 
@@ -28,6 +32,20 @@ audit:
 
 test:
 	python -m pytest -q
+
+coverage:
+	python -m pytest -q --cov=src --cov-report=term-missing
+
+typecheck:
+	python -m mypy src/ --ignore-missing-imports
+
+# Strict rollout: add modules here as they get fully typed.
+typecheck-strict:
+	python -m mypy src/ingestion/schema.py src/bootstrap.py --strict
+
+# Markdown reports are derived artifacts: regenerate from JSON, never edit by hand.
+reports:
+	python scripts/regenerate_analytics_report.py
 
 ui:
 	streamlit run app.py
