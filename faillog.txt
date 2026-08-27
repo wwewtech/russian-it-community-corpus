@@ -1,0 +1,28 @@
+lint	Run linter	﻿2026-08-27T23:18:45.5073138Z ##[group]Run ruff check .
+lint	Run linter	2026-08-27T23:18:45.5073443Z [36;1mruff check .[0m
+lint	Run linter	2026-08-27T23:18:45.5117985Z shell: /usr/bin/bash -e {0}
+lint	Run linter	2026-08-27T23:18:45.5118446Z env:
+lint	Run linter	2026-08-27T23:18:45.5118726Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+lint	Run linter	2026-08-27T23:18:45.5119184Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+lint	Run linter	2026-08-27T23:18:45.5119629Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+lint	Run linter	2026-08-27T23:18:45.5120017Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+lint	Run linter	2026-08-27T23:18:45.5120400Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+lint	Run linter	2026-08-27T23:18:45.5120784Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+lint	Run linter	2026-08-27T23:18:45.5121125Z ##[endgroup]
+lint	Run linter	2026-08-27T23:18:45.5392657Z W292 [*] No newline at end of file
+lint	Run linter	2026-08-27T23:18:45.5393307Z    --> tests/test_exporters_roundtrip.py:143:60
+lint	Run linter	2026-08-27T23:18:45.5393781Z     |
+lint	Run linter	2026-08-27T23:18:45.5394375Z 141 |         out = exp.export_openai_chatml([_dialogue(9)], system_prompt="Custom")
+lint	Run linter	2026-08-27T23:18:45.5395216Z 142 |         parsed = json.loads(out.read_text(encoding="utf-8").strip())
+lint	Run linter	2026-08-27T23:18:45.5395911Z 143 |         assert parsed["messages"][0]["content"] == "Custom"
+lint	Run linter	2026-08-27T23:18:45.5396448Z     |                                                            ^
+lint	Run linter	2026-08-27T23:18:45.5396783Z help: Add trailing newline
+lint	Run linter	2026-08-27T23:18:45.5397019Z     |
+lint	Run linter	2026-08-27T23:18:45.5397306Z 142 |         parsed = json.loads(out.read_text(encoding="utf-8").strip())
+lint	Run linter	2026-08-27T23:18:45.5397727Z     -         assert parsed["messages"][0]["content"] == "Custom"
+lint	Run linter	2026-08-27T23:18:45.5398114Z 143 +         assert parsed["messages"][0]["content"] == "Custom"
+lint	Run linter	2026-08-27T23:18:45.5398768Z     |
+lint	Run linter	2026-08-27T23:18:45.5398914Z 
+lint	Run linter	2026-08-27T23:18:45.5399051Z Found 1 error.
+lint	Run linter	2026-08-27T23:18:45.5399370Z [*] 1 fixable with the `--fix` option.
+lint	Run linter	2026-08-27T23:18:45.5415712Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,61 @@
+........................................................................ [ 57%]
+......................................................                   [100%]
+============================== warnings summary ===============================
+tests/test_deep_anonymization.py::TestDeepAnonymization::test_database_url_masking
+  C:\Users\pasha\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymorphy2\analyzer.py:114: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+
+tests/test_deep_anonymization.py::TestDeepAnonymization::test_database_url_masking
+  C:\Users\pasha\AppData\Local\Programs\Python\Python313\Lib\site-packages\pkg_resources\__init__.py:3147: DeprecationWarning: Deprecated call to `pkg_resources.declare_namespace('google')`.
+  Implementing implicit namespace packages (as specified in PEP 420) is preferred to `pkg_resources.declare_namespace`. See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-namespace-packages
+    declare_namespace(pkg)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.5-final-0 _______________
+
+Name                                             Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------------
+src\__init__.py                                      1      0   100%
+src\analytics\__init__.py                            5      0   100%
+src\analytics\engine.py                            287    250    13%   19-27, 34-35, 170-214, 220-234, 241-261, 284-319, 336-361, 376-388, 406-418, 435-436, 445-467, 474-518, 525-551, 558-562, 585-657, 670-691
+src\analytics\metrics.py                            59      5    92%   20-21, 31-33
+src\analytics\network.py                            58     49    16%   20, 29-61, 67-106
+src\analytics\report_generator.py                  178     31    83%   14-15, 242-278
+src\bootstrap.py                                    19      1    95%   40
+src\config.py                                       22      1    95%   20
+src\deduplication\__init__.py                        3      0   100%
+src\deduplication\exact_dedup.py                    29      2    93%   42-43
+src\deduplication\minhash_lsh.py                    86      0   100%
+src\evaluation\official_academic_benchmarks.py     187    150    20%   169-171, 203-216, 223-513, 517-522, 526
+src\exporter\__init__.py                             5      0   100%
+src\exporter\dpo_exporter.py                        17      0   100%
+src\exporter\finalize_sync_all.py                   70     70     0%   5-191
+src\exporter\jsonl_exporter.py                      49      0   100%
+src\exporter\parquet_exporter.py                    33      0   100%
+src\exporter\rag_exporter.py                        17      0   100%
+src\graph\__init__.py                                3      0   100%
+src\graph\conversation_extractor.py                131     11    92%   150, 155, 161, 164-165, 170, 186, 205, 249, 260, 296
+src\graph\thread_builder.py                         88      9    90%   74, 100-103, 113-116
+src\inference.py                                    81     81     0%   6-149
+src\ingestion\__init__.py                            3      0   100%
+src\ingestion\loader.py                            118    104    12%   27-41, 46-74, 82-185, 196-210
+src\ingestion\schema.py                             62      0   100%
+src\pii\__init__.py                                  4      0   100%
+src\pii\anonymizer.py                               17      4    76%   28, 32, 36, 40
+src\pii\deep_anonymizer.py                         133     30    77%   16-24, 209, 226, 235, 253-254, 261, 278, 305, 327-334, 357-367
+src\pii\ner_scrubber.py                             52     19    63%   322-323, 331, 351-366, 372-383
+src\pii\regex_scrubber.py                          110     27    75%   81, 98-99, 123-124, 129-130, 135-136, 160-161, 177, 185-193, 199-200, 211, 219-220, 226-227
+src\pipeline.py                                    124     97    22%   50-72, 76-207
+src\rag\rag_pipeline.py                             60     10    83%   27-28, 46, 50-52, 66-67, 70, 102
+src\taxonomy\__init__.py                             3      0   100%
+src\taxonomy\classifier.py                          30      1    97%   33
+src\taxonomy\tagger.py                              43      0   100%
+src\validation\__init__.py                           3      0   100%
+src\validation\benchmark.py                         18      1    94%   640
+src\validation\pii_redteam.py                       63      0   100%
+src\validation\validator.py                        125     26    79%   60-62, 77-80, 101-103, 112, 130-132, 140, 154, 167-168, 182, 200-201, 203, 205, 210-212
+------------------------------------------------------------------------------
+TOTAL                                             2396    979    59%
+Required test coverage of 50% reached. Total coverage: 59.14%
+126 passed, 2 warnings in 41.71s
