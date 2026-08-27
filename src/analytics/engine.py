@@ -1,6 +1,6 @@
 """
-Comprehensive Deep Statistical & Semantic Analytics Engine for IT Community Datasets.
-Version 4.0 Enterprise Edition (800+ lines of robust analytical computation).
+Statistical and Semantic Analytics Engine for IT Community Datasets.
+Computes longitudinal activity, domain distributions, lexical statistics, and interaction graphs.
 """
 
 import logging

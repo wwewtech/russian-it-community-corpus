@@ -3,7 +3,7 @@
 help:
 	@echo "Russian IT Community Data Platform — Command Shortcuts:"
 	@echo "  make run        - Execute full data curation pipeline"
-	@echo "  make analyze    - Run Deep Analytics Engine (800+ lines)"
+	@echo "  make analyze    - Run Statistical & Semantic Analytics Engine"
 	@echo "  make validate   - Validate dataset schema & zero-PII leak"
 	@echo "  make benchmark  - Export and run 100-question domain benchmark"
 	@echo "  make audit      - Run Red-Team adversarial PII penetration audit"
