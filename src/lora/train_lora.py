@@ -16,9 +16,11 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-# Ensure HuggingFace cache is located on local drive with full permissions
-os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+ROOT_DIR = Path(__file__).resolve().parents[2]
+os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import torch
 from datasets import load_dataset
 from peft import LoraConfig, TaskType, get_peft_model

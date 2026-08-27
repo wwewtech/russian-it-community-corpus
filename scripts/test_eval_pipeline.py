@@ -6,7 +6,10 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def test():

@@ -21,7 +21,8 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+ROOT_DIR = Path(__file__).resolve().parents[2]
+os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -336,7 +337,7 @@ def update_catalogs(results: list[dict[str, Any]]):
 
     for r in sorted(successful, key=lambda x: x["id"]):
         md_lines.append(
-            f"| `{r['id']}` | **`{r['model_name']}`** | {r['family']} | {r['params']} | [`lora_adapters/{r['id']}/`](file:///D:/project_x/lora_adapters/{r['id']}/) |"
+            f"| `{r['id']}` | **`{r['model_name']}`** | {r['family']} | {r['params']} | [`lora_adapters/{r['id']}/`](lora_adapters/{r['id']}/) |"
         )
 
     output_md.write_text("\n".join(md_lines), encoding="utf-8")

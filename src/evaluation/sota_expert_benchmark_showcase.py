@@ -15,7 +15,8 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+ROOT_DIR = Path(__file__).resolve().parents[2]
+os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

@@ -6,9 +6,10 @@ Run: python src/lora/generate_demo.py --prompt "Как настроить при
 import argparse
 import os
 import sys
+from pathlib import Path
 
-# Ensure HuggingFace cache is configured BEFORE importing transformers
-os.environ["HF_HOME"] = "D:/project_x/.hf_cache"
+ROOT_DIR = Path(__file__).resolve().parents[2]
+os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 if sys.platform == "win32":
