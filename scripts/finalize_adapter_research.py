@@ -9,10 +9,11 @@ Writes:
 """
 
 import json
-import sys
 from pathlib import Path
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+from src.bootstrap import setup_runtime_env
+
+setup_runtime_env()
 
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX = ROOT / "reports" / "academic_scientific_benchmarks_matrix.json"

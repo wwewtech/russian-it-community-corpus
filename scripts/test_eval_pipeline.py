@@ -1,15 +1,13 @@
 import math
-import os
-from pathlib import Path
 
-import pandas as pd
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from src.bootstrap import setup_runtime_env
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+setup_runtime_env()
+
+import pandas as pd  # noqa: E402
+import torch  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
 
 def test():

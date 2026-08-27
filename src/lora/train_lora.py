@@ -5,23 +5,13 @@ Optimized for NVIDIA GeForce RTX 3060 (12GB VRAM).
 
 import argparse
 import logging
-import os
-import sys
 from pathlib import Path
 
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+from src.bootstrap import setup_runtime_env
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-import torch
+setup_runtime_env(pytorch_alloc_conf=True)
+
+import torch  # noqa: E402
 from datasets import load_dataset
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
