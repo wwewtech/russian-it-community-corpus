@@ -22,7 +22,6 @@ class TestCountTokens:
     def test_fallback_multiplier(self):
         # With tiktoken unavailable the fallback is ~1.35 tokens per word.
         text = "one two three four"
-        expected = max(1, int(len(text.split()) * 1.35))
         result = count_tokens(text)
         assert result >= len(text.split())  # never fewer tokens than words
 
