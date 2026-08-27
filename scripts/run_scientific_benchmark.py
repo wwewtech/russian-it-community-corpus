@@ -43,10 +43,10 @@ from src.bootstrap import setup_runtime_env
 setup_runtime_env()
 
 import numpy as np  # noqa: E402
-import pandas as pd
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import pandas as pd  # noqa: E402
+import torch  # noqa: E402
+from peft import PeftModel  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("ScientificBenchmark")

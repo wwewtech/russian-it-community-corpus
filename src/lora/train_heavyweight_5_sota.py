@@ -22,9 +22,9 @@ setup_runtime_env(pytorch_alloc_conf=True)
 
 import pandas as pd  # noqa: E402
 import torch  # noqa: E402
-from datasets import Dataset
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from transformers import (
+from datasets import Dataset  # noqa: E402
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training  # noqa: E402
+from transformers import (  # noqa: E402
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,

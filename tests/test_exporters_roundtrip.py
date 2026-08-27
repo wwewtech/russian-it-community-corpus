@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from src.exporter.jsonl_exporter import JSONLExporter
 from src.exporter.parquet_exporter import ParquetExporter
