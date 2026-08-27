@@ -3,12 +3,9 @@ Unified PII Anonymizer combining Deterministic RegEx and NLP/NER scrubbers with 
 """
 
 import logging
-from tqdm import tqdm
 
 from src.ingestion.schema import CleanedMessage, NormalizedMessage
 from src.pii.deep_anonymizer import DeepPIIAnonymizer
-from src.pii.ner_scrubber import NERPIIScrubber
-from src.pii.regex_scrubber import RegexPIIScrubber
 
 logger = logging.getLogger(__name__)
 

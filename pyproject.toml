@@ -90,6 +90,14 @@ ignore = [
     "B008", # do not perform function calls in argument defaults
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# These modules intentionally set environment variables (HF_HOME, PYTORCH_CUDA_ALLOC_CONF,
+# TOKENIZERS_PARALLELISM, etc.) BEFORE importing torch/transformers — the imports must stay
+# below the os.environ setup, so E402 is expected and safe here.
+"scripts/run_scientific_benchmark.py" = ["E402"]
+"src/evaluation/**" = ["E402"]
+"src/lora/**" = ["E402"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
