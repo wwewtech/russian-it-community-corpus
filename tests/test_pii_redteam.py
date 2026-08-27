@@ -86,7 +86,13 @@ class TestRedTeamPIIAuditor(unittest.TestCase):
         result_path = self.auditor.generate_audit_certificate(out_path)
         self.assertTrue(result_path.exists())
         cert = json.loads(result_path.read_text(encoding="utf-8"))
-        for key in ("report_title", "disclaimer", "adversarial_suite", "production_parquet_audit", "verification_status"):
+        for key in (
+            "report_title",
+            "disclaimer",
+            "adversarial_suite",
+            "production_parquet_audit",
+            "verification_status",
+        ):
             self.assertIn(key, cert)
         # Missing dataset => zero leaks => combined with a passing adversarial
         # suite the certificate must state PASSED, not LEAKS_DETECTED.

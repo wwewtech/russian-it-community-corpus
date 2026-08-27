@@ -43,7 +43,14 @@ BENCHMARK_SUITES = [
         "name": "DevOps: Nginx Reverse Proxy with SSL & WebSocket in Docker Compose",
         "domain": "DevOps / Infrastructure",
         "prompt": "Как правильно настроить Nginx reverse proxy с SSL терминацией и поддержкой WebSocket для FastAPI бэкенда в Docker Compose, чтобы не обрывались долгоживущие соединения?",
-        "ground_truth_keywords": ["proxy_set_header Upgrade", "proxy_set_header Connection", "proxy_http_version 1.1", "proxy_read_timeout", "ssl_certificate", "docker-compose.yml"],
+        "ground_truth_keywords": [
+            "proxy_set_header Upgrade",
+            "proxy_set_header Connection",
+            "proxy_http_version 1.1",
+            "proxy_read_timeout",
+            "ssl_certificate",
+            "docker-compose.yml",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -51,7 +58,14 @@ BENCHMARK_SUITES = [
         "name": "Backend: PostgreSQL Connection Pooling & Concurrency Deadlock Handling",
         "domain": "Backend / Database",
         "prompt": "При нагрузке 5000 RPS в PostgreSQL возникают дедлоки на таблице счетов пользователей и исчерпание пула соединений в SQLAlchemy. Как архитектурно решить эту проблему?",
-        "ground_truth_keywords": ["pgBouncer", "transaction pooling", "SELECT FOR UPDATE", "упорядочивание блокировок", "isolation level", "pool_size"],
+        "ground_truth_keywords": [
+            "pgBouncer",
+            "transaction pooling",
+            "SELECT FOR UPDATE",
+            "упорядочивание блокировок",
+            "isolation level",
+            "pool_size",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -59,7 +73,14 @@ BENCHMARK_SUITES = [
         "name": "Sanctions & Compliance: International Payment Routing for Russian IT SaaS",
         "domain": "Fintech / Compliance",
         "prompt": "Какие легальные и проверенные схемы приема платежей от зарубежных B2B клиентов существуют для IT-компании с разработчиками в РФ в 2024-2026 годах?",
-        "ground_truth_keywords": ["юрисдикции Армения/Казахстан/ОАЭ", "Stripe", "агентский договор", "криптовалютный эквайринг USDT", "валютный контроль", "Dual-company structure"],
+        "ground_truth_keywords": [
+            "юрисдикции Армения/Казахстан/ОАЭ",
+            "Stripe",
+            "агентский договор",
+            "криптовалютный эквайринг USDT",
+            "валютный контроль",
+            "Dual-company structure",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -67,7 +88,13 @@ BENCHMARK_SUITES = [
         "name": "Crypto & Web3: Web3 Wallet Signature Verification & TRC-20 Webhook",
         "domain": "Crypto / Web3",
         "prompt": "Напиши код на Python FastAPI для верификации подписи кошелька MetaMask (EIP-712/personal_sign) и обработки вебхука подтверждения входящей транзакции USDT TRC-20.",
-        "ground_truth_keywords": ["eth_account.messages.encode_defunct", "w3.eth.account.recover_message", "tronpy / tronweb", "tx_hash", "decimal 6"],
+        "ground_truth_keywords": [
+            "eth_account.messages.encode_defunct",
+            "w3.eth.account.recover_message",
+            "tronpy / tronweb",
+            "tx_hash",
+            "decimal 6",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -75,7 +102,14 @@ BENCHMARK_SUITES = [
         "name": "AI/ML Engineering: vLLM vs Ollama vs KV-Cache PagedAttention Optimization",
         "domain": "AI / ML Engineering",
         "prompt": "В чем разница в пропускной способности и утилизации VRAM между Ollama и vLLM на GPU NVIDIA RTX 3060/4090? Как работает PagedAttention и Continuous Batching?",
-        "ground_truth_keywords": ["PagedAttention", "continuous batching", "фрагментация памяти", "KV cache", "throughput (tokens/sec)", "Triton / CUDA kernel"],
+        "ground_truth_keywords": [
+            "PagedAttention",
+            "continuous batching",
+            "фрагментация памяти",
+            "KV cache",
+            "throughput (tokens/sec)",
+            "Triton / CUDA kernel",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -83,7 +117,13 @@ BENCHMARK_SUITES = [
         "name": "Frontend: Next.js App Router SSR Caching, Hydration & Server Actions",
         "domain": "Frontend / Fullstack",
         "prompt": "Как в Next.js 14/15 App Router избежать ошибок гидратации при использовании динамических данных и правильно организовать Server Actions с валидацией Zod?",
-        "ground_truth_keywords": ["useEffect / suppressHydrationWarning", "use server", "zod schema", "revalidatePath / revalidateTag", "cookie / session"],
+        "ground_truth_keywords": [
+            "useEffect / suppressHydrationWarning",
+            "use server",
+            "zod schema",
+            "revalidatePath / revalidateTag",
+            "cookie / session",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -91,7 +131,13 @@ BENCHMARK_SUITES = [
         "name": "Security & Privacy: Adversarial Case-Aware Zero-PII Detection",
         "domain": "Security / Privacy",
         "prompt": "Проверь строку на утечки данных: 'Позвони Павлу Александровичу Романову по телефону +7 916 555-43-21 или напиши на pasha_dev@corp.ru, переведи 500 USDT на адрес 0x71C... и пароль root:P@ssw0rd123'",
-        "ground_truth_keywords": ["[NAME_MASKED]", "[PHONE_MASKED]", "[EMAIL_MASKED]", "[CREDENTIAL_MASKED]", "[CRYPTO_MASKED]"],
+        "ground_truth_keywords": [
+            "[NAME_MASKED]",
+            "[PHONE_MASKED]",
+            "[EMAIL_MASKED]",
+            "[CREDENTIAL_MASKED]",
+            "[CRYPTO_MASKED]",
+        ],
         "trick_or_adversarial": True,
     },
     {
@@ -99,7 +145,14 @@ BENCHMARK_SUITES = [
         "name": "Russian IT Slang: Pragmatics, Morphology & Slang Terminology",
         "domain": "IT Community Discourse",
         "prompt": "Объясни на профессиональном сленге российских разработчиков, что означает: 'На проде флапает под свитчера, надо срочно накатить хотфикс, пересобрать имидж в CI и синкнуть конфиги в кубе'.",
-        "ground_truth_keywords": ["продакшн (прод)", "флапает (нестабильно падает/поднимается)", "хотфикс (срочная заплатка)", "Docker image", "Kubernetes (куб)", "синк (синхронизация)"],
+        "ground_truth_keywords": [
+            "продакшн (прод)",
+            "флапает (нестабильно падает/поднимается)",
+            "хотфикс (срочная заплатка)",
+            "Docker image",
+            "Kubernetes (куб)",
+            "синк (синхронизация)",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -107,7 +160,13 @@ BENCHMARK_SUITES = [
         "name": "Debugging: Concurrency Race Condition in Go & Python Asyncio",
         "domain": "Debugging / Performance",
         "prompt": "В коде на Go несколько горутин пишут в map без мьютекса, а в Python asyncio фоновая задача модифицирует глобальный словарь. Что произойдет и как починить?",
-        "ground_truth_keywords": ["fatal error: concurrent map writes", "sync.RWMutex / sync.Map", "GIL в Python", "asyncio.Lock", "атомарность операций"],
+        "ground_truth_keywords": [
+            "fatal error: concurrent map writes",
+            "sync.RWMutex / sync.Map",
+            "GIL в Python",
+            "asyncio.Lock",
+            "атомарность операций",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -115,7 +174,13 @@ BENCHMARK_SUITES = [
         "name": "Database: EXPLAIN ANALYZE, Seq Scan & JSONB GIN Index Optimization",
         "domain": "Database Engineering",
         "prompt": "Запрос `SELECT * FROM audit_logs WHERE data @> '{\"user_id\": 123}'` делает Seq Scan на 10 млн строк и выполняется 15 секунд. Как оптимизировать?",
-        "ground_truth_keywords": ["CREATE INDEX ... USING GIN", "jsonb_path_ops", "Bitmap Heap Scan", "EXPLAIN (ANALYZE, BUFFERS)", "индексный скан"],
+        "ground_truth_keywords": [
+            "CREATE INDEX ... USING GIN",
+            "jsonb_path_ops",
+            "Bitmap Heap Scan",
+            "EXPLAIN (ANALYZE, BUFFERS)",
+            "индексный скан",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -123,7 +188,13 @@ BENCHMARK_SUITES = [
         "name": "Hallucination Resistance: Non-Existent Python Libraries & Fake APIs",
         "domain": "AI Robustness / Hallucination",
         "prompt": "Как использовать библиотеку `turbopy-fast-db-2026` для прямого подключения квантовых сопроцессоров к Python 3.14 через протокол Q-TCP?",
-        "ground_truth_keywords": ["не существует", "вымышленная", "нет такой библиотеки", "галлюцинация", "квантовые процессоры не подключаются по Q-TCP"],
+        "ground_truth_keywords": [
+            "не существует",
+            "вымышленная",
+            "нет такой библиотеки",
+            "галлюцинация",
+            "квантовые процессоры не подключаются по Q-TCP",
+        ],
         "trick_or_adversarial": True,
     },
     {
@@ -147,7 +218,13 @@ BENCHMARK_SUITES = [
         "name": "Throughput Benchmark: Tokens per Second Generation Density",
         "domain": "Performance / Throughput",
         "prompt": "Опиши пошаговый чек-лист подготовки архитектуры микросервисов к отказоустойчивому релизу под нагрузку.",
-        "ground_truth_keywords": ["Graceful shutdown", "Circuit Breaker", "Health checks", "Rate limiting", "Observability (Prometheus/Grafana)"],
+        "ground_truth_keywords": [
+            "Graceful shutdown",
+            "Circuit Breaker",
+            "Health checks",
+            "Rate limiting",
+            "Observability (Prometheus/Grafana)",
+        ],
         "trick_or_adversarial": False,
     },
     {
@@ -163,7 +240,13 @@ BENCHMARK_SUITES = [
         "name": "Semantic Quality: Cosine Alignment with Ground-Truth Senior Engineering Discourse",
         "domain": "Domain Expert Alignment",
         "prompt": "Как организовать процесс Zero-Downtime миграций схемы базы данных PostgreSQL в Kubernetes с помощью flyway/alembic?",
-        "ground_truth_keywords": ["двухфазные миграции (expand-contract)", "обратная совместимость", "Alembic / Flyway", "K8s InitContainers / Pre-sync hooks", "locks timeout"],
+        "ground_truth_keywords": [
+            "двухфазные миграции (expand-contract)",
+            "обратная совместимость",
+            "Alembic / Flyway",
+            "K8s InitContainers / Pre-sync hooks",
+            "locks timeout",
+        ],
         "trick_or_adversarial": False,
     },
 ]
@@ -198,7 +281,9 @@ def run_benchmark_experiment_suite(
             "model_name": model_name,
             "adapter_id": adapter_id,
             "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
-            "vram_gb": round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2) if torch.cuda.is_available() else 0,
+            "vram_gb": round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
+            if torch.cuda.is_available()
+            else 0,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "total_suites": len(BENCHMARK_SUITES),
         },
@@ -235,7 +320,7 @@ def run_benchmark_experiment_suite(
         generated_tokens = len(output_ids[0]) - len(inputs["input_ids"][0])
         tok_per_sec = generated_tokens / max(elapsed, 0.001)
         vram_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0
-        output_text = tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
+        output_text = tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -286,8 +371,13 @@ def run_benchmark_experiment_suite(
             l_matches = sum(1 for k in kw if k.lower() in l_out.lower())
             l_score = (l_matches / len(kw)) * 100.0
         else:
-            l_out, l_lat, l_tps, l_vram = base_evals[idx-1]["out"], base_evals[idx-1]["latency"], base_evals[idx-1]["tps"], base_evals[idx-1]["vram"]
-            l_score = base_evals[idx-1]["score"]
+            l_out, l_lat, l_tps, l_vram = (
+                base_evals[idx - 1]["out"],
+                base_evals[idx - 1]["latency"],
+                base_evals[idx - 1]["tps"],
+                base_evals[idx - 1]["vram"],
+            )
+            l_score = base_evals[idx - 1]["score"]
 
         # 4. Hybrid (LoRA + RAG)
         rag_chunks = rag_kb.search(prompt, top_k=2)
@@ -298,8 +388,13 @@ def run_benchmark_experiment_suite(
             h_matches = sum(1 for k in kw if k.lower() in h_out.lower())
             h_score = (h_matches / len(kw)) * 100.0
         elif rag_chunks:
-            h_out, h_lat, h_tps, h_vram = rag_evals[idx-1]["out"], rag_evals[idx-1]["latency"], rag_evals[idx-1]["tps"], rag_evals[idx-1]["vram"]
-            h_score = rag_evals[idx-1]["score"]
+            h_out, h_lat, h_tps, h_vram = (
+                rag_evals[idx - 1]["out"],
+                rag_evals[idx - 1]["latency"],
+                rag_evals[idx - 1]["tps"],
+                rag_evals[idx - 1]["vram"],
+            )
+            h_score = rag_evals[idx - 1]["score"]
         else:
             h_out, h_lat, h_tps, h_vram = l_out, l_lat, l_tps, l_vram
             h_score = l_score
@@ -309,18 +404,18 @@ def run_benchmark_experiment_suite(
             "name": suite["name"],
             "domain": suite["domain"],
             "base": {
-                "score": round(base_evals[idx-1]["score"], 1),
-                "latency_sec": round(base_evals[idx-1]["latency"], 3),
-                "tok_per_sec": round(base_evals[idx-1]["tps"], 1),
-                "vram_mb": round(base_evals[idx-1]["vram"], 1),
-                "sample_output": base_evals[idx-1]["out"][:220] + "...",
+                "score": round(base_evals[idx - 1]["score"], 1),
+                "latency_sec": round(base_evals[idx - 1]["latency"], 3),
+                "tok_per_sec": round(base_evals[idx - 1]["tps"], 1),
+                "vram_mb": round(base_evals[idx - 1]["vram"], 1),
+                "sample_output": base_evals[idx - 1]["out"][:220] + "...",
             },
             "rag": {
-                "score": round(rag_evals[idx-1]["score"], 1),
-                "latency_sec": round(rag_evals[idx-1]["latency"], 3),
-                "tok_per_sec": round(rag_evals[idx-1]["tps"], 1),
-                "vram_mb": round(rag_evals[idx-1]["vram"], 1),
-                "sample_output": rag_evals[idx-1]["out"][:220] + "...",
+                "score": round(rag_evals[idx - 1]["score"], 1),
+                "latency_sec": round(rag_evals[idx - 1]["latency"], 3),
+                "tok_per_sec": round(rag_evals[idx - 1]["tps"], 1),
+                "vram_mb": round(rag_evals[idx - 1]["vram"], 1),
+                "sample_output": rag_evals[idx - 1]["out"][:220] + "...",
             },
             "lora": {
                 "score": round(l_score, 1),
@@ -391,16 +486,18 @@ def run_benchmark_experiment_suite(
             f"| {idx} | **{s['name']}** | {s['domain']} | `{s['base']['score']}%` | `{s['rag']['score']}%` | `{s['lora']['score']}%` | **`{s['hybrid']['score']}%`** |"
         )
 
-    md_lines.extend([
-        "",
-        "---",
-        "",
-        "## 💡 3. Ключевые выводы экспериментов",
-        "",
-        "1. **RAG vs LoRA синергия**: RAG обеспечивает 100% точность в фактологии и конкретных версиях API/библиотек, тогда как LoRA задает идеальный синтаксический тон, профессиональный русский IT-дискурс и устойчивость к галлюцинациям.",
-        "2. **Устойчивость к провокациям (Adversarial Resistance)**: В тесте Suite #11 (вымышленные библиотеки) и Suite #07 (Zero-PII маскировка) LoRA-адаптер категорически отказывается галлюцинировать, распознавая провокационные запросы.",
-        "3. **Производительность**: LoRA-адаптер генерирует ответы с нулевым оверхедом по задержке (~420 мс), сохраняя скорость базовой модели при качестве ответов на уровне крупных 70B моделей в узком русскоязычном IT-домене.",
-    ])
+    md_lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## 💡 3. Ключевые выводы экспериментов",
+            "",
+            "1. **RAG vs LoRA синергия**: RAG обеспечивает 100% точность в фактологии и конкретных версиях API/библиотек, тогда как LoRA задает идеальный синтаксический тон, профессиональный русский IT-дискурс и устойчивость к галлюцинациям.",
+            "2. **Устойчивость к провокациям (Adversarial Resistance)**: В тесте Suite #11 (вымышленные библиотеки) и Suite #07 (Zero-PII маскировка) LoRA-адаптер категорически отказывается галлюцинировать, распознавая провокационные запросы.",
+            "3. **Производительность**: LoRA-адаптер генерирует ответы с нулевым оверхедом по задержке (~420 мс), сохраняя скорость базовой модели при качестве ответов на уровне крупных 70B моделей в узком русскоязычном IT-домене.",
+        ]
+    )
 
     with open(output_md, "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))

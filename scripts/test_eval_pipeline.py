@@ -11,6 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 os.environ.setdefault("HF_HOME", str(ROOT_DIR / ".hf_cache"))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
 def test():
     df = pd.read_parquet("dataset_output/parquet/sft_dialogues.parquet")
     sample_texts = []
@@ -57,8 +58,9 @@ def test():
     print("LoRA losses:", [round(x, 4) for x in lora_losses])
     print("Base PPLs:", [round(x, 2) for x in base_ppl])
     print("LoRA PPLs:", [round(x, 2) for x in lora_ppl])
-    print("Base Mean PPL:", round(sum(base_ppl)/len(base_ppl), 2))
-    print("LoRA Mean PPL:", round(sum(lora_ppl)/len(lora_ppl), 2))
+    print("Base Mean PPL:", round(sum(base_ppl) / len(base_ppl), 2))
+    print("LoRA Mean PPL:", round(sum(lora_ppl) / len(lora_ppl), 2))
+
 
 if __name__ == "__main__":
     test()

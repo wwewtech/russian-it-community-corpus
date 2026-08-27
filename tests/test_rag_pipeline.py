@@ -44,9 +44,7 @@ class TestRAGPipeline(unittest.TestCase):
 
     def test_format_rag_prompt(self):
         query = "как настроить nginx"
-        sample_contexts = [
-            {"title": "Nginx Config", "date_range": "2024", "content": "worker_processes auto;"}
-        ]
+        sample_contexts = [{"title": "Nginx Config", "date_range": "2024", "content": "worker_processes auto;"}]
         formatted = self.rag_pipeline.format_rag_prompt(query, sample_contexts)
         self.assertIn("Nginx Config", formatted)
         self.assertIn("worker_processes auto;", formatted)

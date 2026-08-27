@@ -50,7 +50,7 @@ def upload_dataset(api: huggingface_hub.HfApi):
     for local_path, repo_path in parquet_mappings:
         p = Path(local_path)
         if p.exists():
-            logger.info(f"Uploading {local_path} ({p.stat().st_size / (1024*1024):.2f} MB) -> {repo_path}...")
+            logger.info(f"Uploading {local_path} ({p.stat().st_size / (1024 * 1024):.2f} MB) -> {repo_path}...")
             api.upload_file(
                 path_or_fileobj=str(p),
                 path_in_repo=repo_path,
@@ -90,7 +90,9 @@ def main():
         logger.warning(f"Dataset upload to Hugging Face skipped or failed: {e}")
 
     # 1. Check all local adapters
-    local_adapters = sorted([d for d in adapters_dir.iterdir() if d.is_dir() and (d / "adapter_model.safetensors").exists()])
+    local_adapters = sorted(
+        [d for d in adapters_dir.iterdir() if d.is_dir() and (d / "adapter_model.safetensors").exists()]
+    )
     logger.info(f"Found {len(local_adapters)} trained LoRA adapters locally in {adapters_dir}")
 
     # 2. Upload any missing adapters to Hugging Face Model Hub
@@ -112,7 +114,7 @@ def main():
                     logger.info(f"Successfully uploaded {d.name}!")
                     break
                 except Exception as e:
-                    logger.warning(f"Attempt {attempt+1} failed for {d.name}: {e}. Retrying in 5s...")
+                    logger.warning(f"Attempt {attempt + 1} failed for {d.name}: {e}. Retrying in 5s...")
                     time.sleep(5)
 
     # 3. Generate Final LORA_MODEL_ZOO.md and lora_zoo_index.json
@@ -120,13 +122,15 @@ def main():
     for d in local_adapters:
         safetensors = d / "adapter_model.safetensors"
         size_mb = safetensors.stat().st_size / (1024 * 1024)
-        results.append({
-            "id": d.name,
-            "size_mb": round(size_mb, 2),
-            "status": "SUCCESS",
-            "adapter_dir": f"lora_adapters/{d.name}",
-            "hf_model_repo": MODEL_REPO_ID,
-        })
+        results.append(
+            {
+                "id": d.name,
+                "size_mb": round(size_mb, 2),
+                "status": "SUCCESS",
+                "adapter_dir": f"lora_adapters/{d.name}",
+                "hf_model_repo": MODEL_REPO_ID,
+            }
+        )
 
     with open("reports/lora_zoo_index.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
@@ -151,33 +155,35 @@ def main():
             f"| {idx} | **`{r['id']}`** | **{r['size_mb']} MB** | [`lora_adapters/{r['id']}/`](lora_adapters/{r['id']}/) | [`{MODEL_REPO_ID}`](https://huggingface.co/{MODEL_REPO_ID}) |"
         )
 
-    md_lines.extend([
-        "",
-        "---",
-        "",
-        "## 🚀 Быстрый старт: Запуск любого адаптера в 3 строки кода",
-        "",
-        "```python",
-        "from peft import PeftModel",
-        "from transformers import AutoModelForCausalLM, AutoTokenizer",
-        "",
-        "# 1. Выберите любой адаптер из каталога выше",
-        'adapter_id = "qwen2.5_1.5b_instruct"',
-        'model_hub_path = f"wwewtech/russian-it-community-lora"',
-        "",
-        "# 2. Загрузка весов напрямую с Hugging Face Hub",
-        'tokenizer = AutoTokenizer.from_pretrained(model_hub_path, subfolder=adapter_id)',
-        'base_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto")',
-        'model = PeftModel.from_pretrained(base_model, model_hub_path, subfolder=adapter_id)',
-        "",
-        "# 3. Инференс",
-        'prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"',
-        'messages = [{"role": "user", "content": prompt}]',
-        'inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")',
-        'outputs = model.generate(**inputs, max_new_tokens=256)',
-        'print(tokenizer.decode(outputs[0], skip_special_tokens=True))',
-        "```",
-    ])
+    md_lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## 🚀 Быстрый старт: Запуск любого адаптера в 3 строки кода",
+            "",
+            "```python",
+            "from peft import PeftModel",
+            "from transformers import AutoModelForCausalLM, AutoTokenizer",
+            "",
+            "# 1. Выберите любой адаптер из каталога выше",
+            'adapter_id = "qwen2.5_1.5b_instruct"',
+            'model_hub_path = f"wwewtech/russian-it-community-lora"',
+            "",
+            "# 2. Загрузка весов напрямую с Hugging Face Hub",
+            "tokenizer = AutoTokenizer.from_pretrained(model_hub_path, subfolder=adapter_id)",
+            'base_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto")',
+            "model = PeftModel.from_pretrained(base_model, model_hub_path, subfolder=adapter_id)",
+            "",
+            "# 3. Инференс",
+            'prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"',
+            'messages = [{"role": "user", "content": prompt}]',
+            'inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")',
+            "outputs = model.generate(**inputs, max_new_tokens=256)",
+            "print(tokenizer.decode(outputs[0], skip_special_tokens=True))",
+            "```",
+        ]
+    )
 
     with open("reports/LORA_MODEL_ZOO.md", "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))

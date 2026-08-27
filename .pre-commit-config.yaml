@@ -1,0 +1,22 @@
+# Pre-commit hooks: run `pip install pre-commit && pre-commit install`
+# once per clone; hooks then run automatically on every `git commit`.
+# See https://pre-commit.com for usage and customization.
+repos:
+  # Basic safety checks (huge files, merge conflict markers, broken symlinks)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  # Ruff linting — same version as pinned in .github/workflows/ci.yml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.2
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format

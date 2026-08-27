@@ -74,9 +74,7 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
     return epoch, 0
 
 
-def load_export_file(
-    file_path: str | Path, node_index: int = 1
-) -> tuple[dict[str, Any], list[NormalizedMessage]]:
+def load_export_file(file_path: str | Path, node_index: int = 1) -> tuple[dict[str, Any], list[NormalizedMessage]]:
     """
     Load a Telegram chat export result.json file and return metadata and normalized messages.
     Anonymizes chat_name and chat_id to prevent source de-anonymization.

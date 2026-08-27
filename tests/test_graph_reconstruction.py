@@ -80,7 +80,6 @@ class TestGraphReconstruction(unittest.TestCase):
         self.assertEqual(dialogue.messages[2].role, "user")
         self.assertEqual(dialogue.messages[3].role, "assistant")
 
-
     def _make_msg(self, msg_id, chat_id, unixtime, author_id, text, reply_to_id=None):
         return CleanedMessage(
             msg_id=msg_id,
@@ -98,7 +97,9 @@ class TestGraphReconstruction(unittest.TestCase):
         """Messages without explicit replies but close in time form a burst thread."""
         msgs = [
             self._make_msg(10, 200, 5000, "u_1", "Кто-нибудь сравнивал производительность Redis и KeyDB?"),
-            self._make_msg(11, 200, 5060, "u_2", "KeyDB быстрее на многопоточной нагрузке, но экосистема у Redis больше."),
+            self._make_msg(
+                11, 200, 5060, "u_2", "KeyDB быстрее на многопоточной нагрузке, но экосистема у Redis больше."
+            ),
         ]
         _, threads = self.builder.build_threads(msgs)
         self.assertEqual(len(threads), 1)
@@ -119,7 +120,6 @@ class TestGraphReconstruction(unittest.TestCase):
         updated, threads = self.builder.build_threads([])
         self.assertEqual(updated, [])
         self.assertEqual(threads, {})
-
 
     def test_compute_message_quality(self):
         empty = self._make_msg(30, 400, 7000, "u_1", "")

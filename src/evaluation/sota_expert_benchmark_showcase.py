@@ -46,45 +46,86 @@ FLAGSHIP_CHALLENGES = [
         "title": "Финтех: Exactly-Once Transactional Outbox + Debezium CDC + Kafka",
         "prompt": "Спроектируй production-ready схему Transactional Outbox Pattern в PostgreSQL для биллингового сервиса списания баланса. Напиши SQL-схему outbox таблицы, конфигурацию Debezium CDC коннектора и Go/Python логику консьюмера с гарантией идемпотентности при повторной доставке сообщений.",
         "eval_criteria": {
-            "keywords": ["outbox", "debezium", "kafka", "idempotency", "select for update", "unique constraint", "cdc", "slot"],
+            "keywords": [
+                "outbox",
+                "debezium",
+                "kafka",
+                "idempotency",
+                "select for update",
+                "unique constraint",
+                "cdc",
+                "slot",
+            ],
             "requires_code": True,
-        }
+        },
     },
     {
         "id": "chal_02_k8s_zero_downtime",
         "title": "SRE: Zero-Downtime Rolling Update & 502 Bad Gateway Mitigation",
         "prompt": "В Kubernetes при rolling update подов периодически возникают 502 Bad Gateway на Ingress контроллере (Nginx/Envoy). Объясни точную физику этой проблемы (рассинхрон iptables/endpoints и conntrack) и приведи эталонный YAML Deployment с preStop хуком, readinessProbe и конфигурацию graceful shutdown.",
         "eval_criteria": {
-            "keywords": ["prestop", "terminationgraceperiodseconds", "readinessprobe", "iptables", "endpoints", "conntrack", "sigterm"],
+            "keywords": [
+                "prestop",
+                "terminationgraceperiodseconds",
+                "readinessprobe",
+                "iptables",
+                "endpoints",
+                "conntrack",
+                "sigterm",
+            ],
             "requires_code": True,
-        }
+        },
     },
     {
         "id": "chal_03_pg_txid_disaster",
         "title": "PostgreSQL DBA: Ликвидация кризиса TXID Wraparound и frozenxid",
         "prompt": "В продакшн кластере PostgreSQL datfrozenxid достиг критической отметки, autovacuum не успевает, СУБД угрожает переходом в read-only режим. Опиши пошаговый Disaster Recovery регламент спасения базы данных для дежурного DBA без простоя сервиса.",
         "eval_criteria": {
-            "keywords": ["datfrozenxid", "vacuum freeze", "autovacuum_freeze_max_age", "maintenance_work_mem", "pg_database", "wraparound"],
+            "keywords": [
+                "datfrozenxid",
+                "vacuum freeze",
+                "autovacuum_freeze_max_age",
+                "maintenance_work_mem",
+                "pg_database",
+                "wraparound",
+            ],
             "requires_code": True,
-        }
+        },
     },
     {
         "id": "chal_04_vllm_paged_attention",
         "title": "AI Platform: Оптимизация vLLM PagedAttention и Multi-LoRA Serving",
         "prompt": "Как устроен механизм PagedAttention в vLLM на уровне CUDA-блоков и таблиц виртуальных страниц? Как развернуть vLLM сервер для одновременного динамического обслуживания 20 различных LoRA адаптеров без перезагрузки базовой модели?",
         "eval_criteria": {
-            "keywords": ["pagedattention", "kv cache", "cuda", "virtual memory", "lora adapter", "dynamic serving", "continuous batching"],
+            "keywords": [
+                "pagedattention",
+                "kv cache",
+                "cuda",
+                "virtual memory",
+                "lora adapter",
+                "dynamic serving",
+                "continuous batching",
+            ],
             "requires_code": True,
-        }
+        },
     },
     {
         "id": "chal_05_sanctions_b2b_routing",
         "title": "Compliance & FinTech: Санкционный комплаенс и B2B трансграничные расчеты 2026",
         "prompt": "Опиши юридически легальную и технически реализуемую в 2024-2026 годах структуру трансграничных B2B платежей для IT-компаний (разработка ПО в РФ, клиенты в ЕС/США). Рассмотри схему через нейтральные юрисдикции (ОАЭ, Армения, Казахстан, Гонконг), валютный контроль РФ (173-ФЗ) и особенности корреспондентских счетов.",
         "eval_criteria": {
-            "keywords": ["валютный контроль", "173-фз", "оаэ", "армения", "казахстан", "агентский договор", "корреспондентский счет", "ofac"],
+            "keywords": [
+                "валютный контроль",
+                "173-фз",
+                "оаэ",
+                "армения",
+                "казахстан",
+                "агентский договор",
+                "корреспондентский счет",
+                "ofac",
+            ],
             "requires_code": False,
-        }
+        },
     },
     {
         "id": "chal_06_crdt_offline_first",
@@ -93,16 +134,24 @@ FLAGSHIP_CHALLENGES = [
         "eval_criteria": {
             "keywords": ["yjs", "crdt", "y-indexeddb", "y-websocket", "state vector", "conflict-free", "awareness"],
             "requires_code": True,
-        }
+        },
     },
     {
         "id": "chal_07_go_memory_leak_pprof",
         "title": "Debugging: Диагностика утечек горутин и памяти в Go через pprof",
         "prompt": "Go-микросервис под нагрузкой испытывает утечку памяти (OOMKilled через 12 часов). Опиши пошаговый процесс снятия профилей кучи и горутин через `go tool pprof`, как отличить inuse_space от alloc_space и найти утечку в невычитанном time.Ticker.",
         "eval_criteria": {
-            "keywords": ["pprof", "inuse_space", "alloc_space", "flamegraph", "goroutine leak", "time.ticker", "oomkilled"],
+            "keywords": [
+                "pprof",
+                "inuse_space",
+                "alloc_space",
+                "flamegraph",
+                "goroutine leak",
+                "time.ticker",
+                "oomkilled",
+            ],
             "requires_code": True,
-        }
+        },
     },
     {
         "id": "chal_08_gost_tls_dual_stack",
@@ -111,7 +160,7 @@ FLAGSHIP_CHALLENGES = [
         "eval_criteria": {
             "keywords": ["криптопро", "гост", "openssl", "nginx", "кузнечик", "magma", "dual-cert", "sni"],
             "requires_code": True,
-        }
+        },
     },
 ]
 
@@ -127,7 +176,22 @@ def score_response_quality(text: str, criteria: dict[str, Any]) -> dict[str, flo
     code_score = 100.0 if has_code_block else (50.0 if not criteria["requires_code"] else 20.0)
 
     # Russian Technical Tone (density of professional IT vocabulary)
-    ru_it_tokens = ["кластер", "деплой", "инференс", "реплика", "транзакция", "блокировк", "нагрузк", "контейнер", "пайплайн", "конфигураци", "сертификат", "прод", "воркер", "метрик"]
+    ru_it_tokens = [
+        "кластер",
+        "деплой",
+        "инференс",
+        "реплика",
+        "транзакция",
+        "блокировк",
+        "нагрузк",
+        "контейнер",
+        "пайплайн",
+        "конфигураци",
+        "сертификат",
+        "прод",
+        "воркер",
+        "метрик",
+    ]
     ru_density = min(100.0, sum(10.0 for t in ru_it_tokens if t in text.lower()))
 
     # Depth & Elaboration (token count penalty if too brief)
@@ -194,7 +258,7 @@ def run_sota_showcase(
                 pad_token_id=tokenizer.pad_token_id,
             )
 
-        text = tokenizer.decode(out_ids[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
+        text = tokenizer.decode(out_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return text.strip()
@@ -241,7 +305,7 @@ def run_sota_showcase(
             l_text = generate_expert(lora_model, prompt)
             l_scores = score_response_quality(l_text, item["eval_criteria"])
         else:
-            l_text, l_scores = base_outputs[idx-1]
+            l_text, l_scores = base_outputs[idx - 1]
 
         # Hybrid (LoRA + RAG)
         rag_hits = rag_kb.search(prompt, top_k=2)
@@ -256,8 +320,8 @@ def run_sota_showcase(
             "id": item["id"],
             "title": item["title"],
             "prompt": prompt,
-            "base": {"text": base_outputs[idx-1][0], "scores": base_outputs[idx-1][1]},
-            "rag": {"text": rag_outputs[idx-1][0], "scores": rag_outputs[idx-1][1]},
+            "base": {"text": base_outputs[idx - 1][0], "scores": base_outputs[idx - 1][1]},
+            "rag": {"text": rag_outputs[idx - 1][0], "scores": rag_outputs[idx - 1][1]},
             "lora": {"text": l_text, "scores": l_scores},
             "hybrid": {"text": h_text, "scores": h_scores},
         }
@@ -295,25 +359,27 @@ def run_sota_showcase(
     ]
 
     for idx, r in enumerate(results, 1):
-        md_lines.extend([
-            f"### Сценарий #{idx}: {r['title']}",
-            f"**Запрос:** *\"{r['prompt']}\"*",
-            "",
-            "| Конфигурация | Балл | Ключевые особенности генерации |",
-            "| :--- | :---: | :--- |",
-            f"| **Base Model** | `{r['base']['scores']['overall']}%` | Общий поверхностный ответ, абстрактные рекомендации без точных параметров. |",
-            f"| **RAG Augmented** | `{r['rag']['scores']['overall']}%` | Подтянуты точные параметры и факты из базы знаний. |",
-            f"| **Domain LoRA** | `{r['lora']['scores']['overall']}%` | Аутентичный тон ведущего архитектора, нативное использование профессионального сленга. |",
-            f"| **Hybrid (LoRA+RAG)** | **`{r['hybrid']['scores']['overall']}%`** | Полный продакшн-код, готовые SQL схемы / YAML манифесты, разбор race conditions. |",
-            "",
-            "**Пример генерации Гибридной модели (LoRA + RAG):**",
-            "```text",
-            r['hybrid']['text'][:800] + ("..." if len(r['hybrid']['text']) > 800 else ""),
-            "```",
-            "",
-            "---",
-            "",
-        ])
+        md_lines.extend(
+            [
+                f"### Сценарий #{idx}: {r['title']}",
+                f'**Запрос:** *"{r["prompt"]}"*',
+                "",
+                "| Конфигурация | Балл | Ключевые особенности генерации |",
+                "| :--- | :---: | :--- |",
+                f"| **Base Model** | `{r['base']['scores']['overall']}%` | Общий поверхностный ответ, абстрактные рекомендации без точных параметров. |",
+                f"| **RAG Augmented** | `{r['rag']['scores']['overall']}%` | Подтянуты точные параметры и факты из базы знаний. |",
+                f"| **Domain LoRA** | `{r['lora']['scores']['overall']}%` | Аутентичный тон ведущего архитектора, нативное использование профессионального сленга. |",
+                f"| **Hybrid (LoRA+RAG)** | **`{r['hybrid']['scores']['overall']}%`** | Полный продакшн-код, готовые SQL схемы / YAML манифесты, разбор race conditions. |",
+                "",
+                "**Пример генерации Гибридной модели (LoRA + RAG):**",
+                "```text",
+                r["hybrid"]["text"][:800] + ("..." if len(r["hybrid"]["text"]) > 800 else ""),
+                "```",
+                "",
+                "---",
+                "",
+            ]
+        )
 
     output_path = Path("reports/SOTA_EXPERT_SHOWCASE_DIFFS.md")
     with open(output_path, "w", encoding="utf-8") as f:
@@ -321,7 +387,12 @@ def run_sota_showcase(
 
     json_path = Path("reports/sota_expert_matrix.json")
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump({"summary": {"base": base_avg, "rag": rag_avg, "lora": lora_avg, "hybrid": hyb_avg}, "results": results}, f, ensure_ascii=False, indent=2)
+        json.dump(
+            {"summary": {"base": base_avg, "rag": rag_avg, "lora": lora_avg, "hybrid": hyb_avg}, "results": results},
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
 
     logger.info(f"Showcase report generated at {output_path}")
 

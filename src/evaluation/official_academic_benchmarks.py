@@ -51,37 +51,37 @@ logger = logging.getLogger("AcademicBenchmark")
 HUMANEVAL_TASKS = [
     {
         "task_id": "HumanEval/0",
-        "prompt": "from typing import List\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    \"\"\" Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    \"\"\"\n",
+        "prompt": 'from typing import List\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    """ Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    """\n',
         "test": "def check(candidate):\n    assert candidate([1.0, 2.0, 3.9, 4.0, 5.0, 2.2], 0.3) == True\n    assert candidate([1.0, 2.0, 3.9, 4.0, 5.0, 2.2], 0.05) == False\n    assert candidate([1.0, 2.0, 5.9, 4.0, 5.0], 0.95) == True\n    assert candidate([1.0, 2.0, 5.9, 4.0, 5.0], 0.8) == False\n    assert candidate([1.0, 2.0, 3.0, 4.0, 5.0, 2.0], 0.1) == True\ncheck(has_close_elements)",
         "entry_point": "has_close_elements",
     },
     {
         "task_id": "HumanEval/2",
-        "prompt": "def truncate_number(number: float) -> float:\n    \"\"\" Given a positive floating point number, it can be decomposed into\n    and integer part (largest integer smaller than given number) and decimals\n    (leftover part always smaller than 1, also called fractional part).\n    Return the decimal part of the number.\n    >>> truncate_number(3.5)\n    0.5\n    \"\"\"\n",
+        "prompt": 'def truncate_number(number: float) -> float:\n    """ Given a positive floating point number, it can be decomposed into\n    and integer part (largest integer smaller than given number) and decimals\n    (leftover part always smaller than 1, also called fractional part).\n    Return the decimal part of the number.\n    >>> truncate_number(3.5)\n    0.5\n    """\n',
         "test": "def check(candidate):\n    assert abs(candidate(3.5) - 0.5) < 1e-6\n    assert abs(candidate(1.33) - 0.33) < 1e-6\n    assert abs(candidate(123.456) - 0.456) < 1e-6\ncheck(truncate_number)",
         "entry_point": "truncate_number",
     },
     {
         "task_id": "HumanEval/3",
-        "prompt": "from typing import List\n\ndef below_zero(operations: List[int]) -> bool:\n    \"\"\" You're given a list of deposit and withdrawal operations on a bank account that starts with\n    zero balance. Your task is to detect if at any point the balance of account fallls below zero, and\n    at that point function should return True. Otherwise it should return False.\n    >>> below_zero([1, 2, 3])\n    False\n    >>> below_zero([1, 2, -4, 5])\n    True\n    \"\"\"\n",
+        "prompt": 'from typing import List\n\ndef below_zero(operations: List[int]) -> bool:\n    """ You\'re given a list of deposit and withdrawal operations on a bank account that starts with\n    zero balance. Your task is to detect if at any point the balance of account fallls below zero, and\n    at that point function should return True. Otherwise it should return False.\n    >>> below_zero([1, 2, 3])\n    False\n    >>> below_zero([1, 2, -4, 5])\n    True\n    """\n',
         "test": "def check(candidate):\n    assert candidate([]) == False\n    assert candidate([1, 2, -3, 1, 2, -3]) == False\n    assert candidate([1, 2, -4, 5, 6]) == True\n    assert candidate([1, -1, 2, -2, 5, -5, -6]) == True\n    assert candidate([1, -2]) == True\ncheck(below_zero)",
         "entry_point": "below_zero",
     },
     {
         "task_id": "HumanEval/4",
-        "prompt": "from typing import List\n\ndef mean_absolute_deviation(numbers: List[float]) -> float:\n    \"\"\" For a given list of input numbers, calculate Mean Absolute Deviation\n    around the mean of this dataset.\n    Mean Absolute Deviation = average |x - mean(x)|\n    >>> mean_absolute_deviation([1.0, 2.0, 3.0, 4.0])\n    1.0\n    \"\"\"\n",
+        "prompt": 'from typing import List\n\ndef mean_absolute_deviation(numbers: List[float]) -> float:\n    """ For a given list of input numbers, calculate Mean Absolute Deviation\n    around the mean of this dataset.\n    Mean Absolute Deviation = average |x - mean(x)|\n    >>> mean_absolute_deviation([1.0, 2.0, 3.0, 4.0])\n    1.0\n    """\n',
         "test": "def check(candidate):\n    assert abs(candidate([1.0, 2.0, 3.0]) - 2.0/3.0) < 1e-6\n    assert abs(candidate([1.0, 2.0, 3.0, 4.0]) - 1.0) < 1e-6\n    assert abs(candidate([1.0, 2.0, 3.0, 4.0, 5.0]) - 6.0/5.0) < 1e-6\ncheck(mean_absolute_deviation)",
         "entry_point": "mean_absolute_deviation",
     },
     {
         "task_id": "HumanEval/5",
-        "prompt": "from typing import List\n\ndef intersperse(numbers: List[int], delimeter: int) -> List[int]:\n    \"\"\" Insert a number 'delimeter' between every two consecutive elements of input list `numbers'\n    >>> intersperse([], 4)\n    []\n    >>> intersperse([1, 2, 3], 4)\n    [1, 4, 2, 4, 3]\n    \"\"\"\n",
+        "prompt": 'from typing import List\n\ndef intersperse(numbers: List[int], delimeter: int) -> List[int]:\n    """ Insert a number \'delimeter\' between every two consecutive elements of input list `numbers\'\n    >>> intersperse([], 4)\n    []\n    >>> intersperse([1, 2, 3], 4)\n    [1, 4, 2, 4, 3]\n    """\n',
         "test": "def check(candidate):\n    assert candidate([], 7) == []\n    assert candidate([5, 6, 3, 2], 8) == [5, 8, 6, 8, 3, 8, 2]\n    assert candidate([2, 2, 2], 2) == [2, 2, 2, 2, 2]\ncheck(intersperse)",
         "entry_point": "intersperse",
     },
     {
         "task_id": "HumanEval/8",
-        "prompt": "from typing import List, Tuple\n\ndef sum_product(numbers: List[int]) -> Tuple[int, int]:\n    \"\"\" For a given list of integers, return a tuple consisting of a sum and a product of all the integers in a list.\n    Empty sum should be equal to 0 and empty product should be equal to 1.\n    >>> sum_product([])\n    (0, 1)\n    >>> sum_product([1, 2, 3, 4])\n    (10, 24)\n    \"\"\"\n",
+        "prompt": 'from typing import List, Tuple\n\ndef sum_product(numbers: List[int]) -> Tuple[int, int]:\n    """ For a given list of integers, return a tuple consisting of a sum and a product of all the integers in a list.\n    Empty sum should be equal to 0 and empty product should be equal to 1.\n    >>> sum_product([])\n    (0, 1)\n    >>> sum_product([1, 2, 3, 4])\n    (10, 24)\n    """\n',
         "test": "def check(candidate):\n    assert candidate([]) == (0, 1)\n    assert candidate([1, 1, 1]) == (3, 1)\n    assert candidate([100, 0]) == (100, 0)\n    assert candidate([3, 5, 7]) == (3 + 5 + 7, 3 * 5 * 7)\ncheck(sum_product)",
         "entry_point": "sum_product",
     },
@@ -93,7 +93,7 @@ HUMANEVAL_TASKS = [
     },
     {
         "task_id": "HumanEval/15",
-        "prompt": "def string_sequence(n: int) -> str:\n    \"\"\" Return a string containing space-delimited numbers starting from 0 upto n inclusive.\n    >>> string_sequence(0)\n    '0'\n    >>> string_sequence(5)\n    '0 1 2 3 4 5'\n    \"\"\"\n",
+        "prompt": 'def string_sequence(n: int) -> str:\n    """ Return a string containing space-delimited numbers starting from 0 upto n inclusive.\n    >>> string_sequence(0)\n    \'0\'\n    >>> string_sequence(5)\n    \'0 1 2 3 4 5\'\n    """\n',
         "test": "def check(candidate):\n    assert candidate(0) == '0'\n    assert candidate(3) == '0 1 2 3'\n    assert candidate(10) == '0 1 2 3 4 5 6 7 8 9 10'\ncheck(string_sequence)",
         "entry_point": "string_sequence",
     },
@@ -127,7 +127,12 @@ RUMMLU_CS_QUESTIONS = [
     {
         "id": "rummlu_cs_04",
         "question": "Что происходит при переполнении стека вызовов (Stack Overflow) в большинстве компилируемых языков (C/C++, Rust)?",
-        "options": ["A) Память динамически довыделяется из кучи (Heap)", "B) Программа аварийно завершается с ошибкой Segmentation Fault / Stack Overflow", "C) Активируется сборщик мусора GC", "D) Происходит автоматический сброс стека на диск"],
+        "options": [
+            "A) Память динамически довыделяется из кучи (Heap)",
+            "B) Программа аварийно завершается с ошибкой Segmentation Fault / Stack Overflow",
+            "C) Активируется сборщик мусора GC",
+            "D) Происходит автоматический сброс стека на диск",
+        ],
         "answer": "B",
         "category": "Systems Architecture",
     },
@@ -141,7 +146,12 @@ RUMMLU_CS_QUESTIONS = [
     {
         "id": "rummlu_cs_06",
         "question": "В чем заключается фундаментальное отличие алгоритма консенсуса Raft от классического Paxos?",
-        "options": ["A) Raft не поддерживает распределенные транзакции", "B) Raft декомпозирует консенсус на выбор лидера (Leader Election) и репликацию лога (Log Replication) для простоты понимания", "C) Raft требует синхронных аппаратных часов", "D) Raft работает только в топологии звезда"],
+        "options": [
+            "A) Raft не поддерживает распределенные транзакции",
+            "B) Raft декомпозирует консенсус на выбор лидера (Leader Election) и репликацию лога (Log Replication) для простоты понимания",
+            "C) Raft требует синхронных аппаратных часов",
+            "D) Raft работает только в топологии звезда",
+        ],
         "answer": "B",
         "category": "Distributed Systems",
     },
@@ -155,7 +165,12 @@ RUMMLU_CS_QUESTIONS = [
     {
         "id": "rummlu_cs_08",
         "question": "Для чего в HTTP/2 и HTTP/3 используется мультиплексирование потоков (Multiplexing)?",
-        "options": ["A) Для шифрования TLS без сертификата", "B) Для одновременной передачи множества запросов и ответов по одному TCP/QUIC соединению без блокировки Head-of-Line", "C) Для сжатия видеопотока", "D) Для кэширования DNS ответов"],
+        "options": [
+            "A) Для шифрования TLS без сертификата",
+            "B) Для одновременной передачи множества запросов и ответов по одному TCP/QUIC соединению без блокировки Head-of-Line",
+            "C) Для сжатия видеопотока",
+            "D) Для кэширования DNS ответов",
+        ],
         "answer": "B",
         "category": "Networking",
     },
@@ -174,9 +189,7 @@ _CYRILLIC_TO_LATIN = str.maketrans({"А": "A", "В": "B", "С": "C"})
 # A valid MC answer letter must be surrounded by non-word characters (or
 # string boundaries). This prevents false positives such as the "C" inside
 # "Compose" or a Cyrillic "с" inside a Russian word.
-_MC_LETTER_RE = re.compile(
-    r"(?:^|(?<=[^\w]))([ABCDАВС])(?=$|[^\w])"
-)
+_MC_LETTER_RE = re.compile(r"(?:^|(?<=[^\w]))([ABCDАВС])(?=$|[^\w])")
 
 
 def parse_mc_answer(response: str, valid_letters: str = "ABCD") -> str | None:
@@ -272,7 +285,7 @@ def run_official_academic_benchmarks(
                 do_sample=False,  # Greedy decoding for deterministic benchmark reproduction
                 pad_token_id=tokenizer.pad_token_id,
             )
-        text = tokenizer.decode(out[0][len(inputs["input_ids"][0]):], skip_special_tokens=True)
+        text = tokenizer.decode(out[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return text.strip()
@@ -321,13 +334,15 @@ def run_official_academic_benchmarks(
         if h_ok:
             humaneval_results["hybrid"] += 1
 
-        task_exec_records.append({
-            "task_id": task["task_id"],
-            "entry_point": task["entry_point"],
-            "base_ok": b_ok,
-            "lora_ok": l_ok,
-            "hybrid_ok": h_ok,
-        })
+        task_exec_records.append(
+            {
+                "task_id": task["task_id"],
+                "entry_point": task["entry_point"],
+                "base_ok": b_ok,
+                "lora_ok": l_ok,
+                "hybrid_ok": h_ok,
+            }
+        )
 
     pass_at_1 = {k: round((v / len(HUMANEVAL_TASKS)) * 100.0, 1) for k, v in humaneval_results.items() if k != "total"}
 
@@ -338,7 +353,11 @@ def run_official_academic_benchmarks(
     rummlu_results = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0, "total": len(RUMMLU_CS_QUESTIONS)}
 
     for q in RUMMLU_CS_QUESTIONS:
-        prompt_q = f"Вопрос: {q['question']}\nВарианты ответа:\n" + "\n".join(q["options"]) + "\nУкажи только одну букву правильного ответа (A, B, C или D):"
+        prompt_q = (
+            f"Вопрос: {q['question']}\nВарианты ответа:\n"
+            + "\n".join(q["options"])
+            + "\nУкажи только одну букву правильного ответа (A, B, C или D):"
+        )
 
         # Base (adapter disabled)
         b_ans = base_generate(prompt_q, max_tokens=10)
@@ -361,7 +380,9 @@ def run_official_academic_benchmarks(
         if parse_mc_answer(h_ans) == q["answer"]:
             rummlu_results["hybrid"] += 1
 
-    rummlu_acc = {k: round((v / len(RUMMLU_CS_QUESTIONS)) * 100.0, 1) for k, v in rummlu_results.items() if k != "total"}
+    rummlu_acc = {
+        k: round((v / len(RUMMLU_CS_QUESTIONS)) * 100.0, 1) for k, v in rummlu_results.items() if k != "total"
+    }
 
     # -------------------------------------------------------------
     # 3. MATHEMATICAL INFORMATION-THEORETIC PERPLEXITY (PPL)
@@ -377,9 +398,7 @@ def run_official_academic_benchmarks(
         turns = row.get("messages")
         if turns is None:
             continue
-        text = " ".join(
-            f"{t.get('role', '')}: {t.get('content', '')}" for t in turns if isinstance(t, dict)
-        )
+        text = " ".join(f"{t.get('role', '')}: {t.get('content', '')}" for t in turns if isinstance(t, dict))
         if text.strip():
             test_texts.append(text)
         if len(test_texts) >= 30:
@@ -455,8 +474,8 @@ def run_official_academic_benchmarks(
         f"| **HumanEval Subset ({len(HUMANEVAL_TASKS)} задач)** | `pass@1 (%)` | **{pass_at_1['base']}%** | **{pass_at_1['rag']}%** | **{pass_at_1['lora']}%** | **{pass_at_1['hybrid']}%** |",
         f"| **RuMMLU CS Subset ({len(RUMMLU_CS_QUESTIONS)} вопр.)** | `Accuracy (%)` | **{rummlu_acc['base']}%** | **{rummlu_acc['rag']}%** | **{rummlu_acc['lora']}%** | **{rummlu_acc['hybrid']}%** |",
         f"| **Test Set Perplexity** | `PPL (ниже = лучше)` | `{base_ppl}` | N/A | **`{lora_ppl}`** | **`{lora_ppl}`** |",
-        f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1']*100, 1)}%` | N/A | **`{round(lora_rouge['rouge1']*100, 1)}%`** | **`{round(lora_rouge['rouge1']*100, 1)}%`** |",
-        f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL']*100, 1)}%` | N/A | **`{round(lora_rouge['rougeL']*100, 1)}%`** | **`{round(lora_rouge['rougeL']*100, 1)}%`** |",
+        f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rouge1'] * 100, 1)}%`** | **`{round(lora_rouge['rouge1'] * 100, 1)}%`** |",
+        f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rougeL'] * 100, 1)}%`** | **`{round(lora_rouge['rougeL'] * 100, 1)}%`** |",
         "",
         "---",
         "",
@@ -470,20 +489,20 @@ def run_official_academic_benchmarks(
         b_str = "✅ PASSED" if rec["base_ok"] else "❌ FAILED"
         l_str = "✅ PASSED" if rec["lora_ok"] else "❌ FAILED"
         h_str = "✅ PASSED" if rec["hybrid_ok"] else "❌ FAILED"
-        report_lines.append(
-            f"| `{rec['task_id']}` | `{rec['entry_point']}` | {b_str} | {l_str} | {h_str} |"
-        )
+        report_lines.append(f"| `{rec['task_id']}` | `{rec['entry_point']}` | {b_str} | {l_str} | {h_str} |")
 
-    report_lines.extend([
-        "",
-        "---",
-        "",
-        "## 4. Выводы",
-        "",
-        f"1. **Перплексия на доменном тесте (PPL {base_ppl} ➔ {lora_ppl})**: Доменный LoRA адаптер снижает кросс-энтропийную потерю на русскоязычном инженерном тексте.",
-        f"2. **Кодогенерация HumanEval (pass@1 = {pass_at_1['hybrid']}%)**: Проверка работоспособности сгенерированных Python-функций на тестовых ассертах.",
-        f"3. **RuMMLU Точность ({rummlu_acc['hybrid']}%)**: Оценка точности выбора вариантов ответов на контрольных вопросах по архитектуре БД, сетей и ОС.",
-    ])
+    report_lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## 4. Выводы",
+            "",
+            f"1. **Перплексия на доменном тесте (PPL {base_ppl} ➔ {lora_ppl})**: Доменный LoRA адаптер снижает кросс-энтропийную потерю на русскоязычном инженерном тексте.",
+            f"2. **Кодогенерация HumanEval (pass@1 = {pass_at_1['hybrid']}%)**: Проверка работоспособности сгенерированных Python-функций на тестовых ассертах.",
+            f"3. **RuMMLU Точность ({rummlu_acc['hybrid']}%)**: Оценка точности выбора вариантов ответов на контрольных вопросах по архитектуре БД, сетей и ОС.",
+        ]
+    )
 
     with open(output_md, "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines))
@@ -491,12 +510,17 @@ def run_official_academic_benchmarks(
     # Save JSON matrix
     output_json = Path("reports/academic_scientific_benchmarks_matrix.json")
     with open(output_json, "w", encoding="utf-8") as f:
-        json.dump({
-            "humaneval_pass_at_1": pass_at_1,
-            "rummlu_accuracy": rummlu_acc,
-            "perplexity": {"base": base_ppl, "lora": lora_ppl},
-            "rouge": {"base": base_rouge, "lora": lora_rouge},
-        }, f, ensure_ascii=False, indent=2)
+        json.dump(
+            {
+                "humaneval_pass_at_1": pass_at_1,
+                "rummlu_accuracy": rummlu_acc,
+                "perplexity": {"base": base_ppl, "lora": lora_ppl},
+                "rouge": {"base": base_rouge, "lora": lora_rouge},
+            },
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
 
     logger.info(f"Academic Benchmark evaluation finished! Report written to {output_md}")
 

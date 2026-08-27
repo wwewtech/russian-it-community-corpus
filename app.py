@@ -139,8 +139,13 @@ if nav == NAV_MAIN:
         leak_breakdown = parquet_audit.get("leak_breakdown", {})
         adv_suite = cert_data.get("adversarial_suite", {})
 
-        total_leaks = parquet_audit.get("total_leaks_found", pii_leak.get("phone_leaks", 0) + pii_leak.get("email_leaks", 0) + pii_leak.get("api_key_leaks", 0))
-        is_passed = (cert_data.get("verification_status") == "PASSED" or val_data.get("validation_passed", False)) and total_leaks == 0
+        total_leaks = parquet_audit.get(
+            "total_leaks_found",
+            pii_leak.get("phone_leaks", 0) + pii_leak.get("email_leaks", 0) + pii_leak.get("api_key_leaks", 0),
+        )
+        is_passed = (
+            cert_data.get("verification_status") == "PASSED" or val_data.get("validation_passed", False)
+        ) and total_leaks == 0
 
         if is_passed:
             st.success("✅ **Zero-PII Verification Status: PASSED**")
@@ -155,7 +160,9 @@ if nav == NAV_MAIN:
         st.write(f"- Утечек криптокошельков: **{leak_breakdown.get('crypto_wallets', 0)}**")
         adv_passed = adv_suite.get("adversarial_tests_passed", 14)
         adv_total = adv_suite.get("total_adversarial_tests", 14)
-        st.write(f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_suite.get('success_rate_percentage', 100.0):.1f}%)**")
+        st.write(
+            f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_suite.get('success_rate_percentage', 100.0):.1f}%)**"
+        )
 
 # =============================================================================
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)

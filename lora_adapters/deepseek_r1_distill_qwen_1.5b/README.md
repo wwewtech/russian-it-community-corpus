@@ -14,11 +14,7 @@ base_model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 adapter_path = "lora_adapters/deepseek_r1_distill_qwen_1.5b"
 
 tokenizer = AutoTokenizer.from_pretrained(adapter_path)
-model = AutoModelForCausalLM.from_pretrained(
-    base_model_name,
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained(base_model_name, torch_dtype=torch.float16, device_map="auto")
 model = PeftModel.from_pretrained(model, adapter_path)
 
 prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket и SSL в Docker?"

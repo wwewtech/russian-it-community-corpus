@@ -102,9 +102,14 @@ def format_chat_prompt(example: dict, tokenizer: Any) -> dict:
     """Format dialogue into conversational prompt."""
     conv = example.get("conversations") or example.get("messages")
     if conv and isinstance(conv, list):
-        messages = [{"role": msg.get("from") or msg.get("role"), "content": msg.get("value") or msg.get("content")} for msg in conv]
+        messages = [
+            {"role": msg.get("from") or msg.get("role"), "content": msg.get("value") or msg.get("content")}
+            for msg in conv
+        ]
         role_map = {"human": "user", "gpt": "assistant", "system": "system", "user": "user", "assistant": "assistant"}
-        clean_msgs = [{"role": role_map.get(m["role"], "user"), "content": str(m["content"])} for m in messages if m["content"]]
+        clean_msgs = [
+            {"role": role_map.get(m["role"], "user"), "content": str(m["content"])} for m in messages if m["content"]
+        ]
     else:
         q = example.get("query") or example.get("instruction") or "Расскажи про IT архитектуру"
         r = example.get("response") or example.get("output") or example.get("content") or ""

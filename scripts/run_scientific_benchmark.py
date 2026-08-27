@@ -80,21 +80,85 @@ EVAL_MODELS = [
     {"id": "opt_125m", "base": "facebook/opt-125m", "family": "OPT", "params": "125M", "type": "base"},
     {"id": "bloom_560m", "base": "bigscience/bloom-560m", "family": "BLOOM", "params": "560M", "type": "base"},
     {"id": "gpt2_medium", "base": "openai-community/gpt2-medium", "family": "GPT-2", "params": "355M", "type": "base"},
-    {"id": "rugpt3_small", "base": "ai-forever/rugpt3small_based_on_gpt2", "family": "RuGPT3", "params": "125M", "type": "base"},
-
+    {
+        "id": "rugpt3_small",
+        "base": "ai-forever/rugpt3small_based_on_gpt2",
+        "family": "RuGPT3",
+        "params": "125M",
+        "type": "base",
+    },
     # Tier 2: Compact 1B-Class Models (Instruct & Coder)
-    {"id": "tinyllama_1.1b_chat", "base": "TinyLlama/TinyLlama-1.1B-Chat-v1.0", "family": "TinyLlama", "params": "1.1B", "type": "instruct"},
-    {"id": "smollm2_1.7b_instruct", "base": "HuggingFaceTB/SmolLM2-1.7B-Instruct", "family": "SmolLM2", "params": "1.7B", "type": "instruct"},
-    {"id": "llama_3.2_1b_instruct", "base": "unsloth/Llama-3.2-1B-Instruct", "family": "LLaMA 3.2", "params": "1.0B", "type": "instruct"},
-    {"id": "deepseek_coder_1.3b_instruct", "base": "deepseek-ai/deepseek-coder-1.3b-instruct", "family": "DeepSeek Coder", "params": "1.3B", "type": "coder"},
-    {"id": "falcon3_1b_instruct", "base": "tiiuae/Falcon3-1B-Instruct", "family": "Falcon 3", "params": "1.0B", "type": "instruct"},
-
+    {
+        "id": "tinyllama_1.1b_chat",
+        "base": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "family": "TinyLlama",
+        "params": "1.1B",
+        "type": "instruct",
+    },
+    {
+        "id": "smollm2_1.7b_instruct",
+        "base": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        "family": "SmolLM2",
+        "params": "1.7B",
+        "type": "instruct",
+    },
+    {
+        "id": "llama_3.2_1b_instruct",
+        "base": "unsloth/Llama-3.2-1B-Instruct",
+        "family": "LLaMA 3.2",
+        "params": "1.0B",
+        "type": "instruct",
+    },
+    {
+        "id": "deepseek_coder_1.3b_instruct",
+        "base": "deepseek-ai/deepseek-coder-1.3b-instruct",
+        "family": "DeepSeek Coder",
+        "params": "1.3B",
+        "type": "coder",
+    },
+    {
+        "id": "falcon3_1b_instruct",
+        "base": "tiiuae/Falcon3-1B-Instruct",
+        "family": "Falcon 3",
+        "params": "1.0B",
+        "type": "instruct",
+    },
     # Tier 3: Modern 0.5B-1.5B Architectures (Instruct & Reasoning)
-    {"id": "qwen2.5_0.5b_instruct", "base": "Qwen/Qwen2.5-0.5B-Instruct", "family": "Qwen 2.5", "params": "0.5B", "type": "instruct"},
-    {"id": "qwen2.5_1.5b_instruct", "base": "Qwen/Qwen2.5-1.5B-Instruct", "family": "Qwen 2.5", "params": "1.5B", "type": "instruct"},
-    {"id": "qwen2.5_coder_1.5b_instruct", "base": "Qwen/Qwen2.5-Coder-1.5B-Instruct", "family": "Qwen 2.5 Coder", "params": "1.5B", "type": "coder"},
-    {"id": "vikhr_qwen_2.5_1.5b", "base": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct", "family": "Vikhr Russian", "params": "1.5B", "type": "instruct"},
-    {"id": "deepseek_r1_distill_qwen_1.5b", "base": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", "family": "DeepSeek R1", "params": "1.5B", "type": "reasoning"},
+    {
+        "id": "qwen2.5_0.5b_instruct",
+        "base": "Qwen/Qwen2.5-0.5B-Instruct",
+        "family": "Qwen 2.5",
+        "params": "0.5B",
+        "type": "instruct",
+    },
+    {
+        "id": "qwen2.5_1.5b_instruct",
+        "base": "Qwen/Qwen2.5-1.5B-Instruct",
+        "family": "Qwen 2.5",
+        "params": "1.5B",
+        "type": "instruct",
+    },
+    {
+        "id": "qwen2.5_coder_1.5b_instruct",
+        "base": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+        "family": "Qwen 2.5 Coder",
+        "params": "1.5B",
+        "type": "coder",
+    },
+    {
+        "id": "vikhr_qwen_2.5_1.5b",
+        "base": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+        "family": "Vikhr Russian",
+        "params": "1.5B",
+        "type": "instruct",
+    },
+    {
+        "id": "deepseek_r1_distill_qwen_1.5b",
+        "base": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        "family": "DeepSeek R1",
+        "params": "1.5B",
+        "type": "reasoning",
+    },
 ]
 
 QUALITATIVE_PROMPTS = [
@@ -125,6 +189,7 @@ QUALITATIVE_PROMPTS = [
 # Provenance helpers
 # ---------------------------------------------------------------------------
 
+
 def sha256_file(path: Path, chunk_size: int = 1 << 20) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -140,13 +205,9 @@ def sha256_text(text: str) -> str:
 def get_git_revision() -> dict[str, Any]:
     """Return the REAL current git revision. Never hand-write commit hashes."""
     try:
-        commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
-        ).stdout.strip()
+        commit = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
         dirty = bool(
-            subprocess.run(
-                ["git", "status", "--porcelain"], capture_output=True, text=True, check=True
-            ).stdout.strip()
+            subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=True).stdout.strip()
         )
         return {"commit": commit, "dirty": dirty}
     except Exception as exc:  # pragma: no cover - git always present in repo
@@ -169,9 +230,7 @@ def build_run_metadata(dataset_sha256: str, source: str) -> dict[str, Any]:
         "max_length": MAX_LEN,
         "dataset_path": str(DATASET_PATH),
         "dataset_sha256": dataset_sha256,
-        "training_exclusion_rules": [
-            {"n_samples": n, "random_state": s} for n, s in TRAINING_SAMPLING_RULES
-        ],
+        "training_exclusion_rules": [{"n_samples": n, "random_state": s} for n, s in TRAINING_SAMPLING_RULES],
         "environment": {
             "python": platform.python_version(),
             "torch": torch.__version__,
@@ -196,10 +255,7 @@ def build_eval_splits(df: pd.DataFrame) -> dict[str, Any]:
         if len(df) > n:
             excluded_indices.update(df.sample(n=n, random_state=seed).index.tolist())
     pool = df.drop(index=sorted(excluded_indices)).reset_index(drop=True)
-    logger.info(
-        f"Eval pool: {len(pool)} dialogues "
-        f"({len(excluded_indices)} excluded as possible training data)."
-    )
+    logger.info(f"Eval pool: {len(pool)} dialogues ({len(excluded_indices)} excluded as possible training data).")
 
     splits: dict[int, list[str]] = {}
     manifest_seeds: dict[str, Any] = {}
@@ -208,9 +264,7 @@ def build_eval_splits(df: pd.DataFrame) -> dict[str, Any]:
         texts = [dialogue_to_text(row) for _, row in sample_df.iterrows()]
         splits[s] = texts
         manifest_seeds[f"seed_{s}"] = {
-            "pool_positions": sample_df.index.tolist()
-            if "index" in sample_df.columns
-            else None,
+            "pool_positions": sample_df.index.tolist() if "index" in sample_df.columns else None,
             "dialogue_sha256": [sha256_text(t) for t in texts],
         }
     return {"splits": splits, "pool_size": len(pool), "excluded_count": len(excluded_indices), "seeds": manifest_seeds}
@@ -232,6 +286,7 @@ def compute_sample_ppls(model, tokenizer, texts: list[str], max_len: int = MAX_L
 # ---------------------------------------------------------------------------
 # Full GPU benchmark run
 # ---------------------------------------------------------------------------
+
 
 def run_benchmark() -> None:
     logger.info("Initializing Scientific Benchmark & Reproducibility Audit (protocol v%s)...", PROTOCOL_VERSION)
@@ -255,7 +310,9 @@ def run_benchmark() -> None:
         base_name = m_info["base"]
         adapter_path = Path(f"lora_adapters/{m_id}")
         logger.info("=" * 80)
-        logger.info(f"[{m_idx}/{len(EVAL_MODELS)}] Evaluating: {m_id} ({base_name}) | Family: {m_info['family']} | Params: {m_info['params']}")
+        logger.info(
+            f"[{m_idx}/{len(EVAL_MODELS)}] Evaluating: {m_id} ({base_name}) | Family: {m_info['family']} | Params: {m_info['params']}"
+        )
         logger.info("=" * 80)
 
         try:
@@ -279,7 +336,9 @@ def run_benchmark() -> None:
                 inp = tokenizer(f"<|user|>\n{q['prompt']}<|assistant|>\n", return_tensors="pt").to(base_model.device)
                 with torch.no_grad():
                     out = base_model.generate(**inp, max_new_tokens=90, do_sample=False)
-                base_generations[q["id"]] = tokenizer.decode(out[0][inp["input_ids"].shape[1]:], skip_special_tokens=True).strip()
+                base_generations[q["id"]] = tokenizer.decode(
+                    out[0][inp["input_ids"].shape[1] :], skip_special_tokens=True
+                ).strip()
 
             lora_seed_ppls = {}
             lora_generations = {}
@@ -295,14 +354,20 @@ def run_benchmark() -> None:
                     lora_seed_ppls[s] = compute_sample_ppls(lora_model, tokenizer, seed_splits[s])
 
                 for q in QUALITATIVE_PROMPTS:
-                    inp = tokenizer(f"<|user|>\n{q['prompt']}<|assistant|>\n", return_tensors="pt").to(lora_model.device)
+                    inp = tokenizer(f"<|user|>\n{q['prompt']}<|assistant|>\n", return_tensors="pt").to(
+                        lora_model.device
+                    )
                     with torch.no_grad():
                         out = lora_model.generate(**inp, max_new_tokens=90, do_sample=False)
-                    lora_generations[q["id"]] = tokenizer.decode(out[0][inp["input_ids"].shape[1]:], skip_special_tokens=True).strip()
+                    lora_generations[q["id"]] = tokenizer.decode(
+                        out[0][inp["input_ids"].shape[1] :], skip_special_tokens=True
+                    ).strip()
 
                 del lora_model
             else:
-                logger.warning(f"Adapter not found for {m_id}; marking record as adapter_missing (no fake LoRA numbers).")
+                logger.warning(
+                    f"Adapter not found for {m_id}; marking record as adapter_missing (no fake LoRA numbers)."
+                )
                 lora_seed_ppls = {}
                 lora_generations = {}
 
@@ -341,16 +406,19 @@ def run_benchmark() -> None:
                 overall_lora_std = float(np.std(all_lora_ppls))
                 overall_lora_min = float(np.min(all_lora_ppls))
                 overall_lora_max = float(np.max(all_lora_ppls))
-                overall_delta_pct = ((overall_base_mean - overall_lora_mean) / overall_base_mean * 100.0) if overall_base_mean > 0 else float("nan")
+                overall_delta_pct = (
+                    ((overall_base_mean - overall_lora_mean) / overall_base_mean * 100.0)
+                    if overall_base_mean > 0
+                    else float("nan")
+                )
             else:
                 overall_lora_mean = overall_lora_median = overall_lora_std = None
                 overall_lora_min = overall_lora_max = None
                 overall_delta_pct = None
 
             deltas = [seed_comparison[f"seed_{s}"]["delta_ppl_pct"] for s in SEEDS]
-            is_stable_sign = (
-                all(d is not None for d in deltas)
-                and (deltas[0] >= 0) == (deltas[1] >= 0) == (deltas[2] >= 0)
+            is_stable_sign = all(d is not None for d in deltas) and (deltas[0] >= 0) == (deltas[1] >= 0) == (
+                deltas[2] >= 0
             )
 
             reproducibility_results[m_id] = {
@@ -404,9 +472,13 @@ def run_benchmark() -> None:
             full_matrix_results.append(model_matrix_entry)
 
             if all_lora_ppls:
-                logger.info(f"[{m_id}] Base PPL: {overall_base_mean:.2f} (σ={overall_base_std:.1f}) -> LoRA PPL: {overall_lora_mean:.2f} (σ={overall_lora_std:.1f}) | Δ = {overall_delta_pct:+.1f}%")
+                logger.info(
+                    f"[{m_id}] Base PPL: {overall_base_mean:.2f} (σ={overall_base_std:.1f}) -> LoRA PPL: {overall_lora_mean:.2f} (σ={overall_lora_std:.1f}) | Δ = {overall_delta_pct:+.1f}%"
+                )
             else:
-                logger.info(f"[{m_id}] Base PPL: {overall_base_mean:.2f} (σ={overall_base_std:.1f}) | LoRA: adapter missing")
+                logger.info(
+                    f"[{m_id}] Base PPL: {overall_base_mean:.2f} (σ={overall_base_std:.1f}) | LoRA: adapter missing"
+                )
 
             del base_model
             del tokenizer
@@ -428,6 +500,7 @@ def run_benchmark() -> None:
 # Artifact writing (shared by GPU run and --from-cache regeneration)
 # ---------------------------------------------------------------------------
 
+
 def write_artifacts(
     matrix: list[dict[str, Any]],
     repro: dict[str, Any],
@@ -444,18 +517,20 @@ def write_artifacts(
 
     summary_metrics = []
     for m in matrix:
-        summary_metrics.append({
-            "model_id": m["id"],
-            "family": m["family"],
-            "params": m["params"],
-            "type": m["type"],
-            "adapter_found": m.get("adapter_found", True),
-            "base_ppl": m["base_ppl_distribution"]["mean"],
-            "lora_ppl": m["lora_ppl_distribution"]["mean"],
-            "ppl_delta_pct": m["mean_ppl_improvement_pct"],
-            "base_ppl_std": m["base_ppl_distribution"]["std"],
-            "lora_ppl_std": m["lora_ppl_distribution"]["std"],
-        })
+        summary_metrics.append(
+            {
+                "model_id": m["id"],
+                "family": m["family"],
+                "params": m["params"],
+                "type": m["type"],
+                "adapter_found": m.get("adapter_found", True),
+                "base_ppl": m["base_ppl_distribution"]["mean"],
+                "lora_ppl": m["lora_ppl_distribution"]["mean"],
+                "ppl_delta_pct": m["mean_ppl_improvement_pct"],
+                "base_ppl_std": m["base_ppl_distribution"]["std"],
+                "lora_ppl_std": m["lora_ppl_distribution"]["std"],
+            }
+        )
     with open("reports/scientific_evaluation_metrics.json", "w", encoding="utf-8") as f:
         json.dump({"run_metadata": metadata, "metrics": summary_metrics}, f, ensure_ascii=False, indent=2)
 
@@ -476,6 +551,7 @@ def write_artifacts(
 # Markdown report — narrative is DERIVED from the measured numbers
 # ---------------------------------------------------------------------------
 
+
 def generate_markdown_report(matrix: list[dict[str, Any]], repro: dict[str, Any], metadata: dict[str, Any]) -> None:
     measured = [m for m in matrix if m.get("mean_ppl_improvement_pct") is not None]
     missing = [m for m in matrix if not m.get("adapter_found", True)]
@@ -483,39 +559,53 @@ def generate_markdown_report(matrix: list[dict[str, Any]], repro: dict[str, Any]
     md = []
     md.append("# 🔬 Scientific Evaluation & Multi-Seed Reproducibility Audit: LoRA Domain Adaptation")
     md.append("")
-    md.append(f"> **Protocol version**: {metadata['protocol_version']} · "
-              f"**Git commit**: `{metadata['git']['commit']}` (dirty: {metadata['git']['dirty']}) · "
-              f"**Generated (UTC)**: {metadata['generated_at_utc']}")
+    md.append(
+        f"> **Protocol version**: {metadata['protocol_version']} · "
+        f"**Git commit**: `{metadata['git']['commit']}` (dirty: {metadata['git']['dirty']}) · "
+        f"**Generated (UTC)**: {metadata['generated_at_utc']}"
+    )
     md.append(f"> **Dataset fingerprint (SHA-256)**: `{metadata['dataset_sha256']}`")
     md.append(">")
     md.append("> **Methodology & Verification Protocol**:")
 
     cached_measurement = metadata.get("measurement_protocol_version") is not None
     if cached_measurement:
-        md.append(f"> 1. **⚠️ MEASUREMENT PROVENANCE**: the numbers below were measured under "
-                  f"**protocol v{metadata['measurement_protocol_version']}** (commit "
-                  f"`{metadata['measured_in_commit']}`): seeded splits drawn from the **full** corpus, "
-                  f"*without* training-overlap exclusion. They are preserved verbatim for history; "
-                  f"re-run `scripts/run_scientific_benchmark.py` (without `--from-cache`) for clean "
-                  f"v{metadata['protocol_version']} numbers on the exclusion-filtered pool.")
+        md.append(
+            f"> 1. **⚠️ MEASUREMENT PROVENANCE**: the numbers below were measured under "
+            f"**protocol v{metadata['measurement_protocol_version']}** (commit "
+            f"`{metadata['measured_in_commit']}`): seeded splits drawn from the **full** corpus, "
+            f"*without* training-overlap exclusion. They are preserved verbatim for history; "
+            f"re-run `scripts/run_scientific_benchmark.py` (without `--from-cache`) for clean "
+            f"v{metadata['protocol_version']} numbers on the exclusion-filtered pool."
+        )
     else:
-        md.append(f"> 1. **Empirical Intrinsic Loss & Perplexity ($PPL = \\exp(\\text{{loss}})$)**: measured per-sample on "
-                  f"{len(SEEDS)} independent seeded sub-splits of {EVAL_SPLIT_SIZE} dialogues each "
-                  f"($S \\in \\{{{', '.join(map(str, SEEDS))}\\}}$, max_length={MAX_LEN}). "
-                  "The evaluation pool **excludes every dialogue selected by the LoRA training sampling rules** "
-                  "(see `reports/eval_split_manifest.json`), so the split is genuinely held-out.")
-    md.append("> 2. **Sign convention**: $\\Delta PPL = (PPL_{base} - PPL_{lora}) / PPL_{base} \\times 100\\%$ — "
-              "**positive = improvement** (LoRA lowers perplexity), negative = regression.")
+        md.append(
+            f"> 1. **Empirical Intrinsic Loss & Perplexity ($PPL = \\exp(\\text{{loss}})$)**: measured per-sample on "
+            f"{len(SEEDS)} independent seeded sub-splits of {EVAL_SPLIT_SIZE} dialogues each "
+            f"($S \\in \\{{{', '.join(map(str, SEEDS))}\\}}$, max_length={MAX_LEN}). "
+            "The evaluation pool **excludes every dialogue selected by the LoRA training sampling rules** "
+            "(see `reports/eval_split_manifest.json`), so the split is genuinely held-out."
+        )
+    md.append(
+        "> 2. **Sign convention**: $\\Delta PPL = (PPL_{base} - PPL_{lora}) / PPL_{base} \\times 100\\%$ — "
+        "**positive = improvement** (LoRA lowers perplexity), negative = regression."
+    )
     md.append("> 3. **Multi-Seed Stability Audit**: whether the sign of $\\Delta PPL$ replicates across seeds.")
-    md.append("> 4. **4-Domain Qualitative Generation Sandbox**: verbatim greedy generation across PostgreSQL, Kubernetes, Nginx, and Asyncio Python tasks.")
-    md.append(f"> 5. **Environment**: {metadata['environment']['device']}, torch {metadata['environment']['torch']}, "
-              f"transformers {metadata['environment']['transformers']}, peft {metadata['environment']['peft']}.")
+    md.append(
+        "> 4. **4-Domain Qualitative Generation Sandbox**: verbatim greedy generation across PostgreSQL, Kubernetes, Nginx, and Asyncio Python tasks."
+    )
+    md.append(
+        f"> 5. **Environment**: {metadata['environment']['device']}, torch {metadata['environment']['torch']}, "
+        f"transformers {metadata['environment']['transformers']}, peft {metadata['environment']['peft']}."
+    )
     md.append("")
     md.append("---")
     md.append("")
     md.append(f"## 📊 1. Multi-Seed Reproducibility & Distribution Table ({len(matrix)} Models)")
     md.append("")
-    md.append("| Architecture Class | Model ID | Params | Base PPL (Mean ± σ) | LoRA PPL (Mean ± σ) | Full Range [Min .. Max] | Seed 42 (Δ%) | Seed 123 (Δ%) | Seed 777 (Δ%) | Overall Δ PPL |")
+    md.append(
+        "| Architecture Class | Model ID | Params | Base PPL (Mean ± σ) | LoRA PPL (Mean ± σ) | Full Range [Min .. Max] | Seed 42 (Δ%) | Seed 123 (Δ%) | Seed 777 (Δ%) | Overall Δ PPL |"
+    )
     md.append("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
 
     def _fmt_seed(seed_key: str, seed_map: dict) -> str:
@@ -576,53 +666,75 @@ def generate_markdown_report(matrix: list[dict[str, Any]], repro: dict[str, Any]
         regressions = [m for m in measured if m["mean_ppl_improvement_pct"] < 0]
         stable = [m for m in measured if repro.get(m["id"], {}).get("overall_summary", {}).get("is_stable_sign")]
 
-        md.append("1. **Top improvements (overall Δ PPL)**: "
-                  + "; ".join(f"`{m['id']}` **{m['mean_ppl_improvement_pct']:+.1f}%**" for m in ranked[:3]) + ".")
+        md.append(
+            "1. **Top improvements (overall Δ PPL)**: "
+            + "; ".join(f"`{m['id']}` **{m['mean_ppl_improvement_pct']:+.1f}%**" for m in ranked[:3])
+            + "."
+        )
         if regressions:
-            md.append("2. **Honest negative results**: "
-                      + "; ".join(f"`{m['id']}` {m['mean_ppl_improvement_pct']:+.1f}%" for m in regressions)
-                      + " — LoRA *raised* perplexity for these models on this split.")
+            md.append(
+                "2. **Honest negative results**: "
+                + "; ".join(f"`{m['id']}` {m['mean_ppl_improvement_pct']:+.1f}%" for m in regressions)
+                + " — LoRA *raised* perplexity for these models on this split."
+            )
         else:
             md.append("2. **No regressions** measured on this split (Δ ≥ 0 for every evaluated model).")
-        md.append(f"3. **Cross-seed sign stability**: {len(stable)}/{len(measured)} models keep the same "
-                  "sign of $\\Delta$ across all three seeds.")
+        md.append(
+            f"3. **Cross-seed sign stability**: {len(stable)}/{len(measured)} models keep the same "
+            "sign of $\\Delta$ across all three seeds."
+        )
         by_type: dict[str, list[float]] = {}
         for m in measured:
             by_type.setdefault(m["type"], []).append(m["mean_ppl_improvement_pct"])
-        type_summary = "; ".join(
-            f"{t}: mean Δ {np.mean(v):+.1f}% (n={len(v)})" for t, v in sorted(by_type.items())
-        )
+        type_summary = "; ".join(f"{t}: mean Δ {np.mean(v):+.1f}% (n={len(v)})" for t, v in sorted(by_type.items()))
         md.append(f"4. **Effect by model class**: {type_summary}.")
     else:
         md.append("_No LoRA adapters were evaluated; the table contains base-model measurements only._")
 
     if missing:
-        md.append("5. **Not evaluated (adapter missing, no numbers fabricated)**: "
-                  + ", ".join(f"`{m['id']}`" for m in missing) + ".")
+        md.append(
+            "5. **Not evaluated (adapter missing, no numbers fabricated)**: "
+            + ", ".join(f"`{m['id']}`" for m in missing)
+            + "."
+        )
 
     md.append("")
     md.append("## ⚠️ 4. Scope & Limitations")
     md.append("")
-    md.append(f"- This audit covers **{len(matrix)} of 55** zoo adapters. Conclusions MUST NOT be extrapolated "
-              "to the unevaluated adapters without re-running this script on them.")
-    md.append(f"- Each seed split contains {EVAL_SPLIT_SIZE} dialogues ({len(SEEDS) * EVAL_SPLIT_SIZE} measurements "
-              "per model in total). This is a **sanity check, not an academic leaderboard**; absolute PPL values "
-              "depend on split composition and max_length.")
-    md.append("- Knowledge-retention probes (HumanEval/RuMMLU micro-subsets of 8 items) reported elsewhere in this "
-              "repository are **8-item subsets**, not the full benchmarks, and are labelled as such in "
-              "`reports/BENCHMARK_AND_EVALUATION.md`.")
+    md.append(
+        f"- This audit covers **{len(matrix)} of 55** zoo adapters. Conclusions MUST NOT be extrapolated "
+        "to the unevaluated adapters without re-running this script on them."
+    )
+    md.append(
+        f"- Each seed split contains {EVAL_SPLIT_SIZE} dialogues ({len(SEEDS) * EVAL_SPLIT_SIZE} measurements "
+        "per model in total). This is a **sanity check, not an academic leaderboard**; absolute PPL values "
+        "depend on split composition and max_length."
+    )
+    md.append(
+        "- Knowledge-retention probes (HumanEval/RuMMLU micro-subsets of 8 items) reported elsewhere in this "
+        "repository are **8-item subsets**, not the full benchmarks, and are labelled as such in "
+        "`reports/BENCHMARK_AND_EVALUATION.md`."
+    )
     md.append("")
     md.append("## 🧾 5. Methodology Changelog (why old numbers are NOT comparable)")
     md.append("")
     md.append("| Protocol | Commit | Eval set | max_length | Notes |")
     md.append("| :--- | :--- | :--- | :---: | :--- |")
-    md.append("| v1 | `d99aee3` (superseded) | `df.tail(15)` of the full corpus | 512 | Single unseeded split; possible train/eval overlap; script `comprehensive_scientific_audit.py` **removed** — it overwrote the canonical output file with a different methodology. |")
-    md.append("| v2 | `463c778` | 3 seeded splits of 10 from the full corpus | 384 | Multi-seed, but training dialogues were NOT excluded. |")
-    md.append(f"| v3 | `{metadata['git']['commit']}` | 3 seeded splits of 10 from a pool excluding all training dialogues (manifest-fingerprinted) | {MAX_LEN} | Current canonical protocol. |")
+    md.append(
+        "| v1 | `d99aee3` (superseded) | `df.tail(15)` of the full corpus | 512 | Single unseeded split; possible train/eval overlap; script `comprehensive_scientific_audit.py` **removed** — it overwrote the canonical output file with a different methodology. |"
+    )
+    md.append(
+        "| v2 | `463c778` | 3 seeded splits of 10 from the full corpus | 384 | Multi-seed, but training dialogues were NOT excluded. |"
+    )
+    md.append(
+        f"| v3 | `{metadata['git']['commit']}` | 3 seeded splits of 10 from a pool excluding all training dialogues (manifest-fingerprinted) | {MAX_LEN} | Current canonical protocol. |"
+    )
     md.append("")
-    md.append("Absolute PPL values from different protocol rows measure different text sets and "
-              "**must never be compared row-by-row**. Within one protocol row, all figures are "
-              "reproducible from `reports/eval_split_manifest.json` plus this script.")
+    md.append(
+        "Absolute PPL values from different protocol rows measure different text sets and "
+        "**must never be compared row-by-row**. Within one protocol row, all figures are "
+        "reproducible from `reports/eval_split_manifest.json` plus this script."
+    )
     md.append("")
 
     with open("reports/SCIENTIFIC_EVALUATION_REPORT.md", "w", encoding="utf-8") as f:

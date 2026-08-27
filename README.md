@@ -168,19 +168,13 @@ Load pre-built dataset splits in Python with a single line:
 from datasets import load_dataset
 
 # 1. Load SFT Multi-Turn Dialogues (171.5k dialogues)
-sft_ds = load_dataset(
-    "wwewtech/russian-it-community-corpus", "sft_dialogues", split="train"
-)
+sft_ds = load_dataset("wwewtech/russian-it-community-corpus", "sft_dialogues", split="train")
 
 # 2. Load RAG Knowledge Base Chunks (325.7k chunks)
-rag_ds = load_dataset(
-    "wwewtech/russian-it-community-corpus", "rag_knowledge_base", split="train"
-)
+rag_ds = load_dataset("wwewtech/russian-it-community-corpus", "rag_knowledge_base", split="train")
 
 # 3. Load Full Clean Messages (2.81M records)
-full_ds = load_dataset(
-    "wwewtech/russian-it-community-corpus", "full_corpus", split="train"
-)
+full_ds = load_dataset("wwewtech/russian-it-community-corpus", "full_corpus", split="train")
 ```
 
 ### LoRA Model Zoo (58 Pre-Trained Adapters & 7B–8B Flagships)
@@ -203,9 +197,7 @@ Pre-trained adapters fine-tuned on RICC dataset are available in [`lora_adapters
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-base = AutoModelForCausalLM.from_pretrained(
-    "Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto"
-)
+base = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto")
 tokenizer = AutoTokenizer.from_pretrained(
     "lora_adapters/qwen2.5_1.5b_instruct"
 )  # or "wwewtech/russian-it-community-lora"

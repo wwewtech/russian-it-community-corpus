@@ -14,11 +14,7 @@ base_model_name = "Vikhrmodels/Vikhr-Qwen-2.5-0.5B-Instruct"
 adapter_path = "lora_adapters/vikhr_qwen_2.5_0.5b"
 
 tokenizer = AutoTokenizer.from_pretrained(adapter_path)
-model = AutoModelForCausalLM.from_pretrained(
-    base_model_name,
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained(base_model_name, torch_dtype=torch.float16, device_map="auto")
 model = PeftModel.from_pretrained(model, adapter_path)
 
 prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket и SSL в Docker?"

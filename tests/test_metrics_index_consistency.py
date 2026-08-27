@@ -34,15 +34,18 @@ class TestMetricsIndexConsistency(unittest.TestCase):
             scores = [s[variant]["score"] for s in self.scenarios]
             mean = sum(scores) / len(scores)
             # Aggregates are stored rounded to one decimal place.
-            self.assertLessEqual(abs(mean - agg[f"{variant}_total_score"]), 0.051,
-                                 f"{variant}: aggregate contradicts per-scenario scores")
+            self.assertLessEqual(
+                abs(mean - agg[f"{variant}_total_score"]),
+                0.051,
+                f"{variant}: aggregate contradicts per-scenario scores",
+            )
 
     def test_gains_equal_score_differences(self):
         agg = self.matrix["aggregate_summary"]
+        self.assertAlmostEqual(agg["rag_gain_over_base"], agg["rag_total_score"] - agg["base_total_score"], places=6)
         self.assertAlmostEqual(
-            agg["rag_gain_over_base"], agg["rag_total_score"] - agg["base_total_score"], places=6)
-        self.assertAlmostEqual(
-           agg["hybrid_gain_over_base"], agg["hybrid_total_score"] - agg["base_total_score"], places=6)
+            agg["hybrid_gain_over_base"], agg["hybrid_total_score"] - agg["base_total_score"], places=6
+        )
 
     def test_domain_breakdown_covers_all_scenarios(self):
         scenario_domains = {s["domain"] for s in self.scenarios}

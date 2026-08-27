@@ -30,8 +30,7 @@ def fetch_json(url: str, retries: int = 3):
 def main():
     data = fetch_json(API)
     subfolders = sorted(
-        {s["rfilename"].split("/")[0] for s in data.get("siblings", []) if "/" in s["rfilename"]}
-        - {"models"}
+        {s["rfilename"].split("/")[0] for s in data.get("siblings", []) if "/" in s["rfilename"]} - {"models"}
     )
 
     def fetch_base(sub: str) -> dict:
@@ -88,7 +87,7 @@ def main():
         'subfolder = "qwen2.5_1.5b_instruct"              # choose from the catalog below',
         "",
         "tokenizer = AutoTokenizer.from_pretrained(model_id)",
-        "base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map=\"auto\")",
+        'base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")',
         "model = PeftModel.from_pretrained(base_model, adapter_id, subfolder=subfolder)",
         "",
         'inputs = tokenizer("<|user|>\\nКак настроить репликацию PostgreSQL?\\n<|assistant|>\\n", return_tensors="pt").to(model.device)',
@@ -197,9 +196,13 @@ def main():
     out_md = Path("reports/LORA_MODEL_ZOO.md")
     out_md.write_text("\n".join(zoo_lines), encoding="utf-8")
 
-    index = {"repo_id": REPO, "total_adapters": total, "flagships": sorted(FLAGSHIPS),
-             "adapters": [{"id": r["id"], "base_model": r["base"]} for r in rows],
-             "generated_at_utc": generated_at}
+    index = {
+        "repo_id": REPO,
+        "total_adapters": total,
+        "flagships": sorted(FLAGSHIPS),
+        "adapters": [{"id": r["id"], "base_model": r["base"]} for r in rows],
+        "generated_at_utc": generated_at,
+    }
     Path("reports/lora_zoo_index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Wrote {out_md}, {card}, lora_zoo_index.json; total adapters: {total}")

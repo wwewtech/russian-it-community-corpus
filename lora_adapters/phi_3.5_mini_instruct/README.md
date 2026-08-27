@@ -14,11 +14,7 @@ base_model_name = "microsoft/Phi-3.5-mini-instruct"
 adapter_path = "lora_adapters/phi_3.5_mini_instruct"
 
 tokenizer = AutoTokenizer.from_pretrained(adapter_path)
-model = AutoModelForCausalLM.from_pretrained(
-    base_model_name,
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
+model = AutoModelForCausalLM.from_pretrained(base_model_name, torch_dtype=torch.float16, device_map="auto")
 model = PeftModel.from_pretrained(model, adapter_path)
 
 prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket и SSL в Docker?"

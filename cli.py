@@ -129,6 +129,7 @@ def main():
 
     elif args.command == "chat":
         from src.inference import interactive_chat_session
+
         interactive_chat_session(
             model_name=args.model,
             adapter_id=args.adapter,
@@ -137,6 +138,7 @@ def main():
 
     elif args.command == "rag":
         from src.rag.rag_pipeline import LocalRAGPipeline
+
         kb_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
         if not kb_path.exists():
             print("❌ RAG knowledge base not found at dataset_output/parquet/rag_knowledge_base.parquet")

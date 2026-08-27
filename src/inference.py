@@ -136,7 +136,9 @@ def interactive_chat_session(
 def main():
     parser = argparse.ArgumentParser(description="Russian IT Community LLM & RAG Inference CLI")
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID or path")
-    parser.add_argument("--adapter", type=str, default="heavyweight_qwen2.5_coder_7b", help="LoRA Adapter ID in lora_adapters/")
+    parser.add_argument(
+        "--adapter", type=str, default="heavyweight_qwen2.5_coder_7b", help="LoRA Adapter ID in lora_adapters/"
+    )
     parser.add_argument("--no-rag", action="store_true", help="Disable RAG knowledge augmentation")
     parser.add_argument("--max-tokens", type=int, default=512, help="Maximum generated response tokens")
     args = parser.parse_args()

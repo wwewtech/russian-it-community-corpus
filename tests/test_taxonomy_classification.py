@@ -33,7 +33,9 @@ class TestTaxonomyClassification(unittest.TestCase):
         tags = self.tagger.extract_tags(text)
         self.assertIsInstance(tags, list)
         tag_set = {t.lower() for t in tags}
-        self.assertTrue(any(k in tag_set for k in ["docker", "redis", "nginx", "tls", "security", "infra", "container", "proxy"]))
+        self.assertTrue(
+            any(k in tag_set for k in ["docker", "redis", "nginx", "tls", "security", "infra", "container", "proxy"])
+        )
 
 
 if __name__ == "__main__":

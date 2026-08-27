@@ -235,7 +235,12 @@ class RedTeamPIIAuditor:
             ),
             "adversarial_suite": adv_res,
             "production_parquet_audit": prod_res,
-            "verification_status": "PASSED" if (adv_res["adversarial_tests_passed"] == adv_res["total_adversarial_tests"] and prod_res["total_leaks_found"] == 0) else "LEAKS_DETECTED",
+            "verification_status": "PASSED"
+            if (
+                adv_res["adversarial_tests_passed"] == adv_res["total_adversarial_tests"]
+                and prod_res["total_leaks_found"] == 0
+            )
+            else "LEAKS_DETECTED",
         }
 
         output_path.parent.mkdir(parents=True, exist_ok=True)

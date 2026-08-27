@@ -55,9 +55,7 @@ def build_synthetic_dataset(root: Path) -> Path:
         }
     )
     messages.to_parquet(parquet_dir / "full_clean_messages.parquet", index=False)
-    pd.DataFrame({"dialogue_id": [1], "turns": [3]}).to_parquet(
-        parquet_dir / "sft_dialogues.parquet", index=False
-    )
+    pd.DataFrame({"dialogue_id": [1], "turns": [3]}).to_parquet(parquet_dir / "sft_dialogues.parquet", index=False)
     pd.DataFrame({"chunk_id": [1], "content": ["nginx reverse proxy guide"]}).to_parquet(
         parquet_dir / "rag_knowledge_base.parquet", index=False
     )
@@ -120,7 +118,7 @@ class TestCLICommands(unittest.TestCase):
             output = f.getvalue()
             self.assertIn("Validating datasets", output)
 
-            result = json.loads(output[output.index("{"):])
+            result = json.loads(output[output.index("{") :])
             self.assertTrue(result["overall_passed"])
             self.assertTrue(result["parquet_files"]["passed"])
             self.assertTrue(result["jsonl_files"]["passed"])
@@ -141,12 +139,10 @@ class TestCLICommands(unittest.TestCase):
             ):
                 main()
 
-            result = json.loads(f.getvalue()[f.getvalue().index("{"):])
+            result = json.loads(f.getvalue()[f.getvalue().index("{") :])
             self.assertFalse(result["overall_passed"])
             self.assertFalse(result["jsonl_files"]["passed"])
-            self.assertEqual(
-                result["jsonl_files"]["details"]["rag_chunks_kb.jsonl"]["corrupt_lines"], 1
-            )
+            self.assertEqual(result["jsonl_files"]["details"]["rag_chunks_kb.jsonl"]["corrupt_lines"], 1)
 
     def test_cli_validate_flags_pii_leak(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -174,12 +170,9 @@ class TestCLICommands(unittest.TestCase):
                 main()
 
             raw = f.getvalue()
-            result = json.loads(raw[raw.index("{"):])
+            result = json.loads(raw[raw.index("{") :])
             self.assertFalse(result["pii_leakage_audit"]["passed"])
-            self.assertGreaterEqual(
-                result["pii_leakage_audit"]["leaks_found"]["unmasked_emails"], 1
-            )
-
+            self.assertGreaterEqual(result["pii_leakage_audit"]["leaks_found"]["unmasked_emails"], 1)
 
     def test_cli_benchmark(self):
         f = io.StringIO()

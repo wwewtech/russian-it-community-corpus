@@ -27,15 +27,17 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_id = "Qwen/Qwen2.5-1.5B-Instruct"          # any base model from the catalog
+model_id = "Qwen/Qwen2.5-1.5B-Instruct"  # any base model from the catalog
 adapter_id = "wwewtech/russian-it-community-lora"
-subfolder = "qwen2.5_1.5b_instruct"              # choose from the catalog below
+subfolder = "qwen2.5_1.5b_instruct"  # choose from the catalog below
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")
 model = PeftModel.from_pretrained(base_model, adapter_id, subfolder=subfolder)
 
-inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL?\n<|assistant|>\n", return_tensors="pt").to(model.device)
+inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL?\n<|assistant|>\n", return_tensors="pt").to(
+    model.device
+)
 outputs = model.generate(**inputs, max_new_tokens=256)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
