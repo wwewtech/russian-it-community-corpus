@@ -37,14 +37,16 @@ def interactive_chat_session(
     print("=" * 70)
     print("Type your technical question (or 'exit' / 'quit' to end session):\n")
 
+    root_dir = Path(__file__).resolve().parent.parent
+
     # 1. Load RAG
     rag_kb = None
     if use_rag:
-        rag_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
+        rag_path = root_dir / "dataset_output" / "parquet" / "rag_knowledge_base.parquet"
         if rag_path.exists():
             print("🔍 Initializing Local RAG Knowledge Base...")
             rag_kb = LocalRAGPipeline(rag_path)
-            print(f"✅ RAG Engine ready ({len(rag_kb.df):,} chunks indexed).")
+            print(f"✅ RAG Engine ready ({len(rag_kb.df_kb):,} chunks indexed).")
         else:
             print("⚠️ RAG Parquet knowledge base not found. Running without RAG.")
 
@@ -64,7 +66,7 @@ def interactive_chat_session(
 
     # 3. Attach LoRA Adapter
     if adapter_id:
-        adapter_path = Path(f"lora_adapters/{adapter_id}")
+        adapter_path = root_dir / "lora_adapters" / adapter_id
         if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
             try:
                 model = PeftModel.from_pretrained(model, str(adapter_path))

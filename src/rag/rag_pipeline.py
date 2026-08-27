@@ -30,6 +30,14 @@ class LocalRAGPipeline:
         self.df_kb = pd.read_parquet(self.parquet_kb_path)
         logger.info(f"Loaded {len(self.df_kb):,} RAG knowledge chunks.")
 
+    @property
+    def df(self) -> pd.DataFrame:
+        """Alias for df_kb for backward compatibility."""
+        return self.df_kb
+
+    def __len__(self) -> int:
+        return len(self.df_kb)
+
     def search(self, query: str, top_k: int = 3, domain_filter: str | None = None) -> list[dict[str, Any]]:
         """
         Fast lexical and semantic retrieval across knowledge base chunks.

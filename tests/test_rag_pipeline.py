@@ -37,6 +37,21 @@ class TestRAGPipeline(unittest.TestCase):
         for r in results:
             self.assertIsInstance(r.get("content", ""), str)
 
+    def test_rag_properties_and_len(self):
+        self.assertIsNotNone(self.rag_pipeline.df)
+        self.assertEqual(len(self.rag_pipeline), len(self.rag_pipeline.df_kb))
+        self.assertEqual(len(self.rag_pipeline.df), len(self.rag_pipeline.df_kb))
+
+    def test_format_rag_prompt(self):
+        query = "как настроить nginx"
+        sample_contexts = [
+            {"title": "Nginx Config", "date_range": "2024", "content": "worker_processes auto;"}
+        ]
+        formatted = self.rag_pipeline.format_rag_prompt(query, sample_contexts)
+        self.assertIn("Nginx Config", formatted)
+        self.assertIn("worker_processes auto;", formatted)
+        self.assertIn(query, formatted)
+
 
 if __name__ == "__main__":
     unittest.main()

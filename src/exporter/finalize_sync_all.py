@@ -149,7 +149,7 @@ def main():
 
     for idx, r in enumerate(results, 1):
         md_lines.append(
-            f"| {idx} | **`{r['id']}`** | **{r['size_mb']} MB** | [`lora_adapters/{r['id']}/`](file:///D:/project_x/lora_adapters/{r['id']}/) | [`{MODEL_REPO_ID}`](https://huggingface.co/{MODEL_REPO_ID}) |"
+            f"| {idx} | **`{r['id']}`** | **{r['size_mb']} MB** | [`lora_adapters/{r['id']}/`](lora_adapters/{r['id']}/) | [`{MODEL_REPO_ID}`](https://huggingface.co/{MODEL_REPO_ID}) |"
         )
 
     md_lines.extend([
@@ -184,12 +184,6 @@ def main():
         f.write("\n".join(md_lines))
 
     logger.info(f"Generated LORA_MODEL_ZOO.md with {len(results)} adapters!")
-
-    # 4. Git commit and push to GitHub
-    subprocess.run(["git", "add", "."], check=True)
-    subprocess.run(["git", "commit", "-m", f"feat(zoo): expand LoRA Model Zoo to {len(results)} pre-trained foundation models"], check=False)
-    subprocess.run(["git", "push", "origin", "main"], check=False)
-    logger.info("Successfully pushed updated configs and catalog to GitHub!")
 
 
 if __name__ == "__main__":
