@@ -194,7 +194,7 @@ class RedTeamPIIAuditor:
         sample = df.sample(n=min(sample_size, len(df)), random_state=42)
 
         scrubber = RegexPIIScrubber()
-        leaks = defaultdict(int)
+        leaks: defaultdict[str, int] = defaultdict(int)
 
         for _, row in sample.iterrows():
             text = row.get("text_clean")

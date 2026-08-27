@@ -72,7 +72,7 @@ class RegexPIIScrubber:
             r"(?i)\b(?:rozetked\s+plus\s+chat|rozetked|wylsacom\s+media|wylsacom|лама\s+ai|лама\s*:\s*комментарии|русский\s+ит\s+бизнес|полезная\s+нагрузка|forgetme\s*\|\s*comms|внутри\s+ai)\b"
         )
 
-    def scrub(self, text: str, mention_map: dict[str, str] = None) -> tuple[str, dict[str, int]]:
+    def scrub(self, text: str, mention_map: dict[str, str] | None = None) -> tuple[str, dict[str, int]]:
         """
         Scrub sensitive PII from text using regex patterns.
         Returns cleaned text and a dictionary with count of scrubbed entities.
