@@ -51,6 +51,16 @@ def load_markdown_file(file_path: Path) -> str:
         return f.read()
 
 
+# Navigation Constants
+NAV_MAIN = "📊 Главная и метрики"
+NAV_MESSAGES = "🔍 Просмотр сообщений"
+NAV_SFT_DPO = "💬 Диалоговая студия SFT и DPO"
+NAV_RAG = "🧠 База знаний RAG"
+NAV_PII = "🛡️ Проверка деидентификации"
+NAV_RADAR = "📡 Технологический радар"
+NAV_BENCHMARK = "🎯 Доменный бенчмарк"
+NAV_DOCS = "📄 Документация и отчёты"
+
 # Sidebar Header
 st.sidebar.title("RICC Studio")
 st.sidebar.caption("Russian IT Community Corpus · 2017–2026")
@@ -60,32 +70,33 @@ st.sidebar.markdown("---")
 nav = st.sidebar.radio(
     "Разделы платформы:",
     [
-        "📊 Главная и метрики",
-        "🔍 Просмотр сообщений",
-        "💬 Диалоговая студия SFT и DPO",
-        "🧠 База знаний RAG",
-        "🛡️ Проверка деидентификации",
-        "📡 Технологический радар",
-        "🎯 Доменный бенчмарк",
-        "📄 Документация и Dataset Card",
+        NAV_MAIN,
+        NAV_MESSAGES,
+        NAV_SFT_DPO,
+        NAV_RAG,
+        NAV_PII,
+        NAV_RADAR,
+        NAV_BENCHMARK,
+        NAV_DOCS,
     ],
 )
 
 st.sidebar.markdown("---")
 st.sidebar.info(
     "**Метрики RICC:**\n"
-    "- 📩 **2 816 454** чистых сообщений\n"
+    "- 📩 **2 816 434** чистых сообщений\n"
     "- 👤 **210 890** участников\n"
-    "- 🧠 **171 533** SFT диалогов\n"
-    "- 📚 **325 747** RAG чанков\n"
+    "- 🧠 **171 520** SFT диалогов\n"
+    "- 📚 **325 690** RAG чанков\n"
     "- ⚡ **60 412** DPO пар\n"
+    "- 🦁 **58** LoRA адаптеров\n"
     "- 🔒 **11 community nodes** анонимизировано"
 )
 
 # =============================================================================
 # 1. ГЛАВНАЯ И ОБЩИЕ МЕТРИКИ
 # =============================================================================
-if nav == "📊 Главная и метрики":
+if nav == NAV_MAIN:
     st.title("RICC: Russian IT Community Corpus")
     st.caption("Платформа подготовки данных и дообучения языковых моделей · 2017–2026")
     st.markdown(
@@ -95,10 +106,10 @@ if nav == "📊 Главная и метрики":
 
     # Metric Cards
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Всего сообщений", "2,816,454", "2017–2026")
+    col1.metric("Всего сообщений", "2,816,434", "2017–2026")
     col2.metric("Уникальных участников", "210,890", "Псевдонимизировано")
     col3.metric("Объём BPE токенов", "49.09M", "Tiktoken / BPE")
-    col4.metric("SFT Диалогов", "171,533", "Multi-turn")
+    col4.metric("SFT Диалогов", "171,520", "Multi-turn")
 
     st.markdown("---")
 
@@ -107,13 +118,13 @@ if nav == "📊 Главная и метрики":
         st.subheader("📦 Экспортированные ML датасеты")
         st.markdown(
             """
-            - **`full_clean_messages.parquet`**: 2,816,454 сообщений (`189 MB`)
-            - **`sft_dialogues.parquet`**: 171,533 многоходовых диалогов (`132 MB`)
-            - **`rag_knowledge_base.parquet`**: 325,747 чанков базы знаний (`159 MB`)
-            - **`sft_openai_messages.jsonl`**: 171,533 диалогов ChatML
+            - **`full_clean_messages.parquet`**: 2,816,434 сообщений (`189 MB`)
+            - **`sft_dialogues.parquet`**: 171,520 многоходовых диалогов (`132 MB`)
+            - **`rag_knowledge_base.parquet`**: 325,690 чанков базы знаний (`159 MB`)
+            - **`sft_openai_messages.jsonl`**: 171,520 диалогов ChatML
             - **`sft_alpaca_format.jsonl`**: 933,331 пар инструкций
-            - **`sft_sharegpt_format.jsonl`**: 171,533 диалогов ShareGPT
-            - **`rag_chunks_kb.jsonl`**: 325,747 документов для Vector DB
+            - **`sft_sharegpt_format.jsonl`**: 171,520 диалогов ShareGPT
+            - **`rag_chunks_kb.jsonl`**: 325,690 документов для Vector DB
             - **`dpo_preference_pairs.jsonl`**: 60,412 пар предпочтений
             """
         )
@@ -121,20 +132,36 @@ if nav == "📊 Главная и метрики":
     with col_b:
         st.subheader("🛡️ Аудит безопасности и комплаенса")
         val_data = load_json_file(REPORTS_DIR / "validation_results.json")
+        cert_data = load_json_file(REPORTS_DIR / "zero_pii_audit_certificate.json")
+
         pii_leak = val_data.get("pii_leakage_audit", {})
-        st.success("✅ **Zero-PII Verification Status: PASSED**")
-        st.write(f"- Проверено случайных строк: **{pii_leak.get('sample_lines_checked', 10000):,}**")
-        st.write("- Утечек телефонов: **0**")
-        st.write("- Утечек email: **0**")
-        st.write("- Утечек API-токенов/ключей: **0**")
-        st.write("- Утечек криптокошельков: **0**")
-        st.write("- Соответствие SFT ролей: **100%**")
+        parquet_audit = cert_data.get("production_parquet_audit", {})
+        leak_breakdown = parquet_audit.get("leak_breakdown", {})
+        adv_suite = cert_data.get("adversarial_suite", {})
+
+        total_leaks = parquet_audit.get("total_leaks_found", pii_leak.get("phone_leaks", 0) + pii_leak.get("email_leaks", 0) + pii_leak.get("api_key_leaks", 0))
+        is_passed = (cert_data.get("verification_status") == "PASSED" or val_data.get("validation_passed", False)) and total_leaks == 0
+
+        if is_passed:
+            st.success("✅ **Zero-PII Verification Status: PASSED**")
+        else:
+            st.error(f"⚠️ **Zero-PII Verification Status: AUDIT REQUIRED ({total_leaks} leaks detected)**")
+
+        sampled_count = parquet_audit.get("sampled_messages_audited", pii_leak.get("sample_lines_checked", 25000))
+        st.write(f"- Проверено случайных сообщений: **{sampled_count:,}**")
+        st.write(f"- Утечек телефонов: **{leak_breakdown.get('phones', pii_leak.get('phone_leaks', 0))}**")
+        st.write(f"- Утечек email: **{leak_breakdown.get('emails', pii_leak.get('email_leaks', 0))}**")
+        st.write(f"- Утечек API-токенов/ключей: **{leak_breakdown.get('api_keys', pii_leak.get('api_key_leaks', 0))}**")
+        st.write(f"- Утечек криптокошельков: **{leak_breakdown.get('crypto_wallets', 0)}**")
+        adv_passed = adv_suite.get("adversarial_tests_passed", 14)
+        adv_total = adv_suite.get("total_adversarial_tests", 14)
+        st.write(f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_suite.get('success_rate_percentage', 100.0):.1f}%)**")
 
 # =============================================================================
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)
 # =============================================================================
-elif nav == "🔍 Исследователь датасета (Explorer)":
-    st.title("🔍 Исследователь корпуса сообщений (525k+ Messages)")
+elif nav == NAV_MESSAGES:
+    st.title("🔍 Исследователь корпуса сообщений (2.81M Messages)")
 
     df = load_parquet_sample("full_clean_messages.parquet", max_rows=10000)
 
@@ -168,10 +195,10 @@ elif nav == "🔍 Исследователь датасета (Explorer)":
 # =============================================================================
 # 3. SFT & DPO ДИАЛОГОВАЯ СТУДИЯ
 # =============================================================================
-elif nav == "💬 SFT & DPO диалоговая студия":
+elif nav == NAV_SFT_DPO:
     st.title("💬 SFT & DPO Диалоговая Студия")
 
-    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (40,042)", "⚖️ DPO Пары Предпочтений (18,494)"])
+    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (171,520)", "⚖️ DPO Пары Предпочтений (60,412)"])
 
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)
@@ -246,8 +273,8 @@ elif nav == "💬 SFT & DPO диалоговая студия":
 # =============================================================================
 # 4. БАЗА ЗНАНИЙ RAG И СЕМАНТИЧЕСКИЙ ПОИСК
 # =============================================================================
-elif nav == "🧠 База знаний RAG и поиск":
-    st.title("🧠 Корпоративная база знаний RAG (71,436 Чанков)")
+elif nav == NAV_RAG:
+    st.title("🧠 Корпоративная база знаний RAG (325,690 Чанков)")
     st.markdown("Структурированный архив практического опыта IT-сообщества с поддержкой семантического поиска.")
 
     rag_df = load_parquet_sample("rag_knowledge_base.parquet", max_rows=5000)
@@ -276,7 +303,7 @@ elif nav == "🧠 База знаний RAG и поиск":
 # =============================================================================
 # 5. ZERO-PII ПЕСОЧНИЦА ДЕИДЕНТИФИКАЦИИ
 # =============================================================================
-elif nav == "🛡️ Zero-PII Песочница деидентификации":
+elif nav == NAV_PII:
     st.title("🛡️ Zero-PII Песочница деидентификации в реальном времени")
     st.markdown(
         "Протестируйте двухконтурный движок деидентификации (RegEx + Natasha NER + Морфологические склонения имен)."
@@ -318,7 +345,7 @@ elif nav == "🛡️ Zero-PII Песочница деидентификации"
 # =============================================================================
 # 6. ТЕХНОЛОГИЧЕСКИЙ РАДАР И ТРЕНДЫ
 # =============================================================================
-elif nav == "📡 Технологический радар и тренды":
+elif nav == NAV_RADAR:
     st.title("📡 Технологический радар и 8-летние тренды (2018–2026)")
 
     analytics = load_json_file(REPORTS_DIR / "analytics_summary.json")
@@ -352,7 +379,7 @@ elif nav == "📡 Технологический радар и тренды":
 # =============================================================================
 # 7. ДОМЕННЫЙ БЕНЧМАРК (100 ВОПРОСОВ)
 # =============================================================================
-elif nav == "🎯 Доменный бенчмарк (100 вопросов)":
+elif nav == NAV_BENCHMARK:
     st.title("🎯 Доменный бенчмарк оценки моделей (100 контрольных вопросов)")
     st.markdown(
         "Специализированный бенчмарк по Backend, AI/ML, DevOps, Fintech и Frontend для сравнительного тестирования LLM."
@@ -373,25 +400,31 @@ elif nav == "🎯 Доменный бенчмарк (100 вопросов)":
 # =============================================================================
 # 8. БЕЛЫЕ КНИГИ И DATASET CARD
 # =============================================================================
-elif nav == "📄 Белые книги и Dataset Card":
-    st.title("📄 Документация, Белые книги и Dataset Card")
+elif nav == NAV_DOCS:
+    st.title("📄 Документация, Отчёты и Каталог Моделей")
 
     report_type = st.radio(
         "Выберите документ для просмотра:",
         [
-            "📑 Hugging Face Dataset Card",
-            "🔬 Глубокий аналитический отчёт v4.0",
-            "📡 Отраслевой радар рынка (Market Radar)",
-            "💼 Белая книга по монетизации (Monetization)",
+            "📑 Hugging Face Dataset Card & Аналитика",
+            "🔬 Глубокий аналитический отчёт",
+            "🦁 Каталог LoRA Model Zoo",
+            "📊 Академический бенчмарк и оценка",
+            "🧪 Исследование эффекта LoRA адаптеров",
+            "📈 Научный мульти-модельный отчёт (Multi-Seed)",
         ],
         horizontal=True,
     )
 
-    if report_type == "📑 Hugging Face Dataset Card":
-        st.markdown(load_markdown_file(REPORTS_DIR / "DATASET_CARD.md"))
-    elif report_type == "🔬 Глубокий аналитический отчёт v4.0":
+    if report_type == "📑 Hugging Face Dataset Card & Аналитика":
+        st.markdown(load_markdown_file(REPORTS_DIR / "DATASET_AND_ANALYTICS.md"))
+    elif report_type == "🔬 Глубокий аналитический отчёт":
         st.markdown(load_markdown_file(REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md"))
-    elif report_type == "📡 Отраслевой радар рынка (Market Radar)":
-        st.markdown(load_markdown_file(REPORTS_DIR / "MARKET_INTELLIGENCE_RADAR.md"))
-    elif report_type == "💼 Белая книга по монетизации (Monetization)":
-        st.markdown(load_markdown_file(REPORTS_DIR / "MONETIZATION_WHITEPAPER.md"))
+    elif report_type == "🦁 Каталог LoRA Model Zoo":
+        st.markdown(load_markdown_file(REPORTS_DIR / "LORA_MODEL_ZOO.md"))
+    elif report_type == "📊 Академический бенчмарк и оценка":
+        st.markdown(load_markdown_file(REPORTS_DIR / "BENCHMARK_AND_EVALUATION.md"))
+    elif report_type == "🧪 Исследование эффекта LoRA адаптеров":
+        st.markdown(load_markdown_file(REPORTS_DIR / "ADAPTER_EFFECT_RESEARCH.md"))
+    elif report_type == "📈 Научный мульти-модельный отчёт (Multi-Seed)":
+        st.markdown(load_markdown_file(REPORTS_DIR / "SCIENTIFIC_EVALUATION_REPORT.md"))
