@@ -5,6 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pandas as pd
+import pytest
+
 from src.exporter.jsonl_exporter import JSONLExporter
 from src.exporter.parquet_exporter import ParquetExporter
 from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
@@ -74,7 +77,7 @@ class TestParquetExporter:
         exp = ParquetExporter(tmp_path)
         out = exp.export_messages([_msg(1), _msg(2, "Второе сообщение")])
         assert out.exists() and out.suffix == ".parquet"
-        df = out.to_parquet and __import__("pandas").read_parquet(out)
+        df = pd.read_parquet(out)
         assert len(df) == 2
         assert df.loc[0, "msg_id"] == 1
         assert df.loc[0, "text_clean"] == "Как настроить репликацию?"
@@ -86,7 +89,7 @@ class TestParquetExporter:
     def test_sft_dialogues_roundtrip(self, tmp_path: Path):
         exp = ParquetExporter(tmp_path)
         out = exp.export_sft_dialogues([_dialogue(1), _dialogue(2)])
-        df = __import__("pandas").read_parquet(out)
+        df = pd.read_parquet(out)
         assert len(df) == 2
         assert df.loc[0, "thread_id"] == 1
         assert df.loc[0, "topic_domain"] == "backend_databases"
@@ -95,7 +98,7 @@ class TestParquetExporter:
     def test_rag_chunks_roundtrip(self, tmp_path: Path):
         exp = ParquetExporter(tmp_path)
         out = exp.export_rag_chunks([_chunk("c1"), _chunk("c2")])
-        df = __import__("pandas").read_parquet(out)
+        df = pd.read_parquet(out)
         assert len(df) == 2
         assert df.loc[1, "chunk_id"] == "c2"
         assert df.loc[0, "token_count"] == 15
