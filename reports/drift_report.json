@@ -1,0 +1,42 @@
+{
+  "report_title": "DATASET DRIFT MONITORING REPORT",
+  "generated_at_utc": "2026-08-28T01:12:09.671976+00:00",
+  "reference_rows": 2,
+  "current_rows": 2,
+  "thresholds": {
+    "psi": {
+      "stable": 0.1,
+      "moderate": 0.25
+    },
+    "js_divergence_bits": {
+      "stable": 0.05,
+      "moderate": 0.2
+    },
+    "vocab_jaccard": {
+      "stable": 0.9,
+      "moderate": 0.75
+    }
+  },
+  "metrics": {
+    "length_psi": {
+      "value": 0.0,
+      "verdict": "stable"
+    },
+    "domain_distribution": {
+      "js_divergence_bits": 0.0,
+      "biggest_share_shift_domain": "devops_infra",
+      "biggest_share_shift_pp": 0.0,
+      "per_domain_share_delta_pp": {
+        "devops_infra": 0.0
+      },
+      "verdict": "stable"
+    },
+    "vocabulary": {
+      "jaccard_overlap": 1.0,
+      "new_top_tokens": 0,
+      "dropped_top_tokens": 0,
+      "verdict": "stable"
+    }
+  },
+  "overall_verdict": "stable"
+}
