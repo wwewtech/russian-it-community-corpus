@@ -73,9 +73,9 @@ typecheck:
 typecheck-strict:
 	python -m mypy src/ingestion/schema.py src/bootstrap.py --strict
 
-# Markdown reports are derived artifacts: regenerate from JSON, never edit by hand.
+# Markdown model zoo catalog is generated from local & hub models.
 reports:
-	python scripts/regenerate_analytics_report.py
+	python scripts/regenerate_model_catalog.py
 
 ui:
 	streamlit run app.py

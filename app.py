@@ -413,25 +413,16 @@ elif nav == NAV_DOCS:
     report_type = st.radio(
         "Выберите документ для просмотра:",
         [
-            "📑 Hugging Face Dataset Card & Аналитика",
-            "🔬 Глубокий аналитический отчёт",
-            "🦁 Каталог LoRA Model Zoo",
-            "📊 Академический бенчмарк и оценка",
-            "🧪 Исследование эффекта LoRA адаптеров",
-            "📈 Научный мульти-модельный отчёт (Multi-Seed)",
+            "Dataset Card (Hugging Face)",
+            "Model Card (Hugging Face)",
+            "LoRA Model Zoo Catalog",
         ],
         horizontal=True,
     )
 
-    if report_type == "📑 Hugging Face Dataset Card & Аналитика":
+    if report_type == "Dataset Card (Hugging Face)":
         st.markdown(load_markdown_file(REPORTS_DIR / "DATASET_AND_ANALYTICS.md"))
-    elif report_type == "🔬 Глубокий аналитический отчёт":
-        st.markdown(load_markdown_file(REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md"))
-    elif report_type == "🦁 Каталог LoRA Model Zoo":
+    elif report_type == "Model Card (Hugging Face)":
+        st.markdown(load_markdown_file(REPORTS_DIR / "HF_MODEL_CARD.md"))
+    elif report_type == "LoRA Model Zoo Catalog":
         st.markdown(load_markdown_file(REPORTS_DIR / "LORA_MODEL_ZOO.md"))
-    elif report_type == "📊 Академический бенчмарк и оценка":
-        st.markdown(load_markdown_file(REPORTS_DIR / "BENCHMARK_AND_EVALUATION.md"))
-    elif report_type == "🧪 Исследование эффекта LoRA адаптеров":
-        st.markdown(load_markdown_file(REPORTS_DIR / "ADAPTER_EFFECT_RESEARCH.md"))
-    elif report_type == "📈 Научный мульти-модельный отчёт (Multi-Seed)":
-        st.markdown(load_markdown_file(REPORTS_DIR / "SCIENTIFIC_EVALUATION_REPORT.md"))

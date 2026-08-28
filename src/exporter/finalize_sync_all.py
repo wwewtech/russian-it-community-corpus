@@ -57,11 +57,8 @@ def upload_dataset(api: huggingface_hub.HfApi):
 
     # 3. Reports and Metadata
     meta_files = [
-        ("reports/metrics_index.json", "metrics_index.json"),
         ("reports/domain_benchmark_100.json", "domain_benchmark_100.json"),
-        ("reports/zero_pii_audit_certificate.json", "zero_pii_audit_certificate.json"),
-        ("reports/BENCHMARK_AND_EVALUATION.md", "BENCHMARK_AND_EVALUATION.md"),
-        ("reports/DEEP_ANALYTICAL_REPORT.md", "DEEP_ANALYTICAL_REPORT.md"),
+        ("reports/LORA_MODEL_ZOO.md", "LORA_MODEL_ZOO.md"),
     ]
     for local_path, repo_path in meta_files:
         p = Path(local_path)

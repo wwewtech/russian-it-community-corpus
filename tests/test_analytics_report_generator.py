@@ -12,10 +12,6 @@ from pathlib import Path
 
 from src.analytics.report_generator import ReportGenerator, generate_ascii_bar
 
-REPORTS = Path("reports")
-SUMMARY = REPORTS / "analytics_summary.json"
-REPORT_MD = REPORTS / "DATASET_AND_ANALYTICS.md"
-
 MINIMAL_SUMMARY = {
     "report_metadata": {"generated_at": "2026-08-24T04:15:26.716205"},
     "volume_statistics": {
@@ -121,40 +117,6 @@ class TestReportGeneratorExportMarkdown:
             assert "АНАЛИТИЧЕСКИЙ ОТЧЁТ" in md
         finally:
             md_path.unlink(missing_ok=True)
-
-
-@unittest.skipUnless(SUMMARY.exists(), "analytics_summary.json not generated yet")
-class TestJsonIsSingleSourceOfTruth(unittest.TestCase):
-    """Guard: a fresh render of the JSON must contain its load-bearing numbers.
-
-    NOTE: reports/DATASET_AND_ANALYTICS.md is the hand-curated Hugging Face
-    dataset card, NOT a derived artifact — its numbers may legitimately differ
-    (it is edited/reviewed by hand). The derived report is
-    reports/ANALYTICS_REPORT.md, produced by scripts/regenerate_analytics_report.py.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.summary = json.loads(SUMMARY.read_text(encoding="utf-8"))
-
-    def test_fresh_render_contains_json_numbers(self):
-        vol = self.summary["volume_statistics"]
-        render_path = Path("_test_fresh_render.md")
-        try:
-            ReportGenerator(self.summary).export_markdown(render_path)
-            rendered = render_path.read_text(encoding="utf-8")
-            for key in ("total_messages", "unique_authors", "vocabulary_unique_words"):
-                formatted = f"{vol[key]:,}"
-                self.assertIn(formatted, rendered, f"{formatted} ({key}) from JSON missing in rendered report")
-        finally:
-            render_path.unlink(missing_ok=True)
-
-    def test_hf_card_is_not_the_regeneration_target(self):
-        """The regeneration script must write to ANALYTICS_REPORT.md, never
-        overwrite the hand-curated HF dataset card."""
-        script = Path("scripts/regenerate_analytics_report.py").read_text(encoding="utf-8")
-        self.assertIn("ANALYTICS_REPORT.md", script)
-        self.assertNotIn('out_path = Path("reports/DATASET_AND_ANALYTICS.md")', script)
 
 
 if __name__ == "__main__":

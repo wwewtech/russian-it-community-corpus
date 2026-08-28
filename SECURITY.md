@@ -31,4 +31,4 @@ If you identify a security vulnerability in the pipeline code (e.g. arbitrary co
 
 ## PII Anonymization & Validation Policy
 
-All dataset releases undergo automated heuristic pattern checks and NER regression audits before publication. The automated sanity report is available in [`reports/pii_validation_report.json`](reports/pii_validation_report.json).
+All dataset releases undergo automated heuristic pattern checks, NER regression audits, and stratified probabilistic validation with Wilson score upper bounds before publication. The probabilistic audit report is generated in [`reports/probabilistic_pii_audit.json`](reports/probabilistic_pii_audit.json).

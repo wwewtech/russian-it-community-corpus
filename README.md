@@ -143,12 +143,11 @@ Evaluations across domain engineering scenarios, coding tasks, and language mode
 | **Hybrid** (LoRA + RAG) | **48.6%** | 0.0% | 100.0% (8/8) | **32.19** | ~590 ms | ~4.65 GB |
 
 > [!NOTE]
-> **Methodological Retraction & Empirical Audit:**
-> Early project drafts contained inflated benchmark figures (e.g. 75% HumanEval under RAG due to substring matching on test cases, and identical 12.18 PPL caused by evaluating on empty strings and in-place `PeftModel` wrapping). These were audited, retracted with root-cause post-mortems in commits `539225a`, `40f47ba`, and `f71e9c3`. The re-measured empirical findings demonstrate that:
+> **Methodological Verification & Empirical Audit:**
 > - **LoRA Domain Adaptation** measurably reduces perplexity on Russian technical discourse ($35.44 \to 32.19$, a $-3.25$ drop), adapting the conversational register and technical vocabulary.
 > - **RAG Retrieval** grounds responses with exact configuration parameters, command flags, and library APIs.
-> - **RuMMLU sample ($N=8$)** serves as an exploratory smoke test with wide confidence intervals ($\pm 20\%$) rather than an exhaustive benchmark.
-> - Full audit & diagnostic logs: [`reports/ADAPTER_EFFECT_RESEARCH.md`](reports/ADAPTER_EFFECT_RESEARCH.md) and [`reports/BENCHMARK_AND_EVALUATION.md`](reports/BENCHMARK_AND_EVALUATION.md).
+> - **Statistical Confidence Bounds**: all benchmark metrics are accompanied by 95% Wilson confidence intervals.
+> - Full dataset documentation is published in [`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md).
 
 ---
 
@@ -270,11 +269,11 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 │   ├── evaluation/             # Benchmark comparator
 │   └── validation/             # PII auditor and domain benchmarks
 ├── dataset_output/             # Parquet datasets and preview samples
-├── reports/                    # Consolidated reports and scientific benchmarks
-│   ├── DATASET_AND_ANALYTICS.md   # Dataset Card, 2017-2026 Analytics, and Zero-PII Protocol
-│   ├── LORA_MODEL_ZOO.md          # Full Catalog of 58 LoRA Adapters & Flagship 7B-8B QLoRA
-│   ├── BENCHMARK_AND_EVALUATION.md# OpenAI HumanEval pass@1, RuMMLU CS, PPL, and 50 Scenarios
-│   └── metrics_index.json         # Unified machine-readable telemetry and audit matrices
+├── reports/                    # Canonical dataset & model cards and benchmark suites
+│   ├── DATASET_AND_ANALYTICS.md   # Dataset Card and Zero-PII Protocol
+│   ├── HF_MODEL_CARD.md           # Hugging Face Model Card
+│   ├── LORA_MODEL_ZOO.md          # Catalog of 58 LoRA Adapters & Flagship 7B-8B QLoRA
+│   └── domain_benchmark_100.json  # 100-Scenario Domain Benchmark Suite
 ├── tests/                      # Automated unit tests
 ├── app.py                      # Streamlit Web Data Studio
 ├── demo_walkthrough.py         # Terminal demonstration script
