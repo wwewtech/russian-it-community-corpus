@@ -1,0 +1,57 @@
+# DVC pipeline for the RICC data platform.
+#
+# The corpus artifacts (dataset_output/) are large binaries hosted on
+# Hugging Face, not in git. DVC versions them and makes the curation
+# pipeline reproducible: `dvc repro` re-runs only the stages whose
+# dependencies changed.
+#
+# Remote storage (S3 / Hugging Face DVC remote) is configured per-machine:
+#   dvc remote add -d storage s3://your-bucket/ricc
+#   dvc remote add hf-storage https://huggingface.co/datasets/wwewtech/russian-it-community-corpus
+
+stages:
+  curate:
+    cmd: python main.py
+    deps:
+      - main.py
+      - src/
+      - params.yaml
+    outs:
+      - dataset_output/parquet:
+          cache: true
+      - dataset_output/jsonl:
+          cache: true
+      - dataset_output/samples:
+          cache: true
+    metrics:
+      - reports/pipeline_execution_stats.json:
+          cache: false
+    always_changed: false
+
+  validate:
+    cmd: python cli.py validate
+    deps:
+      - dataset_output/parquet
+      - dataset_output/jsonl
+      - src/validation/
+    metrics:
+      - reports/validation_results.json:
+          cache: false
+
+  probabilistic_audit:
+    cmd: python scripts/run_probabilistic_pii_audit.py
+    deps:
+      - dataset_output/parquet/full_clean_messages.parquet
+      - src/validation/probabilistic_audit.py
+    metrics:
+      - reports/probabilistic_pii_audit.json:
+          cache: false
+
+  drift_monitoring:
+    cmd: python scripts/run_drift_monitoring.py
+    deps:
+      - dataset_output/parquet/full_clean_messages.parquet
+      - src/monitoring/drift.py
+    metrics:
+      - reports/drift_report.json:
+          cache: false

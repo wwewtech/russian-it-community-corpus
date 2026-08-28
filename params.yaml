@@ -1,0 +1,20 @@
+# DVC pipeline parameters (consumed via dvc params / dvc.yaml deps).
+# Keep the audit & drift thresholds in sync with src/config.py defaults.
+
+pii_audit:
+  sample_size: 50000
+  confidence: 0.99
+  max_leak_tolerance: 0.0001
+
+drift:
+  length_buckets: 10
+  vocab_top_k: 500
+  psi_stable: 0.10
+  psi_moderate: 0.25
+  js_stable: 0.05
+  js_moderate: 0.20
+
+benchmarks:
+  humaneval_tasks: 40
+  rummlu_questions: 50
+  confidence: 0.95
