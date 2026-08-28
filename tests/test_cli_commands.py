@@ -198,6 +198,77 @@ class TestCLICommands(unittest.TestCase):
         self.assertIn("Top 1 RAG Results", output)
         self.assertIn("Sample docker nginx result", output)
 
+    def test_cli_audit_prob(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = build_synthetic_dataset(Path(tmp))
+            parquet = data_dir / "parquet" / "full_clean_messages.parquet"
+            out = Path(tmp) / "audit_report.json"
+            f = io.StringIO()
+            with (
+                patch(
+                    "sys.argv",
+                    [
+                        "cli.py",
+                        "audit-prob",
+                        "--parquet",
+                        str(parquet),
+                        "--sample-size",
+                        "10",
+                        "--output",
+                        str(out),
+                        "--tolerance",
+                        "0.8",
+                    ],
+                ),
+                redirect_stdout(f),
+            ):
+                main()
+            output = f.getvalue()
+            self.assertIn("Running stratified probabilistic PII audit", output)
+            self.assertIn("Verdict: PASSED", output)
+            self.assertTrue(out.exists())
+
+    def test_cli_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = build_synthetic_dataset(Path(tmp))
+            parquet = data_dir / "parquet" / "full_clean_messages.parquet"
+            out = Path(tmp) / "drift_report.json"
+            f = io.StringIO()
+            with (
+                patch(
+                    "sys.argv",
+                    [
+                        "cli.py",
+                        "drift",
+                        "--reference",
+                        str(parquet),
+                        "--current",
+                        str(parquet),
+                        "--output",
+                        str(out),
+                    ],
+                ),
+                redirect_stdout(f),
+            ):
+                main()
+            output = f.getvalue()
+            self.assertIn("Running dataset drift monitoring", output)
+            self.assertIn("Overall drift verdict: stable", output)
+            self.assertTrue(out.exists())
+
+    def test_cli_orchestrate(self):
+        f = io.StringIO()
+        with (
+            patch("sys.argv", ["cli.py", "orchestrate", "--skip-pipeline", "--sample-size", "10"]),
+            patch("src.orchestration.prefect_flow.run_flow") as mock_flow,
+            redirect_stdout(f),
+        ):
+            mock_flow.return_value = {"validate-dataset": {"status": "completed"}}
+            main()
+        output = f.getvalue()
+        self.assertIn("Executing Prefect orchestration flow", output)
+        self.assertIn("validate-dataset", output)
+
 
 if __name__ == "__main__":
     unittest.main()

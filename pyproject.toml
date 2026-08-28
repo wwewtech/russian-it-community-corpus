@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ricc"
-version = "11.0.0"
+version = "12.0.0"
 description = "RICC: Russian IT Community Corpus — Data Engineering and Zero-PII Curation Platform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -54,16 +54,38 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Data-platform extras: orchestration (Prefect) and data versioning (DVC).
+# Both are optional — the platform degrades gracefully without them
+# (sequential flow execution, plain filesystem artifacts).
+platform = [
+    "prefect>=2.19.0",
+    "dvc>=3.50.0",
+]
 dev = [
     "pytest>=8.0.0",
-    "ruff>=0.3.0",
+    "pytest-cov>=4.1",
+    # Pinned to the exact ruff version used by pre-commit (.pre-commit-config.yaml)
+    # and CI (.github/workflows/ci.yml) so local, hook, and CI lint always agree.
+    "ruff==0.16.2",
     "black>=24.0.0",
+    "mypy>=1.8.0",
     "pre-commit>=3.6.0",
 ]
 
 [project.scripts]
 it-pipeline = "cli:main"
-it-studio = "app:main"
+# NOTE: the Streamlit Data Studio is intentionally NOT a console script —
+# Streamlit apps must be served by the Streamlit runtime: `make ui` or
+# `streamlit run app.py`. A bare `app:main` entry point would execute the
+# script outside the Streamlit runtime and render nothing.
+
+[tool.setuptools]
+# Root-level entry modules (cli.py, main.py) plus the src/ package tree,
+# so `pip install .` produces a working `it-pipeline` console command.
+py-modules = ["cli", "main"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
 
 [tool.ruff]
 line-length = 120
@@ -125,7 +147,7 @@ ignore_errors = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["."]
-addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=50"
+addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=60"
 markers = [
     "integration: tests that require locally generated dataset artifacts (deselected by default when combined with -m 'not integration')",
 ]

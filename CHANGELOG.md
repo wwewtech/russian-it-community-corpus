@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.0.0] - 2026-08-28
+
+### Added
+- **Probabilistic PII Audit (`src/validation/probabilistic_audit.py`)**: upgrades the point-check red-team audit to a statistically bounded one — stratified proportional sampling across community nodes, per-category leak-rate estimation with Wilson intervals and one-sided 99% upper bounds, power analysis (`required_sample_size`), and a verdict with an explicit statistical guarantee. Script `scripts/run_probabilistic_pii_audit.py` + `make audit-prob`.
+- **Enlarged Benchmark Subsets for Statistical Power**: HumanEval subset 8 → **40 tasks**, RuMMLU CS subset 8 → **50 questions** (new categories: Distributed Systems, Security, Programming Languages, Systems Architecture). At N=8 the 95% Wilson CI spanned ~±20 p.p.; at N=40/50 it is ~±10/±11 p.p.
+- **Wilson Confidence Intervals in Benchmark Reports (`src/evaluation/statistical_power.py`)**: dependency-free z-score/Wilson/upper-bound math; every published accuracy figure now carries a 95% CI (Markdown table rows + `*_ci95` keys in the JSON matrix).
+- **Dataset Drift Monitoring (`src/monitoring/drift.py`)**: PSI over message-length distribution, Jensen–Shannon divergence over domain shares, top-k vocabulary Jaccard overlap — with stable/moderate/significant verdicts. Script `scripts/run_drift_monitoring.py` + `make drift`.
+- **Prefect Orchestration (`src/orchestration/prefect_flow.py`)**: curation → validation → probabilistic audit → drift monitoring as Prefect tasks with retries; graceful sequential fallback when Prefect is not installed. `make orchestrate`.
+- **DVC Pipeline (`dvc.yaml`, `params.yaml`)**: versioned corpus artifacts and reproducible stages (curate → validate → probabilistic_audit → drift_monitoring) with DVC metrics tracking; `platform` optional dependency group (`prefect`, `dvc`).
+
+### Changed
+- **Makefile**: new targets `audit-prob`, `drift`, `orchestrate`, `dvc-repro`.
+
+---
+
+## [11.0.0] - 2026-08-28
+
+### Added
+- **Installable Package & Console Entry Point**: `pip install .` now works — setuptools packaging config (`py-modules`, `packages.find`) plus the `it-pipeline` console command (`ricc` CLI). The Streamlit Data Studio intentionally stays on `streamlit run app.py` / `make ui`.
+- **Extended PII Test Suite (`tests/test_pii_deep_coverage.py`)**: 28 new tests covering regex scrubber edge cases (TON/JWT/AWS/SSH/secret-assignment/invite links/mentions/IP filtering), deep morphological anonymizer control flow, NER scrubber logic via a fake Natasha `Doc` (no model downloads), and the `UnifiedPIIAnonymizer` facade.
+
+### Changed
+- **Toolchain Pinning**: `ruff` pinned to `==0.16.2` across pyproject dev extras, pre-commit, and CI — local lint now reproduces CI exactly; added missing dev deps (`pytest-cov`, `mypy`).
+- **Coverage Gate Raised**: `--cov-fail-under` 50 → 60; `src/pii/` coverage lifted from 63–77% to 92–98% per module (total 59% → 62%).
+- **Makefile**: new `install`, `lint`, and `format` targets.
+
+---
+
 ## [5.0.0] - 2026-08-22
 
 ### Added

@@ -37,6 +37,52 @@ def main():
     # Command: benchmark
     subparsers.add_parser("benchmark", help="Export and display benchmark questions")
 
+    # Command: audit-prob
+    parser_audit = subparsers.add_parser(
+        "audit-prob", help="Run stratified probabilistic PII audit with confidence bounds"
+    )
+    parser_audit.add_argument(
+        "--parquet",
+        type=Path,
+        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        help="Path to production messages parquet",
+    )
+    parser_audit.add_argument("--sample-size", type=int, default=50000, help="Sample size to audit")
+    parser_audit.add_argument("--confidence", type=float, default=0.99, help="Confidence level for bounds")
+    parser_audit.add_argument("--tolerance", type=float, default=1e-4, help="Max acceptable leak rate tolerance")
+    parser_audit.add_argument(
+        "--output",
+        type=Path,
+        default=REPORTS_DIR / "probabilistic_pii_audit.json",
+        help="Output report JSON path",
+    )
+
+    # Command: drift
+    parser_drift = subparsers.add_parser("drift", help="Run dataset drift monitoring (PSI / JS / vocabulary)")
+    parser_drift.add_argument(
+        "--reference",
+        type=Path,
+        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        help="Reference snapshot parquet",
+    )
+    parser_drift.add_argument(
+        "--current",
+        type=Path,
+        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        help="Current snapshot parquet",
+    )
+    parser_drift.add_argument(
+        "--output",
+        type=Path,
+        default=REPORTS_DIR / "drift_report.json",
+        help="Output report JSON path",
+    )
+
+    # Command: orchestrate
+    parser_orch = subparsers.add_parser("orchestrate", help="Run Prefect curation orchestration flow")
+    parser_orch.add_argument("--skip-pipeline", action="store_true", help="Skip curation stage and run downstream")
+    parser_orch.add_argument("--sample-size", type=int, default=50000, help="Audit sample size")
+
     # Command: chat
     parser_chat = subparsers.add_parser("chat", help="Start interactive LLM + RAG terminal chat session")
     parser_chat.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID")
@@ -126,6 +172,52 @@ def main():
         bench = BenchmarkRunner()
         out = bench.export_benchmark_file(REPORTS_DIR / "domain_benchmark_100.json")
         print(f"✅ Benchmark saved to {out} (Total questions: {len(bench.questions)})")
+
+    elif args.command == "audit-prob":
+        from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
+
+        print("🛡️ Running stratified probabilistic PII audit...")
+        auditor = ProbabilisticPIIAuditor(args.parquet)
+        report = auditor.run_audit(
+            sample_size=args.sample_size,
+            confidence=args.confidence,
+            max_leak_tolerance=args.tolerance,
+        )
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        import json
+
+        out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"Verdict: {report.get('verdict', report.get('status'))}")
+        print(f"Report saved to {out}")
+
+    elif args.command == "drift":
+        import pandas as pd
+
+        from src.monitoring.drift import DatasetDriftMonitor
+
+        print("📊 Running dataset drift monitoring...")
+        if not args.reference.exists() or not args.current.exists():
+            print(f"Snapshots missing: reference={args.reference.exists()} current={args.current.exists()}")
+            sys.exit(0)
+        monitor = DatasetDriftMonitor(pd.read_parquet(args.reference), pd.read_parquet(args.current))
+        report = monitor.run()
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        import json
+
+        out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"Overall drift verdict: {report['overall_verdict']}")
+        print(f"Report saved to {out}")
+
+    elif args.command == "orchestrate":
+        import json
+
+        from src.orchestration.prefect_flow import run_flow
+
+        print("🔄 Executing Prefect orchestration flow...")
+        results = run_flow(run_pipeline=not args.skip_pipeline, audit_sample_size=args.sample_size)
+        print(json.dumps(results, indent=2, ensure_ascii=False, default=str))
 
     elif args.command == "chat":
         from src.inference import interactive_chat_session
