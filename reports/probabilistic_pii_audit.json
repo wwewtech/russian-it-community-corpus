@@ -1,0 +1,98 @@
+{
+  "report_title": "PROBABILISTIC PII AUDIT (stratified, confidence-bounded)",
+  "generated_at_utc": "2026-08-28T01:12:09.663884+00:00",
+  "dataset_path": "C:\\Users\\pasha\\AppData\\Local\\Temp\\tmpvazwg20w\\dataset_output\\parquet\\full_clean_messages.parquet",
+  "corpus_size": 2,
+  "sampled_messages": 2,
+  "sampling": {
+    "method": "stratified_proportional",
+    "strata_column": "chat_name",
+    "seed": 42,
+    "strata_count": 1
+  },
+  "power_analysis": {
+    "required_sample_for_1e-3_rate_at_5e-4_margin_99pct": 26514,
+    "audited_sample_size": 2,
+    "sufficient": false
+  },
+  "results": {
+    "messages_with_leaks": 0,
+    "total_leak_instances": 0,
+    "message_leak_rate_observed": 0.0,
+    "message_leak_rate_ci": [
+      0.0,
+      0.76838171
+    ],
+    "message_leak_rate_upper_bound_99": 0.73016345,
+    "categories": {
+      "phones": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      },
+      "emails": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      },
+      "crypto_wallets": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      },
+      "api_keys": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      },
+      "jwt_tokens": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      },
+      "ssh_keys": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      },
+      "public_ips": {
+        "leaks_found": 0,
+        "observed_rate": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.76838171,
+        "upper_bound_99": 0.73016345,
+        "examples": []
+      }
+    }
+  },
+  "per_stratum": {
+    "community_node_01": {
+      "messages": 2,
+      "leaks": 0
+    }
+  },
+  "tolerance": {
+    "max_message_leak_rate": 0.0001,
+    "confidence": 0.99
+  },
+  "verdict": "LEAKS_DETECTED",
+  "statistical_guarantee": "With 99% confidence the true message-level leak rate does not exceed 7.30e-01 (tolerance 1e-04)."
+}
