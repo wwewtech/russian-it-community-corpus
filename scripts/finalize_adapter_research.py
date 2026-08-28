@@ -20,7 +20,6 @@ MATRIX = ROOT / "reports" / "academic_scientific_benchmarks_matrix.json"
 PROBE2 = ROOT / "_probe2_results.json"
 OUT_MD = ROOT / "reports" / "ADAPTER_EFFECT_RESEARCH.md"
 OUT_JSON = ROOT / "reports" / "academic_findings_summary.json"
-OLD_MD = ROOT / "reports" / "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md"
 
 with open(MATRIX, encoding="utf-8") as f:
     matrix = json.load(f)

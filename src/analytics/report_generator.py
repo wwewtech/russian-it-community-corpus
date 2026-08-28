@@ -169,7 +169,7 @@ class ReportGenerator:
             pct = (cnt / tot_m) * 100
             yr_info = longit.get(yr, {})
             techs = ", ".join(yr_info.get("top_tech_keywords", [])[:5])
-            md_lines.append(f"| **{yr}** | {cnt:,} | {pct:.1f}% | {techs if techs else 'Базовые обсуждения'} |")
+            md_lines.append(f"| **{yr}** | {cnt:,} | {pct:.1f}% | {techs if techs else '—'} |")
         md_lines.append("\n---\n")
 
         # 5. Russian IT Slang & Key Entities

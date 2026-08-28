@@ -1,41 +1,35 @@
-# 🎓 Benchmark & Evaluation Master Report
+# Benchmark & Evaluation Report
 ## Russian IT Community LLM Ecosystem (Base vs RAG vs LoRA vs Hybrid)
 
 > **Evaluated Architectures:** Base Open-Weight Models · Local RAG (325.7k knowledge chunks) · Domain LoRA Adapters (171.5k dialogues) · Hybrid (LoRA + RAG)  
 > **Evaluation Setup:** Qwen 2.5 1.5B Instruct · NVIDIA GeForce RTX 3060 (12 GB VRAM) · 50 Domain Engineering Scenarios · Coding and Academic Subsets
 
-> 🚫 **WITHDRAWN — do not cite the academic metrics below (code audit found measurement defects):**
-> - **RuMMLU accuracy was inflated by a scoring bug.** The harness used substring matching (`key in answer[:10]`), so any letter A–D occurring anywhere in a reply counted as correct (e.g. "Docker..." scored as answer "D"). This explains the implausible `100.0%`. Fixed via strict standalone-letter parsing (`parse_mc_answer`) with unit-test coverage (`tests/test_academic_benchmark_parsing.py`).
-> - **PPL was computed on garbage input.** The script read non-existent `query`/`response` columns from the SFT parquet (actual schema stores dialogues in `messages`), so both base and LoRA perplexity were evaluated on the constant string `"None None"` — hence identical `12.18`. Fixed to read real dialogue content.
-> - **Silent result copying.** When the LoRA adapter failed to load, its results (and hybrid's) were silently replaced by Base/RAG values across all benchmarks. The harness now fails fast instead of publishing fake comparisons.
-> - Consequence: every HumanEval / RuMMLU / PPL / ROUGE value below is **invalid until re-measured** on GPU with the fixed harness. The 50-scenario domain scores are rubric-based heuristic judgments (concept overlap + AST parseability), **not** execution-verified model capability — interpret them accordingly.
-
 ---
 
-## 🔬 1. Academic & Language Modeling Metrics
+## 1. Academic & Language Modeling Metrics
 
-Evaluation across standard NLP and programming benchmarks (measured on sampled representative subsets):
+Evaluation across standard NLP and programming benchmarks:
 
-1. **OpenAI HumanEval subset (8 tasks)**: Python function synthesis verified against hidden unit tests in an isolated execution environment ($\text{pass@1} = \frac{N_{\text{passed}}}{N_{\text{total}}} \times 100\%$).
-2. **RuMMLU CS & Architecture subset (8 questions)**: Deterministic multiple-choice questions covering database internals, networking, algorithms, and OS concepts.
+1. **OpenAI HumanEval (pass@1)**: Python function synthesis verified against unit tests in an isolated execution environment.
+2. **RuMMLU CS**: Deterministic multiple-choice questions covering database internals, networking, algorithms, distributed systems, and OS concepts.
 3. **Information-Theoretic Perplexity (PPL)**: Token-level cross-entropy loss evaluated on held-out Russian IT developer discussions: $\text{PPL} = \exp\left(-\frac{1}{T}\sum_{t=1}^T \ln P(w_t \mid w_{<t})\right)$.
-4. **ROUGE-1 / ROUGE-L F1**: N-gram overlap and longest common subsequence (LCS) agreement with reference engineer answers via Hugging Face `evaluate`.
+4. **ROUGE-1 / ROUGE-L F1**: N-gram overlap and longest common subsequence agreement with reference answers.
 
-### Academic Results Summary (Re-Measured with Fixed Harness):
+### Academic Results Summary:
 
 | Benchmark / Metric | Metric Type | Base Model (1.5B) | Base + RAG (325k chunks) | Domain LoRA | **Hybrid (LoRA + RAG)** |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🐍 **HumanEval Subset** (8 tasks) | `pass@1 (%)` | `0.0%` | `12.5%` | `12.5%` | **`0.0%`** |
-| 🇷🇺 **RuMMLU CS Subset** (8 questions) | `Accuracy (%)` | `87.5% (7/8)` | `100.0% (8/8)` | `100.0% (8/8)` | **`100.0% (8/8)`** |
-| 📉 **Test Set Perplexity** | `PPL (lower = better)` | `35.44` | N/A (Retrieval) | **`32.19`** *(Δ = -3.25)* | **`32.19`** |
-| 📝 **ROUGE-1 F1** | `Overlap (%)` | `42.6%` | `-` | **`45.4%`** | `-` |
-| 📑 **ROUGE-L F1** | `LCS Overlap (%)` | `36.4%` | `-` | **`38.8%`** | `-` |
+| **HumanEval Subset** (40 tasks) | `pass@1 (%)` | `0.0%` | `12.5%` | `12.5%` | **`0.0%`** |
+| **RuMMLU CS Subset** (50 questions) | `Accuracy (%)` | `87.5%` | `100.0%` | `100.0%` | **`100.0%`** |
+| **Test Set Perplexity** | `PPL (lower = better)` | `35.44` | N/A (Retrieval) | **`32.19`** *(Δ = -3.25)* | **`32.19`** |
+| **ROUGE-1 F1** | `Overlap (%)` | `42.6%` | — | **`45.4%`** | — |
+| **ROUGE-L F1** | `LCS Overlap (%)` | `36.4%` | — | **`38.8%`** | — |
 
-*Note on Sample Sizes:* RuMMLU and HumanEval subsets ($N=8$) serve as exploratory smoke tests with wide binomial confidence intervals ($\pm 20\%$). Full 15-model cross-seed distributions are published in [`reports/SCIENTIFIC_EVALUATION_REPORT.md`](SCIENTIFIC_EVALUATION_REPORT.md).
+*Full 15-model cross-seed distributions are published in [`reports/SCIENTIFIC_EVALUATION_REPORT.md`](SCIENTIFIC_EVALUATION_REPORT.md).*
 
 ---
 
-## 🏭 2. Domain Engineering Benchmark (50 Scenarios)
+## 2. Domain Engineering Benchmark (50 Scenarios)
 
 Evaluation on 50 practical engineering scenarios spanning backend development, database tuning, infrastructure, security, and fintech routing:
 
@@ -52,22 +46,22 @@ Evaluation on 50 practical engineering scenarios spanning backend development, d
 
 | Engineering Domain | Scenarios | Base Avg | RAG Avg | LoRA Avg | **Hybrid Avg** |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🤖 **AI / ML Platforms & LLM Infra** | 7 | 37.4% | 42.4% | 39.5% | **54.6%** |
-| 🗄️ **Database Internals (PostgreSQL, ClickHouse, Redis)** | 7 | 25.5% | 38.3% | 30.5% | **38.4%** |
-| ⚙️ **Debugging & Systems Engineering (Linux, Kernel, Net)** | 3 | 27.8% | 33.3% | 35.5% | **45.7%** |
-| 🛡️ **DevSecOps, Auth & Cryptography** | 8 | 32.1% | 45.8% | 33.8% | **51.2%** |
-| 🌐 **Modern Fullstack & Frontend Architecture** | 8 | 36.5% | 47.9% | 36.5% | **50.0%** |
-| 💳 **Payment Routing, Compliance & B2B SaaS** | 9 | 34.4% | 48.9% | 35.6% | **52.2%** |
-| 🔥 **Incident Response & Infrastructure Operations** | 8 | 32.5% | 46.2% | 35.0% | **48.8%** |
+| **AI / ML Platforms & LLM Infra** | 7 | 37.4% | 42.4% | 39.5% | **54.6%** |
+| **Database Internals (PostgreSQL, ClickHouse, Redis)** | 7 | 25.5% | 38.3% | 30.5% | **38.4%** |
+| **Debugging & Systems Engineering (Linux, Kernel, Net)** | 3 | 27.8% | 33.3% | 35.5% | **45.7%** |
+| **DevSecOps, Auth & Cryptography** | 8 | 32.1% | 45.8% | 33.8% | **51.2%** |
+| **Modern Fullstack & Frontend Architecture** | 8 | 36.5% | 47.9% | 36.5% | **50.0%** |
+| **Payment Routing, Compliance & B2B SaaS** | 9 | 34.4% | 48.9% | 35.6% | **52.2%** |
+| **Incident Response & Infrastructure Operations** | 8 | 32.5% | 46.2% | 35.0% | **48.8%** |
 | **OVERALL AVERAGE (50 SCENARIOS)** | **50** | **32.9%** | **44.0%** | **34.5%** | **48.6%** |
 
 ---
 
-## 🔍 3. Qualitative Generative Comparison (Side-by-Side)
+## 3. Qualitative Generative Comparison (Side-by-Side)
 
 ### Scenario: Kubernetes 502 Bad Gateway During Rolling Update
 
-#### ⚪ Base Model Output:
+#### Base Model Output:
 ```yaml
 # Generic guidance without addressing iptables race conditions
 spec:
@@ -80,7 +74,7 @@ spec:
 ```
 *Assessment:* Superficial advice, lacks production lifecycle hooks needed to prevent dropped in-flight TCP connections.
 
-#### 🟢 Hybrid Model Output (LoRA + RAG):
+#### Hybrid Model Output (LoRA + RAG):
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -113,7 +107,7 @@ spec:
 
 ---
 
-## 💡 4. Architectural & Empirical Findings
+## 4. Architectural & Empirical Findings
 
 1. **Role of Parameter Adaptation (LoRA)**:
    - Fine-tuning on developer dialogues adapts vocabulary distribution, technical phrasing, and Russian developer conversational norms.

@@ -51,36 +51,8 @@
 - **LoRA Adapter**: <|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|assistant|>|
 
 **Prompt**: *Почему в FastAPI / Asyncio нельзя вызывать блокирующий time.sleep или requests.get в async def эндпоинтах и как это исправить?*
-- **Base Model**: <|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-- **LoRA Adapter**: <|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
+- **Base Model**: `<|assistant|>` *(repetitive token loop)*
+- **LoRA Adapter**: `<|assistant|>` *(repetitive token loop)*
 
 ---
 
@@ -120,13 +92,7 @@
 
 **Prompt**: *Что делать, если под в Kubernetes постоянно падает с ошибкой OOMKilled (Exit Code 137)?*
 - **Base Model**: При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс. Как сделать, чтобы создавать следующее класс, не было ошибка OOMKilled (Exit Code 137)?<|assistant|>
-- **LoRA Adapter**: При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс.<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|assistant|>
-<|ass
+- **LoRA Adapter**: При этом, если создавать следующее класс, то он будет создан, а не создавать следующее класс. `<|assistant|>` *(repetitive token loop)*
 
 **Prompt**: *Как правильно настроить проксирование WebSocket в Nginx и какие директивы proxy_set_header и proxy_read_timeout необходимы?*
 - **Base Model**: Привет, если вам нужно сделать проксирование WebSocket в Nginx, то вот это:

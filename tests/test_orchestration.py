@@ -29,12 +29,16 @@ class TestCurateCorpusFlow(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_flow_with_stub_pipeline_reports_all_stages(self):
+        audit_out = Path(self.temp_dir.name) / "audit.json"
+        drift_out = Path(self.temp_dir.name) / "drift.json"
         results = curate_corpus_flow(
             pipeline_factory=_StubPipeline,
             output_dir=self.data_dir,
             parquet_path=self.parquet,
             reference_drift_path=self.parquet,
             current_drift_path=self.parquet,
+            audit_report_path=audit_out,
+            drift_report_path=drift_out,
             run_pipeline=True,
             audit_sample_size=10,
         )
@@ -46,11 +50,15 @@ class TestCurateCorpusFlow(unittest.TestCase):
         self.assertEqual(results["curate-corpus"]["summary"]["validation_passed"], True)
 
     def test_flow_without_pipeline_skips_curation(self):
+        audit_out = Path(self.temp_dir.name) / "audit.json"
+        drift_out = Path(self.temp_dir.name) / "drift.json"
         results = curate_corpus_flow(
             output_dir=self.data_dir,
             parquet_path=self.parquet,
             reference_drift_path=self.parquet,
             current_drift_path=self.parquet,
+            audit_report_path=audit_out,
+            drift_report_path=drift_out,
             run_pipeline=False,
             audit_sample_size=10,
         )
@@ -65,12 +73,16 @@ class TestCurateCorpusFlow(unittest.TestCase):
             def run_all(self):
                 raise RuntimeError("no raw exports available")
 
+        audit_out = Path(self.temp_dir.name) / "audit.json"
+        drift_out = Path(self.temp_dir.name) / "drift.json"
         results = curate_corpus_flow(
             pipeline_factory=_ExplodingPipeline,
             output_dir=self.data_dir,
             parquet_path=self.parquet,
             reference_drift_path=self.parquet,
             current_drift_path=self.parquet,
+            audit_report_path=audit_out,
+            drift_report_path=drift_out,
             run_pipeline=True,
             audit_sample_size=10,
         )
@@ -83,11 +95,15 @@ class TestCurateCorpusFlow(unittest.TestCase):
         # HAS_PREFECT may be True or False depending on the environment;
         # the flow must work identically in both cases.
         self.assertIsInstance(HAS_PREFECT, bool)
+        audit_out = Path(self.temp_dir.name) / "audit.json"
+        drift_out = Path(self.temp_dir.name) / "drift.json"
         results = curate_corpus_flow(
             output_dir=self.data_dir,
             parquet_path=self.parquet,
             reference_drift_path=self.parquet,
             current_drift_path=self.parquet,
+            audit_report_path=audit_out,
+            drift_report_path=drift_out,
             run_pipeline=False,
             audit_sample_size=10,
         )
