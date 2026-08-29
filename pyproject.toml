@@ -97,8 +97,6 @@ exclude = [
     ".pre-commit-cache",
     "ChatExport_*",
     "dataset_output",
-    # Local junction to C:\Users\pasha\Desktop\work — not part of this repo.
-    "work",
 ]
 
 [tool.ruff.lint]
@@ -131,9 +129,24 @@ ignore_missing_imports = true
 # Slow-mode rollout: strict checks only for the modules listed in
 # `make typecheck-strict`; extend module-by-module, not all of src/ at once.
 
-# GPU/eval modules are excluded from type checking for now: they rely on
-# untyped dict payloads from model outputs and torch/peft stubs. Re-enable
-# module-by-module as they get typed (see `make typecheck-strict`).
+# Modules excluded from strict type checking, grouped by reason.
+# Re-enable one at a time as they get typed; see `make typecheck-strict`.
+
+# 1) Heavy third-party dependencies (torch, peft, trl) with weak/incomplete
+#    type stubs. Removing these will surface dozens of "no overload variant"
+#    and "Any" errors that are not actionable for us.
+#    Candidates for re-enable: per-file typing effort, not a one-shot move.
+#    - src.evaluation.*  : uses transformers / evaluate / scikit-learn stubs
+#    - src.lora.*        : PEFT / TRL callbacks and trainer plumbing
+#    - src.inference     : torch + transformers generate()/pipeline()
+#    - src.pipeline      : orchestrates torch-backed stages end-to-end
+
+# 2) Internal modules with high cyclomatic complexity / dict-heavy payloads
+#    that would require a large refactor before strict pays off.
+#    - src.analytics.engine            : 27k LoC, dict-based metric accumulators
+#    - src.graph.*                     : conversation DAG traversal + heuristics
+#    - src.exporter.finalize_sync_all  : cross-store sync glue code
+
 [[tool.mypy.overrides]]
 module = [
     "src.evaluation.*",
