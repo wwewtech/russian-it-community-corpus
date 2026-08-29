@@ -125,28 +125,38 @@ All datasets are automatically generated and saved in `dataset_output/`:
 | `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
 | `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 171,520 dialogues | OpenAI format for Unsloth / TRL | Local / HF |
 | `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,520 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
-| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,331 pairs | Single-turn instruction-response pairs | Local / HF |
+| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,313 pairs | Single-turn instruction-response pairs | Local / HF |
 | `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 325,690 chunks | Segmented technical documents | Local / HF |
-| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 60,412 pairs | Chosen / Rejected alignment pairs | Local / HF |
+| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 60,899 pairs | Chosen / Rejected alignment pairs | Local / HF |
 
 ---
 
 ## Comparative Architectural Evaluation (Base vs RAG vs LoRA vs Hybrid)
 
-Evaluations across domain engineering scenarios, coding tasks, and language modeling metrics:
+> [!WARNING]
+> **Benchmark results are WITHDRAWN pending a GPU re-run.**
+> The evaluation harness had three bugs (fail-fast on unloaded adapter, adapter
+> not disabled for the Base column, enlarged subsets not yet re-run). The numbers
+> below were **officially retracted** in the dataset card
+> ([`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md), section
+> "Empirical Evaluation — Honest Status") and are flagged with `_status_warning`
+> in [`metrics_index.json`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json).
+> **Do not cite the figures below until they are re-measured and re-published.**
 
 | Setup | 50 Domain Scenarios (Heuristic Overlap & AST) | HumanEval (`pass@1`, 8-task sample) | RuMMLU CS (8-question exploratory sample) | PPL on Held-out Russian IT Corpus | Latency (P50) | VRAM on RTX 3060 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Base Model** (Qwen 2.5 1.5B) | 32.9% | 0.0% | 87.5% (7/8) | 35.44 | ~410 ms | ~4.20 GB |
 | **Base Model + RAG** (325k chunks) | 44.0% | 12.5% | 100.0% (8/8) | N/A (Retrieval) | ~580 ms | ~4.50 GB |
-| **Domain LoRA** (171.5k dialogues) | 34.5% | 12.5% | 100.0% (8/8) | **32.19** *(Δ = -3.25)* | ~415 ms | ~4.35 GB |
-| **Hybrid** (LoRA + RAG) | **48.6%** | 0.0% | 100.0% (8/8) | **32.19** | ~590 ms | ~4.65 GB |
+| **Domain LoRA** (171.5k dialogues) | 34.5% | 12.5% | 100.0% (8/8) | ~~32.19~~ *(withdrawn)* | ~415 ms | ~4.35 GB |
+| **Hybrid** (LoRA + RAG) | ~~48.6%~~ | ~~0.0%~~ | ~~100.0% (8/8)~~ | ~~32.19~~ *(withdrawn)* | ~590 ms | ~4.65 GB |
 
 > [!NOTE]
-> **Methodological Verification & Empirical Audit:**
-> - **LoRA Domain Adaptation** measurably reduces perplexity on Russian technical discourse ($35.44 \to 32.19$, a $-3.25$ drop), adapting the conversational register and technical vocabulary.
-> - **RAG Retrieval** grounds responses with exact configuration parameters, command flags, and library APIs.
-> - **Statistical Confidence Bounds**: all benchmark metrics are accompanied by 95% Wilson confidence intervals.
+> **Methodological status:**
+> - All benchmark figures in the table above are **unverified/withdrawn** until the
+>   harness bugs are fixed and the full suite is re-run on GPU (see the dataset card
+>   for the list of the three harness bugs).
+> - **RAG Retrieval** grounds responses with exact configuration parameters, command
+>   flags, and library APIs (architectural claim, not a benchmark result).
 > - Full dataset documentation is published in [`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md).
 
 ---

@@ -33,6 +33,7 @@ MAX_REPLY_TIME_GAP_HOURS = 48  # Maximum hours between reply and target message
 MIN_QUESTION_WORDS = 3
 MIN_ANSWER_WORDS = 4
 MAX_THREAD_DEPTH = 15
+MAX_SFT_TURNS = 32  # Cap on turns per SFT dialogue — mega-threads (1000+ turns) are not valid SFT examples
 
 # Sentiment & Emotional Lexicon
 SENTIMENT_DICT = {

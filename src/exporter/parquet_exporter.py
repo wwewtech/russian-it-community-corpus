@@ -22,9 +22,17 @@ class ParquetExporter:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def export_messages(self, messages: list[CleanedMessage], file_name: str = "full_clean_messages.parquet") -> Path:
-        """Export all cleaned messages to Parquet."""
+        """Export all cleaned messages to Parquet (empty texts are excluded — empty rows in a 'clean' corpus are noise)."""
         out_path = self.output_dir / file_name
         logger.info(f"Exporting {len(messages)} messages to Parquet at {out_path}...")
+
+        # Drop messages with empty/whitespace-only text: they carry no linguistic
+        # value and pollute the "clean" corpus (~5% of rows in earlier exports).
+        before = len(messages)
+        messages = [m for m in messages if m.text_clean and m.text_clean.strip()]
+        dropped = before - len(messages)
+        if dropped:
+            logger.info(f"Filtered out {dropped} empty-text messages before Parquet export.")
 
         records = [
             {

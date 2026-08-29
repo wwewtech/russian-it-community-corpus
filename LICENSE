@@ -19,13 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-### Dataset Usage Terms (Academic & Research Use)
-
-The curated datasets (Parquet, JSONL, and LoRA adapters) derived from public discussions
-are provided strictly for academic research, educational evaluation, and linguistic study
-pursuant to Article 1274 of the Civil Code of the Russian Federation and international
-Fair Use principles. All personal identifiers have been de-identified in accordance with
-GDPR Recital 26 and applicable privacy laws.

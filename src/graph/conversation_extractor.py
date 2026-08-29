@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
-from src.config import DOMAIN_TAXONOMY, MIN_ANSWER_WORDS, MIN_QUESTION_WORDS
+from src.config import MAX_SFT_TURNS, MIN_ANSWER_WORDS, MIN_QUESTION_WORDS, DOMAIN_TAXONOMY
 from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
 
 logger = logging.getLogger(__name__)
@@ -168,6 +168,11 @@ class ConversationExtractor:
 
             if len(merged_turns) < 2:
                 continue
+
+            # Cap mega-threads: a dialogue with thousands of turns is a dumped
+            # thread, not a valid SFT example. Keep the first MAX_SFT_TURNS turns.
+            if len(merged_turns) > MAX_SFT_TURNS:
+                merged_turns = merged_turns[:MAX_SFT_TURNS]
 
             # Convert merged turns into alternating User / Assistant turns
             sft_turns: list[SFTTurn] = []

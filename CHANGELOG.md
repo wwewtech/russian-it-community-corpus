@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.0.1] - 2026-08-29
+
+### Fixed
+- **Broken dependency pin**: `pymorphy3-dicts-ru>=2.4.417127.20260408` referenced a version that does not exist on PyPI (only `2.4.417150.4580142` is published), which made `pip install -r requirements.txt` fail. Pin corrected in `requirements.txt` and `pyproject.toml` (source: [PyPI](https://pypi.org/pypi/pymorphy3-dicts-ru/json)).
+- **README benchmark table**: figures for HumanEval / RuMMLU / PPL were officially withdrawn in the dataset card but were still published as valid in the README. The table is now marked WITHDRAWN pending a GPU re-run, consistent with the dataset card and `metrics_index.json`.
+- **README count mismatches**: Alpaca pairs corrected 933,331 → 933,313 and DPO pairs 60,412 → 60,899, synchronized with `reports/validation_results.json`.
+- **Probabilistic PII audit report**: the committed `reports/probabilistic_pii_audit.json` was generated against a 2-message temp-folder fixture (verdict `LEAKS_DETECTED`, upper bound 0.73). Re-generated against the production corpus (2,816,434 messages, 100,000-message stratified sample, 0 leaks, verdict PASSED).
+- **License detection**: `LICENSE` now contains only the MIT license text so GitHub recognizes it (`spdx_id: MIT`); the dataset usage terms moved to [`DATASET_TERMS.md`](DATASET_TERMS.md).
+
+### Changed
+- **CHANGELOG versioning note**: git tags `v7.0.0`–`v12.0.0` exist for released versions whose changelog entries were not preserved in this file; entries for 6.0.0–10.0.0 are therefore missing from this log. Historical tags are kept as-is (retagging published versions would violate SemVer).
+
+---
+
 ## [12.0.0] - 2026-08-28
 
 ### Added
