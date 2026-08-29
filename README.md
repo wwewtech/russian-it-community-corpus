@@ -8,7 +8,7 @@
 
 **High-throughput data engineering and Zero-PII curation platform for language models**
 
-2.91M+ discussions · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
+2,816,434 discussions · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
 
 <br />
 
@@ -25,7 +25,7 @@
 
 > [!TIP]
 > **🤗 Official Hugging Face Hub Integration**:
-> - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2.91M clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
+> - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2,816,434 clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
 > - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 pre-trained open adapters + Flagship 7B-8B QLoRA models (Qwen 2.5 Coder 7B, DeepSeek R1 7B, LLaMA 3.1 8B).
 >
 > ```python
@@ -37,7 +37,7 @@
 
 ## Overview
 
-**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures over 2,910,000 engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
+**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures 2,816,434 engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval.
 
@@ -54,8 +54,8 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 
 ```text
                        ┌──────────────────────────────┐
- 11 Community Nodes ──►   Multi-Source Ingestion      │
-   2.91M raw records   └──────────────┬───────────────┘
+   11 Community Nodes ──►   Multi-Source Ingestion      │
+    2,816,434 raw records   └──────────────┬───────────────┘
                                       │
                        ┌──────────────▼───────────────┐
                        │   Deep Case-Aware Zero-PII   │ ──► Declension across 6 Russian cases

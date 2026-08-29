@@ -71,3 +71,14 @@ jobs:
       if: ${{ hashFiles('dataset_output/parquet/full_clean_messages.parquet') != '' }}
       run: |
         python cli.py validate
+
+    # SFT dialogue quality regression check. Catches silent extraction
+    # failures (empty replies, role imbalance, English drift, duplicate
+    # turns). Runs whenever the SFT parquet is present; fails the build
+    # if any sub-score falls below its floor.
+    - name: SFT Dialogue Quality Regression
+      if: ${{ hashFiles('dataset_output/parquet/sft_dialogues.parquet') != '' }}
+      run: |
+        python -m src.monitoring.sft_quality \
+          --input dataset_output/parquet/sft_dialogues.parquet \
+          --report reports/sft_quality_report.json

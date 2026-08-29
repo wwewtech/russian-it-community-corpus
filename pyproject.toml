@@ -143,9 +143,15 @@ ignore_missing_imports = true
 
 # 2) Internal modules with high cyclomatic complexity / dict-heavy payloads
 #    that would require a large refactor before strict pays off.
-#    - src.analytics.engine            : 27k LoC, dict-based metric accumulators
+#    - src.analytics.engine            : ~700 LoC (27,665 bytes), dict-based metric accumulators
 #    - src.graph.*                     : conversation DAG traversal + heuristics
 #    - src.exporter.finalize_sync_all  : cross-store sync glue code
+#
+# Status (2026-08-29): src.analytics.engine and src.graph.* now pass
+# `mypy --strict` and have been moved to the strict target in the Makefile
+# (`make typecheck-strict`). Remaining excluded modules need their own
+# typing PRs — see `docs/mypy_strict_rollout.md` (TODO) for the per-module
+# backlog and a list of the exact strict errors to clear.
 
 [[tool.mypy.overrides]]
 module = [
@@ -153,8 +159,6 @@ module = [
     "src.lora.*",
     "src.inference",
     "src.pipeline",
-    "src.analytics.engine",
-    "src.graph.*",
     "src.exporter.finalize_sync_all",
 ]
 ignore_errors = true
