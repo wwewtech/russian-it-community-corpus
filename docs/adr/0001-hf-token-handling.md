@@ -1,75 +1,84 @@
-# ADR 0001 — Hugging Face Token Handling
+# ADR 0001: Hugging Face Token Handling
 
-- **Status:** Accepted
-- **Date:** 2026-08-29
-- **Deciders:** @wwewtech
+**Status:** Accepted
+**Date:** 2026-08-29
+**Authors:** RICC maintainers
+**Supersedes:** —
 
 ## Context
 
-The project publishes its LoRA adapter zoo and dataset releases to the
-Hugging Face Hub under `wwewtech/russian-it-community-lora` and
-`wwewtech/russian-it-community-corpus`. Mirroring the local `registry.json`,
-dataset cards, and parquet outputs to those repositories requires a write
-token.
+The `lora_adapters/` directory is mirrored to `wwewtech/russian-it-community-lora`
+on the Hugging Face Hub via `scripts/sync_to_hub.py`. The Hub requires an
+authentication token, which is a long-lived secret with write access to that
+repo.
 
-Two natural ways to feed that token into automation:
-
-1. Pass it through a chat session or paste it into the repo.
-2. Read it from an environment variable or GitHub Actions secret.
-
-Option (1) is unsafe: the token ends up in the chat provider's logs, in
-the agent's `environment_details` cache, in shell history, and — if
-accidentally committed — in git history. Even one rotation per incident
-is not free: HF tokens gate `wwewtech/*` namespaces, so a leak requires
-manual cleanup of every dataset/model card on the org.
+During the 2026-08-29 audit we discovered that a real HF token was pasted
+into chat, and the conversation log was then summarized into a new session
+context. Tokens that travel through chat are considered compromised: they
+end up in scrollback, screen-shares, exported transcripts, and downstream
+context windows, and once shipped there is no reliable way to scrub them.
 
 ## Decision
 
-**The HF write token is never embedded in source code, never pasted into
-chat, and never passed as a CLI flag to scripts that ship to disk.**
+The HF token **MUST NOT** appear in:
 
-All scripts and CI workflows read the token from one of:
+- Source code, comments, or docstrings
+- CLI flags or positional arguments
+- Chat, issues, pull requests, or commit messages
+- Documentation examples
+- Test fixtures
 
-* `HF_TOKEN` environment variable (exported by the developer locally or
-  injected by GitHub Actions from a secret).
-* `~/.huggingface/token` (the standard `huggingface-cli login` location).
-* GitHub Actions secret `HF_TOKEN` at the org or repo level.
+The token **MUST** be supplied through one of the following channels only:
 
-Scripts MUST call `huggingface_hub.HfApi(token=os.environ["HF_TOKEN"])`
-or — preferably — rely on `huggingface_hub`'s built-in environment
-auto-detection (`HfApi()` with no argument).
+1. The `HF_TOKEN` environment variable (preferred for CI and one-off runs).
+2. The `~/.huggingface/token` cache file (preferred for interactive use,
+   written by `huggingface-cli login`).
+
+`scripts/sync_to_hub.py` is the only sanctioned upload path and enforces
+these rules:
+
+- Reads `HF_TOKEN` from the environment first, then falls back to
+  `HfFolder.get_token()`.
+- Exits with code 3 if neither source provides a token.
+- Never prints the token value, even when `--apply` is passed.
+- Defaults to a dry-run; `--apply` is required for a real upload.
+
+If a token is ever exposed through chat, logs, or commit history, it
+**MUST** be revoked at https://huggingface.co/settings/tokens and rotated
+before any further sync.
 
 ## Consequences
 
-* If someone pastes a token into chat, the correct response is to revoke
-  the token at https://huggingface.co/settings/tokens and rotate. The
-  pasted value must never be wired into a script by an agent.
-* A new `scripts/sync_to_hub.py` is provided that wraps the safe path:
-  it reads the token from the environment, refuses to run if `HF_TOKEN`
-  is unset, and never logs the token. See
-  [`../../scripts/sync_to_hub.py`](../../scripts/sync_to_hub.py).
-* The local `lora_adapters/registry.json` and `lora_adapters/SUMMARY.md`
-  remain the **single source of truth** for the adapter zoo. HF Hub is
-  treated as a derived artifact; if the two ever disagree, the local
-  files win until the next sync.
-* CI does **not** push to HF Hub automatically. Any HF push is an
-  explicit, reviewed action: a maintainer runs the script locally with
-  a properly-sourced `HF_TOKEN`, or triggers a dedicated `release-hf`
-  workflow that consumes the org-level `HF_TOKEN` secret.
+Positive:
+
+- Single, auditable entry point for Hub writes.
+- No accidental token leakage in screenshots, recordings, or context
+  windows.
+- The default dry-run mode prevents accidental writes from a copy-paste
+  or a stray shell history entry.
+
+Negative / costs:
+
+- Interactive `huggingface-cli login` is required on each new machine;
+  there is no shared "dev token" baked into the repo.
+- CI must use GitHub Actions secrets (`HF_TOKEN` is already configured
+  there, scoped to this repo).
+- Local developers must remember to revoke any token they ever type
+  into a chat window.
 
 ## Alternatives considered
 
-* **Embed the token in a `.env` file committed to the repo.** Rejected:
-  the same exposure as pasting into chat, plus accidental commits.
-* **Per-developer token with least-privilege scopes.** Rejected for now:
-  the project is single-maintainer; a single org-level token with
-  write access to `wwewtech/*` is acceptable. Revisit if a second
-  maintainer joins.
-* **No HF sync at all.** Rejected: the existing `wwewtech/russian-it-community-lora`
-  repo is a real distribution channel for users; cutting it off would
-  degrade the project's value.
+- **Embed the token in `.env` and load it via `python-dotenv`.** Rejected:
+  `.env` files are routinely pasted into chats and shown in screen-shares,
+  so this provides only a thin layer of protection.
+- **Use a per-developer token file path.** Rejected: the standard
+  `~/.huggingface/token` is already supported and is the recommended
+  Hugging Face workflow.
+- **Mint a fine-grained, read-only token for the local script.** Rejected:
+  the sync script needs write access to push `registry.json`.
 
 ## References
 
-* HF token management: https://huggingface.co/docs/hub/security-tokens
-* `huggingface_hub` auth docs: https://huggingface.co/docs/huggingface_hub/authentication
+- `scripts/sync_to_hub.py` — the implementation that enforces this policy.
+- Hugging Face Hub authentication docs:
+  https://huggingface.co/docs/huggingface_hub/en/quick-start#authentication
