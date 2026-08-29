@@ -1,25 +1,26 @@
 """
 Command-Line Interface (CLI) for Russian IT Community Data Engineering Pipeline.
+
+Heavy, command-specific dependencies (torch, transformers, pandas, natasha,
+prefect, pymorphy3, sklearn, pyarrow) are imported lazily inside each
+subcommand branch so that ``it-pipeline --help`` and lightweight subcommands
+start instantly without dragging the full ML stack through import time.
+Runtime environment setup (UTF-8 stdio, HF_HOME, tokenizers) is centralized
+in ``src.bootstrap.setup_runtime_env`` instead of being duplicated here or in
+``main.py``.
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
-# Ensure UTF-8 stdout on Windows
-if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8")
-
-from src.analytics.engine import DeepChatAnalyzer
-from src.analytics.report_generator import ReportGenerator
+from src.bootstrap import setup_runtime_env
 from src.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, RAW_EXPORT_DIRS, REPORTS_DIR
-from src.ingestion.loader import merge_multiple_exports
-from src.pipeline import MasterDataPipeline
-from src.validation.benchmark import BenchmarkRunner
-from src.validation.validator import DatasetValidator
 
 
-def main():
+def main() -> None:
+    setup_runtime_env()
     parser = argparse.ArgumentParser(description="Russian IT Community Data Engineering & Curation CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
@@ -97,6 +98,8 @@ def main():
     args = parser.parse_args()
 
     if args.command in ("run", None):
+        from src.pipeline import MasterDataPipeline
+
         print("🚀 Starting full data curation pipeline...")
         pipeline = MasterDataPipeline()
         if hasattr(args, "skip_ner") and args.skip_ner:
@@ -104,9 +107,12 @@ def main():
         pipeline.run_all()
 
     elif args.command == "analyze":
+        from src.analytics.engine import DeepChatAnalyzer
+        from src.analytics.report_generator import ReportGenerator
+        from src.ingestion.schema import CleanedMessage
+
         print("🔬 Loading messages for analytical profiling...")
         clean_parquet_path = PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
-        from src.ingestion.schema import CleanedMessage
 
         if clean_parquet_path.exists():
             import pandas as pd
@@ -136,6 +142,8 @@ def main():
                 )
             print(f"✅ Loaded {len(cleaned):,} cleaned and tagged messages from Parquet.")
         else:
+            from src.ingestion.loader import merge_multiple_exports
+
             chats_info, msgs = merge_multiple_exports(RAW_EXPORT_DIRS)
             cleaned = [
                 CleanedMessage(
@@ -160,14 +168,16 @@ def main():
         gen.export_json(REPORTS_DIR / "analytics_summary.json")
 
     elif args.command == "validate":
+        from src.validation.validator import DatasetValidator
+
         print("🔍 Validating datasets in output directory...")
         validator = DatasetValidator(OUTPUT_DIR)
         res = validator.validate_all()
-        import json
-
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.command == "benchmark":
+        from src.validation.benchmark import BenchmarkRunner
+
         print("🎯 Generating domain evaluation benchmark...")
         bench = BenchmarkRunner()
         out = bench.export_benchmark_file(REPORTS_DIR / "domain_benchmark_100.json")
@@ -185,7 +195,6 @@ def main():
         )
         out = Path(args.output)
         out.parent.mkdir(parents=True, exist_ok=True)
-        import json
 
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"Verdict: {report.get('verdict', report.get('status'))}")
@@ -204,15 +213,12 @@ def main():
         report = monitor.run()
         out = Path(args.output)
         out.parent.mkdir(parents=True, exist_ok=True)
-        import json
 
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"Overall drift verdict: {report['overall_verdict']}")
         print(f"Report saved to {out}")
 
     elif args.command == "orchestrate":
-        import json
-
         from src.orchestration.prefect_flow import run_flow
 
         print("🔄 Executing Prefect orchestration flow...")

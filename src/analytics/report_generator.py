@@ -237,7 +237,7 @@ class ReportGenerator:
         logger.info(f"Saved comprehensive Markdown report to {out}")
         return out
 
-    def print_terminal_summary(self):
+    def print_terminal_summary(self) -> None:
         """Print high-contrast rich visualization in terminal."""
         v = self.data.get("volume_statistics", {})
         t = self.data.get("temporal_dynamics", {})

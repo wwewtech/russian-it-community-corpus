@@ -19,7 +19,7 @@ class TechnicalTagger:
     High-speed extractor of technical keyword tags, domain assignment, and sentiment.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.classifier = DomainClassifier()
         self.sentiment_dict = SENTIMENT_DICT
 

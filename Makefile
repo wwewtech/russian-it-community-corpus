@@ -69,9 +69,12 @@ format:
 typecheck:
 	python -m mypy src/ --ignore-missing-imports
 
-# Strict rollout: add modules here as they get fully typed.
+# Strict rollout: modules are added here as they pass `mypy --strict`.
+# Mirrors the [[tool.mypy.overrides]] ignore_errors list in pyproject.toml:
+# heavy GPU/NLP modules (engine, pipeline, inference, lora, evaluation,
+# graph, finalize_sync_all) stay ignored there and are excluded from this path.
 typecheck-strict:
-	python -m mypy src/ingestion/schema.py src/bootstrap.py --strict
+	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py --strict
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:

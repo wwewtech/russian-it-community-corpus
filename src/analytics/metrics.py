@@ -33,7 +33,7 @@ def count_tokens(text: str) -> int:
     return max(1, int(len(text.split()) * 1.35))
 
 
-def compute_shannon_entropy(word_counts: Counter) -> float:
+def compute_shannon_entropy(word_counts: Counter[str]) -> float:
     """Calculate Shannon Lexical Diversity / Entropy: H = -sum(p * log2(p))."""
     total = sum(word_counts.values())
     if total == 0:

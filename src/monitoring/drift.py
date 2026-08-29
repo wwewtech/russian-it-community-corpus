@@ -42,34 +42,35 @@ JS_MODERATE = 0.20
 _TOKEN_RE = re.compile(r"[a-zA-Zа-яё0-9]{3,}")
 
 
-def _psi(expected: np.ndarray, actual: np.ndarray, eps: float = 1e-6) -> float:
+def _psi(expected: np.ndarray[Any, Any], actual: np.ndarray[Any, Any], eps: float = 1e-6) -> float:
     """Population Stability Index between two discrete distributions."""
-    expected = expected / max(expected.sum(), 1)
-    actual = actual / max(actual.sum(), 1)
+    expected = expected / max(float(expected.sum()), 1)
+    actual = actual / max(float(actual.sum()), 1)
     expected = np.clip(expected, eps, None)
     actual = np.clip(actual, eps, None)
     return float(np.sum((actual - expected) * np.log(actual / expected)))
 
 
-def _js_divergence(p: np.ndarray, q: np.ndarray, eps: float = 1e-10) -> float:
+def _js_divergence(p: np.ndarray[Any, Any], q: np.ndarray[Any, Any], eps: float = 1e-10) -> float:
     """Jensen-Shannon divergence (base-2, bounded by 1.0 bit)."""
-    p = p / max(p.sum(), 1)
-    q = q / max(q.sum(), 1)
+    p = p / max(float(p.sum()), 1)
+    q = q / max(float(q.sum()), 1)
     p = np.clip(p, eps, None)
     q = np.clip(q, eps, None)
     m = 0.5 * (p + q)
 
-    def _kl(a: np.ndarray, b: np.ndarray) -> float:
+    def _kl(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         return float(np.sum(a * np.log2(a / b)))
 
     return 0.5 * _kl(p, m) + 0.5 * _kl(q, m)
 
 
-def _psi_bucket_edges(reference_lengths: np.ndarray, n_buckets: int = 10) -> np.ndarray:
+def _psi_bucket_edges(reference_lengths: np.ndarray[Any, Any], n_buckets: int = 10) -> np.ndarray[Any, Any]:
     """Quantile-based bucket edges from the reference distribution."""
     quantiles = np.linspace(0.0, 100.0, n_buckets + 1)[1:-1]
     edges = np.percentile(reference_lengths, quantiles)
-    return np.unique(edges)
+    unique: np.ndarray[Any, Any] = np.unique(edges)
+    return unique
 
 
 class DatasetDriftMonitor:
