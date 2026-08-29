@@ -13,6 +13,7 @@ __pycache__/
 .env
 .venv
 .hf_cache/
+.pre-commit-cache/
 env/
 venv/
 ENV/
@@ -64,4 +65,3 @@ _probe*_results.json
 prompt.md
 _commit_msg.txt
 info.txt
-

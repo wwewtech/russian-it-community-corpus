@@ -94,8 +94,11 @@ exclude = [
     ".git",
     ".venv",
     ".hf_cache",
+    ".pre-commit-cache",
     "ChatExport_*",
     "dataset_output",
+    # Local junction to C:\Users\pasha\Desktop\work — not part of this repo.
+    "work",
 ]
 
 [tool.ruff.lint]

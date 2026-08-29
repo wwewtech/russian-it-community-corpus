@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
-from src.config import MAX_SFT_TURNS, MIN_ANSWER_WORDS, MIN_QUESTION_WORDS, DOMAIN_TAXONOMY
+from src.config import DOMAIN_TAXONOMY, MAX_SFT_TURNS, MIN_ANSWER_WORDS, MIN_QUESTION_WORDS
 from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
 
 logger = logging.getLogger(__name__)

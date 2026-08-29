@@ -48,14 +48,24 @@ class TestBuildNetwork:
     def test_different_chat_no_sequential_edge(self):
         msgs = [
             CleanedMessage(
-                msg_id=1, chat_id=1, chat_name="a",
-                timestamp=datetime.fromtimestamp(1000).isoformat(), unixtime=1000,
-                author_anon="Alice", author_id_anon="Alice", text_clean="hi",
+                msg_id=1,
+                chat_id=1,
+                chat_name="a",
+                timestamp=datetime.fromtimestamp(1000).isoformat(),
+                unixtime=1000,
+                author_anon="Alice",
+                author_id_anon="Alice",
+                text_clean="hi",
             ),
             CleanedMessage(
-                msg_id=2, chat_id=2, chat_name="b",
-                timestamp=datetime.fromtimestamp(1100).isoformat(), unixtime=1100,
-                author_anon="Bob", author_id_anon="Bob", text_clean="hi",
+                msg_id=2,
+                chat_id=2,
+                chat_name="b",
+                timestamp=datetime.fromtimestamp(1100).isoformat(),
+                unixtime=1100,
+                author_anon="Bob",
+                author_id_anon="Bob",
+                text_clean="hi",
             ),
         ]
         adj, _, _ = SocialNetworkAnalyzer(reply_window_minutes=30).build_network(msgs)
@@ -75,8 +85,13 @@ class TestAnalyze:
         ]
         report = SocialNetworkAnalyzer().analyze(msgs)
         for key in (
-            "total_nodes", "total_edges", "total_interactions", "density",
-            "reciprocal_connections", "top_influencers", "top_responders",
+            "total_nodes",
+            "total_edges",
+            "total_interactions",
+            "density",
+            "reciprocal_connections",
+            "top_influencers",
+            "top_responders",
             "strongest_collaboration_pairs",
         ):
             assert key in report
