@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-29T09:20:32+00:00",
+  "generated_at": "2026-08-30T06:32:35+00:00",
   "hf_dataset_url": "https://huggingface.co/datasets/wwewtech/russian-it-community-corpus",
   "hf_hub_base": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main",
   "adapter_count": 56,

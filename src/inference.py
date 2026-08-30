@@ -1,20 +1,126 @@
 """
 Interactive CLI Chat & Unified Inference Engine.
-Supports Base Models, 44+ LoRA Adapters, Flagship 7B-8B QLoRA, and Local RAG Pipeline.
+
+Supports Base Models, 44+ LoRA Adapters, Flagship 7B-8B QLoRA, and Local
+RAG Pipeline.
+
+The module exposes three layers:
+
+* :func:`validate_adapter_path` / :func:`build_chat_messages` /
+  :func:`build_prompt` / :func:`is_exit_command` — pure helpers covered by
+  :mod:`tests.test_inference` so failures surface in CI even on machines
+  without a GPU/transformers stack.
+* :func:`interactive_chat_session` — the I/O loop. Tries to load the model
+  and tokenizer; raises :class:`RuntimeError` on adapter / weight corruption
+  rather than silently downgrading to the base model.
+* :func:`main` — argparse wrapper used by ``python -m src.inference``.
 """
+
+from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Any
 
 from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import torch  # noqa: E402
-from peft import PeftModel  # noqa: E402
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer  # noqa: E402
+import torch  # noqa: E402  (must stay below setup_runtime_env)
 
-from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
+# Heavy third-party imports are deferred to interactive_chat_session() so
+# that test modules (which only need the pure helpers) do not require
+# torch / transformers / peft at collection time.
+
+
+EXIT_COMMANDS = frozenset({"exit", "quit", "q"})
+
+
+def is_exit_command(text: str) -> bool:
+    """Return True if ``text`` is empty / whitespace-only or matches a session-exit keyword.
+
+    Centralised here so the same definition is used by the interactive
+    loop and by the unit tests in :mod:`tests.test_inference`.
+    """
+    if not text or not text.strip():
+        return True
+    return text.strip().lower() in EXIT_COMMANDS
+
+
+def validate_adapter_path(adapter_id: str, lora_root: Path) -> Path:
+    """Resolve and validate a local LoRA adapter directory.
+
+    Returns the absolute :class:`~pathlib.Path` to the adapter directory.
+
+    Raises:
+        RuntimeError: if the directory is missing, or if the expected
+            ``adapter_model.safetensors`` weight file is absent.
+    """
+    adapter_path = (lora_root / adapter_id).resolve()
+    if not adapter_path.exists():
+        raise RuntimeError(
+            f"LoRA adapter directory not found: {adapter_path}. "
+            "Run `python scripts/generate_lora_registry.py` to regenerate, "
+            "or pass adapter_id=None to use the base model."
+        )
+    if not (adapter_path / "adapter_model.safetensors").is_file():
+        raise RuntimeError(
+            f"LoRA adapter weights missing at {adapter_path}/adapter_model.safetensors. "
+            "The adapter directory exists but weights are absent or corrupt."
+        )
+    return adapter_path
+
+
+def build_chat_messages(query: str, rag_context: str = "") -> list[dict[str, str]]:
+    """Build the ChatML-style messages list fed to ``tokenizer.apply_chat_template``.
+
+    When ``rag_context`` is non-empty the system prompt is augmented with
+    the retrieved knowledge-base chunks; otherwise the model receives a
+    plain "senior engineer" persona prompt.
+    """
+    if rag_context:
+        system_prompt = (
+            "Ты — старший ведущий архитектор и инженер русскоязычного IT-сообщества. "
+            "Используй предоставленный контекст базы знаний для точного, лаконичного ответа "
+            "с примерами кода и архитектурными деталями.\n\n"
+            f"КОНТЕКСТ БАЗЫ ЗНАНИЙ:\n{rag_context}"
+        )
+    else:
+        system_prompt = "Ты — опытный инженер и архитектор программных систем. Дай точный и профессиональный ответ."
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": query},
+    ]
+
+
+def build_prompt(messages: list[dict[str, str]], apply_template: Any) -> str:
+    """Render a chat-template prompt, falling back to explicit delimiters.
+
+    ``apply_template`` is normally ``tokenizer.apply_chat_template``. We
+    accept it as a parameter so unit tests can substitute a stub that
+    raises (simulating Qwen / ChatGLM-family models whose tokenizers
+    reject unknown message roles) and verify the fallback path is used.
+    """
+    try:
+        return apply_template(messages, tokenize=False, add_generation_prompt=True)
+    except Exception:
+        # Reconstruct using explicit <|im_start|> delimiters; without them,
+        # Qwen / ChatGLM-family models treat everything as a single prompt
+        # and ignore the system block.
+        system_content = next((m["content"] for m in messages if m["role"] == "system"), "")
+        user_content = next((m["content"] for m in messages if m["role"] == "user"), "")
+        return (
+            "<|im_start|>system\n" + system_content + "<|im_end|>\n"
+            "<|im_start|>user\n" + user_content + "<|im_end|>\n"
+            "<|im_start|>assistant\n"
+        )
+
+
+def format_rag_context(hits: list[dict[str, Any]]) -> str:
+    """Format a list of RAG hits into a single context string for the system prompt."""
+    if not hits:
+        return ""
+    return "\n---\n".join(f"[{h.get('domain', 'Tech')}]: {h.get('content', '')}" for h in hits)
 
 
 def interactive_chat_session(
@@ -22,7 +128,19 @@ def interactive_chat_session(
     adapter_id: str | None = "heavyweight_qwen2.5_coder_7b",
     use_rag: bool = True,
     max_tokens: int = 512,
-):
+) -> None:
+    """Run the interactive CLI chat loop.
+
+    Heavy imports are deferred inside the function so importing this
+    module from tests does not require torch / transformers.
+    """
+    # Deferred imports keep test collection light and let the pure
+    # helpers above be tested in CPU-only environments.
+    from peft import PeftModel  # noqa: E402
+    from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer  # noqa: E402
+
+    from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
+
     print("=" * 70)
     print("🤖 Russian IT Community LLM & RAG Interactive Terminal")
     print(f"📦 Base Model: {model_name}")
@@ -58,24 +176,13 @@ def interactive_chat_session(
         trust_remote_code=True,
     )
 
-    # 3. Attach LoRA Adapter.
-    # Loading a corrupted adapter must NOT be silently swallowed — that masks
-    # weight corruption / base-model mismatch. Raise RuntimeError so the caller
-    # (Streamlit button, CLI) can show a real error instead of running the base
-    # model and printing a misleading "✅ Attached".
+    # 3. Attach LoRA Adapter. Loading a corrupted adapter must NOT be
+    # silently swallowed — that masks weight corruption / base-model
+    # mismatch. Raise RuntimeError so the caller (Streamlit button, CLI)
+    # can show a real error instead of running the base model and
+    # printing a misleading "✅ Attached".
     if adapter_id:
-        adapter_path = root_dir / "lora_adapters" / adapter_id
-        if not adapter_path.exists():
-            raise RuntimeError(
-                f"LoRA adapter directory not found: {adapter_path}. "
-                "Run `python scripts/generate_lora_registry.py` to regenerate, "
-                "or pass adapter_id=None to use the base model."
-            )
-        if not (adapter_path / "adapter_model.safetensors").is_file():
-            raise RuntimeError(
-                f"LoRA adapter weights missing at {adapter_path}/adapter_model.safetensors. "
-                "The adapter directory exists but weights are absent or corrupt."
-            )
+        adapter_path = validate_adapter_path(adapter_id, root_dir / "lora_adapters")
         try:
             model = PeftModel.from_pretrained(model, str(adapter_path))
             print(f"✅ Attached LoRA Adapter from {adapter_path}")
@@ -91,7 +198,7 @@ def interactive_chat_session(
             print("\n👋 Exiting chat session.")
             break
 
-        if not query or query.lower() in ("exit", "quit", "q"):
+        if is_exit_command(query):
             print("👋 Exiting chat session.")
             break
 
@@ -99,40 +206,11 @@ def interactive_chat_session(
         if rag_kb:
             hits = rag_kb.search(query, top_k=2)
             if hits:
-                rag_context = "\n---\n".join([f"[{h.get('domain', 'Tech')}]: {h.get('content', '')}" for h in hits])
+                rag_context = format_rag_context(hits)
                 print(f"\n[🔍 RAG Retrieved {len(hits)} Context Chunks]")
 
-        if rag_context:
-            system_prompt = (
-                "Ты — старший ведущий архитектор и инженер русскоязычного IT-сообщества. "
-                "Используй предоставленный контекст базы знаний для точного, лаконичного ответа с примерами кода и архитектурными деталями.\n\n"
-                f"КОНТЕКСТ БАЗЫ ЗНАНИЙ:\n{rag_context}"
-            )
-        else:
-            system_prompt = "Ты — опытный инженер и архитектор программных систем. Дай точный и профессиональный ответ."
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": query},
-        ]
-
-        try:
-            prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        except Exception as exc:
-            # Fallback that at least keeps <|im_start|>-style delimiters so the
-            # base model can distinguish system / user roles. Without explicit
-            # tokens, Qwen / ChatGLM-family models will treat everything as a
-            # single prompt and ignore the system block.
-            logger = __import__("logging").getLogger("Inference")
-            logger.warning(
-                "tokenizer.apply_chat_template failed (%s); using <|im_start|>-style fallback.",
-                exc,
-            )
-            prompt_text = (
-                "<|im_start|>system\n" + system_prompt + "<|im_end|>\n"
-                "<|im_start|>user\n" + query + "<|im_end|>\n"
-                "<|im_start|>assistant\n"
-            )
+        messages = build_chat_messages(query, rag_context)
+        prompt_text = build_prompt(messages, tokenizer.apply_chat_template)
 
         inputs = tokenizer(prompt_text, return_tensors="pt")
         if torch.cuda.is_available():
@@ -152,7 +230,7 @@ def interactive_chat_session(
         print()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Russian IT Community LLM & RAG Inference CLI")
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID or path")
     parser.add_argument(

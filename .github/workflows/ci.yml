@@ -59,9 +59,31 @@ jobs:
       run: |
         python cli.py benchmark
 
+    # --- Synthetic parquet fixtures for the data-dependent steps ---------
+    # The production parquet/JSONL artifacts are gitignored (they live on
+    # the Hugging Face Hub, not in the repository), so on a vanilla PR
+    # build they would be absent and the next three steps would short-
+    # circuit to "skipped".  ``scripts/build_synthetic_parquet.py`` emits
+    # a tiny (~5 KB) self-contained fixture set that satisfies the
+    # schemas expected by the PII red-team, the dataset validator, and
+    # the SFT quality monitor.  The fixture is deterministic, free of
+    # real PII, and small enough to ship in a PR diff.
+    #
+    # When a real parquet is present (self-hosted runner with pre-staged
+    # artifacts, or a tagged release) this step is a no-op because the
+    # production files already exist on disk.
+    - name: Build synthetic parquet fixtures
+      run: |
+        if [ ! -f dataset_output/parquet/full_clean_messages.parquet ]; then
+          python scripts/build_synthetic_parquet.py --out dataset_output --rows 100
+        else
+          echo "Real parquet present, skipping synthetic fixture generation."
+        fi
+
     # Dataset binaries are gitignored (hosted on Hugging Face), so these
     # data-dependent audits only execute when artifacts are present,
-    # e.g. on self-hosted runners or after a dataset rebuild step.
+    # e.g. on self-hosted runners, on a tagged release, or after the
+    # synthetic-fixture step above has populated dataset_output/.
     - name: Run Automated PII Sanity & Leak Detection Check
       if: ${{ hashFiles('dataset_output/parquet/full_clean_messages.parquet') != '' }}
       run: |

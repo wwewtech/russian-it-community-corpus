@@ -1,5 +1,9 @@
 """
 Streamlit Web Data Studio & Analytics Dashboard for Russian IT Community Corpus.
+
+The pure data-handling helpers live in :mod:`app_helpers` so they are
+unit-testable without spinning up a Streamlit runtime. The functions
+defined here are thin Streamlit-aware wrappers around those helpers.
 """
 
 import json
@@ -7,6 +11,22 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+
+from app_helpers import (
+    DEFAULT_PARQUET_ROWS,
+    adversarial_summary,
+    derive_pii_verdict,
+    leak_breakdown,
+)
+from app_helpers import (
+    load_json_file as _load_json_file,
+)
+from app_helpers import (
+    load_markdown_file as _load_markdown_file,
+)
+from app_helpers import (
+    load_parquet_sample as _load_parquet_sample,
+)
 
 # Configure Streamlit page
 st.set_page_config(
@@ -24,31 +44,21 @@ REPORTS_DIR = BASE_DIR / "reports"
 
 
 @st.cache_data(show_spinner=False)
-def load_parquet_sample(file_name: str, max_rows: int = 5000) -> pd.DataFrame:
-    """Load a cached sample of parquet dataset."""
-    path = PARQUET_DIR / file_name
-    if not path.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(path)
-    return df.head(max_rows)
+def load_parquet_sample(file_name: str, max_rows: int = DEFAULT_PARQUET_ROWS) -> pd.DataFrame:
+    """Cached wrapper around :func:`app_helpers.load_parquet_sample`."""
+    return _load_parquet_sample(PARQUET_DIR, file_name, max_rows=max_rows)
 
 
 @st.cache_data(show_spinner=False)
 def load_json_file(file_path: Path) -> dict:
-    """Load and cache JSON file."""
-    if not file_path.exists():
-        return {}
-    with open(file_path, encoding="utf-8") as f:
-        return json.load(f)
+    """Cached wrapper around :func:`app_helpers.load_json_file`."""
+    return _load_json_file(file_path)
 
 
 @st.cache_data(show_spinner=False)
 def load_markdown_file(file_path: Path) -> str:
-    """Load markdown report file."""
-    if not file_path.exists():
-        return "Файл отчёта не найден."
-    with open(file_path, encoding="utf-8") as f:
-        return f.read()
+    """Cached wrapper around :func:`app_helpers.load_markdown_file`."""
+    return _load_markdown_file(file_path)
 
 
 # Navigation Constants
@@ -134,40 +144,25 @@ if nav == NAV_MAIN:
         val_data = load_json_file(REPORTS_DIR / "validation_results.json")
         cert_data = load_json_file(REPORTS_DIR / "zero_pii_audit_certificate.json")
 
-        pii_leak = val_data.get("pii_leakage_audit", {})
-        parquet_audit = cert_data.get("production_parquet_audit", {})
-        leak_breakdown = parquet_audit.get("leak_breakdown", {})
-        adv_suite = cert_data.get("adversarial_suite", {})
-
-        total_leaks = parquet_audit.get(
-            "total_leaks_found",
-            pii_leak.get("phone_leaks", 0) + pii_leak.get("email_leaks", 0) + pii_leak.get("api_key_leaks", 0),
-        )
-        # Безопасный PII-вердикт: PASSED только если ОБА источника подтверждают
-        # отсутствие утечек. Прежняя логика с `or` позволяла UI показать «PASSED»,
-        # даже если один из сертификатов устарел и содержит ненулевой total_leaks.
-        cert_passed = (
-            cert_data.get("verification_status") == "PASSED" and parquet_audit.get("total_leaks_found", 0) == 0
-        )
-        val_passed = val_data.get("validation_passed", False) and total_leaks == 0
-        is_passed = cert_passed or val_passed
+        # Delegate the verdict / breakdown maths to :mod:`app_helpers`
+        # so the same logic is covered by ``tests/test_app.py`` and a
+        # regression here can never silently flip the PASSED banner
+        # back to the previous permissive ``or`` short-circuit.
+        is_passed, total_leaks, sampled_count = derive_pii_verdict(val_data, cert_data)
+        breakdown = leak_breakdown(cert_data, val_data)
+        adv_passed, adv_total, adv_rate = adversarial_summary(cert_data)
 
         if is_passed:
             st.success("✅ **Zero-PII Verification Status: PASSED**")
         else:
             st.error(f"⚠️ **Zero-PII Verification Status: AUDIT REQUIRED ({total_leaks} leaks detected)**")
 
-        sampled_count = parquet_audit.get("sampled_messages_audited", pii_leak.get("sample_lines_checked", 25000))
         st.write(f"- Проверено случайных сообщений: **{sampled_count:,}**")
-        st.write(f"- Утечек телефонов: **{leak_breakdown.get('phones', pii_leak.get('phone_leaks', 0))}**")
-        st.write(f"- Утечек email: **{leak_breakdown.get('emails', pii_leak.get('email_leaks', 0))}**")
-        st.write(f"- Утечек API-токенов/ключей: **{leak_breakdown.get('api_keys', pii_leak.get('api_key_leaks', 0))}**")
-        st.write(f"- Утечек криптокошельков: **{leak_breakdown.get('crypto_wallets', 0)}**")
-        adv_passed = adv_suite.get("adversarial_tests_passed", 14)
-        adv_total = adv_suite.get("total_adversarial_tests", 14)
-        st.write(
-            f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_suite.get('success_rate_percentage', 100.0):.1f}%)**"
-        )
+        st.write(f"- Утечек телефонов: **{breakdown['phones']}**")
+        st.write(f"- Утечек email: **{breakdown['emails']}**")
+        st.write(f"- Утечек API-токенов/ключей: **{breakdown['api_keys']}**")
+        st.write(f"- Утечек криптокошельков: **{breakdown['crypto_wallets']}**")
+        st.write(f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_rate:.1f}%)**")
 
 # =============================================================================
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)
