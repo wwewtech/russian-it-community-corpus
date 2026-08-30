@@ -119,10 +119,10 @@ tested** (`tests/test_pipeline.py`). It does three things:
 ```python
 from src.pipeline import MasterDataPipeline, PipelineConfig
 
-config = PipelineConfig.from_env()        # or build one explicitly
+config = PipelineConfig.from_env()  # or build one explicitly
 pipeline = MasterDataPipeline(config)
-pipeline.run_all()                         # all 7 stages
-pipeline.run_export()                      # just stage 6
+pipeline.run_all()  # all 7 stages
+pipeline.run_export()  # just stage 6
 ```
 
 Because each stage collaborator is a small object with explicit
