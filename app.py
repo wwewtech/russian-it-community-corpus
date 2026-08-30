@@ -88,8 +88,8 @@ st.sidebar.info(
     "- 👤 **210 890** участников\n"
     "- 🧠 **171 520** SFT диалогов\n"
     "- 📚 **325 690** RAG чанков\n"
-    "- ⚡ **60 412** DPO пар\n"
-    "- 🦁 **58** LoRA адаптеров\n"
+    "- ⚡ **60 899** DPO пар\n"
+    "- 🦁 **56** LoRA адаптеров\n"
     "- 🔒 **11 community nodes** анонимизировано"
 )
 
@@ -122,10 +122,10 @@ if nav == NAV_MAIN:
             - **`sft_dialogues.parquet`**: 171,520 многоходовых диалогов (`132 MB`)
             - **`rag_knowledge_base.parquet`**: 325,690 чанков базы знаний (`159 MB`)
             - **`sft_openai_messages.jsonl`**: 171,520 диалогов ChatML
-            - **`sft_alpaca_format.jsonl`**: 933,331 пар инструкций
+            - **`sft_alpaca_format.jsonl`**: 933,313 пар инструкций
             - **`sft_sharegpt_format.jsonl`**: 171,520 диалогов ShareGPT
             - **`rag_chunks_kb.jsonl`**: 325,690 документов для Vector DB
-            - **`dpo_preference_pairs.jsonl`**: 60,412 пар предпочтений
+            - **`dpo_preference_pairs.jsonl`**: 60,899 пар предпочтений
             """
         )
 
@@ -143,9 +143,14 @@ if nav == NAV_MAIN:
             "total_leaks_found",
             pii_leak.get("phone_leaks", 0) + pii_leak.get("email_leaks", 0) + pii_leak.get("api_key_leaks", 0),
         )
-        is_passed = (
-            cert_data.get("verification_status") == "PASSED" or val_data.get("validation_passed", False)
-        ) and total_leaks == 0
+        # Безопасный PII-вердикт: PASSED только если ОБА источника подтверждают
+        # отсутствие утечек. Прежняя логика с `or` позволяла UI показать «PASSED»,
+        # даже если один из сертификатов устарел и содержит ненулевой total_leaks.
+        cert_passed = (
+            cert_data.get("verification_status") == "PASSED" and parquet_audit.get("total_leaks_found", 0) == 0
+        )
+        val_passed = val_data.get("validation_passed", False) and total_leaks == 0
+        is_passed = cert_passed or val_passed
 
         if is_passed:
             st.success("✅ **Zero-PII Verification Status: PASSED**")
@@ -205,7 +210,7 @@ elif nav == NAV_MESSAGES:
 elif nav == NAV_SFT_DPO:
     st.title("💬 SFT & DPO Диалоговая Студия")
 
-    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (171,520)", "⚖️ DPO Пары Предпочтений (60,412)"])
+    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (171,520)", "⚖️ DPO Пары Предпочтений (60,899)"])
 
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)

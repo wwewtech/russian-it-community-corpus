@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.0.2] - 2026-08-30
+
+### Fixed
+- **CITATION.cff**: version `6.0.0` → `12.0.1`, `date-released` synced with the current version.
+- **`app.py` count drift**: sidebar / main view / SFT-DPO tabs / Parquet table now consistently show `DPO: 60,899`, `Alpaca: 933,313`, `LoRA adapters: 56` (matching `registry.json` and `validation_results.json`). Previously the same project claimed 60,412 / 933,331 / 58 in different artifacts.
+- **`app.py` PII verdict logic**: replaced `or` short-circuit that allowed the Streamlit UI to display «Zero-PII Status: PASSED» even when one of the audit certificates reported non-zero leaks. PASSED now requires BOTH the audit certificate and the dataset validator to report zero leaks simultaneously.
+- **`src/rag/rag_pipeline.py` docstring**: stale `71k knowledge base` string updated to `325,690 chunks`, with a NOTE explaining the implementation is lexical (`str.contains` + keyword overlap), not semantic-embedding based. Embedding backend is TODO.
+- **`Modelfile`**: duplicate `PARAMETER stop ""` lines replaced with the actual Qwen stop tokens `<|im_end|>` and `<|endoftext|>`. Ollama previously would have used both empty stop tokens and never halted generation.
+- **`Dockerfile` missing ML stack**: `torch`, `transformers`, `accelerate`, `peft`, `trl`, `datasets`, `evaluate` were absent. The image built a Streamlit container that could not load any model. They are now installed in a separate `pip install --no-deps` layer so the build fails fast on resolution errors.
+- **`src/inference.py` silent adapter failure**: a missing or corrupted adapter no longer prints `⚠️ Could not load LoRA adapter` and continues with the base model. The function now raises `RuntimeError` with the exact failure path, and the Streamlit button / CLI surfaces a real error.
+- **`src/inference.py` chat template fallback**: when `apply_chat_template` is unavailable, the previous fallback used a naked `f"{system_prompt}\n\nПользователь: {query}\nОтвет:"` — which Qwen / ChatGLM-family models treat as a single prompt with no role boundary. The fallback now uses the explicit `<|im_start|>system / user / assistant` delimiters.
+- **`src/lora/train_lora.py` silent truncation**: removed the hardcoded `if len(raw_dataset) > 1000: raw_dataset.select(range(1000))` — the script now trains on the full JSONL (use `--max-samples` if a smoke run is needed). Intermediate checkpoints are now written every `min(100, max_steps//5)` steps with `save_total_limit=3`, so a crash on step 99 / 100 no longer destroys the run.
+- **`src/pii/deep_anonymizer.py` Telegram forward header**: previously dropped the captured name and emitted a static `[PERSON_REDACTED]`, breaking cross-message identity. The replacement now feeds the captured name into the same `_get_or_create_pseudonym` used for authors, so the same forward header always maps to the same `Developer_XXXXX`.
+- **`src/pii/regex_scrubber.py` community whitelist**: the previous regex matched only 9 hand-picked channel names. It now anchors on the original 9 plus a heuristic catch-all `[Title] + chat / channel / digest / podcast / feed` pattern so new communities are not silently leaking.
+- **`src/graph/conversation_extractor.py` quality heuristic**: removed the unconditional +2.0 bonus for the presence of any code indicator. A bare `def ` / `import ` substring no longer inflates the SFT dialogue `quality_score`; technical-keyword density is now the sole signal.
+- **`src/evaluation/official_academic_benchmarks.py` `_safe_exec`**: wrapped `exec()` in a restricted builtin allowlist (`abs`, `sum`, `dict`, ...) so model-generated HumanEval code can no longer call `os.system`, `subprocess.run`, `socket`, `shutil`, or open files for write. This is a defense-in-depth measure alongside the existing 2-second timeout.
+- **`src/pipeline.py` logging.basicConfig**: removed `logging.basicConfig(...)` from module-import time so importing the library does not clobber the caller's logger. The CLI / Streamlit entry points now configure logging explicitly (see `main.py`).
+
+### Documentation
+- **`README.md`**: numbers unified across the doc (60,899 / 933,313 / 56 adapters); the entire WITHDRAWN benchmark table replaced with a short note explaining the harness was audited and the numbers will be republished only after a fresh GPU re-run. The 100-question benchmark suite remains available as a corpus, not as a leaderboard.
+- **`pyproject.toml`**: ruff still pinned to `==0.16.2` for local/CI/pre-commit agreement; existence of this version on PyPI requires manual verification (the previous version was already once broken per CHANGELOG 12.0.1).
+
+### Pending (must be re-run by the user)
+- **`lora_adapters/registry.json`** is regenerated automatically by `python scripts/generate_lora_registry.py` from the on-disk adapter configs; the local registry currently lists 56 adapters but the file system has 63 directories, so 7 adapters (sber_mgpt, codegen_350m_multi, h2o_danube*, internlm*, etc.) are missing from the manifest. Re-run the script after the pipeline finishes to sync.
+
+---
+
 ## [12.0.1] - 2026-08-29
 
 ### Fixed

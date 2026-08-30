@@ -284,9 +284,18 @@ class DeepPIIAnonymizer:
 
         text = self.db_url_pattern.sub(_sub_db, text)
 
-        # Pass 2: Forwarded headers
+        # Pass 2: Forwarded headers.
+        # Use the captured name (m.group(1)) to register a stable pseudonym,
+        # so the same forward header always maps to the same `Developer_XXXXX`
+        # instead of a static `[PERSON_REDACTED]` token. This matches the
+        # author pseudonymization done by `_get_or_create_pseudonym` and
+        # preserves cross-message identity within the same chat.
         def _sub_fwd(m):
+            captured = m.group(1).strip()
             self.stats["forward_headers"] += 1
+            if captured:
+                _anon_id, anon_name = self._get_or_create_pseudonym(captured, captured)
+                return f"Forwarded from {anon_name}"
             return "Forwarded from [PERSON_REDACTED]"
 
         text = self.tg_forward_pattern.sub(_sub_fwd, text)

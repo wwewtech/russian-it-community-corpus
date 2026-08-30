@@ -58,17 +58,29 @@ def interactive_chat_session(
         trust_remote_code=True,
     )
 
-    # 3. Attach LoRA Adapter
+    # 3. Attach LoRA Adapter.
+    # Loading a corrupted adapter must NOT be silently swallowed — that masks
+    # weight corruption / base-model mismatch. Raise RuntimeError so the caller
+    # (Streamlit button, CLI) can show a real error instead of running the base
+    # model and printing a misleading "✅ Attached".
     if adapter_id:
         adapter_path = root_dir / "lora_adapters" / adapter_id
-        if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
-            try:
-                model = PeftModel.from_pretrained(model, str(adapter_path))
-                print(f"✅ Attached LoRA Adapter from {adapter_path}")
-            except Exception as e:
-                print(f"⚠️ Could not load LoRA adapter: {e}")
-        else:
-            print(f"⚠️ Adapter directory '{adapter_path}' not found. Using base weights.")
+        if not adapter_path.exists():
+            raise RuntimeError(
+                f"LoRA adapter directory not found: {adapter_path}. "
+                "Run `python scripts/generate_lora_registry.py` to regenerate, "
+                "or pass adapter_id=None to use the base model."
+            )
+        if not (adapter_path / "adapter_model.safetensors").is_file():
+            raise RuntimeError(
+                f"LoRA adapter weights missing at {adapter_path}/adapter_model.safetensors. "
+                "The adapter directory exists but weights are absent or corrupt."
+            )
+        try:
+            model = PeftModel.from_pretrained(model, str(adapter_path))
+            print(f"✅ Attached LoRA Adapter from {adapter_path}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to attach LoRA adapter from {adapter_path}: {e}") from e
 
     streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
@@ -106,8 +118,21 @@ def interactive_chat_session(
 
         try:
             prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        except Exception:
-            prompt_text = f"{system_prompt}\n\nПользователь: {query}\nОтвет:"
+        except Exception as exc:
+            # Fallback that at least keeps <|im_start|>-style delimiters so the
+            # base model can distinguish system / user roles. Without explicit
+            # tokens, Qwen / ChatGLM-family models will treat everything as a
+            # single prompt and ignore the system block.
+            logger = __import__("logging").getLogger("Inference")
+            logger.warning(
+                "tokenizer.apply_chat_template failed (%s); using <|im_start|>-style fallback.",
+                exc,
+            )
+            prompt_text = (
+                "<|im_start|>system\n" + system_prompt + "<|im_end|>\n"
+                "<|im_start|>user\n" + query + "<|im_end|>\n"
+                "<|im_start|>assistant\n"
+            )
 
         inputs = tokenizer(prompt_text, return_tensors="pt")
         if torch.cuda.is_available():

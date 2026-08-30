@@ -26,7 +26,7 @@
 > [!TIP]
 > **🤗 Official Hugging Face Hub Integration**:
 > - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2,816,434 clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
-> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 pre-trained open adapters + Flagship 7B-8B QLoRA models (Qwen 2.5 Coder 7B, DeepSeek R1 7B, LLaMA 3.1 8B).
+> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 56 pre-trained open adapters + Flagship 7B-8B QLoRA models (Qwen 2.5 Coder 7B, DeepSeek R1 7B, LLaMA 3.1 8B).
 >
 > ```python
 > from datasets import load_dataset
@@ -106,7 +106,7 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
   - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
   - ⚙️ [Unified Metrics & Audit (JSON)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json) — 322 KB metrics index
 
-- 🦁 **Model Hub (58 LoRA Adapters & 7B-8B QLoRA Flagships)**:
+- 🦁 **Model Hub (56 LoRA Adapters & 7B-8B QLoRA Flagships)**:
   👉 [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
   - 🥇 [Flagship Qwen 2.5 Coder 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_qwen2.5_coder_7b)
   - 🥈 [Flagship DeepSeek R1 Distill 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_deepseek_r1_7b)
@@ -134,30 +134,18 @@ All datasets are automatically generated and saved in `dataset_output/`:
 ## Comparative Architectural Evaluation (Base vs RAG vs LoRA vs Hybrid)
 
 > [!WARNING]
-> **Benchmark results are WITHDRAWN pending a GPU re-run.**
-> The evaluation harness had three bugs (fail-fast on unloaded adapter, adapter
-> not disabled for the Base column, enlarged subsets not yet re-run). The numbers
-> below were **officially retracted** in the dataset card
-> ([`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md), section
-> "Empirical Evaluation — Honest Status") and are flagged with `_status_warning`
-> in [`metrics_index.json`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json).
-> **Do not cite the figures below until they are re-measured and re-published.**
-
-| Setup | 50 Domain Scenarios (Heuristic Overlap & AST) | HumanEval (`pass@1`, 8-task sample) | RuMMLU CS (8-question exploratory sample) | PPL on Held-out Russian IT Corpus | Latency (P50) | VRAM on RTX 3060 |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Base Model** (Qwen 2.5 1.5B) | 32.9% | 0.0% | 87.5% (7/8) | 35.44 | ~410 ms | ~4.20 GB |
-| **Base Model + RAG** (325k chunks) | 44.0% | 12.5% | 100.0% (8/8) | N/A (Retrieval) | ~580 ms | ~4.50 GB |
-| **Domain LoRA** (171.5k dialogues) | 34.5% | 12.5% | 100.0% (8/8) | ~~32.19~~ *(withdrawn)* | ~415 ms | ~4.35 GB |
-| **Hybrid** (LoRA + RAG) | ~~48.6%~~ | ~~0.0%~~ | ~~100.0% (8/8)~~ | ~~32.19~~ *(withdrawn)* | ~590 ms | ~4.65 GB |
-
-> [!NOTE]
-> **Methodological status:**
-> - All benchmark figures in the table above are **unverified/withdrawn** until the
->   harness bugs are fixed and the full suite is re-run on GPU (see the dataset card
->   for the list of the three harness bugs).
-> - **RAG Retrieval** grounds responses with exact configuration parameters, command
->   flags, and library APIs (architectural claim, not a benchmark result).
-> - Full dataset documentation is published in [`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md).
+> **Benchmark section withdrawn from README.**
+> Earlier numbers in this section were officially retracted in
+> [`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md), section
+> "Empirical Evaluation — Honest Status". A code audit of the benchmark harness
+> (`src/evaluation/official_academic_benchmarks.py`) found three defects
+> (substring-based MCQ scoring, PPL on empty placeholders, silent copy of
+> Base results into LoRA/Hybrid columns when the adapter failed to load).
+> The numbers will be republished only after a fresh GPU re-run; meanwhile we
+> ship the dataset and adapters without any accuracy claim on this README page.
+> The 100-question **non-executing** benchmark suite remains available in
+> [`reports/domain_benchmark_100.json`](reports/domain_benchmark_100.json) as
+> a corpus, not as a leaderboard.
 
 ---
 
@@ -186,7 +174,7 @@ rag_ds = load_dataset("wwewtech/russian-it-community-corpus", "rag_knowledge_bas
 full_ds = load_dataset("wwewtech/russian-it-community-corpus", "full_corpus", split="train")
 ```
 
-### LoRA Model Zoo (58 Pre-Trained Adapters & 7B–8B Flagships)
+### LoRA Model Zoo (56 Pre-Trained Adapters & 7B–8B Flagships)
 
 Pre-trained adapters fine-tuned on RICC dataset are available in [`lora_adapters/`](lora_adapters/) and on Hugging Face: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora). The local [`lora_adapters/registry.json`](lora_adapters/registry.json) is the single source of truth, generated by [`scripts/generate_lora_registry.py`](scripts/generate_lora_registry.py). To mirror the registry to the Hub, see [`docs/adr/0001-hf-token-handling.md`](docs/adr/0001-hf-token-handling.md) and [`scripts/sync_to_hub.py`](scripts/sync_to_hub.py). Full hand-maintained catalog lives in [`reports/LORA_MODEL_ZOO.md`](reports/LORA_MODEL_ZOO.md).
 
@@ -282,7 +270,7 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 ├── reports/                    # Canonical dataset & model cards and benchmark suites
 │   ├── DATASET_AND_ANALYTICS.md   # Dataset Card and Zero-PII Protocol
 │   ├── HF_MODEL_CARD.md           # Hugging Face Model Card
-│   ├── LORA_MODEL_ZOO.md          # Catalog of 58 LoRA Adapters & Flagship 7B-8B QLoRA
+│   ├── LORA_MODEL_ZOO.md          # Catalog of 56 LoRA Adapters & Flagship 7B-8B QLoRA
 │   └── domain_benchmark_100.json  # 100-Scenario Domain Benchmark Suite
 ├── tests/                      # Automated unit tests
 ├── app.py                      # Streamlit Web Data Studio

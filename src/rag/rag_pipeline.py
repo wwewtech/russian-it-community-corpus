@@ -14,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 class LocalRAGPipeline:
     """
-    RAG engine for retrieval and context injection from the curated 71k knowledge base.
+    RAG engine for retrieval and context injection from the curated 325,690 knowledge base chunks.
+
+    NOTE: this is a lightweight lexical retriever over ``df_kb['content']`` using a
+    pre-filter ``str.contains`` + a keyword-overlap score. It is NOT a semantic
+    embedding search — use ``build_embedding_index`` (TODO) for that. See ``app.py``
+    and ``inference.py`` for the current call sites.
     """
 
     def __init__(self, parquet_kb_path: Path):

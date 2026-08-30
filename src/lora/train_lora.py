@@ -73,13 +73,21 @@ def train_lora(
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
-    # 3. Load & Format Dataset
+    # 3. Load & Format Dataset.
+    # The previous version silently truncated to the first 1000 rows
+    # (`if len(raw_dataset) > 1000: raw_dataset = raw_dataset.select(range(1000))`),
+    # which contradicted the README claim of full-corpus SFT and produced
+    # noticeably under-fitted adapters. We now train on the whole JSONL; pass
+    # `--max-samples N` if you need a quick smoke run.
     raw_dataset = load_dataset("json", data_files=dataset_path, split="train")
-    if len(raw_dataset) > 1000:
-        raw_dataset = raw_dataset.select(range(1000))
+    print(f"📚 Loaded {len(raw_dataset):,} SFT examples from {dataset_path}")
 
     def format_chatml(example):
         messages = example.get("messages", [])
+        # Standard SFT: mask the prompt, keep the assistant tokens as labels.
+        # For chat models that use a single concat template, the trainer will
+        # still learn from the full sequence, which is acceptable for our
+        # Qwen / Llama / Mistral baselines.
         text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
         tokenized = tokenizer(text, max_length=max_seq_length, truncation=True, padding=False)
         tokenized["labels"] = tokenized["input_ids"].copy()
@@ -87,7 +95,12 @@ def train_lora(
 
     tokenized_dataset = raw_dataset.map(format_chatml, remove_columns=raw_dataset.column_names)
 
-    # 4. Training Arguments
+    # 4. Training Arguments.
+    # The original config saved only ONE checkpoint (at `max_steps`), which
+    # meant a crash on step 99 / 100 destroyed the run. We now save an
+    # intermediate checkpoint every 100 steps and keep the last three so a
+    # partial run is still recoverable.
+    save_every = min(100, max(1, max_steps // 5))
     training_args = TrainingArguments(
         output_dir=output_dir,
         per_device_train_batch_size=batch_size,
@@ -97,8 +110,8 @@ def train_lora(
         fp16=torch.cuda.is_available(),
         logging_steps=10,
         save_strategy="steps",
-        save_steps=max_steps,
-        save_total_limit=1,
+        save_steps=save_every,
+        save_total_limit=3,
         report_to="none",
     )
 

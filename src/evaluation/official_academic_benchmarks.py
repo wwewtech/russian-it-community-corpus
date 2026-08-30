@@ -814,9 +814,85 @@ RUMMLU_CS_QUESTIONS = [
 ]
 
 
+# Builtins allowlist for the HumanEval sandbox. Anything outside this set
+# (e.g. ``os``, ``subprocess``, ``socket``, ``shutil``, ``open``) raises
+# ``NameError`` at call time, which prevents the model-generated code from
+# performing filesystem, network, or process-level side effects. We also
+# strip ``__import__`` and ``eval`` / ``exec`` themselves to make sandbox
+# escape harder.
+_SAFE_BUILTINS = {
+    "abs",
+    "all",
+    "any",
+    "ascii",
+    "bin",
+    "bool",
+    "bytearray",
+    "bytes",
+    "callable",
+    "chr",
+    "complex",
+    "dict",
+    "divmod",
+    "enumerate",
+    "filter",
+    "float",
+    "format",
+    "frozenset",
+    "hash",
+    "hex",
+    "id",
+    "int",
+    "isinstance",
+    "issubclass",
+    "iter",
+    "len",
+    "list",
+    "map",
+    "max",
+    "min",
+    "next",
+    "object",
+    "oct",
+    "ord",
+    "pow",
+    "print",
+    "range",
+    "repr",
+    "reversed",
+    "round",
+    "set",
+    "slice",
+    "sorted",
+    "str",
+    "sum",
+    "tuple",
+    "type",
+    "vars",
+    "zip",
+    "True",
+    "False",
+    "None",
+    "Exception",
+    "ValueError",
+    "TypeError",
+    "AssertionError",
+    "StopIteration",
+}
+
+
 def _safe_exec(code_str: str) -> bool:
-    scope = {}
-    exec(code_str, scope)
+    """Execute HumanEval-style code with a restricted builtin namespace.
+
+    Still NOT a full sandbox (model code can still allocate memory, loop
+    forever, etc.) — the 2-second timeout in ``execute_humaneval_code``
+    remains the primary containment. The builtin allowlist prevents the
+    most obvious exfiltration / RCE patterns (os.system, subprocess.run,
+    socket.connect, shutil.rmtree, file open for write, etc.).
+    """
+    safe_globals: dict[str, object] = {"__builtins__": _SAFE_BUILTINS}
+    safe_locals: dict[str, object] = {}
+    exec(code_str, safe_globals, safe_locals)
     return True
 
 

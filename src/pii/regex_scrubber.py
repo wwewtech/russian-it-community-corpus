@@ -67,9 +67,30 @@ class RegexPIIScrubber:
         # 7. User Mentions (@username)
         self.mention_pattern = re.compile(r"(?<!\w)@([a-zA-Z0-9_]{4,32})\b")
 
-        # 8. Source Community Names Redaction Pattern
+        # 8. Source Community Names Redaction Pattern.
+        # The previous regex only matched the original 9 hand-picked channel
+        # names — any new community that appeared in the source data would
+        # leak through untouched. We now anchor on two patterns:
+        #   (a) the original explicit names (kept for backward compatibility)
+        #   (b) any channel / supergroup title that looks like a Russian IT
+        #       media handle, plus Telegram-specific chat / channel suffixes.
+        # Strict redaction (not a "whitelist") — every match becomes
+        # `[COMMUNITY_REDACTED]` so downstream consumers never see the raw name.
         self.community_names_pattern = re.compile(
-            r"(?i)\b(?:rozetked\s+plus\s+chat|rozetked|wylsacom\s+media|wylsacom|лама\s+ai|лама\s*:\s*комментарии|русский\s+ит\s+бизнес|полезная\s+нагрузка|forgetme\s*\|\s*comms|внутри\s+ai)\b"
+            r"(?i)\b(?:"
+            # Original seed list (kept for exact-string compatibility)
+            r"rozetked\s+plus\s+chat|rozetked|"
+            r"wylsacom\s+media|wylsacom|"
+            r"лама\s+ai|лама\s*:\s*комментарии|"
+            r"русский\s+ит\s+бизнес|"
+            r"полезная\s+нагрузка|"
+            r"forgetme\s*\|\s*comms|"
+            r"внутри\s+ai|"
+            # Heuristic catch-all: title-like name + chat/channel suffix
+            # e.g. "Backend Podcast Chat", "Python Digest", "AI Talks Channel"
+            r"[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9 _\-]{2,40}?"
+            r"(?:\s+(?:chat|channel|chatgpt|комментарии|обсуждение|диалоги|notes|podcast|digest|feed))"
+            r")\b"
         )
 
     def scrub(self, text: str, mention_map: dict[str, str] | None = None) -> tuple[str, dict[str, int]]:

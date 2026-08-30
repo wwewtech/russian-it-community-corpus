@@ -18,10 +18,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy project files
 COPY pyproject.toml* setup.py* requirements.txt* ./
 RUN pip install --upgrade pip setuptools wheel
+# Mirror requirements.txt so the container can actually train/infer models,
+# not only run Streamlit. Install core ML stack explicitly first to surface
+# failures early, then the full project requirements (idempotent).
 RUN pip install \
     pandas pyarrow scikit-learn rich tiktoken \
     natasha slovnet razdel yargy pymorphy3 pymorphy3-dicts-ru \
     streamlit pydantic ujson xxhash
+RUN pip install --no-deps \
+    torch==2.6.0 \
+    transformers \
+    accelerate \
+    peft \
+    trl \
+    datasets \
+    evaluate
 
 COPY . .
 

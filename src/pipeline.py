@@ -33,11 +33,10 @@ from src.taxonomy.tagger import TechnicalTagger
 from src.validation.benchmark import BenchmarkRunner
 from src.validation.validator import DatasetValidator
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler()],
-)
+# Note: logging.basicConfig intentionally NOT called here. Configuring the root
+# logger at import time overrides any setup done by the embedding application
+# (Streamlit, Jupyter, pytest capture, etc.). Each entry point is responsible
+# for its own logging config via src.bootstrap.setup_runtime_env().
 logger = logging.getLogger("Pipeline")
 
 

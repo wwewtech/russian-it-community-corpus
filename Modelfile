@@ -1,4 +1,4 @@
-# Modelfile for Russian IT Community LLM (Ollama)
+﻿# Modelfile for Russian IT Community LLM (Ollama)
 FROM qwen2.5-coder:7b
 
 # LoRA Adapter: Flagship Russian IT Community Model
@@ -11,5 +11,5 @@ SYSTEM """Ты — старший ведущий системный архите
 # Generation Parameters
 PARAMETER temperature 0.3
 PARAMETER top_p 0.9
-PARAMETER stop "<|im_end|>"
-PARAMETER stop "<|endoftext|>"
+PARAMETER stop "im_end"
+PARAMETER stop "endoftext"

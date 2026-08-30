@@ -119,11 +119,9 @@ class ConversationExtractor:
         # Word count bonus (up to 3 points)
         score += min(3.0, word_count / 15.0)
 
-        # Code & technical syntax bonus
-        if any(ind in text for ind in CODE_INDICATORS):
-            score += 2.0
-
-        # Technical keyword density bonus
+        # Technical keyword density bonus (moved up — code-only markers are
+        # now scored via keyword density, not via a flat +2.0 boost that any
+        # random "def " / "import " snippet could trigger).
         tech_words_count = 0
         text_lower = text.lower()
         for _domain, info in DOMAIN_TAXONOMY.items():
