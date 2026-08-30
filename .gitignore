@@ -65,3 +65,9 @@ _probe*_results.json
 prompt.md
 _commit_msg.txt
 info.txt
+
+# Debug & test logs (local one-off, never tracked)
+pytest_output.txt
+pytest_full_output.txt
+pytest_*.txt
+.coverage.json
