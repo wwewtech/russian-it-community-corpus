@@ -135,9 +135,20 @@ class TestGraphReconstruction(unittest.TestCase):
         self.assertEqual(self.extractor.compute_message_quality(trivial), 0.2)
 
     def test_extract_dpo_pairs_prefers_higher_quality_answer(self):
+        # 12.0.2 fix: the compute_message_quality heuristic no longer awards
+        # +2.0 for the mere presence of a code keyword — it now scores only
+        # length and technical-keyword density. Make the chosen message
+        # long enough and dense enough in technical terms to cross the
+        # ``best_score >= 3.0`` threshold that gates DPO pair creation.
         good_text = (
-            "Для продакшена настройте синхронную репликацию и следите за отставанием реплик постоянно. "
-            "SELECT client_state FROM pg_stat_replication; так вы увидите lag каждого стендинба в кластере."
+            "Для продакшена настройте синхронную репликацию PostgreSQL, укажите "
+            "primary_conninfo и standby_conninfo в postgresql.conf, включите wal_level=replica "
+            "и используйте pg_basebackup для начальной инициализации standby. Затем следите за "
+            "отставанием реплик через SELECT client_state, sent_lsn, write_lsn, replay_lsn FROM "
+            "pg_stat_replication; и используйте repmgr или Patroni для автоматического failover "
+            "при сбое primary. В кластере Kubernetes обязательно настройте readinessProbe через "
+            "pg_is_in_recovery() и livenessProbe на pg_stat_replication, чтобы rolling update не "
+            "приводил к split-brain при двух одновременно активных primary."
         )
         bad_text = "вроде где то читал что это не нужно вообще настраивать"
         root = self._make_msg(40, 500, 9000, "u_root", "Как правильно настроить репликацию в PostgreSQL кластере?")
@@ -151,6 +162,7 @@ class TestGraphReconstruction(unittest.TestCase):
         self.assertEqual(pair["chosen"], good_text)
         self.assertEqual(pair["rejected"], bad_text)
         self.assertGreater(pair["chosen_quality"], pair["rejected_quality"])
+        self.assertGreaterEqual(pair["chosen_quality"], 3.0)
 
     def test_extract_dpo_pairs_requires_enough_words_in_prompt(self):
         short_root = self._make_msg(43, 500, 9200, "u_root", "а?")
