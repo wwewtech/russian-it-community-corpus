@@ -34,7 +34,9 @@ model = PeftModel.from_pretrained(base_model, "lora_adapters/qwen2.5_1.5b_instru
 # 3. Генерация ответа
 prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"
 messages = [{"role": "user", "content": prompt}]
-inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")
+inputs = tokenizer(
+    tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt"
+).to("cuda")
 outputs = model.generate(**inputs, max_new_tokens=256, temperature=0.3)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
