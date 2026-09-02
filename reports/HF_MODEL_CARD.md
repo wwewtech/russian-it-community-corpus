@@ -18,7 +18,7 @@ tags:
 
 **58 pre-trained adapters** (55 domain adapters + 3 flagship 7B–8B QLoRA), fine-tuned on the RICC corpus (2.91M messages, 171.5k curated SFT dialogues) for Russian-language IT discourse: backend, DevOps, AI/ML, infrastructure.
 
-> Catalog regenerated from the Hub file tree on 2026-08-27. Source of truth: the `siblings` listing of this repository.
+> Catalog regenerated from the Hub file tree on 2026-09-02. Source of truth: the `siblings` listing of this repository.
 
 ## ⚡ Quick Start: 3-Line Inference
 
@@ -27,17 +27,15 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_id = "Qwen/Qwen2.5-1.5B-Instruct"  # any base model from the catalog
+model_id = "Qwen/Qwen2.5-1.5B-Instruct"          # any base model from the catalog
 adapter_id = "wwewtech/russian-it-community-lora"
-subfolder = "qwen2.5_1.5b_instruct"  # choose from the catalog below
+subfolder = "qwen2.5_1.5b_instruct"              # choose from the catalog below
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")
 model = PeftModel.from_pretrained(base_model, adapter_id, subfolder=subfolder)
 
-inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL?\n<|assistant|>\n", return_tensors="pt").to(
-    model.device
-)
+inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL?\n<|assistant|>\n", return_tensors="pt").to(model.device)
 outputs = model.generate(**inputs, max_new_tokens=256)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
@@ -112,4 +110,4 @@ Full-precision copies also live under [`models/`](https://huggingface.co/wwewtec
 ## 📓 Training Data & Evaluation Status
 
 - Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) (171,520 multi-turn dialogues).
-- Re-measured empirical metrics: Base PPL 35.44 -> LoRA PPL 32.19 on held-out Russian IT corpus.
+- Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not capability measurements.

@@ -117,7 +117,10 @@ def main():
         "",
         "- Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) "
         "(171,520 multi-turn dialogues).",
-        "- Re-measured empirical metrics: Base PPL 35.44 -> LoRA PPL 32.19 on held-out Russian IT corpus.",
+        "- Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending "
+        "re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible "
+        "values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not "
+        "capability measurements.",
         "",
     ]
 
@@ -189,7 +192,7 @@ def main():
         "",
         "- **Потребление VRAM при обучении:** ~4.35 GB на NVIDIA GeForce RTX 3060 (12 GB) с gradient accumulation = 4, batch size = 1.",
         "- **Флагманские 7B–8B модели:** используют 4-битное квантование BitsAndBytes (NF4) для инференса в пределах 6 GB VRAM.",
-        "- **Метрики адаптации:** Доменное дообучение снижает перплексию на русском инженерном тексте с 35.44 до 32.19 (-3.25 PPL), повышая соответствие лексике и архитектурным паттернам сообщества.",
+        "- **Статус метрик:** ранее опубликованные академические метрики (HumanEval / RuMMLU / PPL) **отозваны до переоценки** — аудит тестового контура выявил дефекты парсинга ответов и маппинга колонок (см. историю коммитов). Оценки enterprise-сценариев являются эвристиками на основе рубрик, а не измерениями способностей.",
         "",
     ]
 
