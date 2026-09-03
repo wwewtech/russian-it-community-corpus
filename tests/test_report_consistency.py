@@ -1,15 +1,20 @@
 """test_report_consistency.py — Sentinel consistency tests for reports and docs.
 
-Verifies that numbers, tables, and adapter counts in human-facing markdown
-documentation (README.md, reports/HF_MODEL_CARD.md, reports/LORA_MODEL_ZOO.md,
-reports/DATASET_AND_ANALYTICS.md, lora_adapters/SUMMARY.md) are strictly
-consistent with the machine-readable sources of truth:
-  - reports/lora_zoo_index.json (58 adapters on HF Hub)
+Verifies that numbers, tables, adapter counts, and benchmark percentage metrics
+in human-facing markdown documentation (README.md, reports/HF_MODEL_CARD.md,
+reports/LORA_MODEL_ZOO.md, reports/DATASET_AND_ANALYTICS.md,
+lora_adapters/SUMMARY.md) are strictly consistent with the machine-readable
+sources of truth:
+  - reports/lora_zoo_index.json (58 adapters hosted on Hugging Face Hub)
   - reports/pipeline_execution_stats.json (2,816,434 messages, 171,520 SFT dialogues, etc.)
-  - lora_adapters/registry.json (56 local adapters on disk)
+  - lora_adapters/registry.json (56 local adapters cloned on disk)
 
-This test directly catches discrepancies such as the historical '41 vs 58'
-adapter count drift and fails CI if any figure is manually tampered with.
+This test suite directly catches:
+  1. Historical '41 vs 58' adapter count drift between cards and registry.
+  2. Dataset volume drift (clean messages, SFT dialogues, RAG chunks, DPO pairs).
+  3. Benchmark metric discrepancies (heuristic scores, AST parse rates).
+  4. Re-emergence of retracted inflated percentages (e.g. historical 96.4% or 100.0%).
+  5. Missing withdrawal disclaimers for academic benchmarks across docs.
 """
 
 from __future__ import annotations
@@ -95,7 +100,6 @@ def verify_hf_model_card(card_text: str, zoo_index: dict) -> None:
     # 3. Table row count and adapter slugs
     # Target table has columns: | # | Adapter Subfolder | Base Model | Hub Link |
     rows = parse_markdown_table_rows(card_text, min_cols=4)
-    # Filter for catalog table rows (first column is 1-based index digits)
     catalog_rows = [r for r in rows if r[0].isdigit()]
     assert len(catalog_rows) == total_expected, (
         f"HF_MODEL_CARD.md catalog table has {len(catalog_rows)} rows, expected {total_expected}"
@@ -208,14 +212,15 @@ def verify_dataset_and_analytics(analytics_text: str, stats: dict, zoo_index: di
     )
 
 
-def verify_readme_metrics(readme_text: str, stats: dict, local_registry: dict) -> None:
-    """Verify README.md numbers against pipeline execution stats and local adapter registry."""
+def verify_readme_metrics(readme_text: str, stats: dict, local_registry: dict, zoo_index: dict) -> None:
+    """Verify README.md numbers against pipeline execution stats, local registry, and Hub zoo index."""
     clean_cnt = stats["cleaned_messages_count"]
     sft_cnt = stats["sft_dialogues_count"]
     rag_cnt = stats["rag_chunks_count"]
     dpo_cnt = stats["dpo_pairs_count"]
     nodes_cnt = stats.get("pii_stats", {}).get("community_names_anonymized", 11)
     local_adapters_cnt = local_registry["adapter_count"]
+    hub_adapters_cnt = zoo_index["total_adapters"]
 
     # 1. Local Datasets and Formats table
     rows = parse_markdown_table_rows(readme_text, min_cols=3)
@@ -275,30 +280,111 @@ def verify_readme_metrics(readme_text: str, stats: dict, local_registry: dict) -
     assert parse_int_clean(dialogue_rows[0][2]) == sft_cnt
 
     # 3. LoRA Model Zoo adapter counts in README.md:
-    # All mentions must be mutually consistent and match the local registry count.
-    m_lora_tip = re.search(r"LoRA\s+Model\s+Zoo.*?(\d+)\s+pre-trained\s+open\s+adapters", readme_text)
-    assert m_lora_tip is not None, "README.md missing LoRA Model Zoo pre-trained open adapters count"
-    assert int(m_lora_tip.group(1)) == local_adapters_cnt, (
-        f"README.md tip claims {m_lora_tip.group(1)} adapters, expected {local_adapters_cnt}"
+    # Must explicitly state both 58 (on Hub) and 56 (locally on disk), matching respective sources of truth.
+    m_lora_tip = re.search(
+        r"LoRA\s+Model\s+Zoo.*?(\d+)\s+adapters\s+on\s+Hugging\s+Face\s+Hub.*?(\d+)\s+adapters\s+cloned\s+locally",
+        readme_text,
+    )
+    assert m_lora_tip is not None, "README.md tip missing dual Hub / local adapter counts"
+    assert int(m_lora_tip.group(1)) == hub_adapters_cnt, (
+        f"README.md tip Hub count {m_lora_tip.group(1)} != expected {hub_adapters_cnt}"
+    )
+    assert int(m_lora_tip.group(2)) == local_adapters_cnt, (
+        f"README.md tip local count {m_lora_tip.group(2)} != expected {local_adapters_cnt}"
     )
 
-    m_lora_hub = re.search(r"Model\s+Hub\s*\((\d+)\s+LoRA\s+Adapters", readme_text)
-    assert m_lora_hub is not None, "README.md missing Model Hub LoRA adapters count"
-    assert int(m_lora_hub.group(1)) == local_adapters_cnt, (
-        f"README.md Hub claims {m_lora_hub.group(1)} adapters, expected {local_adapters_cnt}"
+    m_lora_hub = re.search(
+        r"Model\s+Hub\s*\((\d+)\s+LoRA\s+Adapters\s+on\s+Hub\s*/\s*(\d+)\s+Local\s+Adapters\)", readme_text
+    )
+    assert m_lora_hub is not None, "README.md missing Model Hub dual adapter count heading"
+    assert int(m_lora_hub.group(1)) == hub_adapters_cnt, (
+        f"README.md Model Hub claims {m_lora_hub.group(1)} on Hub, expected {hub_adapters_cnt}"
+    )
+    assert int(m_lora_hub.group(2)) == local_adapters_cnt, (
+        f"README.md Model Hub claims {m_lora_hub.group(2)} local, expected {local_adapters_cnt}"
     )
 
-    m_lora_sec = re.search(r"###\s*LoRA\s+Model\s+Zoo\s*\((\d+)\s+Pre-Trained\s+Adapters", readme_text)
-    assert m_lora_sec is not None, "README.md missing '### LoRA Model Zoo (<N> Pre-Trained Adapters)'"
+    m_lora_sec = re.search(
+        r"###\s*LoRA\s+Model\s+Zoo\s*\((\d+)\s+Local\s+Adapters\s*/\s*(\d+)\s+Adapters\s+on\s+Hugging\s+Face\s+Hub\)",
+        readme_text,
+    )
+    assert m_lora_sec is not None, "README.md section missing dual adapter count"
     assert int(m_lora_sec.group(1)) == local_adapters_cnt, (
-        f"README.md section claims {m_lora_sec.group(1)} adapters, expected {local_adapters_cnt}"
+        f"README.md section claims {m_lora_sec.group(1)} local, expected {local_adapters_cnt}"
+    )
+    assert int(m_lora_sec.group(2)) == hub_adapters_cnt, (
+        f"README.md section claims {m_lora_sec.group(2)} on Hub, expected {hub_adapters_cnt}"
     )
 
-    m_tree = re.search(r"LORA_MODEL_ZOO\.md\s+#\s+Catalog\s+of\s+(\d+)\s+LoRA\s+Adapters", readme_text)
-    assert m_tree is not None, "README.md repo tree missing 'Catalog of <N> LoRA Adapters' comment"
-    assert int(m_tree.group(1)) == local_adapters_cnt, (
-        f"README.md tree claims {m_tree.group(1)} adapters, expected {local_adapters_cnt}"
+    m_tree = re.search(
+        r"LORA_MODEL_ZOO\.md\s+#\s+Catalog\s+of\s+(\d+)\s+LoRA\s+Adapters\s+on\s+Hub\s*\((\d+)\s+local\)",
+        readme_text,
     )
+    assert m_tree is not None, "README.md repo tree missing dual adapter count comment"
+    assert int(m_tree.group(1)) == hub_adapters_cnt, (
+        f"README.md tree claims {m_tree.group(1)} on Hub, expected {hub_adapters_cnt}"
+    )
+    assert int(m_tree.group(2)) == local_adapters_cnt, (
+        f"README.md tree claims {m_tree.group(2)} local, expected {local_adapters_cnt}"
+    )
+
+
+def verify_benchmark_metrics_and_withdrawal_status(
+    analytics_text: str,
+    readme_text: str,
+    hf_card_text: str,
+    zoo_text: str,
+) -> None:
+    """Verify empirical benchmark percentage/heuristic metrics and withdrawal status consistency.
+
+    Guards against:
+      1. Regressions in rubric-based heuristic scores / AST parse rates in reports/DATASET_AND_ANALYTICS.md.
+      2. Re-emergence of retracted inflated percentages (e.g. historical 96.4% or 100.0% RuMMLU) in README or cards.
+      3. Silent omission of the benchmark WITHDRAWN notice across README and documentation.
+    """
+    expected_benchmarks: dict[str, tuple[float, float]] = {
+        "Base Model (Qwen 2.5 1.5B)": (32.9, 69.0),
+        "Base Model + RAG (325k chunks)": (44.0, 71.0),
+        "Domain LoRA (171.5k dialogues)": (34.5, 72.2),
+        "Hybrid (LoRA + RAG)": (48.6, 73.0),
+    }
+
+    # 1. Parse heuristic evaluation table in reports/DATASET_AND_ANALYTICS.md
+    rows = parse_markdown_table_rows(analytics_text, min_cols=3)
+    bench_rows = [r for r in rows if any(k in r[0] for k in expected_benchmarks)]
+    assert len(bench_rows) == 4, f"Expected 4 benchmark rows in DATASET_AND_ANALYTICS.md, found {len(bench_rows)}"
+
+    for r in bench_rows:
+        matched_key = [k for k in expected_benchmarks if k in r[0]][0]
+        exp_score, exp_ast = expected_benchmarks[matched_key]
+        score = float(r[1].replace("*", "").strip())
+        ast_rate = float(r[2].replace("*", "").replace("%", "").strip())
+        assert score == exp_score, (
+            f"{matched_key} heuristic score mismatch in DATASET_AND_ANALYTICS.md: got {score}, expected {exp_score}"
+        )
+        assert ast_rate == exp_ast, (
+            f"{matched_key} AST rate mismatch in DATASET_AND_ANALYTICS.md: got {ast_rate}%, expected {exp_ast}%"
+        )
+
+    # 2. Check withdrawal disclaimers across all 4 documents
+    assert (
+        "Academic metrics (HumanEval / RuMMLU / PPL / ROUGE) published earlier have been WITHDRAWN" in analytics_text
+    ), "DATASET_AND_ANALYTICS.md missing official academic metrics withdrawal callout"
+
+    assert "Benchmark section withdrawn from README" in readme_text, (
+        "README.md missing 'Benchmark section withdrawn from README' warning notice"
+    )
+
+    assert re.search(r"Academic benchmark numbers.*?are \*\*withdrawn pending re-evaluation\*\*", hf_card_text, re.S), (
+        "HF_MODEL_CARD.md missing withdrawal notice"
+    )
+
+    assert re.search(r"академические метрики.*?отозваны до переоценки", zoo_text), (
+        "LORA_MODEL_ZOO.md missing withdrawal notice"
+    )
+
+    # 3. Anti-inflation guard: verify that historical inflated scores (e.g. 96.4%) do NOT appear in README
+    assert not re.search(r"\b96\.4%", readme_text), "README.md contains retracted inflated metric 96.4%"
 
 
 def verify_local_registry_and_summary(registry: dict, summary_text: str, lora_dir: Path) -> None:
@@ -381,8 +467,14 @@ class TestReportConsistency(unittest.TestCase):
         verify_dataset_and_analytics(self.analytics_text, self.stats, self.zoo_index)
 
     def test_readme_metrics_consistency(self):
-        """README.md dataset numbers and LoRA counts match execution stats and registry."""
-        verify_readme_metrics(self.readme_text, self.stats, self.registry)
+        """README.md dataset numbers and LoRA counts match execution stats, registry, and zoo index."""
+        verify_readme_metrics(self.readme_text, self.stats, self.registry, self.zoo_index)
+
+    def test_benchmark_metrics_and_withdrawal_consistency(self):
+        """Check heuristic benchmark table (32.9..48.6), withdrawal callouts, and anti-inflation."""
+        verify_benchmark_metrics_and_withdrawal_status(
+            self.analytics_text, self.readme_text, self.hf_card_text, self.zoo_md_text
+        )
 
     def test_local_registry_and_summary_consistency(self):
         """lora_adapters/registry.json matches on-disk dirs and lora_adapters/SUMMARY.md (56 adapters)."""
@@ -422,15 +514,66 @@ class TestReportConsistency(unittest.TestCase):
         # Mutate cleaned messages count 2,816,434 -> 2,816,435
         tampered = self.readme_text.replace("2,816,434 rows", "2,816,435 rows")
         with self.assertRaises(AssertionError) as ctx:
-            verify_readme_metrics(tampered, self.stats, self.registry)
+            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index)
         self.assertIn("expected 2816434", str(ctx.exception))
 
-    def test_negative_tampered_readme_adapter_count_fails(self):
-        """Demonstrates that altering LoRA adapter count in README.md (e.g. 56 -> 59) fails."""
-        tampered = self.readme_text.replace("56 pre-trained open adapters", "59 pre-trained open adapters")
+    def test_negative_tampered_readme_hub_adapter_count_fails(self):
+        """Demonstrates that altering Hub adapter count in README.md (58 -> 59) fails."""
+        tampered = self.readme_text.replace("58 adapters on Hugging Face Hub", "59 adapters on Hugging Face Hub")
         with self.assertRaises(AssertionError) as ctx:
-            verify_readme_metrics(tampered, self.stats, self.registry)
-        self.assertIn("README.md tip claims 59 adapters, expected 56", str(ctx.exception))
+            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index)
+        self.assertIn("expected 58", str(ctx.exception))
+
+    def test_negative_tampered_readme_local_adapter_count_fails(self):
+        """Demonstrates that altering local adapter count in README.md (56 -> 57) fails."""
+        tampered = self.readme_text.replace("56 adapters cloned locally", "57 adapters cloned locally")
+        with self.assertRaises(AssertionError) as ctx:
+            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index)
+        self.assertIn("expected 56", str(ctx.exception))
+
+    def test_negative_tampered_heuristic_score_fails(self):
+        """Demonstrates that altering heuristic benchmark score (34.5 -> 96.4) fails."""
+        tampered = self.analytics_text.replace(
+            "| Domain LoRA (171.5k dialogues) | 34.5 | 72.2% |",
+            "| Domain LoRA (171.5k dialogues) | 96.4 | 72.2% |",
+        )
+        with self.assertRaises(AssertionError) as ctx:
+            verify_benchmark_metrics_and_withdrawal_status(
+                tampered, self.readme_text, self.hf_card_text, self.zoo_md_text
+            )
+        self.assertIn("expected 34.5", str(ctx.exception))
+
+    def test_negative_tampered_ast_rate_fails(self):
+        """Demonstrates that altering AST parse rate (72.2% -> 100.0%) fails."""
+        tampered = self.analytics_text.replace(
+            "| Domain LoRA (171.5k dialogues) | 34.5 | 72.2% |",
+            "| Domain LoRA (171.5k dialogues) | 34.5 | 100.0% |",
+        )
+        with self.assertRaises(AssertionError) as ctx:
+            verify_benchmark_metrics_and_withdrawal_status(
+                tampered, self.readme_text, self.hf_card_text, self.zoo_md_text
+            )
+        self.assertIn("expected 72.2%", str(ctx.exception))
+
+    def test_negative_tampered_readme_inflated_metric_fails(self):
+        """Demonstrates that sneaking retracted inflated metric (96.4%) into README fails."""
+        tampered = self.readme_text + "\n<!-- Sneaked inflated score: 96.4% -->\n"
+        with self.assertRaises(AssertionError) as ctx:
+            verify_benchmark_metrics_and_withdrawal_status(
+                self.analytics_text, tampered, self.hf_card_text, self.zoo_md_text
+            )
+        self.assertIn("README.md contains retracted inflated metric 96.4%", str(ctx.exception))
+
+    def test_negative_missing_withdrawal_notice_fails(self):
+        """Demonstrates that removing the WITHDRAWN warning notice from README fails."""
+        tampered = self.readme_text.replace(
+            "Benchmark section withdrawn from README", "Benchmark section active in README"
+        )
+        with self.assertRaises(AssertionError) as ctx:
+            verify_benchmark_metrics_and_withdrawal_status(
+                self.analytics_text, tampered, self.hf_card_text, self.zoo_md_text
+            )
+        self.assertIn("Benchmark section withdrawn from README", str(ctx.exception))
 
 
 if __name__ == "__main__":
