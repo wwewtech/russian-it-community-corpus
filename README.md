@@ -104,7 +104,7 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
   - 📄 [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows (2,816,434 records, 189 MB)
   - 💬 [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171,520 multi-turn dialogues (132 MB)
   - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
-  - ⚙️ [Unified Metrics & Audit (JSON)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/metrics_index.json) — 322 KB metrics index
+  - ⚙️ [Heuristic Benchmark Evaluation (JSON)](reports/heuristic_benchmark_eval.json) — 50-scenario domain heuristic evaluation matrix
 
 - 🦁 **Model Hub (58 LoRA Adapters on Hub / 56 Local Adapters)**:
   👉 [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
@@ -271,6 +271,7 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 │   ├── DATASET_AND_ANALYTICS.md   # Dataset Card and Zero-PII Protocol
 │   ├── HF_MODEL_CARD.md           # Hugging Face Model Card
 │   ├── LORA_MODEL_ZOO.md          # Catalog of 58 LoRA Adapters on Hub (56 local)
+│   ├── heuristic_benchmark_eval.json # 50-Scenario Heuristic Benchmark Matrix
 │   └── domain_benchmark_100.json  # 100-Scenario Domain Benchmark Suite
 ├── tests/                      # Automated unit tests
 ├── app.py                      # Streamlit Web Data Studio

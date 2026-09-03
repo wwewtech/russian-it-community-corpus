@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "framework": "Russian IT Domain Scenario Benchmark Suite (50 Scenarios)",
+    "evaluation_type": "rubric-based heuristic scores (concept-overlap + AST-parseability)",
+    "status": "Academic metrics (HumanEval / RuMMLU / PPL / ROUGE) WITHDRAWN pending GPU re-evaluation",
+    "total_scenarios": 50,
+    "source": "reports/domain_benchmark_100.json"
+  },
+  "setups": {
+    "Base Model (Qwen 2.5 1.5B)": {
+      "heuristic_score": 32.9,
+      "ast_parse_rate": 69.0
+    },
+    "Base Model + RAG (325k chunks)": {
+      "heuristic_score": 44.0,
+      "ast_parse_rate": 71.0
+    },
+    "Domain LoRA (171.5k dialogues)": {
+      "heuristic_score": 34.5,
+      "ast_parse_rate": 72.2
+    },
+    "Hybrid (LoRA + RAG)": {
+      "heuristic_score": 48.6,
+      "ast_parse_rate": 73.0
+    }
+  }
+}

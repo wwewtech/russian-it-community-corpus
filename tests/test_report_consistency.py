@@ -1,24 +1,26 @@
 """test_report_consistency.py — Sentinel consistency tests for reports and docs.
 
-Verifies that numbers, tables, adapter counts, and benchmark percentage metrics
-in human-facing markdown documentation (README.md, reports/HF_MODEL_CARD.md,
+Verifies that numbers, tables, adapter counts, and benchmark metrics in
+human-facing markdown documentation (README.md, reports/HF_MODEL_CARD.md,
 reports/LORA_MODEL_ZOO.md, reports/DATASET_AND_ANALYTICS.md,
 lora_adapters/SUMMARY.md) are strictly consistent with the machine-readable
 sources of truth:
   - reports/lora_zoo_index.json (58 adapters hosted on Hugging Face Hub)
   - reports/pipeline_execution_stats.json (2,816,434 messages, 171,520 SFT dialogues, etc.)
   - lora_adapters/registry.json (56 local adapters cloned on disk)
+  - reports/heuristic_benchmark_eval.json (50-scenario domain heuristic evaluation matrix)
 
 This test suite directly catches:
   1. Historical '41 vs 58' adapter count drift between cards and registry.
   2. Dataset volume drift (clean messages, SFT dialogues, RAG chunks, DPO pairs).
-  3. Benchmark metric discrepancies (heuristic scores, AST parse rates).
-  4. Re-emergence of retracted inflated percentages (e.g. historical 96.4% or 100.0%).
-  5. Missing withdrawal disclaimers for academic benchmarks across docs.
+  3. Benchmark metric discrepancies (heuristic scores, AST parse rates) against JSON truth.
+  4. Re-emergence of ANY unauthorized percentage metrics in README's retracted benchmark section.
+  5. Missing withdrawal disclaimers for academic benchmarks across documentation.
 """
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 import unittest
@@ -334,36 +336,34 @@ def verify_benchmark_metrics_and_withdrawal_status(
     readme_text: str,
     hf_card_text: str,
     zoo_text: str,
+    benchmark_eval: dict,
 ) -> None:
     """Verify empirical benchmark percentage/heuristic metrics and withdrawal status consistency.
 
     Guards against:
-      1. Regressions in rubric-based heuristic scores / AST parse rates in reports/DATASET_AND_ANALYTICS.md.
-      2. Re-emergence of retracted inflated percentages (e.g. historical 96.4% or 100.0% RuMMLU) in README or cards.
+      1. Drift between reports/heuristic_benchmark_eval.json and reports/DATASET_AND_ANALYTICS.md.
+      2. Re-emergence of ANY unauthorized percentage metrics in README's retracted benchmark section.
       3. Silent omission of the benchmark WITHDRAWN notice across README and documentation.
     """
-    expected_benchmarks: dict[str, tuple[float, float]] = {
-        "Base Model (Qwen 2.5 1.5B)": (32.9, 69.0),
-        "Base Model + RAG (325k chunks)": (44.0, 71.0),
-        "Domain LoRA (171.5k dialogues)": (34.5, 72.2),
-        "Hybrid (LoRA + RAG)": (48.6, 73.0),
-    }
+    expected_setups = benchmark_eval["setups"]
 
     # 1. Parse heuristic evaluation table in reports/DATASET_AND_ANALYTICS.md
     rows = parse_markdown_table_rows(analytics_text, min_cols=3)
-    bench_rows = [r for r in rows if any(k in r[0] for k in expected_benchmarks)]
-    assert len(bench_rows) == 4, f"Expected 4 benchmark rows in DATASET_AND_ANALYTICS.md, found {len(bench_rows)}"
+    bench_rows = [r for r in rows if any(k in r[0] for k in expected_setups)]
+    assert len(bench_rows) == len(expected_setups), (
+        f"Expected {len(expected_setups)} benchmark rows in DATASET_AND_ANALYTICS.md, found {len(bench_rows)}"
+    )
 
     for r in bench_rows:
-        matched_key = [k for k in expected_benchmarks if k in r[0]][0]
-        exp_score, exp_ast = expected_benchmarks[matched_key]
+        matched_key = [k for k in expected_setups if k in r[0]][0]
+        exp = expected_setups[matched_key]
         score = float(r[1].replace("*", "").strip())
         ast_rate = float(r[2].replace("*", "").replace("%", "").strip())
-        assert score == exp_score, (
-            f"{matched_key} heuristic score mismatch in DATASET_AND_ANALYTICS.md: got {score}, expected {exp_score}"
+        assert score == exp["heuristic_score"], (
+            f"{matched_key} heuristic score mismatch in DATASET_AND_ANALYTICS.md: got {score}, expected {exp['heuristic_score']}"
         )
-        assert ast_rate == exp_ast, (
-            f"{matched_key} AST rate mismatch in DATASET_AND_ANALYTICS.md: got {ast_rate}%, expected {exp_ast}%"
+        assert ast_rate == exp["ast_parse_rate"], (
+            f"{matched_key} AST rate mismatch in DATASET_AND_ANALYTICS.md: got {ast_rate}%, expected {exp['ast_parse_rate']}%"
         )
 
     # 2. Check withdrawal disclaimers across all 4 documents
@@ -383,8 +383,22 @@ def verify_benchmark_metrics_and_withdrawal_status(
         "LORA_MODEL_ZOO.md missing withdrawal notice"
     )
 
-    # 3. Anti-inflation guard: verify that historical inflated scores (e.g. 96.4%) do NOT appear in README
-    assert not re.search(r"\b96\.4%", readme_text), "README.md contains retracted inflated metric 96.4%"
+    # 3. Generalized Anti-Inflation Guard:
+    # Verifies that NO percentage scores (e.g. 96.4%, 91.2%, 100%, pass@1) appear anywhere in
+    # the Comparative Architectural Evaluation section of README.md, as all capability metrics
+    # in this section were officially retracted and marked WITHDRAWN pending a fresh GPU re-run.
+    m_bench_sec = re.search(
+        r"## Comparative Architectural Evaluation.*?(?=## Quick start)",
+        readme_text,
+        re.DOTALL,
+    )
+    assert m_bench_sec is not None, "README.md missing 'Comparative Architectural Evaluation' section"
+    bench_section_text = m_bench_sec.group(0)
+    percentages_in_bench = re.findall(r"\b\d+(?:\.\d+)?%", bench_section_text)
+    assert not percentages_in_bench, (
+        f"README.md benchmark section contains unauthorized/retracted percentage metrics: {percentages_in_bench}. "
+        "All benchmark metrics in this section are WITHDRAWN pending fresh GPU re-run."
+    )
 
 
 def verify_local_registry_and_summary(registry: dict, summary_text: str, lora_dir: Path) -> None:
@@ -433,6 +447,7 @@ class TestReportConsistency(unittest.TestCase):
         cls.zoo_index_path = REPO_ROOT / "reports" / "lora_zoo_index.json"
         cls.stats_path = REPO_ROOT / "reports" / "pipeline_execution_stats.json"
         cls.registry_path = REPO_ROOT / "lora_adapters" / "registry.json"
+        cls.benchmark_eval_path = REPO_ROOT / "reports" / "heuristic_benchmark_eval.json"
         cls.lora_dir = REPO_ROOT / "lora_adapters"
 
         cls.hf_card_path = REPO_ROOT / "reports" / "HF_MODEL_CARD.md"
@@ -447,6 +462,8 @@ class TestReportConsistency(unittest.TestCase):
             cls.stats = json.load(f)
         with cls.registry_path.open(encoding="utf-8") as f:
             cls.registry = json.load(f)
+        with cls.benchmark_eval_path.open(encoding="utf-8") as f:
+            cls.benchmark_eval = json.load(f)
 
         cls.hf_card_text = cls.hf_card_path.read_text(encoding="utf-8")
         cls.zoo_md_text = cls.zoo_md_path.read_text(encoding="utf-8")
@@ -471,9 +488,13 @@ class TestReportConsistency(unittest.TestCase):
         verify_readme_metrics(self.readme_text, self.stats, self.registry, self.zoo_index)
 
     def test_benchmark_metrics_and_withdrawal_consistency(self):
-        """Check heuristic benchmark table (32.9..48.6), withdrawal callouts, and anti-inflation."""
+        """Check heuristic benchmark table matches heuristic_benchmark_eval.json, with withdrawal notices."""
         verify_benchmark_metrics_and_withdrawal_status(
-            self.analytics_text, self.readme_text, self.hf_card_text, self.zoo_md_text
+            self.analytics_text,
+            self.readme_text,
+            self.hf_card_text,
+            self.zoo_md_text,
+            self.benchmark_eval,
         )
 
     def test_local_registry_and_summary_consistency(self):
@@ -532,37 +553,67 @@ class TestReportConsistency(unittest.TestCase):
         self.assertIn("expected 56", str(ctx.exception))
 
     def test_negative_tampered_heuristic_score_fails(self):
-        """Demonstrates that altering heuristic benchmark score (34.5 -> 96.4) fails."""
+        """Demonstrates that altering heuristic benchmark score (34.5 -> 96.4) in markdown fails."""
         tampered = self.analytics_text.replace(
             "| Domain LoRA (171.5k dialogues) | 34.5 | 72.2% |",
             "| Domain LoRA (171.5k dialogues) | 96.4 | 72.2% |",
         )
         with self.assertRaises(AssertionError) as ctx:
             verify_benchmark_metrics_and_withdrawal_status(
-                tampered, self.readme_text, self.hf_card_text, self.zoo_md_text
+                tampered,
+                self.readme_text,
+                self.hf_card_text,
+                self.zoo_md_text,
+                self.benchmark_eval,
             )
         self.assertIn("expected 34.5", str(ctx.exception))
 
     def test_negative_tampered_ast_rate_fails(self):
-        """Demonstrates that altering AST parse rate (72.2% -> 100.0%) fails."""
+        """Demonstrates that altering AST parse rate (72.2% -> 100.0%) in markdown fails."""
         tampered = self.analytics_text.replace(
             "| Domain LoRA (171.5k dialogues) | 34.5 | 72.2% |",
             "| Domain LoRA (171.5k dialogues) | 34.5 | 100.0% |",
         )
         with self.assertRaises(AssertionError) as ctx:
             verify_benchmark_metrics_and_withdrawal_status(
-                tampered, self.readme_text, self.hf_card_text, self.zoo_md_text
+                tampered,
+                self.readme_text,
+                self.hf_card_text,
+                self.zoo_md_text,
+                self.benchmark_eval,
             )
         self.assertIn("expected 72.2%", str(ctx.exception))
 
-    def test_negative_tampered_readme_inflated_metric_fails(self):
-        """Demonstrates that sneaking retracted inflated metric (96.4%) into README fails."""
-        tampered = self.readme_text + "\n<!-- Sneaked inflated score: 96.4% -->\n"
+    def test_negative_tampered_benchmark_json_fails(self):
+        """Demonstrates that if the JSON source of truth is updated but docs are not, test fails."""
+        tampered_json = copy.deepcopy(self.benchmark_eval)
+        tampered_json["setups"]["Domain LoRA (171.5k dialogues)"]["heuristic_score"] = 99.9
         with self.assertRaises(AssertionError) as ctx:
             verify_benchmark_metrics_and_withdrawal_status(
-                self.analytics_text, tampered, self.hf_card_text, self.zoo_md_text
+                self.analytics_text,
+                self.readme_text,
+                self.hf_card_text,
+                self.zoo_md_text,
+                tampered_json,
             )
-        self.assertIn("README.md contains retracted inflated metric 96.4%", str(ctx.exception))
+        self.assertIn("expected 99.9", str(ctx.exception))
+
+    def test_negative_tampered_readme_inflated_metric_fails(self):
+        """Demonstrates that sneaking ANY percentage metric (e.g. 91.2% or 96.4%) into README fails."""
+        tampered = self.readme_text.replace(
+            "## Comparative Architectural Evaluation (Base vs RAG vs LoRA vs Hybrid)\n\n> [!WARNING]",
+            "## Comparative Architectural Evaluation (Base vs RAG vs LoRA vs Hybrid)\n\n"
+            "Preliminary pass rate: **91.2%**\n\n> [!WARNING]",
+        )
+        with self.assertRaises(AssertionError) as ctx:
+            verify_benchmark_metrics_and_withdrawal_status(
+                self.analytics_text,
+                tampered,
+                self.hf_card_text,
+                self.zoo_md_text,
+                self.benchmark_eval,
+            )
+        self.assertIn("unauthorized/retracted percentage metrics: ['91.2%']", str(ctx.exception))
 
     def test_negative_missing_withdrawal_notice_fails(self):
         """Demonstrates that removing the WITHDRAWN warning notice from README fails."""
@@ -571,7 +622,11 @@ class TestReportConsistency(unittest.TestCase):
         )
         with self.assertRaises(AssertionError) as ctx:
             verify_benchmark_metrics_and_withdrawal_status(
-                self.analytics_text, tampered, self.hf_card_text, self.zoo_md_text
+                self.analytics_text,
+                tampered,
+                self.hf_card_text,
+                self.zoo_md_text,
+                self.benchmark_eval,
             )
         self.assertIn("Benchmark section withdrawn from README", str(ctx.exception))
 

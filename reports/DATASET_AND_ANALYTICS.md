@@ -250,7 +250,7 @@ What remains interpretable today — **rubric-based heuristic scores** on 50 eng
 | Domain LoRA (171.5k dialogues) | 34.5 | 72.2% |
 | Hybrid (LoRA + RAG) | **48.6** | **73.0%** |
 
-*(AST rates recomputed as means over all 50 per-scenario `ast_score` values in `metrics_index.json`; an earlier version of this card quoted different numbers that did not match the machine-readable data.)*
+*(AST rates recomputed as means over all 50 per-scenario `ast_score` values in [`reports/heuristic_benchmark_eval.json`](heuristic_benchmark_eval.json); an earlier version of this card quoted different numbers that did not match the machine-readable data.)*
 
 Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora).
 
