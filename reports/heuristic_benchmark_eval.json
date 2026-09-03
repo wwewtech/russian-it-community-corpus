@@ -4,7 +4,7 @@
     "evaluation_type": "rubric-based heuristic scores (concept-overlap + AST-parseability)",
     "status": "Academic metrics (HumanEval / RuMMLU / PPL / ROUGE) WITHDRAWN pending GPU re-evaluation",
     "total_scenarios": 50,
-    "source": "reports/domain_benchmark_100.json"
+    "source": "src/evaluation/enterprise_production_eval_suite.py (50 Enterprise Engineering Scenarios)"
   },
   "setups": {
     "Base Model (Qwen 2.5 1.5B)": {
