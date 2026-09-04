@@ -90,7 +90,13 @@ def derive_pii_verdict(
         audit_certificate.get("verification_status") == "PASSED" and parquet_audit.get("total_leaks_found", 0) == 0
     )
     val_passed = bool(validation_results.get("validation_passed", False)) and total_leaks == 0
-    is_passed = cert_passed or val_passed
+    # AND, not OR: a PASSED verdict requires BOTH independent audits to
+    # confirm zero leaks. An OR short-circuit is exactly the
+    # "privacy-as-checklist, not threat model" failure mode called out in
+    # NADO.md — one stale certificate is enough to flip the UI banner to
+    # "✅ Zero-PII Verification Status: PASSED" while a second audit is
+    # silently warning. See CHANGELOG 12.0.2.
+    is_passed = cert_passed and val_passed
 
     sampled = parquet_audit.get(
         "sampled_messages_audited",

@@ -118,11 +118,11 @@ class TestDerivePiiVerdict(unittest.TestCase):
         self.assertEqual(total, 3)
 
     def test_failed_when_validation_failed_even_if_cert_passes(self):
-        # Each source is independently gated on zero leaks; the
-        # verdict is "PASSED" if EITHER source confirms it. With a
-        # leaky ``pii_leakage_audit`` block the ``val_passed`` leg
-        # must be False, and since ``cert`` here is also empty the
-        # verdict collapses to False.
+        # AND semantics: a PASSED verdict requires BOTH the cert and the
+        # validation results to independently confirm zero leaks. An
+        # empty cert (``cert_passed=False``) collapses the verdict to
+        # False, regardless of the validation block's own state. See
+        # CHANGELOG 12.0.2 / NADO.md "privacy as a checklist" pattern.
         val = {
             "validation_passed": False,
             "pii_leakage_audit": {"phone_leaks": 0, "email_leaks": 0, "api_key_leaks": 0},
@@ -132,16 +132,33 @@ class TestDerivePiiVerdict(unittest.TestCase):
         self.assertFalse(passed)
         self.assertEqual(total, 0)
 
-    def test_passed_when_only_one_source_confirms(self):
-        # Either-side-positive semantics: PASSED if ``cert`` says
-        # zero leaks OR ``validation_results`` says zero leaks.
-        # This is the behaviour the production code preserves from
-        # the 12.0.2 rewrite: both legs require zero leaks, but
-        # only one of them needs to confirm.
-        val = {"validation_passed": True, "pii_leakage_audit": {"phone_leaks": 0, "email_leaks": 0, "api_key_leaks": 0}}
-        cert = {}
+    def test_failed_when_only_one_source_confirms(self):
+        # Regression guard for the "privacy-as-checklist" failure mode.
+        # If only ONE of the two independent PII audits reports zero
+        # leaks, the verdict MUST be False: a single stale certificate
+        # is exactly the threat model we are defending against. The
+        # previous ``or`` short-circuit pinned here was the bug; the
+        # production code now uses ``and`` (CHANGELOG 12.0.2).
+        val = {
+            "validation_passed": True,
+            "pii_leakage_audit": {"phone_leaks": 0, "email_leaks": 0, "api_key_leaks": 0},
+        }
+        cert = {}  # cert_passed is False: missing status and missing audit
         passed, total, _ = derive_pii_verdict(val, cert)
-        self.assertTrue(passed)
+        self.assertFalse(passed)
+        self.assertEqual(total, 0)
+
+    def test_failed_when_only_cert_confirms_but_validation_missing(self):
+        # Mirror of the previous test: cert says PASSED + zero leaks,
+        # but the validation block is missing entirely. AND semantics
+        # must still produce a False verdict.
+        val = {}
+        cert = {
+            "verification_status": "PASSED",
+            "production_parquet_audit": {"total_leaks_found": 0, "sampled_messages_audited": 1000},
+        }
+        passed, total, _ = derive_pii_verdict(val, cert)
+        self.assertFalse(passed)
         self.assertEqual(total, 0)
 
     def test_falls_back_to_pii_leak_block_when_parquet_missing(self):

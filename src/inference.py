@@ -1,7 +1,9 @@
 """
 Interactive CLI Chat & Unified Inference Engine.
 
-Supports Base Models, 44+ LoRA Adapters, Flagship 7B-8B QLoRA, and Local
+Supports Base Models, the 56 LoRA Adapters cloned locally under
+``lora_adapters/`` (58 published on the Hugging Face Hub, see
+``reports/lora_zoo_index.json``), Flagship 7B-8B QLoRA, and Local
 RAG Pipeline.
 
 The module exposes three layers:
