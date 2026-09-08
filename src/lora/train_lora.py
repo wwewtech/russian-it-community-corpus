@@ -84,13 +84,40 @@ def train_lora(
 
     def format_chatml(example):
         messages = example.get("messages", [])
-        # Standard SFT: mask the prompt, keep the assistant tokens as labels.
-        # For chat models that use a single concat template, the trainer will
-        # still learn from the full sequence, which is acceptable for our
-        # Qwen / Llama / Mistral baselines.
-        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
-        tokenized = tokenizer(text, max_length=max_seq_length, truncation=True, padding=False)
-        tokenized["labels"] = tokenized["input_ids"].copy()
+        if not messages:
+            return {"input_ids": [], "labels": []}
+
+        # Standard SFT: mask the prompt with -100 so CrossEntropyLoss is only
+        # computed over the assistant's response tokens, not the user's input.
+        if hasattr(tokenizer, "apply_chat_template") and getattr(tokenizer, "chat_template", None):
+            try:
+                full_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
+                tokenized = tokenizer(full_text, max_length=max_seq_length, truncation=True, padding=False)
+                labels = list(tokenized["input_ids"])
+
+                if len(messages) >= 2 and messages[-1].get("role") in ("assistant", "gpt"):
+                    prompt_text = tokenizer.apply_chat_template(
+                        messages[:-1], tokenize=False, add_generation_prompt=True
+                    )
+                    tokenized_prompt = tokenizer(prompt_text, max_length=max_seq_length, truncation=True, padding=False)
+                    prompt_len = min(len(tokenized_prompt["input_ids"]), len(labels))
+                    labels[:prompt_len] = [-100] * prompt_len
+
+                tokenized["labels"] = labels
+                return tokenized
+            except Exception as e:
+                logger.debug(f"Tokenizer chat_template failed, using fallback: {e}")
+
+        # Fallback for models without a built-in chat template:
+        prompt_parts = [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in messages[:-1]]
+        prompt_text = "\n".join(prompt_parts) + "\nassistant:"
+        full_text = prompt_text + " " + str(messages[-1].get("content", ""))
+        tokenized = tokenizer(full_text, max_length=max_seq_length, truncation=True, padding=False)
+        labels = list(tokenized["input_ids"])
+        tokenized_prompt = tokenizer(prompt_text, max_length=max_seq_length, truncation=True, padding=False)
+        prompt_len = min(len(tokenized_prompt["input_ids"]), len(labels))
+        labels[:prompt_len] = [-100] * prompt_len
+        tokenized["labels"] = labels
         return tokenized
 
     tokenized_dataset = raw_dataset.map(format_chatml, remove_columns=raw_dataset.column_names)

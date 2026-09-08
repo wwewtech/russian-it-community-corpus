@@ -87,6 +87,35 @@ CODE_INDICATORS = [
     "https://",
 ]
 
+# Patterns indicating synthetic AI self-identification, chatbot boilerplate,
+# or forwarded LLM outputs that should not contaminate human conversational SFT data.
+AI_CONTAMINATION_PATTERNS: list[re.Pattern] = [
+    re.compile(r"\b(?:как\s+)?(?:большая\s+)?языковая\s+модель\b", re.IGNORECASE),
+    re.compile(r"\b(?:как\s+)?искусственный\s+интеллект\b", re.IGNORECASE),
+    re.compile(
+        r"\bя\s*[-—–]?\s*(?:языковая\s+модель|искусственный\s+интеллект|виртуальный\s+ассистент|бот|ии)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:as\s+an?\s+ai|as\s+a\s+language\s+model|i\s+am\s+an?\s+ai|i'm\s+a\s+language\s+model)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bнас\s*\(модели\s+[a-zA-Z0-9_-]+\)\s*тренируют", re.IGNORECASE),
+    re.compile(r"\bмои\s+разработчики\s+из\s+(?:openai|anthropic|google|yandex)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(?:claude\s+[0-9.]+\s*(?:sonnet|opus|haiku)?|gemini\s+[0-9.]+\s*(?:pro|flash)?|chatgpt)\s*$",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+]
+
+
+def is_llm_contaminated(text: str) -> bool:
+    """Check whether text contains overt AI self-identification, chatbot meta-disclaimers,
+    or forwarded chatbot transcripts that should not pollute human conversational data."""
+    if not text:
+        return False
+    return any(p.search(text) for p in AI_CONTAMINATION_PATTERNS)
+
 
 class ConversationExtractor:
     """
@@ -110,6 +139,10 @@ class ConversationExtractor:
         word_count = len(words)
         if word_count < 2:
             return 0.0
+
+        # Penalize LLM contamination (forwarded bot transcripts / AI self-identification)
+        if is_llm_contaminated(text):
+            return 0.1
 
         # Check trivial reactions
         if text.lower().strip("!.?,") in TRIVIAL_REACTIONS:
@@ -208,6 +241,10 @@ class ConversationExtractor:
                 sft_turns.pop()
 
             if len(sft_turns) >= 2:
+                # Reject dialogues contaminated with AI self-identification or forwarded chatbot transcripts
+                if any(is_llm_contaminated(t.content) for t in sft_turns):
+                    continue
+
                 # Determine primary topic and tags across messages in this thread
                 domain_counter: dict[str, int] = defaultdict(int)
                 tags_collected: set[str] = set()
@@ -269,8 +306,11 @@ class ConversationExtractor:
             best_score, best_reply = scored_replies[0]
             worst_score, worst_reply = scored_replies[-1]
 
-            # We need a significant quality margin to create a valid preference pair
+            # We need a significant quality margin to create a valid preference pair,
+            # and the chosen response must not be contaminated by AI chatbot boilerplate
             if (best_score - worst_score) >= 1.5 and best_score >= 3.0:
+                if is_llm_contaminated(best_reply.text_clean):
+                    continue
                 dpo_pairs.append(
                     {
                         "thread_id": thread_id,

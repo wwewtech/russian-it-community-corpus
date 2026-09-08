@@ -288,14 +288,42 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
         # 4. Tokenization Function
         def format_chat(example, _tokenizer=tokenizer):
             msgs = example.get("messages", [])
-            text_blocks = []
-            for m in msgs:
-                r = m.get("role", "user")
-                c = m.get("content", "")
-                text_blocks.append(f"<|{r}|>\n{c}")
-            full_text = "\n".join(text_blocks)
+            if not msgs:
+                return {"input_ids": [], "labels": []}
+
+            # If model tokenizer has a native chat template, use it
+            if hasattr(_tokenizer, "apply_chat_template") and getattr(_tokenizer, "chat_template", None):
+                try:
+                    full_text = _tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
+                    tokens = _tokenizer(full_text, truncation=True, max_length=512, padding=False)
+                    labels = list(tokens["input_ids"])
+
+                    # Mask user prompt tokens with -100 so loss is computed only on assistant response
+                    if len(msgs) >= 2 and msgs[-1].get("role") in ("assistant", "gpt"):
+                        prompt_text = _tokenizer.apply_chat_template(
+                            msgs[:-1], tokenize=False, add_generation_prompt=True
+                        )
+                        p_tokens = _tokenizer(prompt_text, truncation=True, max_length=512, padding=False)
+                        p_len = min(len(p_tokens["input_ids"]), len(labels))
+                        labels[:p_len] = [-100] * p_len
+                    tokens["labels"] = labels
+                    return tokens
+                except Exception as e:
+                    logger.debug(f"Tokenizer chat_template failed for {adapter_id}, falling back: {e}")
+
+            # Fallback formatting for foundation / base models without chat template
+            prompt_parts = []
+            for m in msgs[:-1]:
+                prompt_parts.append(f"{m.get('role', 'user')}: {m.get('content', '')}")
+            prompt_text = "\n".join(prompt_parts) + "\nassistant:"
+            full_text = prompt_text + " " + str(msgs[-1].get("content", ""))
+
             tokens = _tokenizer(full_text, truncation=True, max_length=512, padding=False)
-            tokens["labels"] = tokens["input_ids"].copy()
+            labels = list(tokens["input_ids"])
+            p_tokens = _tokenizer(prompt_text, truncation=True, max_length=512, padding=False)
+            p_len = min(len(p_tokens["input_ids"]), len(labels))
+            labels[:p_len] = [-100] * p_len
+            tokens["labels"] = labels
             return tokens
 
         tokenized_ds = sft_dataset.map(format_chat, remove_columns=sft_dataset.column_names)

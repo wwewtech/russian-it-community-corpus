@@ -193,6 +193,51 @@ class TestGraphReconstruction(unittest.TestCase):
         tiny = [self._make_msg(52, 600, 12000, "u_1", "+"), self._make_msg(53, 600, 12060, "u_2", "ок")]
         self.assertEqual(self.extractor.extract_rag_chunks({9: tiny}), [])
 
+    def test_llm_contamination_detection(self):
+        from src.graph.conversation_extractor import is_llm_contaminated
+
+        ai_samples = [
+            "Как искусственный интеллект, я не обладаю личным опытом в настройке Kubernetes.",
+            "Я языковая модель, обученная отвечать на технические вопросы.",
+            "As an AI, I cannot provide advice on breaking into systems.",
+            "Нас (модели Google) тренируют быть максимально точными в коде.",
+            "Вот решение проблемы с дедлоками в Postgres:\n...\nClaude 4.5 Sonnet",
+            "Мои разработчики из OpenAI добавили это ограничение.",
+        ]
+        for s in ai_samples:
+            self.assertTrue(is_llm_contaminated(s), f"Failed to detect AI contamination in: {s!r}")
+
+        clean_samples = [
+            "Мы перенесли пару сервисов на FastAPI, прирост RPS в 3 раза.",
+            "Поставь в конфиге Nginx proxy_read_timeout 300s.",
+            "Кто использовал Debezium для outbox pattern в проде?",
+        ]
+        for s in clean_samples:
+            self.assertFalse(is_llm_contaminated(s), f"False positive AI contamination on: {s!r}")
+
+    def test_llm_contaminated_messages_receive_low_quality(self):
+        msg = self._make_msg(
+            60,
+            700,
+            13000,
+            "u_bot",
+            "Как языковая модель, я могу объяснить устройство Docker и Kubernetes во всех деталях.",
+        )
+        score = self.extractor.compute_message_quality(msg)
+        self.assertEqual(score, 0.1)
+
+    def test_extract_sft_dialogues_filters_llm_contaminated_turns(self):
+        q = self._make_msg(61, 700, 13000, "u_user", "Как оптимизировать запросы в PostgreSQL?")
+        bot_ans = self._make_msg(
+            62,
+            700,
+            13060,
+            "u_assistant",
+            "Как искусственный интеллект, я рекомендую использовать индексы B-tree и vacuum freeze.",
+        )
+        dialogues = self.extractor.extract_sft_dialogues({10: [q, bot_ans]})
+        self.assertEqual(dialogues, [])
+
 
 if __name__ == "__main__":
     unittest.main()

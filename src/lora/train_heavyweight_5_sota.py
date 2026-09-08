@@ -165,15 +165,65 @@ def train_single_heavyweight(
         peft_model = get_peft_model(model, lora_config)
         peft_model.print_trainable_parameters()
 
-        # Tokenize Dataset
-        formatted_ds = dataset.map(lambda ex: format_chat_prompt(ex, tokenizer), remove_columns=dataset.column_names)
+        # Tokenize Dataset with prompt loss masking (-100)
+        def tokenize_example(example):
+            conv = example.get("conversations") or example.get("messages")
+            if conv and isinstance(conv, list):
+                role_map = {
+                    "human": "user",
+                    "gpt": "assistant",
+                    "system": "system",
+                    "user": "user",
+                    "assistant": "assistant",
+                }
+                clean_msgs = [
+                    {
+                        "role": role_map.get(m.get("from") or m.get("role"), "user"),
+                        "content": str(m.get("value") or m.get("content")),
+                    }
+                    for m in conv
+                    if (m.get("value") or m.get("content"))
+                ]
+            else:
+                q = example.get("query") or example.get("instruction") or "Расскажи про IT архитектуру"
+                r = example.get("response") or example.get("output") or example.get("content") or ""
+                clean_msgs = [{"role": "user", "content": str(q)}, {"role": "assistant", "content": str(r)}]
 
-        def tokenize_fn(examples):
-            tokenized = tokenizer(examples["text"], truncation=True, max_length=256, padding=False)
-            tokenized["labels"] = tokenized["input_ids"].copy()
+            if not clean_msgs:
+                return {"input_ids": [], "labels": []}
+
+            # Use chat template if available
+            if hasattr(tokenizer, "apply_chat_template") and getattr(tokenizer, "chat_template", None):
+                try:
+                    full_text = tokenizer.apply_chat_template(clean_msgs, tokenize=False, add_generation_prompt=False)
+                    tokenized = tokenizer(full_text, truncation=True, max_length=512, padding=False)
+                    labels = list(tokenized["input_ids"])
+
+                    if len(clean_msgs) >= 2 and clean_msgs[-1].get("role") in ("assistant", "gpt"):
+                        prompt_text = tokenizer.apply_chat_template(
+                            clean_msgs[:-1], tokenize=False, add_generation_prompt=True
+                        )
+                        p_tokens = tokenizer(prompt_text, truncation=True, max_length=512, padding=False)
+                        p_len = min(len(p_tokens["input_ids"]), len(labels))
+                        labels[:p_len] = [-100] * p_len
+
+                    tokenized["labels"] = labels
+                    return tokenized
+                except Exception as e:
+                    logger.debug(f"Chat template formatting failed: {e}")
+
+            # Fallback
+            prompt_text = f"User: {clean_msgs[0]['content']}\nAssistant:"
+            full_text = f"{prompt_text} {clean_msgs[-1]['content']}"
+            tokenized = tokenizer(full_text, truncation=True, max_length=512, padding=False)
+            labels = list(tokenized["input_ids"])
+            p_tokens = tokenizer(prompt_text, truncation=True, max_length=512, padding=False)
+            p_len = min(len(p_tokens["input_ids"]), len(labels))
+            labels[:p_len] = [-100] * p_len
+            tokenized["labels"] = labels
             return tokenized
 
-        tokenized_ds = formatted_ds.map(tokenize_fn, batched=True, remove_columns=["text"])
+        tokenized_ds = dataset.map(tokenize_example, remove_columns=dataset.column_names)
 
         # Training Args
         training_args = TrainingArguments(
