@@ -1,6 +1,6 @@
 """
-Deep Multi-Experiment Benchmark Suite (16 Test Dimensions) for Russian IT Community Models.
-Compares Base Models, Vector RAG (325k chunks), Domain LoRA, and Hybrid Architectures on RTX 3060.
+Multi-Experiment Benchmark Suite (16 Test Dimensions) for Russian IT Community Models.
+Compares Base Models, Local Lexical RAG (325k chunks), Domain LoRA, and Hybrid Setups.
 """
 
 import argparse

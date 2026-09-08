@@ -1,10 +1,13 @@
 """
-Official Academic Scientific Benchmark Suite for Russian IT LLM Ecosystem.
-Evaluates models against real, established international & Russian scientific standards:
-1. OpenAI HumanEval (Code Execution pass@1)
-2. Sber AI / HSE RuMMLU (Computer Science & Architecture QA Accuracy)
-3. Information-Theoretic Test Set Perplexity (PPL = exp(loss))
-4. Academic Text Overlap: ROUGE-1, ROUGE-2, ROUGE-L, and BLEU-4 (via Hugging Face Evaluate)
+Academic Benchmark Evaluation Harness for Russian IT LLM Ecosystem.
+Evaluates models against representative task subsets:
+1. OpenAI HumanEval (40 curated code execution tasks, pass@1)
+2. Sber AI / HSE RuMMLU CS (50 Computer Science & Architecture QA questions)
+3. Test Set Perplexity (PPL = exp(loss))
+4. Text Overlap: ROUGE-1, ROUGE-2, ROUGE-L (via Hugging Face Evaluate)
+
+NOTE: Prior published aggregate numbers from this harness were WITHDRAWN pending fresh
+GPU re-evaluation due to earlier answer-parsing and column-mapping defects.
 """
 
 import argparse

@@ -1,6 +1,6 @@
 """
-Local Production RAG Pipeline for Russian IT Knowledge Base.
-Supports dense semantic embedding retrieval + BM25 hybrid ranking.
+Local Lexical Retrieval Pipeline for Russian IT Knowledge Base.
+Fast keyword and regex-based relevance retrieval across curated knowledge chunks.
 """
 
 import logging
@@ -16,10 +16,10 @@ class LocalRAGPipeline:
     """
     RAG engine for retrieval and context injection from the curated 325,690 knowledge base chunks.
 
-    NOTE: this is a lightweight lexical retriever over ``df_kb['content']`` using a
-    pre-filter ``str.contains`` + a keyword-overlap score. It is NOT a semantic
-    embedding search — use ``build_embedding_index`` (TODO) for that. See ``app.py``
-    and ``inference.py`` for the current call sites.
+    NOTE: this is a fast lexical retriever over ``df_kb['content']`` using a
+    vectorized ``str.contains`` pre-filter + keyword-overlap scoring. It operates
+    without external vector DBs or heavy embedding models to remain lightweight
+    and runnable in CPU/local environments. See ``app.py`` and ``inference.py``.
     """
 
     def __init__(self, parquet_kb_path: Path):
@@ -45,7 +45,7 @@ class LocalRAGPipeline:
 
     def search(self, query: str, top_k: int = 3, domain_filter: str | None = None) -> list[dict[str, Any]]:
         """
-        Fast lexical and semantic retrieval across knowledge base chunks.
+        Fast lexical keyword-overlap retrieval across knowledge base chunks.
         """
         if self.df_kb.empty:
             return []

@@ -1,12 +1,14 @@
 """
-SOTA Expert Enterprise Showcase & Deep Semantic Benchmark.
-Generates comprehensive responses (420+ tokens) with Senior Principal Architect system prompt,
-evaluating AST syntax, architectural completeness, Russian engineering jargon, and side-by-side diffs.
+Enterprise Engineering Scenario Showcase & Rubric-Based Evaluation Suite.
+Generates model responses on 8 high-load engineering scenarios,
+evaluating concept coverage, syntax validity of code snippets, and technical terminology.
 """
 
 import argparse
+import ast
 import json
 import logging
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -23,10 +25,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("SOTAShowcase")
+logger = logging.getLogger("EnterpriseShowcase")
 
-SYSTEM_PROMPT = """Ты — ведущий Principal Solutions Architect и Staff Software Engineer в российском финтех/бигтех секторе (ex-Yandex, Сбер, Тинькофф).
-Твои ответы предельно глубокие, архитектурно точные, используют правильную терминологию российского инженерного сообщества и содержат готовый к продакшну код, конфигурации и разбор краевых случаев (edge cases, race conditions, failover)."""
+SYSTEM_PROMPT = """Ты — опытный инженер-разработчик и архитектор распределённых систем.
+Твои ответы должны быть глубокими, архитектурно точными, использовать принятую терминологию российского IT-сообщества, содержать корректный production-ready код, конфигурации и разбор граничных случаев (edge cases, race conditions, failover)."""
 
 FLAGSHIP_CHALLENGES = [
     {
@@ -159,9 +161,21 @@ def score_response_quality(text: str, criteria: dict[str, Any]) -> dict[str, flo
     hits = sum(1 for k in kw if k.lower() in text.lower())
     concept_score = (hits / len(kw)) * 100.0
 
-    # AST / Code Score
-    has_code_block = "```" in text
-    code_score = 100.0 if has_code_block else (50.0 if not criteria["requires_code"] else 20.0)
+    # AST / Code Score: require actual code blocks and validate Python syntax if present
+    code_blocks = re.findall(r"```(?:python|py)?\n(.*?)```", text, re.DOTALL)
+    if code_blocks:
+        code_score = 70.0
+        for block in code_blocks:
+            try:
+                ast.parse(block.strip())
+                code_score = 100.0
+                break
+            except SyntaxError:
+                pass
+    elif "```" in text:
+        code_score = 40.0
+    else:
+        code_score = 50.0 if not criteria["requires_code"] else 10.0
 
     # Russian Technical Tone (density of professional IT vocabulary)
     ru_it_tokens = [
