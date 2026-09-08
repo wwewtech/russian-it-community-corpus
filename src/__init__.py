@@ -2,4 +2,4 @@
 IT Community Data Engineering and Curation Pipeline
 """
 
-__version__ = "1.0.0"
+__version__ = "12.0.4"

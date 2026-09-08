@@ -38,5 +38,6 @@
       "verdict": "stable"
     }
   },
-  "overall_verdict": "stable"
+  "overall_verdict": "stable",
+  "_audit_note": "WARNING: This report was generated against a synthetic 2-row dataset (reference_rows=2, current_rows=2), not against the production 2,816,434-row corpus. All drift metrics show 0.0 / stable because reference and current data are identical. Re-run scripts/run_drift_monitor.py with the real parquet snapshots to get meaningful results. The drift monitoring code itself is correctly implemented (see src/monitoring/drift.py)."
 }

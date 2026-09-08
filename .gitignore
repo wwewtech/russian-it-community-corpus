@@ -63,6 +63,7 @@ _tail_bench.py
 _probe*_results.json
 # AI & scratch files
 prompt.md
+prompt.txt
 _commit_msg.txt
 info.txt
 

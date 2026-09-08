@@ -501,6 +501,42 @@ class TestReportConsistency(unittest.TestCase):
         """lora_adapters/registry.json matches on-disk dirs and lora_adapters/SUMMARY.md (56 adapters)."""
         verify_local_registry_and_summary(self.registry, self.summary_text, self.lora_dir)
 
+    def test_version_consistency(self):
+        """Verify that pyproject.toml, CITATION.cff, src/__init__.py, and CHANGELOG.md all agree on version."""
+        import tomllib
+
+        pyproject_path = REPO_ROOT / "pyproject.toml"
+        with pyproject_path.open("rb") as f:
+            pyproject_data = tomllib.load(f)
+        pyproject_ver = pyproject_data["project"]["version"]
+
+        citation_path = REPO_ROOT / "CITATION.cff"
+        m_cff = re.search(r"^version:\s*(\S+)", citation_path.read_text(encoding="utf-8"), re.MULTILINE)
+        self.assertIsNotNone(m_cff, "CITATION.cff missing version field")
+        cff_ver = m_cff.group(1).strip("\"'")
+
+        init_path = REPO_ROOT / "src" / "__init__.py"
+        m_init = re.search(
+            r'^__version__\s*=\s*["\']([^"\']+)["\']', init_path.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        self.assertIsNotNone(m_init, "src/__init__.py missing __version__")
+        init_ver = m_init.group(1)
+
+        changelog_path = REPO_ROOT / "CHANGELOG.md"
+        m_change = re.search(
+            r"^##\s*\[([0-9]+\.[0-9]+\.[0-9]+)\]", changelog_path.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        self.assertIsNotNone(m_change, "CHANGELOG.md missing latest version header")
+        changelog_ver = m_change.group(1)
+
+        self.assertEqual(
+            pyproject_ver, changelog_ver, f"pyproject.toml version ({pyproject_ver}) != CHANGELOG ({changelog_ver})"
+        )
+        self.assertEqual(cff_ver, changelog_ver, f"CITATION.cff version ({cff_ver}) != CHANGELOG ({changelog_ver})")
+        self.assertEqual(
+            init_ver, changelog_ver, f"src/__init__.py version ({init_ver}) != CHANGELOG ({changelog_ver})"
+        )
+
     # ----------------------------------------------------------------------- #
     # Negative test suite: proof that tampered files strictly fail assertions
     # ----------------------------------------------------------------------- #

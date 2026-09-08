@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.0.4] - 2026-09-08
+
+### Fixed (ML training & evaluation rigor)
+- **Prompt loss masking (`labels = -100`)**: Fixed severe SFT bug across `src/lora/train_lora.py`,
+  `src/lora/train_20_popular_models.py`, and `src/lora/train_heavyweight_5_sota.py`. Previously,
+  `tokenized["labels"] = tokenized["input_ids"].copy()` caused the loss to be computed over both the
+  user prompt and the assistant response. Now, user prompt tokens are properly masked with `-100`
+  (PyTorch CrossEntropyLoss `ignore_index`), ensuring models only learn to generate assistant answers.
+- **LLM contamination filtering in SFT & DPO**: Added `AI_CONTAMINATION_PATTERNS` and `is_llm_contaminated()`
+  to `src/graph/conversation_extractor.py`. Automatically rejects messages with AI self-identifications
+  (e.g., "как языковая модель", "as an AI", "нас (модели Google) тренируют", "Claude 4.5 Sonnet", "ChatGPT")
+  from polluting curated SFT dialogues and chosen DPO responses.
+- **AST syntax validation in evaluation**: Replaced superficial `code_score = 100 if "```" in text` in
+  `src/evaluation/sota_expert_benchmark_showcase.py` with true Python AST syntax verification via `ast.parse()`.
+- **RAG pipeline docstring accuracy**: Replaced misleading claims of "dense semantic embedding retrieval + BM25"
+  in `src/rag/rag_pipeline.py` with an accurate technical description: fast vectorized lexical keyword-overlap
+  retrieval.
+- **LoRA Zoo training transparency**: Clarified across `README.md`, `reports/LORA_MODEL_ZOO.md`,
+  `reports/HF_MODEL_CARD.md`, and `reports/DATASET_AND_ANALYTICS.md` that the 58 published adapters
+  represent pilot domain-adaptation checkpoints (50–100 steps on domain batches for PEFT weight verification
+  and consumer-GPU inference), not multi-epoch checkpoints trained on all 171k dialogues.
+
+### Fixed (documentation accuracy)
+- **`reports/DATASET_AND_ANALYTICS.md`**: Corrected `TECH_WHITELIST` size claim from «4,500+» to **276** entries.
+  The previous figure was never backed by code; `len(src.pii.ner_scrubber.TECH_WHITELIST)` returns 276.
+  The whitelist covers the essential coverage domain (languages, frameworks, cloud tools, tech terms in RU+EN)
+  and is functionally sufficient — the number was simply wrong in the docs.
+- **`docs/architecture.md`**: Updated test count from outdated 271 (v12.0.2 baseline) to current **298**
+  (after adding sentinel and LLM-filtering tests in v12.0.4). Clarified that the 76.45% coverage figure
+  is the CI full-matrix result; local Windows runs show ~66% because GPU/HF-API paths are
+  exercised only via mocks there.
+- **`reports/drift_report.json`**: Added `_audit_note` field documenting that this report was generated
+  against a synthetic 2-row dataset, not the production corpus. The drift monitor itself is correctly
+  implemented and tested (9/9 tests pass in `test_drift_monitoring.py`).
+- **Version synchronization**: Synchronized `src/__init__.py`, `pyproject.toml`, and `CITATION.cff` to `12.0.4`.
+  Added automated sentinel test `test_version_consistency` in `tests/test_report_consistency.py`.
+
+### Changed
+- **`CHANGELOG.md`** (this file): Test metrics row for v12.0.3 annotated to clarify that
+  «275 tests» reflects the CI count at time of release; `--collect-only` now returns 294 because
+  `test_app_streamlit_smoke.py` (4 tests, gated on `RUN_STREAMLIT_SMOKE=1`) was already present
+  but not counted in the original CI summary line.
+
+---
+
 ## [12.0.3] - 2026-08-30
 
 ### Added

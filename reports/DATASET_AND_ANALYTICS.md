@@ -252,7 +252,7 @@ What remains interpretable today — **rubric-based heuristic scores** on 50 eng
 
 *(AST rates recomputed as means over all 50 per-scenario `ast_score` values in [`reports/heuristic_benchmark_eval.json`](heuristic_benchmark_eval.json); an earlier version of this card quoted different numbers that did not match the machine-readable data.)*
 
-Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora).
+Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora) (published as pilot domain-adaptation checkpoints on sampled domain subsets).
 
 ---
 
@@ -261,7 +261,7 @@ Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo
 1. **Morphological Name Scrubbing**: Author display names are extracted and declined across all **6 Russian grammatical cases** (Им., Род., Дат., Вин., Твор., Предл.) to remove conversational references in text.
 2. **Community Node Anonymization**: All 11 channel titles and supergroup IDs are strictly anonymized as surrogate nodes (`community_node_01`..`11`).
 3. **Deterministic Pattern Scrubbing**: Removes phone numbers, personal emails, crypto wallet addresses (BTC, ETH, TRON, TON, SOL), API keys (`sk-proj-...`, `ghp_...`), JWT tokens, and database credentials.
-4. **Terminology Whitelist**: 4,500+ standard programming keywords, frameworks, and tools are protected against accidental redaction.
+4. **Terminology Whitelist**: **276** standard programming keywords, frameworks, and tools are protected against accidental redaction (see `src/pii/ner_scrubber.py` → `TECH_WHITELIST`).
 5. **Notice and Takedown Policy**: Intended strictly for educational, academic, and non-commercial research. If you identify any inadvertent personal identifier, please open a takedown issue or submit a removal request. Requests are processed within **48 hours**.
 
 ---

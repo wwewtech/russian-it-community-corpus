@@ -213,10 +213,12 @@ the `LoRA_ZOO.md` index card. It is unit-tested with a mocked
 ## 7. Testing strategy
 
 The test suite is the primary contract that keeps the project
-maintainable. As of v12.0.3:
+maintainable. As of v12.0.4:
 
-- **271 tests, 76.22% line coverage** (project-wide), enforced by
-  `pyproject.toml`'s `--cov-fail-under=60` floor.
+- **298 tests, 76.45% line coverage** (CI, Python 3.11/3.12/3.13 full matrix), enforced by
+  `pyproject.toml`'s `--cov-fail-under=60` floor. Local Windows runs collect the same 298 tests
+  but may report lower aggregate coverage (~66%) because GPU-dependent paths in `src/inference.py`
+  and HF-API paths in `src/exporter/finalize_sync_all.py` are tested via mocks rather than live execution.
 - **Per-module coverage floors** are not enforced, but the four
   "user-facing entry points" (the modules that the 12.0.2 audit flagged
   as 0% covered) now sit at:

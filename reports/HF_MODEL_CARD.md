@@ -112,4 +112,5 @@ Full-precision copies also live under [`models/`](https://huggingface.co/wwewtec
 ## 📓 Training Data & Evaluation Status
 
 - Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) (171,520 multi-turn dialogues).
+- Training regime: Published adapters are domain-adaptation pilot checkpoints (50–100 training steps on sampled domain batches) demonstrating PEFT compatibility and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints over the entire corpus.
 - Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not capability measurements.
