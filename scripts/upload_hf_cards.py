@@ -8,8 +8,25 @@ import os
 import sys
 from pathlib import Path
 
-if not os.getenv("HF_TOKEN"):
-    sys.exit("HF_TOKEN is not set; cannot upload.")
+
+def _resolve_token() -> str | None:
+    env_token = os.getenv("HF_TOKEN")
+    if env_token:
+        return env_token.strip() or None
+    try:
+        from huggingface_hub import get_token
+
+        return get_token()
+    except Exception:
+        return None
+
+
+token = _resolve_token()
+if not token:
+    sys.exit(
+        "HF token not found. Either set HF_TOKEN environment variable with write access, "
+        "or run 'huggingface-cli login' (see docs/adr/0001-hf-token-handling.md)."
+    )
 
 from huggingface_hub import HfApi  # noqa: E402
 
@@ -21,7 +38,7 @@ UPLOADS = [
     ("reports/HF_MODEL_CARD.md", MODEL_REPO, "README.md", "model"),
 ]
 
-api = HfApi(token=os.environ["HF_TOKEN"])
+api = HfApi(token=token)
 for local, repo_id, path_in_repo, repo_type in UPLOADS:
     p = Path(local)
     if not p.exists():
