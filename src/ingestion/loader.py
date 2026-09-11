@@ -97,12 +97,12 @@ def load_export_file(file_path: str | Path, node_index: int = 1) -> tuple[dict[s
 
     chat_info = {
         "name": anon_chat_name,
-        "type": data.get("type", "unknown"),
+        "type": data.get("type", "unknown") if isinstance(data, dict) else "unknown",
         "id": anon_chat_id,
         "file_path": str(path),
     }
 
-    raw_msgs = data.get("messages", [])
+    raw_msgs = data.get("messages", []) if isinstance(data, dict) else []
     if not raw_msgs and isinstance(data, list):
         raw_msgs = data
 

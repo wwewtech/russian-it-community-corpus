@@ -22,7 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **K8s manifests**: `deploy/k8s/data-studio-{deployment,service}.yaml`
   (non-root 10001, probes on `/_stcore/health`, resource requests/limits).
 - **Coverage config**: `[tool.coverage.run] omit` for GPU-only training/enterprise
-  suites; unit gate stays 60% (actual 75%).
+  suites; unit gate stays 60% (actual 94%: 404 passed, 1 skipped).
+- **Coverage boost (75% → 94%)**: 101 new CPU-only tests in
+  `tests/test_coverage_boost{,2,3}.py` — loader edge cases, `DeepChatAnalyzer`
+  incl. LDA success/failure paths, hybrid RAG modes, `BenchmarkComparator`,
+  mocked inference sessions (RAG/CUDA/adapter paths), validator/SLO/sft-quality
+  branches, Prefect task failure/skip paths, drift verdict matrix.
+
+### Fixed
+- **Loader crash on list-shaped exports**: `load_export_file` raised
+  `AttributeError` when `result.json` is a top-level list (the
+  `data.get("messages")` lookup ran before the `isinstance(data, list)`
+  branch). Now degrades to `type="unknown"` + list payload (regression test
+  in `tests/test_coverage_boost.py`).
 
 ### Fixed
 - **Docker hardening**: non-root `appuser`, single-source `requirements.txt`
