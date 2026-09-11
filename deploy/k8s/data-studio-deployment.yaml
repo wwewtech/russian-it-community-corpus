@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ricc-data-studio
+  labels:
+    app: ricc-data-studio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ricc-data-studio
+  template:
+    metadata:
+      labels:
+        app: ricc-data-studio
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: data-studio
+          image: ricc-data-platform:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: HF_HOME
+              value: /app/.hf_cache
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: "1"
+            limits:
+              memory: 8Gi
+              cpu: "4"
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /app/.hf_cache
+      volumes:
+        - name: hf-cache
+          emptyDir: {}

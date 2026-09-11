@@ -89,7 +89,7 @@ CODE_INDICATORS = [
 
 # Patterns indicating synthetic AI self-identification, chatbot boilerplate,
 # or forwarded LLM outputs that should not contaminate human conversational SFT data.
-AI_CONTAMINATION_PATTERNS: list[re.Pattern] = [
+AI_CONTAMINATION_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\b(?:как\s+)?(?:большая\s+)?языковая\s+модель\b", re.IGNORECASE),
     re.compile(r"\b(?:как\s+)?искусственный\s+интеллект\b", re.IGNORECASE),
     re.compile(

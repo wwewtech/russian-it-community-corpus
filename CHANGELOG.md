@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Hybrid RAG retrieval**: `src/rag/rag_pipeline.py` upgraded from lexical-only to
+  lexical pre-filter (5k cap) + per-query TF-IDF (1-2-gram, 20k features) cosine
+  re-rank with `mode="hybrid"|"lexical"|"tfidf"`. Memory-flat on 325k chunks,
+  graceful fallback when sklearn is missing. API backward compatible.
+- **SLO release gate**: `src/monitoring/slo_gate.py` + `make slo` aggregates
+  `validation_results.json` + `probabilistic_pii_audit.json` + `drift_report.json`
+  into single SHIP/HOLD verdict (fail-closed on PII). Emits `reports/slo_verdict.json`.
+- **Packaging hygiene**: added missing `src/evaluation/__init__.py`,
+  `src/lora/__init__.py`, `src/rag/__init__.py` (regular packages, strict-typed).
+- **K8s manifests**: `deploy/k8s/data-studio-{deployment,service}.yaml`
+  (non-root 10001, probes on `/_stcore/health`, resource requests/limits).
+- **Coverage config**: `[tool.coverage.run] omit` for GPU-only training/enterprise
+  suites; unit gate stays 60% (actual 75%).
+
+### Fixed
+- **Docker hardening**: non-root `appuser`, single-source `requirements.txt`
+  install (removed fragile `--no-deps` torch hack), `.dockerignore`, layer caching,
+  `docker-compose.yml` healthcheck + resource limits + `hf-cache` volume.
+- **SLO verdict mapping**: accept `PASSED` alongside `PASS/SHIP/OK` from
+  `probabilistic_pii_audit.json`.
+
 ## [12.0.4] - 2026-09-08
 
 ### Fixed (ML training & evaluation rigor)

@@ -1,4 +1,4 @@
-.PHONY: all install run analyze validate benchmark audit audit-prob drift orchestrate dvc-repro test coverage lint format typecheck typecheck-strict ui docker-build docker-up clean help
+.PHONY: all install run analyze validate benchmark audit audit-prob drift slo orchestrate dvc-repro test coverage lint format typecheck typecheck-strict ui docker-build docker-up k8s-dry-run clean help
 
 help:
 	@echo "Russian IT Community Data Platform — Command Shortcuts:"
@@ -10,6 +10,7 @@ help:
 	@echo "  make audit      - Run Red-Team adversarial PII penetration audit"
 	@echo "  make audit-prob - Run stratified probabilistic PII audit (Wilson CI, 99% bounds)"
 	@echo "  make drift      - Run dataset drift monitoring (PSI / JS / vocabulary)"
+	@echo "  make slo        - Run SLO release gate (SHIP/HOLD from reports/)"
 	@echo "  make orchestrate- Run Prefect orchestration flow (graceful fallback)"
 	@echo "  make dvc-repro  - Reproduce the DVC pipeline (dvc repro)"
 	@echo "  make test       - Run unit test suite (pytest + coverage gate)"
@@ -46,6 +47,9 @@ audit-prob:
 drift:
 	python scripts/run_drift_monitoring.py
 
+slo:
+	python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+
 orchestrate:
 	python -c "from src.orchestration.prefect_flow import run_flow; import json; print(json.dumps(run_flow(run_pipeline=False), indent=2, ensure_ascii=False, default=str))"
 
@@ -78,7 +82,7 @@ typecheck-strict:
 	# passing mypy --strict in isolation. See `pyproject.toml`
 	# [[tool.mypy.overrides]] for the remaining five modules still on the
 	# ignore list and the per-PR backlog to clear them.
-	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/graph/__init__.py --strict
+	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/lora/__init__.py src/graph/__init__.py --strict
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:
@@ -92,6 +96,9 @@ docker-build:
 
 docker-up:
 	docker-compose up data-studio
+
+k8s-dry-run:
+	kubectl apply --dry-run=client -f deploy/k8s/
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

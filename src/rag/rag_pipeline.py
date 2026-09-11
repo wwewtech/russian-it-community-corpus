@@ -1,9 +1,20 @@
-"""
-Local Lexical Retrieval Pipeline for Russian IT Knowledge Base.
-Fast keyword and regex-based relevance retrieval across curated knowledge chunks.
+"""Hybrid retrieval pipeline for Russian IT knowledge base.
+
+Lexical pre-filter + TF-IDF vector re-rank. Runs on CPU with only
+``scikit-learn`` (already a core dependency), no external vector DB needed.
+
+Design:
+* Stage 1 — fast vectorized ``str.contains`` pre-filter (up to 5k candidates).
+* Stage 2 — per-query TF-IDF fit on candidates + cosine re-rank.
+  Per-query fit keeps memory flat even for 325k-chunk KBs (no global
+  325k x 30k matrix in RAM) and degrades gracefully to lexical scores
+  when sklearn is missing or candidates are tiny.
 """
 
+from __future__ import annotations
+
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -11,29 +22,54 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+_PREFILTER_CAP = 5000
+_TFIDF_MAX_FEATURES = 20000
+
+_TOKEN_RE = re.compile(r"[a-zA-Zа-яА-ЯёЁ0-9]{3,}", re.UNICODE)
+
+
+def _extract_keywords(query: str) -> list[str]:
+    return [w.lower() for w in _TOKEN_RE.findall(query.lower())][:10]
+
+
+def _lexical_scores(contents: pd.Series, keywords: list[str]) -> list[float]:
+    scores: list[float] = []
+    for content in contents:
+        c_lower = str(content).lower()
+        scores.append(sum(1.5 for kw in keywords if kw in c_lower))
+    return scores
+
 
 class LocalRAGPipeline:
-    """
-    RAG engine for retrieval and context injection from the curated 325,690 knowledge base chunks.
+    """RAG engine for retrieval and context injection from knowledge chunks.
 
-    NOTE: this is a fast lexical retriever over ``df_kb['content']`` using a
-    vectorized ``str.contains`` pre-filter + keyword-overlap scoring. It operates
-    without external vector DBs or heavy embedding models to remain lightweight
-    and runnable in CPU/local environments. See ``app.py`` and ``inference.py``.
+    Backward compatible with the previous lexical-only version:
+    ``search(query, top_k, domain_filter)`` keeps its signature; a new
+    ``mode`` argument selects ``"hybrid"`` (default), ``"lexical"`` or
+    ``"tfidf"``.
     """
 
-    def __init__(self, parquet_kb_path: Path):
+    def __init__(
+        self,
+        parquet_kb_path: Path | str,
+        *,
+        use_tfidf: bool = True,
+        prefilter_cap: int = _PREFILTER_CAP,
+    ) -> None:
         self.parquet_kb_path = Path(parquet_kb_path)
         self.df_kb: pd.DataFrame = pd.DataFrame()
+        self.use_tfidf = use_tfidf
+        self.prefilter_cap = prefilter_cap
+        self.retriever: str = "lexical"
         self._load_knowledge_base()
 
-    def _load_knowledge_base(self):
+    def _load_knowledge_base(self) -> None:
         if not self.parquet_kb_path.exists():
-            logger.warning(f"Knowledge base parquet not found at {self.parquet_kb_path}")
+            logger.warning("Knowledge base parquet not found at %s", self.parquet_kb_path)
             return
-        logger.info(f"Loading RAG knowledge base from {self.parquet_kb_path}...")
+        logger.info("Loading RAG knowledge base from %s...", self.parquet_kb_path)
         self.df_kb = pd.read_parquet(self.parquet_kb_path)
-        logger.info(f"Loaded {len(self.df_kb):,} RAG knowledge chunks.")
+        logger.info("Loaded %s RAG knowledge chunks.", f"{len(self.df_kb):,}")
 
     @property
     def df(self) -> pd.DataFrame:
@@ -43,29 +79,38 @@ class LocalRAGPipeline:
     def __len__(self) -> int:
         return len(self.df_kb)
 
-    def search(self, query: str, top_k: int = 3, domain_filter: str | None = None) -> list[dict[str, Any]]:
-        """
-        Fast lexical keyword-overlap retrieval across knowledge base chunks.
-        """
+    def get_stats(self) -> dict[str, Any]:
+        return {
+            "chunks": len(self.df_kb),
+            "retriever": self.retriever,
+            "use_tfidf": self.use_tfidf,
+            "domains": sorted(self.df_kb["topic_domain"].dropna().unique().tolist())
+            if not self.df_kb.empty and "topic_domain" in self.df_kb.columns
+            else [],
+        }
+
+    def search(
+        self,
+        query: str,
+        top_k: int = 3,
+        domain_filter: str | None = None,
+        mode: str = "hybrid",
+    ) -> list[dict[str, Any]]:
+        """Retrieve top-k chunks. Never raises on retrieval errors — returns []."""
         if self.df_kb.empty:
             return []
-
-        df = self.df_kb
-        if domain_filter:
-            df = df[df["topic_domain"] == domain_filter]
-            if df.empty:
-                df = self.df_kb
-
-        import re
-
-        # Extract search keywords (min len 3)
-        keywords = [w.lower() for w in query.split() if len(w) >= 3]
+        keywords = _extract_keywords(query)
         if not keywords:
             return []
 
-        # Fast vectorized pre-filter
-        regex_pattern = "|".join(re.escape(kw) for kw in keywords[:10])
+        df = self.df_kb
+        if domain_filter and "topic_domain" in df.columns:
+            filtered = df[df["topic_domain"] == domain_filter]
+            if not filtered.empty:
+                df = filtered
+
         try:
+            regex_pattern = "|".join(re.escape(kw) for kw in keywords)
             mask = df["content"].str.contains(regex_pattern, case=False, na=False, regex=True)
             sub_df = df[mask]
         except Exception:
@@ -73,48 +118,88 @@ class LocalRAGPipeline:
 
         if sub_df.empty:
             return []
+        if len(sub_df) > self.prefilter_cap:
+            # Keep lexical-best candidates before vector re-rank.
+            tmp = sub_df.copy()
+            tmp["_lex"] = _lexical_scores(tmp["content"], keywords)
+            sub_df = tmp.sort_values(by="_lex", ascending=False).head(self.prefilter_cap).drop(columns=["_lex"])
 
-        scores = []
-        for content in sub_df["content"]:
-            c_lower = str(content).lower()
-            match_score = sum(1.5 for kw in keywords if kw in c_lower)
-            scores.append(match_score)
+        use_vector = self.use_tfidf and mode in ("hybrid", "tfidf") and len(sub_df) >= 2
+        if use_vector:
+            ranked = self._tfidf_rerank(sub_df, query, keywords, mode=mode)
+            if ranked is not None:
+                self.retriever = "hybrid-tfidf"
+                return ranked[:top_k]
+        self.retriever = "lexical"
+        return self._lexical_top(sub_df, keywords, top_k)
 
-        sub_df = sub_df.copy()
-        sub_df["relevance_score"] = scores
-        top_matches = sub_df.sort_values(by="relevance_score", ascending=False).head(top_k)
+    def _lexical_top(self, sub_df: pd.DataFrame, keywords: list[str], top_k: int) -> list[dict[str, Any]]:
+        scored = sub_df.copy()
+        scored["relevance_score"] = _lexical_scores(scored["content"], keywords)
+        top = scored.sort_values(by="relevance_score", ascending=False).head(top_k)
+        return [self._row_to_hit(row) for _, row in top.iterrows() if float(row["relevance_score"]) > 0]
 
-        results = []
-        for _, row in top_matches.iterrows():
-            if row["relevance_score"] > 0:
-                results.append(
-                    {
-                        "chunk_id": row["chunk_id"],
-                        "title": row["title"],
-                        "domain": row["topic_domain"],
-                        "tags": row["topic_tags"],
-                        "content": row["content"],
-                        "date_range": row["date_range"],
-                        "score": round(float(row["relevance_score"]), 2),
-                    }
-                )
+    def _tfidf_rerank(
+        self, sub_df: pd.DataFrame, query: str, keywords: list[str], *, mode: str
+    ) -> list[dict[str, Any]] | None:
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.metrics.pairwise import cosine_similarity
+        except Exception as e:  # pragma: no cover - missing optional dep
+            logger.warning("sklearn unavailable, lexical fallback: %s", e)
+            return None
+        try:
+            contents = sub_df["content"].astype(str).tolist()
+            vectorizer = TfidfVectorizer(
+                max_features=_TFIDF_MAX_FEATURES,
+                ngram_range=(1, 2),
+                sublinear_tf=True,
+            )
+            doc_matrix = vectorizer.fit_transform(contents + [query])
+            query_vec = doc_matrix[-1]
+            doc_vecs = doc_matrix[:-1]
+            cosines = cosine_similarity(doc_vecs, query_vec).ravel()
+            lex = _lexical_scores(sub_df["content"], keywords)
+            max_lex = max(lex) if max(lex) > 0 else 1.0
+            ranked = sub_df.copy()
+            if mode == "tfidf":
+                ranked["relevance_score"] = [round(float(c) * 10, 2) for c in cosines]
+            else:  # hybrid: 65% vector + 35% lexical (both 0..1, scaled to 0..10)
+                ranked["relevance_score"] = [
+                    round((0.65 * float(c) + 0.35 * (lx / max_lex)) * 10, 2) for c, lx in zip(cosines, lex, strict=True)
+                ]
+            ranked = ranked[ranked["relevance_score"] > 0].sort_values(by="relevance_score", ascending=False)
+            if ranked.empty:
+                return None
+            return [self._row_to_hit(row) for _, row in ranked.iterrows()]
+        except Exception as e:
+            logger.warning("TF-IDF rerank failed, lexical fallback: %s", e)
+            return None
 
-        return results
+    @staticmethod
+    def _row_to_hit(row: pd.Series) -> dict[str, Any]:
+        tags = row.get("topic_tags", [])
+        if not isinstance(tags, (list, tuple)):
+            tags = []
+        return {
+            "chunk_id": row.get("chunk_id", ""),
+            "title": row.get("title", ""),
+            "domain": row.get("topic_domain", "general"),
+            "tags": list(tags),
+            "content": str(row.get("content", "")),
+            "date_range": row.get("date_range", ""),
+            "score": round(float(row.get("relevance_score", 0.0)), 2),
+        }
 
     def format_rag_prompt(self, user_query: str, retrieved_contexts: list[dict[str, Any]]) -> str:
         """Format retrieved context into an augmented prompt for the LLM."""
         if not retrieved_contexts:
             return user_query
-
         context_str = "\n\n---\n\n".join(
-            [
-                f"[Контекст из базы знаний #{i + 1} | {c['title']} ({c['date_range']})]:\n{c['content']}"
-                for i, c in enumerate(retrieved_contexts)
-            ]
+            f"[Контекст из базы знаний #{i + 1} | {c['title']} ({c['date_range']})]:\n{c['content']}"
+            for i, c in enumerate(retrieved_contexts)
         )
-
         return (
-            f"Используй следующий подтвержденный практический опыт инженеров из базы знаний для точного ответа на вопрос:\n\n"
-            f"{context_str}\n\n"
-            f"---\nВопрос пользователя: {user_query}\nОтвет эксперта:"
+            "Используй следующий подтвержденный практический опыт инженеров из базы знаний для точного ответа на вопрос:\n\n"
+            f"{context_str}\n\n---\nВопрос пользователя: {user_query}\nОтвет эксперта:"
         )

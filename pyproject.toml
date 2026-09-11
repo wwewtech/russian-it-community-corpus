@@ -171,3 +171,17 @@ addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=60
 markers = [
     "integration: tests that require locally generated dataset artifacts (deselected by default when combined with -m 'not integration')",
 ]
+
+[tool.coverage.run]
+# Unit coverage measures CPU-testable library code. GPU/LLM-gated suites
+# (LoRA training, enterprise eval) run on self-hosted runners / manually
+# and are excluded from the 60% gate — see tests/test_hybrid_rag_slo.py
+# and CI test-and-validate job for what IS gated.
+omit = [
+    "src/lora/train_*.py",
+    "src/lora/batch_train_zoo.py",
+    "src/lora/generate_demo.py",
+    "src/evaluation/enterprise_production_eval_suite.py",
+    "src/evaluation/deep_multi_experiment_suite.py",
+    "src/evaluation/sota_expert_benchmark_showcase.py",
+]
