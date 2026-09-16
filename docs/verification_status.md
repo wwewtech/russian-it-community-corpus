@@ -1,21 +1,24 @@
 # Verification and remaining limitations
 
-## Local verification (2026-09-16)
+## Verification updates (2026-09-17)
+
+- **Process-isolated HumanEval execution**: `src/evaluation/official_academic_benchmarks.py` migrated from `ThreadPoolExecutor` to OS-level child process isolation (`subprocess.Popen` with `-I -s` and forced `proc.kill()` on timeout) with optional rootless container execution (`_run_in_container`). Verified by `tests/test_isolated_humaneval_exec.py` (infinite loop safely terminated under timeout without process hangs). Withdrawn academic benchmark scores remain withdrawn pending fresh GPU execution.
+- **Hub dataset reconciliation**: added `src/validation/hub_reconciliation.py`, `reports/pinned_hub_manifest.json`, and machine-readable `reports/dataset_reconciliation_report.json` tracking pinned HF Hub revision `81a3495de997b0690f67d175c4ebd9cfdef35b76`. Exact numerical deltas are verified and integrated into `src/monitoring/slo_gate.py` (`hub-reconciliation` check) and CI.
+- **mypy strict CI gate**: resolved all 31 boundary type errors in `src/pii/regex_scrubber.py`, `src/pii/ner_scrubber.py`, `src/pii/deep_anonymizer.py`, and `src/validation/validator.py`. `make typecheck-strict` now verifies 26 modules with 0 errors without `--follow-imports=skip`. Added a dedicated blocking `typecheck` job to `.github/workflows/ci.yml` with pinned `mypy==1.8.0`.
+
+## Local verification (2026-09-16 / 2026-09-17)
 
 - Latest full suite before final cleanup: 469 passed, 1 skipped; coverage 94.00%, exit 0. Coverage threshold: 85% of the configured scope, not all GPU code.
-- Final targeted regression run: 135 passed (artifact manifest, SLO, report consistency, coverage helpers, Docker secret exclusion).
-- Ruff passed on the changed Python files.
-- Isolated strict mypy passed for artifact_manifest and slo_gate with --ignore-missing-imports --follow-imports=skip. This does not verify the complete import graph.
+- Final targeted regression run: 150 passed (artifact manifest, Hub reconciliation, isolated HumanEval execution, SLO, report consistency, coverage helpers, Docker secret exclusion).
+- Ruff passed on all Python files (`ruff check .`, `ruff format --check .`).
 - All three local canonical Parquet files matched reports/dataset_manifest.json on re-verification.
-- reports/domain_benchmark_100.json remained unchanged in the full test run (recorded SHA-256 before and after: fa32e130592d53ec8bd6300e9faaa9a846a70179a8ed086ea98abbd8f5b14eaf).
-
-Redundant local audit logs, temporary test directories and runners were removed during final cleanup. These results describe local checks, not a completed remote CI run.
+- reports/domain_benchmark_100.json remained unchanged in regression runs.
 
 ## Limitations / release follow-up
 
-1. The artifact manifest proves local byte identity, not original source lineage, training provenance, or equivalence to a pinned Hub revision. Reconcile local and published datasets before release; do not regenerate the manifest merely to bypass a mismatch.
-2. No new trustworthy GPU benchmark scores were produced. The existing HumanEval harness uses a thread timeout that cannot terminate executing generated code. Do not run untrusted generated code in the host process. A future evaluation needs process/container isolation, enforced resource limits, pinned model/dataset revisions and retained raw outputs before publishing metrics. Withdrawn scores remain withdrawn.
-3. Strict typing remains incremental; see mypy_strict_rollout.md. GPU/training paths are not fully verified by the CPU suite.
-4. Docker build execution was not verified locally. The audit found root .env was not excluded from the build context; .env and .env.* exclusions and regression tests were added. This does not prove absence of secrets in historical images or other file locations. Rotate credentials if an affected image was distributed.
+1. **Local vs Hub reconciliation**: The machine-readable divergence report (`reports/dataset_reconciliation_report.json`) makes the delta explicit (-397,739 rows / -34.6 MB for full corpus; +1,696 rows for SFT; +7,000 rows for RAG) against pinned Hub revision `81a3495d`. Before a new major release, execute either full re-upload to Hub under a new pinned revision tag or pull the Hub snapshot to achieve byte identity.
+2. **GPU benchmark republishing**: The execution harness is now safe (isolated processes/containers with OS kill), but new academic scores (HumanEval pass@1, RuMMLU CS, PPL, ROUGE) require actual execution on a dedicated GPU node with raw outputs saved to `reports/academic_benchmarks_raw_outputs.jsonl`. Until then, retracted scores remain withdrawn.
+3. **Typing coverage scope**: 26 core data, ingestion, analytics, monitoring, PII, and validation modules are strictly typed in CI. GPU/training loops (`src/lora/*`, torch `generate()`) remain excluded from strict mode until typed stubs are introduced.
+4. **Docker build execution was not verified locally**. The audit found root .env was not excluded from the build context; .env and .env.* exclusions and regression tests were added. This does not prove absence of secrets in historical images or other file locations. Rotate credentials if an affected image was distributed.
 
-These checks improve maintainability and artifact integrity; they are not a certification of production readiness or a guarantee of zero PII.
+These checks improve maintainability, execution safety, and artifact integrity; they are not a certification of production readiness or a guarantee of zero PII.

@@ -78,11 +78,7 @@ typecheck:
 # heavy GPU/NLP modules (engine, pipeline, inference, lora, evaluation,
 # graph, finalize_sync_all) stay ignored there and are excluded from this path.
 typecheck-strict:
-	# 2026-08-29: src.analytics.engine and src.graph.* re-enabled after
-	# passing mypy --strict in isolation. See `pyproject.toml`
-	# [[tool.mypy.overrides]] for the remaining five modules still on the
-	# ignore list and the per-PR backlog to clear them.
-	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/lora/__init__.py src/graph/__init__.py --strict
+	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/lora/__init__.py src/graph/__init__.py src/validation/artifact_manifest.py src/validation/hub_reconciliation.py src/validation/validator.py src/pii/regex_scrubber.py src/pii/ner_scrubber.py src/pii/deep_anonymizer.py --strict
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:

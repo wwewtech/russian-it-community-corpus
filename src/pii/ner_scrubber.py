@@ -299,7 +299,7 @@ class NERPIIScrubber:
     Scrubber powered by Natasha NER for identifying Person and Location entities.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.enabled = False
         try:
             from natasha import (

@@ -10,7 +10,7 @@ class RegexPIIScrubber:
     High-precision Regex scrubber for identifying and redacting sensitive data.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # 1. Phone Numbers (RU + International)
         # Matches +7, 8, +1, +380, +995, +374 etc. with standard delimiters
         self.phone_pattern = re.compile(
@@ -115,83 +115,83 @@ class RegexPIIScrubber:
         }
 
         # 1. SSH Keys
-        def _sub_ssh(m):
+        def _sub_ssh(m: re.Match[str]) -> str:
             stats["ssh_keys"] += 1
             return "[PRIVATE_KEY_REDACTED]"
 
         text = self.ssh_key_pattern.sub(_sub_ssh, text)
 
         # 2. API Keys & Bot Tokens
-        def _sub_openai(m):
+        def _sub_openai(m: re.Match[str]) -> str:
             stats["api_keys"] += 1
             return "[API_KEY_REDACTED]"
 
         text = self.openai_key_pattern.sub(_sub_openai, text)
 
-        def _sub_gh(m):
+        def _sub_gh(m: re.Match[str]) -> str:
             stats["api_keys"] += 1
             return "[API_KEY_REDACTED]"
 
         text = self.github_token_pattern.sub(_sub_gh, text)
 
-        def _sub_tg_bot(m):
+        def _sub_tg_bot(m: re.Match[str]) -> str:
             stats["api_keys"] += 1
             return "[BOT_TOKEN_REDACTED]"
 
         text = self.tg_bot_token_pattern.sub(_sub_tg_bot, text)
 
-        def _sub_aws(m):
+        def _sub_aws(m: re.Match[str]) -> str:
             stats["api_keys"] += 1
             return "[AWS_KEY_REDACTED]"
 
         text = self.aws_key_pattern.sub(_sub_aws, text)
 
-        def _sub_jwt(m):
+        def _sub_jwt(m: re.Match[str]) -> str:
             stats["jwt_tokens"] += 1
             return "[JWT_TOKEN_REDACTED]"
 
         text = self.jwt_pattern.sub(_sub_jwt, text)
 
-        def _sub_secret(m):
+        def _sub_secret(m: re.Match[str]) -> str:
             stats["api_keys"] += 1
             return m.group(0).replace(m.group(1), "[SECRET_REDACTED]")
 
         text = self.secret_assignment_pattern.sub(_sub_secret, text)
 
         # 3. Crypto Wallets
-        def _sub_btc(m):
+        def _sub_btc(m: re.Match[str]) -> str:
             stats["crypto_wallets"] += 1
             return "[CRYPTO_WALLET_BTC]"
 
         text = self.btc_pattern.sub(_sub_btc, text)
 
-        def _sub_eth(m):
+        def _sub_eth(m: re.Match[str]) -> str:
             stats["crypto_wallets"] += 1
             return "[CRYPTO_WALLET_ETH]"
 
         text = self.eth_pattern.sub(_sub_eth, text)
 
-        def _sub_tron(m):
+        def _sub_tron(m: re.Match[str]) -> str:
             stats["crypto_wallets"] += 1
             return "[CRYPTO_WALLET_TRON]"
 
         text = self.tron_pattern.sub(_sub_tron, text)
 
-        def _sub_ton(m):
+        def _sub_ton(m: re.Match[str]) -> str:
             stats["crypto_wallets"] += 1
             return "[CRYPTO_WALLET_TON]"
 
         text = self.ton_pattern.sub(_sub_ton, text)
 
         # 4. Email Addresses
-        def _sub_email(m):
+        def _sub_email(m: re.Match[str]) -> str:
             stats["emails"] += 1
             return "[EMAIL_REDACTED]"
 
         text = self.email_pattern.sub(_sub_email, text)
 
         # 5. Phone Numbers
-        def _sub_phone(m):
+        def _sub_phone(m: re.Match[str]) -> str:
             # Check if it looks like a version number like 1.2.3 or 10.0.19045
             match_str = m.group(0)
             if re.match(r"^\d+\.\d+\.\d+$", match_str.strip()):
@@ -202,7 +202,7 @@ class RegexPIIScrubber:
         text = self.phone_pattern.sub(_sub_phone, text)
 
         # 6. IPv4 Addresses (filter out loopback 127.0.0.1 and 0.0.0.0)
-        def _sub_ip(m):
+        def _sub_ip(m: re.Match[str]) -> str:
             ip = m.group(0)
             if ip in ("127.0.0.1", "0.0.0.0", "1.1.1.1", "8.8.8.8", "8.8.4.4"):
                 return ip
@@ -216,7 +216,7 @@ class RegexPIIScrubber:
         text = self.ipv4_pattern.sub(_sub_ip, text)
 
         # 7. Private Telegram invite links
-        def _sub_inv(m):
+        def _sub_inv(m: re.Match[str]) -> str:
             stats["private_invites"] += 1
             return "t.me/[INVITE_LINK_REDACTED]"
 
@@ -225,7 +225,7 @@ class RegexPIIScrubber:
         # 8. User Mentions
         if mention_map is not None:
 
-            def _sub_mention(m):
+            def _sub_mention(m: re.Match[str]) -> str:
                 username = m.group(1).lower()
                 stats["user_mentions"] += 1
                 if username in mention_map:
@@ -236,14 +236,14 @@ class RegexPIIScrubber:
             text = self.mention_pattern.sub(_sub_mention, text)
         else:
 
-            def _sub_mention_anon(m):
+            def _sub_mention_anon(m: re.Match[str]) -> str:
                 stats["user_mentions"] += 1
                 return "@user_anon"
 
             text = self.mention_pattern.sub(_sub_mention_anon, text)
 
         # 9. Source Community Names Redaction
-        def _sub_community(m):
+        def _sub_community(m: re.Match[str]) -> str:
             stats["community_names"] += 1
             return "[COMMUNITY_REDACTED]"
 

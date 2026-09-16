@@ -11,11 +11,12 @@ GPU re-evaluation due to earlier answer-parsing and column-mapping defects.
 """
 
 import argparse
-import concurrent.futures
 import json
 import logging
 import math
 import re
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -926,8 +927,106 @@ def parse_mc_answer(response: str, valid_letters: str = "ABCD") -> str | None:
     return letter if letter in valid_letters else None
 
 
-def execute_humaneval_code(generated_code: str, task: dict, timeout_sec: float = 2.0) -> bool:
-    """Execute generated Python code against standard test assertions in a timeout-safe sandbox."""
+def _run_in_isolated_process(code_str: str, timeout_sec: float = 2.0) -> bool:
+    """Execute code_str inside an isolated child OS process with strict containment.
+
+    Unlike threads, an isolated child process can be forcibly terminated
+    (SIGKILL / TerminateProcess) when a timeout occurs, preventing infinite loops
+    or runaway memory allocations from hanging or degrading the runner.
+    """
+    runner_script = (
+        "import builtins, sys\n"
+        "safe_names = " + repr(sorted(list(_SAFE_BUILTINS))) + "\n"
+        "safe_builtins = {k: getattr(builtins, k) for k in safe_names if hasattr(builtins, k)}\n"
+        "code_to_run = sys.stdin.read()\n"
+        "exec(code_to_run, {'__builtins__': safe_builtins}, {})\n"
+    )
+
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "-I", "-s", "-c", runner_script],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except Exception as err:
+        logger.warning(f"Failed to spawn isolated execution process: {err}")
+        return False
+
+    try:
+        proc.communicate(input=code_str, timeout=timeout_sec)
+        return proc.returncode == 0
+    except subprocess.TimeoutExpired:
+        try:
+            proc.kill()
+            proc.communicate()
+        except Exception:
+            pass
+        return False
+    except Exception as err:
+        try:
+            proc.kill()
+            proc.communicate()
+        except Exception:
+            pass
+        logger.debug(f"Execution error in isolated process: {err}")
+        return False
+
+
+def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "python:3.11-slim") -> bool:
+    """Execute code_str inside a rootless container with network disabled and hard memory/cpu limits."""
+    runner_script = (
+        "import builtins, sys\n"
+        "safe_names = " + repr(sorted(list(_SAFE_BUILTINS))) + "\n"
+        "safe_builtins = {k: getattr(builtins, k) for k in safe_names if hasattr(builtins, k)}\n"
+        "code_to_run = sys.stdin.read()\n"
+        "exec(code_to_run, {'__builtins__': safe_builtins}, {})\n"
+    )
+    cmd = [
+        "docker",
+        "run",
+        "--rm",
+        "-i",
+        "--network",
+        "none",
+        "--memory=256m",
+        "--cpus=1.0",
+        image,
+        "python",
+        "-I",
+        "-s",
+        "-c",
+        runner_script,
+    ]
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        proc.communicate(input=code_str, timeout=timeout_sec)
+        return proc.returncode == 0
+    except (subprocess.TimeoutExpired, Exception):
+        try:
+            proc.kill()
+            proc.communicate()
+        except Exception:
+            pass
+        return False
+
+
+def execute_humaneval_code(
+    generated_code: str,
+    task: dict,
+    timeout_sec: float = 2.0,
+    *,
+    isolation_mode: str = "process",
+    container_image: str = "python:3.11-slim",
+) -> bool:
+    """Execute generated Python code against standard test assertions in an isolated process/container sandbox."""
     code_match = re.search(r"```(?:python|py)?\n(.*?)```", generated_code, re.DOTALL)
     code_to_exec = code_match.group(1).strip() if code_match else generated_code.strip()
 
@@ -936,12 +1035,9 @@ def execute_humaneval_code(generated_code: str, task: dict, timeout_sec: float =
 
     full_program = f"{code_to_exec}\n\n{task['test']}"
 
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(_safe_exec, full_program)
-            return future.result(timeout=timeout_sec)
-    except Exception:
-        return False
+    if isolation_mode == "container":
+        return _run_in_container(full_program, timeout_sec=timeout_sec, image=container_image)
+    return _run_in_isolated_process(full_program, timeout_sec=timeout_sec)
 
 
 def run_official_academic_benchmarks(

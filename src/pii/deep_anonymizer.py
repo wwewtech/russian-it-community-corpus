@@ -163,7 +163,7 @@ class DeepPIIAnonymizer:
     Russian case inflections, deterministic regex rules, and Natasha NER.
     """
 
-    def __init__(self, enable_ner: bool = True):
+    def __init__(self, enable_ner: bool = True) -> None:
         self.regex_scrubber = RegexPIIScrubber()
         self.ner_scrubber = NERPIIScrubber() if enable_ner else None
 
@@ -174,7 +174,7 @@ class DeepPIIAnonymizer:
 
         # Set of all inflected name forms to redact in text
         self.name_forms_to_mask: set[str] = set()
-        self.name_regex_patterns: list[re.Pattern] = []
+        self.name_regex_patterns: list[re.Pattern[str]] = []
 
         # Database connection strings pattern (e.g. postgresql://user:pass@host:5432/db)
         self.db_url_pattern = re.compile(
@@ -187,7 +187,7 @@ class DeepPIIAnonymizer:
         # Statistics
         self.stats: dict[str, int] = defaultdict(int)
 
-    def register_authors(self, authors: list[tuple[str, str]]):
+    def register_authors(self, authors: list[tuple[str, str]]) -> None:
         """
         Pre-register all known authors across the corpus to harvest and inflect their names.
         authors is a list of (raw_author_id, raw_author_name)
@@ -220,7 +220,7 @@ class DeepPIIAnonymizer:
             str(raw_name).strip(), f"Developer_{len(self.user_id_to_anon):05d}"
         )
 
-    def _harvest_name_inflections(self, raw_name: str):
+    def _harvest_name_inflections(self, raw_name: str) -> None:
         """Extract first/last names from display name and generate all 6 Russian grammatical cases."""
         if not raw_name:
             return
@@ -253,7 +253,7 @@ class DeepPIIAnonymizer:
                     except Exception:
                         pass
 
-    def _recompile_name_patterns(self):
+    def _recompile_name_patterns(self) -> None:
         """Compile regex patterns from harvested inflected names."""
         # Sort by length descending so longer compound names are matched first
         sorted_names = sorted(list(self.name_forms_to_mask), key=lambda x: len(x), reverse=True)
@@ -278,7 +278,7 @@ class DeepPIIAnonymizer:
             return ""
 
         # Pass 1: Database connection strings with passwords
-        def _sub_db(m):
+        def _sub_db(m: re.Match[str]) -> str:
             self.stats["db_urls"] += 1
             return "[DATABASE_URL_REDACTED]"
 
@@ -290,7 +290,7 @@ class DeepPIIAnonymizer:
         # instead of a static `[PERSON_REDACTED]` token. This matches the
         # author pseudonymization done by `_get_or_create_pseudonym` and
         # preserves cross-message identity within the same chat.
-        def _sub_fwd(m):
+        def _sub_fwd(m: re.Match[str]) -> str:
             captured = m.group(1).strip()
             self.stats["forward_headers"] += 1
             if captured:
@@ -308,7 +308,7 @@ class DeepPIIAnonymizer:
         # Pass 4: Morphological Name Scrubber (all inflected case forms of known participants)
         for pat in self.name_regex_patterns:
 
-            def _sub_name(m):
+            def _sub_name(m: re.Match[str]) -> str:
                 matched = m.group(1).lower()
                 if matched in TECH_WHITELIST:
                     return m.group(0)

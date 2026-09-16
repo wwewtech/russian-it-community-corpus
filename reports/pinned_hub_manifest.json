@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "repo_id": "wwewtech/russian-it-community-corpus",
+  "pinned_revision": "81a3495de997b0690f67d175c4ebd9cfdef35b76",
+  "provenance": "Official published snapshot on Hugging Face Hub under commit 81a3495de997b0690f67d175c4ebd9cfdef35b76",
+  "artifacts": {
+    "data/full_clean_messages.parquet": {
+      "bytes": 198527394,
+      "lfs_sha256": "927205113800a136d32d56f49f411a6c7b927a016ebe821e25ddbe80caceb3ba",
+      "published_rows": 2816434
+    },
+    "data/sft_dialogues.parquet": {
+      "bytes": 138715289,
+      "lfs_sha256": "563eff37817dab8ef68bcfe16ac3e1ec2c50897c6b6e47f5a4352a676663714e",
+      "published_rows": 171520
+    },
+    "data/rag_knowledge_base.parquet": {
+      "bytes": 167053787,
+      "lfs_sha256": "6ee30bd7d6fece9af53a59e3c8780ab9c822bff2876b9c5b17e4cf69db85b0a2",
+      "published_rows": 325690
+    }
+  }
+}

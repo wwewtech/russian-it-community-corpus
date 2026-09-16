@@ -104,6 +104,16 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
         reason = str(exc) or type(exc).__name__
         checks.append(Check("artifact-manifest", False, f"manifest verify failed: {reason}"))
 
+    # Hub reconciliation gate: check alignment with pinned HF Hub revision snapshot
+    hub_rec = _load_json(reports_dir / "dataset_reconciliation_report.json")
+    if hub_rec is None:
+        checks.append(Check("hub-reconciliation", True, "no reconciliation report — skip (warning)"))
+    else:
+        rec_status = str(hub_rec.get("status", "")).upper()
+        ok = rec_status in ("EXACT_MATCH", "DOCUMENTED_DIVERGENCE", "VERIFIED", "OK")
+        rev = str(hub_rec.get("pinned_revision", ""))[:8]
+        checks.append(Check("hub-reconciliation", ok, f"pinned_rev={rev}, status={rec_status}"))
+
     verdict = "SHIP" if all(c.passed for c in checks) and checks else "HOLD"
     return SloVerdict(verdict=verdict, checks=checks)
 

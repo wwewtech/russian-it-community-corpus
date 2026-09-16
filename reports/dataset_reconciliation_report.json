@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-16T22:00:13.291802+00:00",
+  "status": "DOCUMENTED_DIVERGENCE",
+  "repo_id": "wwewtech/russian-it-community-corpus",
+  "pinned_revision": "81a3495de997b0690f67d175c4ebd9cfdef35b76",
+  "online_verified": true,
+  "artifacts_analyzed": 3,
+  "artifacts": [
+    {
+      "local_path": "dataset_output/parquet/full_clean_messages.parquet",
+      "hub_path": "data/full_clean_messages.parquet",
+      "local_sha256": "419bd0284a7d4f84ed1520052304cbe3d153800de8f2d0f6a9849470b6d5e95b",
+      "hub_lfs_sha256": "927205113800a136d32d56f49f411a6c7b927a016ebe821e25ddbe80caceb3ba",
+      "hashes_match": false,
+      "local_bytes": 163918977,
+      "hub_bytes": 198527394,
+      "delta_bytes": -34608417,
+      "local_rows": 2418695,
+      "hub_rows": 2816434,
+      "delta_rows": -397739,
+      "divergence_reason": "LOCAL_WORKING_COPY_DIVERGES: local pipeline output differs from pinned Hub snapshot 81a3495d (delta: -397739 rows, -34608417 bytes)"
+    },
+    {
+      "local_path": "dataset_output/parquet/sft_dialogues.parquet",
+      "hub_path": "data/sft_dialogues.parquet",
+      "local_sha256": "183fde9a7ea725584aca7ea2c4a8e895461be52b6cd6922db3c9a2318b73d839",
+      "hub_lfs_sha256": "563eff37817dab8ef68bcfe16ac3e1ec2c50897c6b6e47f5a4352a676663714e",
+      "hashes_match": false,
+      "local_bytes": 92890583,
+      "hub_bytes": 138715289,
+      "delta_bytes": -45824706,
+      "local_rows": 173216,
+      "hub_rows": 171520,
+      "delta_rows": 1696,
+      "divergence_reason": "LOCAL_WORKING_COPY_DIVERGES: local pipeline output differs from pinned Hub snapshot 81a3495d (delta: +1696 rows, -45824706 bytes)"
+    },
+    {
+      "local_path": "dataset_output/parquet/rag_knowledge_base.parquet",
+      "hub_path": "data/rag_knowledge_base.parquet",
+      "local_sha256": "cafe594c5fa20338f65a459f31215e9a7f93abb1bd5f7eee112e419445922079",
+      "hub_lfs_sha256": "6ee30bd7d6fece9af53a59e3c8780ab9c822bff2876b9c5b17e4cf69db85b0a2",
+      "hashes_match": false,
+      "local_bytes": 134926274,
+      "hub_bytes": 167053787,
+      "delta_bytes": -32127513,
+      "local_rows": 332690,
+      "hub_rows": 325690,
+      "delta_rows": 7000,
+      "divergence_reason": "LOCAL_WORKING_COPY_DIVERGES: local pipeline output differs from pinned Hub snapshot 81a3495d (delta: +7000 rows, -32127513 bytes)"
+    }
+  ],
+  "summary": "Reconciled 3 canonical artifacts against pinned Hub revision 81a3495d. Verdict: DOCUMENTED_DIVERGENCE."
+}

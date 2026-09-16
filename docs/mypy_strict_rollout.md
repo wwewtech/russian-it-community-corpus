@@ -3,9 +3,12 @@
 This document tracks the per-module migration to `mypy --strict` referenced by
 `pyproject.toml` ([[tool.mypy.overrides]]) and `make typecheck-strict`.
 
-## Status (2026-09-16)
+## Status (2026-09-17)
 
-**Paths selected by the existing `make typecheck-strict` target (not a claim that the whole import graph currently passes):**
+**CI Gate Active:** `make typecheck-strict` is now a mandatory blocking CI job in
+`.github/workflows/ci.yml` (`typecheck` job, pinned `mypy==1.8.0`).
+
+**Paths verified by `make typecheck-strict` (26 source files, 0 errors, no `--follow-imports=skip`):**
 
 `src/config.py`, `src/bootstrap.py`, `src/ingestion/schema.py`, `src/ingestion/loader.py`,
 `src/analytics/metrics.py`, `src/analytics/network.py`, `src/analytics/report_generator.py`,
@@ -13,20 +16,14 @@ This document tracks the per-module migration to `mypy --strict` referenced by
 `src/deduplication/exact_dedup.py`, `src/deduplication/minhash_lsh.py`,
 `src/monitoring/drift.py`, `src/monitoring/sft_quality.py`, `src/monitoring/slo_gate.py`,
 `src/rag/rag_pipeline.py`, `src/rag/__init__.py`, `src/evaluation/__init__.py`,
-`src/lora/__init__.py`, `src/graph/__init__.py` (status 2026-08-29: `src.analytics.engine`
-and `src.graph.*` were re-enabled after passing in isolation).
+`src/lora/__init__.py`, `src/graph/__init__.py`, `src/validation/artifact_manifest.py`,
+`src/validation/hub_reconciliation.py`, `src/validation/validator.py`,
+`src/pii/regex_scrubber.py`, `src/pii/ner_scrubber.py`, `src/pii/deep_anonymizer.py`.
 
-Measured locally on 2026-09-16: `python -m mypy src/validation/artifact_manifest.py
---strict --ignore-missing-imports --follow-imports=skip` passes, as does the same
-isolated check for `src/monitoring/slo_gate.py`. This skips imported code; it is
-not equivalent to passing the complete dependency graph. The manifest uses
-`Any` at JSON validation boundaries, narrowed to TypedDict after runtime checks.
-
-Without `--follow-imports=skip`, the manifest check reports 31 errors across
-`src/pii/regex_scrubber.py`, `src/pii/ner_scrubber.py`,
-`src/pii/deep_anonymizer.py`, and `src/validation/validator.py` (untyped methods,
-callbacks, and a bare Pattern type). Next measurable step: annotate these
-boundaries and rerun without skip. Do not suppress them merely to claim success.
+The 31 boundary type errors previously reported across `src/pii/regex_scrubber.py`,
+`src/pii/ner_scrubber.py`, `src/pii/deep_anonymizer.py`, and `src/validation/validator.py`
+were resolved with exact typing annotations (typed callbacks, `Pattern[str]`, explicit
+return types), enabling strict verification across the full imported validation graph.
 
 ## Still excluded (via `[[tool.mypy.overrides]]` in `pyproject.toml`)
 

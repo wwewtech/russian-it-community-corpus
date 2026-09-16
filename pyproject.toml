@@ -68,7 +68,8 @@ dev = [
     # and CI (.github/workflows/ci.yml) so local, hook, and CI lint always agree.
     "ruff==0.16.2",
     "black>=24.0.0",
-    "mypy>=1.8.0",
+    # Pinned so typechecking results remain deterministic between local and CI.
+    "mypy==1.8.0",
     "pre-commit>=3.6.0",
 ]
 
