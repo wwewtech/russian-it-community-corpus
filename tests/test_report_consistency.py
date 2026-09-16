@@ -230,7 +230,11 @@ def verify_readme_metrics(readme_text: str, stats: dict, local_registry: dict, z
     for r in rows:
         file_path = r[0].strip("` ")
         if file_path.startswith("dataset_output/"):
-            file_to_volume[file_path] = r[2]
+            if file_path.endswith(".parquet"):
+                assert len(r) == 6, "Parquet table must distinguish local and published snapshots"
+                file_to_volume[file_path] = r[3]
+            else:
+                file_to_volume[file_path] = r[2]
 
     # Verify full_clean_messages.parquet volume
     v_clean = file_to_volume.get("dataset_output/parquet/full_clean_messages.parquet", "")

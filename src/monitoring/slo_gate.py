@@ -92,6 +92,18 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
         n = int(raw_n) if isinstance(raw_n, (int, str)) else 0
         checks.append(Check("pipeline-volume", n > 0, f"cleaned={n}"))
 
+    # Provenance gate (fail-closed): artifact identity must be verified against
+    # the manifest snapshot. Integrity/consistency problems flip the verdict to
+    # HOLD because shipped numbers must correspond to the exact artifacts.
+    try:
+        from src.validation.artifact_manifest import verify_manifest
+
+        verify_manifest(reports_dir.parent, reports_dir / "dataset_manifest.json")
+        checks.append(Check("artifact-manifest", True, "dataset_manifest.json verified"))
+    except Exception as exc:  # noqa: BLE001 - fail-closed on any provenance failure
+        reason = str(exc) or type(exc).__name__
+        checks.append(Check("artifact-manifest", False, f"manifest verify failed: {reason}"))
+
     verdict = "SHIP" if all(c.passed for c in checks) and checks else "HOLD"
     return SloVerdict(verdict=verdict, checks=checks)
 

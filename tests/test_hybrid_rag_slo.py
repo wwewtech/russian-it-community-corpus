@@ -52,6 +52,23 @@ def _make_kb(tmp: Path) -> Path:
     return out
 
 
+def _make_artifacts_and_manifest(root: Path) -> None:
+    """Build the canonical parquet trio plus a matching manifest under ``root``.
+
+    Mirrors the layout expected by :func:`src.monitoring.slo_gate.evaluate`:
+    ``root/reports/dataset_manifest.json`` is verified against artifacts rooted
+    at ``root`` (the reports directory's parent).
+    """
+    from src.validation.artifact_manifest import create_manifest
+
+    parquet_dir = root / "dataset_output" / "parquet"
+    parquet_dir.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame({"id": [1, 2]})
+    for name in ("full_clean_messages", "sft_dialogues", "rag_knowledge_base"):
+        frame.to_parquet(parquet_dir / f"{name}.parquet")
+    create_manifest(root, Path("reports/dataset_manifest.json"))
+
+
 class TestHybridRag(unittest.TestCase):
     def test_hybrid_beats_lexical_on_paraphrase(self) -> None:
         with tempfile.TemporaryDirectory() as d:
@@ -89,11 +106,43 @@ class TestSloGate(unittest.TestCase):
     def test_ship_when_all_green(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            (root / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
-            (root / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
-            (root / "drift_report.json").write_text(json.dumps({"overall_verdict": "stable"}), encoding="utf-8")
-            verdict = evaluate(root)
+            reports = root / "reports"
+            reports.mkdir()
+            (reports / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (reports / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
+            (reports / "drift_report.json").write_text(json.dumps({"overall_verdict": "stable"}), encoding="utf-8")
+            _make_artifacts_and_manifest(root)
+            verdict = evaluate(reports)
             self.assertEqual(verdict.verdict, "SHIP")
+
+    def test_hold_when_artifact_manifest_missing_or_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            reports = root / "reports"
+            reports.mkdir()
+            (reports / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (reports / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
+            (reports / "drift_report.json").write_text(json.dumps({"overall_verdict": "stable"}), encoding="utf-8")
+            # No manifest at all: privacy/provenance defaults to fail-closed.
+            verdict = evaluate(reports)
+            self.assertEqual(verdict.verdict, "HOLD")
+            self.assertTrue(any(c.name == "artifact-manifest" and not c.passed for c in verdict.checks))
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            reports = root / "reports"
+            reports.mkdir()
+            (reports / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (reports / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
+            _make_artifacts_and_manifest(root)
+            # Tamper with an artifact after the snapshot: rows/bytes identical or not,
+            # the sha256 mismatch must flip the gate to HOLD.
+            victim = root / "dataset_output" / "parquet" / "full_clean_messages.parquet"
+            frame = pd.DataFrame({"id": [1, 2, 3]})
+            frame.to_parquet(victim)
+            verdict = evaluate(reports)
+            self.assertEqual(verdict.verdict, "HOLD")
+            self.assertTrue(any(c.name == "artifact-manifest" and not c.passed for c in verdict.checks))
 
     def test_hold_on_failed_validation(self) -> None:
         with tempfile.TemporaryDirectory() as d:

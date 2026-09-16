@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-16T17:07:48.207741+00:00",
+  "provenance": "Local artifact snapshot only; original source and training provenance are not established.",
+  "artifacts": [
+    {
+      "path": "dataset_output/parquet/full_clean_messages.parquet",
+      "sha256": "419bd0284a7d4f84ed1520052304cbe3d153800de8f2d0f6a9849470b6d5e95b",
+      "bytes": 163918977,
+      "rows": 2418695,
+      "schema": [
+        {
+          "name": "msg_id",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "chat_id",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "chat_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "timestamp",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "unixtime",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "author_anon",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "author_id_anon",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "text_clean",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "reply_to_id",
+          "type": "double",
+          "nullable": true
+        },
+        {
+          "name": "domain",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "tags",
+          "type": "list<element: string>",
+          "nullable": true
+        },
+        {
+          "name": "sentiment_score",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "token_count_approx",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "is_question",
+          "type": "bool",
+          "nullable": true
+        },
+        {
+          "name": "thread_id",
+          "type": "int64",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "path": "dataset_output/parquet/sft_dialogues.parquet",
+      "sha256": "183fde9a7ea725584aca7ea2c4a8e895461be52b6cd6922db3c9a2318b73d839",
+      "bytes": 92890583,
+      "rows": 173216,
+      "schema": [
+        {
+          "name": "thread_id",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "chat_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "topic_domain",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "topic_tags",
+          "type": "list<element: string>",
+          "nullable": true
+        },
+        {
+          "name": "messages",
+          "type": "list<element: struct<author: string, content: string, role: string, timestamp: string>>",
+          "nullable": true
+        },
+        {
+          "name": "quality_score",
+          "type": "double",
+          "nullable": true
+        },
+        {
+          "name": "turn_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "total_tokens",
+          "type": "int64",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "path": "dataset_output/parquet/rag_knowledge_base.parquet",
+      "sha256": "cafe594c5fa20338f65a459f31215e9a7f93abb1bd5f7eee112e419445922079",
+      "bytes": 134926274,
+      "rows": 332690,
+      "schema": [
+        {
+          "name": "chunk_id",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "thread_id",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "chat_name",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "topic_domain",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "topic_tags",
+          "type": "list<element: string>",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "date_range",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "participants_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "message_count",
+          "type": "int64",
+          "nullable": true
+        },
+        {
+          "name": "token_count",
+          "type": "int64",
+          "nullable": true
+        }
+      ]
+    }
+  ]
+}

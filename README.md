@@ -116,13 +116,18 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
 
 ## 📂 Local Datasets and Formats
 
-All datasets are automatically generated and saved in `dataset_output/`:
+All datasets are automatically generated and saved in `dataset_output/`. Exact artifact identity — sha256, byte size, row count and schema — is snapshotted in [`reports/dataset_manifest.json`](reports/dataset_manifest.json) (`python -m src.validation.artifact_manifest create|verify`); the SLO gate re-verifies it on every release check. The Hugging Face Hub hosts a curated snapshot that may differ from the local working copy, so both are listed:
 
-| File Path | Format | Volume | Description | Direct Link |
-|---|---|---|---|:---:|
-| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,434 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
-| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
-| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
+| File Path | Format | Local (verified) | Hub snapshot | Description | Direct Link |
+|---|---|---|---|---|:---:|
+| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,418,695 rows (156.3 MB) | 2,816,434 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
+| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 173,216 dialogues (88.6 MB) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
+| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 332,690 chunks (128.7 MB) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
+
+JSONL counts below are published report values, not independently verified local counts:
+
+| File Path | Format | Reported volume | Description | Availability |
+|---|---|---|---|---|
 | `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 171,520 dialogues | OpenAI format for Unsloth / TRL | Local / HF |
 | `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,520 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
 | `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,313 pairs | Single-turn instruction-response pairs | Local / HF |

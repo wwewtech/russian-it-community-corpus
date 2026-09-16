@@ -397,10 +397,15 @@ class TestSloGateExtra(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            (root / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
-            (root / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
-            out = root / "slo.json"
-            argv = ["slo_gate", "--reports", str(root), "--json-out", str(out)]
+            reports = root / "reports"
+            reports.mkdir()
+            (reports / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (reports / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
+            from tests.test_hybrid_rag_slo import _make_artifacts_and_manifest
+
+            _make_artifacts_and_manifest(root)
+            out = reports / "slo.json"
+            argv = ["slo_gate", "--reports", str(reports), "--json-out", str(out)]
             with patch.object(sys, "argv", argv):
                 self.assertEqual(main(), 0)
             self.assertEqual(json.loads(out.read_text(encoding="utf-8"))["verdict"], "SHIP")
