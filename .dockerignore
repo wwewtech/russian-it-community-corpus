@@ -10,6 +10,9 @@ __pycache__/
 .venv/
 venv/
 env/
+# Local secrets must never enter the build context (see docs/adr/0001-hf-token-handling.md)
+.env
+.env.*
 .hf_cache/
 .pre-commit-cache/
 .idea/
