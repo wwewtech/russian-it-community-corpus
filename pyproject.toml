@@ -167,7 +167,7 @@ ignore_errors = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["."]
-addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=60"
+addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=85"
 markers = [
     "integration: tests that require locally generated dataset artifacts (deselected by default when combined with -m 'not integration')",
 ]

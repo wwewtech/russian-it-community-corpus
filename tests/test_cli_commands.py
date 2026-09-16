@@ -176,10 +176,19 @@ class TestCLICommands(unittest.TestCase):
 
     def test_cli_benchmark(self):
         f = io.StringIO()
-        with patch("sys.argv", ["cli.py", "benchmark"]), redirect_stdout(f):
-            main()
-        output = f.getvalue()
-        self.assertIn("Benchmark saved", output)
+        with tempfile.TemporaryDirectory() as tmp:
+            reports_dir = Path(tmp) / "reports"
+            with (
+                patch("sys.argv", ["cli.py", "benchmark"]),
+                patch("cli.REPORTS_DIR", reports_dir),
+                redirect_stdout(f),
+            ):
+                main()
+            questions = json.loads((reports_dir / "domain_benchmark_100.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(questions), 100)
+            self.assertEqual(len({q["id"] for q in questions}), 100)
+            self.assertTrue(all(q["query"] and q["eval_focus"] for q in questions))
+        self.assertIn("Benchmark saved", f.getvalue())
 
     def test_cli_rag_search(self):
         f = io.StringIO()

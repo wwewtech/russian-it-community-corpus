@@ -60,7 +60,7 @@ test:
 	python -m pytest -q
 
 coverage:
-	python -m pytest -q --cov=src --cov-report=term-missing
+	python -m pytest -q --cov=src --cov-report=term-missing --cov-fail-under=85
 
 # Ruff version is pinned in pyproject.toml dev extras == the pre-commit rev,
 # so `make lint` reproduces CI exactly.
