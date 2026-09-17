@@ -6,9 +6,9 @@ This document tracks the per-module migration to `mypy --strict` referenced by
 ## Status (2026-09-17)
 
 **CI Gate Active:** `make typecheck-strict` is now a mandatory blocking CI job in
-`.github/workflows/ci.yml` (`typecheck` job, pinned `mypy==1.8.0`).
+`.github/workflows/ci.yml` (`typecheck` job, pinned `mypy==2.3.1`).
 
-**Paths verified by `make typecheck-strict` (26 source files, 0 errors, no `--follow-imports=skip`):**
+**Paths verified by `make typecheck-strict` (31 source files, 0 errors, no `--follow-imports=skip`):**
 
 `src/config.py`, `src/bootstrap.py`, `src/ingestion/schema.py`, `src/ingestion/loader.py`,
 `src/analytics/metrics.py`, `src/analytics/network.py`, `src/analytics/report_generator.py`,
@@ -16,9 +16,11 @@ This document tracks the per-module migration to `mypy --strict` referenced by
 `src/deduplication/exact_dedup.py`, `src/deduplication/minhash_lsh.py`,
 `src/monitoring/drift.py`, `src/monitoring/sft_quality.py`, `src/monitoring/slo_gate.py`,
 `src/rag/rag_pipeline.py`, `src/rag/__init__.py`, `src/evaluation/__init__.py`,
+`src/evaluation/statistical_power.py`, `src/evaluation/benchmark_comparator.py`,
 `src/lora/__init__.py`, `src/graph/__init__.py`, `src/validation/artifact_manifest.py`,
 `src/validation/hub_reconciliation.py`, `src/validation/validator.py`,
-`src/pii/regex_scrubber.py`, `src/pii/ner_scrubber.py`, `src/pii/deep_anonymizer.py`.
+`src/pii/regex_scrubber.py`, `src/pii/ner_scrubber.py`, `src/pii/deep_anonymizer.py`,
+`src/inference.py`, `src/pipeline.py`, `src/exporter/finalize_sync_all.py`.
 
 The 31 boundary type errors previously reported across `src/pii/regex_scrubber.py`,
 `src/pii/ner_scrubber.py`, `src/pii/deep_anonymizer.py`, and `src/validation/validator.py`

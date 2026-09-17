@@ -69,7 +69,7 @@ dev = [
     "ruff==0.16.2",
     "black>=24.0.0",
     # Pinned so typechecking results remain deterministic between local and CI.
-    "mypy==1.8.0",
+    "mypy==2.3.1",
     "pre-commit>=3.6.0",
 ]
 
@@ -125,7 +125,7 @@ indent-style = "space"
 line-ending = "lf"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 ignore_missing_imports = true
 # Slow-mode rollout: strict checks only for the modules listed in
 # `make typecheck-strict`; extend module-by-module, not all of src/ at once.
