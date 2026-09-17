@@ -104,7 +104,7 @@ def build_prompt(messages: list[dict[str, str]], apply_template: Any) -> str:
     reject unknown message roles) and verify the fallback path is used.
     """
     try:
-        return apply_template(messages, tokenize=False, add_generation_prompt=True)
+        return str(apply_template(messages, tokenize=False, add_generation_prompt=True))
     except Exception:
         # Reconstruct using explicit <|im_start|> delimiters; without them,
         # Qwen / ChatGLM-family models treat everything as a single prompt
@@ -166,12 +166,12 @@ def interactive_chat_session(
 
     # 2. Load Model & Tokenizer
     print("🧠 Loading model and tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)  # type: ignore[no-untyped-call]
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    model = AutoModelForCausalLM.from_pretrained(
+    model: Any = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,

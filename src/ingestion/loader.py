@@ -5,6 +5,7 @@ Loader and parser for Telegram Chat Export JSON files.
 import contextlib
 import json
 import logging
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -186,7 +187,7 @@ def load_export_file(file_path: str | Path, node_index: int = 1) -> tuple[dict[s
 
 
 def merge_multiple_exports(
-    export_dirs: list[str | Path],
+    export_dirs: Sequence[str | Path],
 ) -> tuple[list[dict[str, Any]], list[NormalizedMessage]]:
     """
     Load and merge multiple Telegram export directories into a single unified stream.

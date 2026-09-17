@@ -148,19 +148,18 @@ ignore_missing_imports = true
 #    - src.graph.*                     : conversation DAG traversal + heuristics
 #    - src.exporter.finalize_sync_all  : cross-store sync glue code
 #
-# Status (2026-08-29): src.analytics.engine and src.graph.* now pass
-# `mypy --strict` and have been moved to the strict target in the Makefile
-# (`make typecheck-strict`). Remaining excluded modules need their own
-# typing PRs — see `docs/mypy_strict_rollout.md` (TODO) for the per-module
-# backlog and a list of the exact strict errors to clear.
+# Status (2026-09-17): src.analytics.engine, src.graph.*, src.inference,
+# src.pipeline, src.exporter.finalize_sync_all, src.evaluation.statistical_power,
+# and src.evaluation.benchmark_comparator now pass `mypy --strict` and are
+# verified in `make typecheck-strict` (31 modules total).
+# Remaining excluded modules:
+# - src.evaluation.official_academic_benchmarks : uses evaluate / transformers stubs
+# - src.lora.*                                  : PEFT / TRL callbacks and trainer plumbing
 
 [[tool.mypy.overrides]]
 module = [
     "src.evaluation.*",
     "src.lora.*",
-    "src.inference",
-    "src.pipeline",
-    "src.exporter.finalize_sync_all",
 ]
 ignore_errors = true
 
@@ -168,7 +167,7 @@ ignore_errors = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["."]
-addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=85"
+addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=85 --basetemp=.pytest_temp"
 markers = [
     "integration: tests that require locally generated dataset artifacts (deselected by default when combined with -m 'not integration')",
 ]

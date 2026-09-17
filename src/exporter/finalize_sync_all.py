@@ -21,6 +21,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 from src.bootstrap import setup_runtime_env
 
@@ -43,14 +44,14 @@ def _local_adapters(adapters_dir: Path) -> list[Path]:
 def compute_lora_zoo_index(
     adapters_dir: Path,
     model_repo_id: str = MODEL_REPO_ID,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Build a serialisable list of adapter records from the local ``lora_adapters/`` tree.
 
     Each record is suitable for both ``reports/lora_zoo_index.json`` and for
     rendering in :func:`build_lora_zoo_markdown`. Pure (no I/O beyond
     ``Path.stat``), so it is fully covered by unit tests.
     """
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
     for d in _local_adapters(Path(adapters_dir)):
         safetensors = d / "adapter_model.safetensors"
         size_mb = round(safetensors.stat().st_size / (1024 * 1024), 2)
@@ -67,7 +68,7 @@ def compute_lora_zoo_index(
 
 
 def build_lora_zoo_markdown(
-    zoo_index: list[dict],
+    zoo_index: list[dict[str, Any]],
     *,
     model_repo_id: str = MODEL_REPO_ID,
     corpus_size_label: str = "2.91M сообщений, 171.5k диалогов",
