@@ -21,6 +21,7 @@ Usage — call once at module top, before any heavy third-party import::
 
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 from pathlib import Path
@@ -38,11 +39,14 @@ def _force_utf8_stdio() -> None:
     """
     if sys.platform != "win32":
         return
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    except Exception:  # pragma: no cover - defensive, non-critical
-        pass
+    reconfig_out = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfig_out):
+        with contextlib.suppress(Exception):
+            reconfig_out(encoding="utf-8", errors="replace")
+    reconfig_err = getattr(sys.stderr, "reconfigure", None)
+    if callable(reconfig_err):
+        with contextlib.suppress(Exception):
+            reconfig_err(encoding="utf-8", errors="replace")
 
 
 def setup_runtime_env(

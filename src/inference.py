@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -166,7 +166,7 @@ def interactive_chat_session(
 
     # 2. Load Model & Tokenizer
     print("🧠 Loading model and tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)  # type: ignore[no-untyped-call]
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
