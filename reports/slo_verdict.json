@@ -1,0 +1,35 @@
+{
+  "verdict": "SHIP",
+  "checks": [
+    {
+      "name": "validation",
+      "passed": true,
+      "detail": "overall_passed=True"
+    },
+    {
+      "name": "pii-audit",
+      "passed": true,
+      "detail": "verdict=PASSED"
+    },
+    {
+      "name": "drift",
+      "passed": true,
+      "detail": "verdict=stable"
+    },
+    {
+      "name": "pipeline-volume",
+      "passed": true,
+      "detail": "cleaned=2816434"
+    },
+    {
+      "name": "artifact-manifest",
+      "passed": true,
+      "detail": "dataset_manifest.json verified"
+    },
+    {
+      "name": "hub-reconciliation",
+      "passed": true,
+      "detail": "pinned_rev=81a3495d, status=EXACT_MATCH"
+    }
+  ]
+}
