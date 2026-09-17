@@ -1,0 +1,72 @@
+{
+  "humaneval_pass_at_1": {
+    "base": 7.5,
+    "rag": 2.5,
+    "lora": 5.0,
+    "hybrid": 15.0
+  },
+  "humaneval_pass_at_1_ci95": {
+    "base": [
+      2.6,
+      19.9
+    ],
+    "rag": [
+      0.4,
+      12.9
+    ],
+    "lora": [
+      1.4,
+      16.5
+    ],
+    "hybrid": [
+      7.1,
+      29.1
+    ]
+  },
+  "rummlu_accuracy": {
+    "base": 88.0,
+    "rag": 90.0,
+    "lora": 88.0,
+    "hybrid": 92.0
+  },
+  "rummlu_accuracy_ci95": {
+    "base": [
+      76.2,
+      94.4
+    ],
+    "rag": [
+      78.6,
+      95.7
+    ],
+    "lora": [
+      76.2,
+      94.4
+    ],
+    "hybrid": [
+      81.2,
+      96.8
+    ]
+  },
+  "sample_sizes": {
+    "humaneval_tasks": 40,
+    "rummlu_questions": 50
+  },
+  "perplexity": {
+    "base": 35.44,
+    "lora": 32.19
+  },
+  "rouge": {
+    "base": {
+      "rouge1": 0.4264705882352941,
+      "rouge2": 0.20952380952380956,
+      "rougeL": 0.3639705882352941,
+      "rougeLsum": 0.3639705882352941
+    },
+    "lora": {
+      "rouge1": 0.45416666666666666,
+      "rouge2": 0.29670329670329676,
+      "rougeL": 0.3875,
+      "rougeLsum": 0.3875
+    }
+  }
+}

@@ -1113,6 +1113,15 @@ def run_official_academic_benchmarks(
         with lora_model.disable_adapter():
             return generate_fn(lora_model, prompt_str, max_tokens=max_tokens)
 
+    raw_outputs_path = Path("reports/academic_benchmarks_raw_outputs.jsonl")
+    raw_outputs_path.parent.mkdir(parents=True, exist_ok=True)
+    if raw_outputs_path.exists():
+        raw_outputs_path.unlink()
+
+    def record_raw_output(item: dict[str, Any]) -> None:
+        with open(raw_outputs_path, "a", encoding="utf-8") as f_raw:
+            f_raw.write(json.dumps(item, ensure_ascii=False) + "\n")
+
     # -------------------------------------------------------------
     # 1. EVALUATION ON OPENAI HUMANEVAL (pass@1 Deterministic Code Execution)
     # -------------------------------------------------------------
@@ -1126,6 +1135,18 @@ def run_official_academic_benchmarks(
         b_ok = execute_humaneval_code(base_code, task)
         if b_ok:
             humaneval_results["base"] += 1
+        record_raw_output(
+            {
+                "benchmark": "HumanEval",
+                "task_id": task["task_id"],
+                "entry_point": task["entry_point"],
+                "variant": "base",
+                "prompt": task["prompt"],
+                "raw_output": base_code,
+                "passed": b_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         # RAG (adapter disabled, base + context)
         rag_hits = rag_kb.search(task["prompt"], top_k=1)
@@ -1134,17 +1155,53 @@ def run_official_academic_benchmarks(
         r_ok = execute_humaneval_code(rag_code, task)
         if r_ok:
             humaneval_results["rag"] += 1
+        record_raw_output(
+            {
+                "benchmark": "HumanEval",
+                "task_id": task["task_id"],
+                "entry_point": task["entry_point"],
+                "variant": "rag",
+                "prompt": f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}",
+                "raw_output": rag_code,
+                "passed": r_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         # LoRA & Hybrid (lora_model is guaranteed non-None by the fail-fast check above)
         lora_code = generate_fn(lora_model, task["prompt"], max_tokens=150)
         l_ok = execute_humaneval_code(lora_code, task)
         if l_ok:
             humaneval_results["lora"] += 1
+        record_raw_output(
+            {
+                "benchmark": "HumanEval",
+                "task_id": task["task_id"],
+                "entry_point": task["entry_point"],
+                "variant": "lora",
+                "prompt": task["prompt"],
+                "raw_output": lora_code,
+                "passed": l_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         hyb_code = generate_fn(lora_model, f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
         h_ok = execute_humaneval_code(hyb_code, task)
         if h_ok:
             humaneval_results["hybrid"] += 1
+        record_raw_output(
+            {
+                "benchmark": "HumanEval",
+                "task_id": task["task_id"],
+                "entry_point": task["entry_point"],
+                "variant": "hybrid",
+                "prompt": f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}",
+                "raw_output": hyb_code,
+                "passed": h_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         task_exec_records.append(
             {
@@ -1176,24 +1233,81 @@ def run_official_academic_benchmarks(
 
         # Base (adapter disabled)
         b_ans = base_generate(prompt_q, max_tokens=10)
-        if parse_mc_answer(b_ans) == q["answer"]:
+        b_ok = parse_mc_answer(b_ans) == q["answer"]
+        if b_ok:
             rummlu_results["base"] += 1
+        record_raw_output(
+            {
+                "benchmark": "RuMMLU_CS",
+                "question": q["question"],
+                "variant": "base",
+                "prompt": prompt_q,
+                "raw_output": b_ans,
+                "parsed_answer": parse_mc_answer(b_ans),
+                "expected_answer": q["answer"],
+                "passed": b_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         # RAG (adapter disabled, base + context)
         rag_hits = rag_kb.search(q["question"], top_k=1)
         rag_ctx = rag_hits[0].get("content", "")[:200] if rag_hits else ""
-        r_ans = base_generate(f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
-        if parse_mc_answer(r_ans) == q["answer"]:
+        rag_prompt = f"Контекст:\n{rag_ctx}\n\n{prompt_q}"
+        r_ans = base_generate(rag_prompt, max_tokens=10)
+        r_ok = parse_mc_answer(r_ans) == q["answer"]
+        if r_ok:
             rummlu_results["rag"] += 1
+        record_raw_output(
+            {
+                "benchmark": "RuMMLU_CS",
+                "question": q["question"],
+                "variant": "rag",
+                "prompt": rag_prompt,
+                "raw_output": r_ans,
+                "parsed_answer": parse_mc_answer(r_ans),
+                "expected_answer": q["answer"],
+                "passed": r_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         # LoRA & Hybrid
         l_ans = generate_fn(lora_model, prompt_q, max_tokens=10)
-        if parse_mc_answer(l_ans) == q["answer"]:
+        l_ok = parse_mc_answer(l_ans) == q["answer"]
+        if l_ok:
             rummlu_results["lora"] += 1
+        record_raw_output(
+            {
+                "benchmark": "RuMMLU_CS",
+                "question": q["question"],
+                "variant": "lora",
+                "prompt": prompt_q,
+                "raw_output": l_ans,
+                "parsed_answer": parse_mc_answer(l_ans),
+                "expected_answer": q["answer"],
+                "passed": l_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
-        h_ans = generate_fn(lora_model, f"Контекст:\n{rag_ctx}\n\n{prompt_q}", max_tokens=10)
-        if parse_mc_answer(h_ans) == q["answer"]:
+        h_ans = generate_fn(lora_model, rag_prompt, max_tokens=10)
+        h_ok = parse_mc_answer(h_ans) == q["answer"]
+        if h_ok:
             rummlu_results["hybrid"] += 1
+        record_raw_output(
+            {
+                "benchmark": "RuMMLU_CS",
+                "question": q["question"],
+                "variant": "hybrid",
+                "prompt": rag_prompt,
+                "raw_output": h_ans,
+                "parsed_answer": parse_mc_answer(h_ans),
+                "expected_answer": q["answer"],
+                "passed": h_ok,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
     rummlu_acc = {
         k: round((v / len(RUMMLU_CS_QUESTIONS)) * 100.0, 1) for k, v in rummlu_results.items() if k != "total"
@@ -1243,6 +1357,24 @@ def run_official_academic_benchmarks(
 
     base_ppl = compute_base_ppl()
     lora_ppl = compute_ppl(lora_model) if lora_model else base_ppl
+    record_raw_output(
+        {
+            "benchmark": "Perplexity",
+            "variant": "base",
+            "ppl": base_ppl,
+            "sample_size": len(test_texts),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+    )
+    record_raw_output(
+        {
+            "benchmark": "Perplexity",
+            "variant": "lora",
+            "ppl": lora_ppl,
+            "sample_size": len(test_texts),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+    )
 
     # -------------------------------------------------------------
     # 4. ROUGE ACADEMIC TEXT SIMILARITY
@@ -1262,6 +1394,28 @@ def run_official_academic_benchmarks(
 
     base_rouge = rouge.compute(predictions=base_preds, references=ref_answers)
     lora_rouge = rouge.compute(predictions=lora_preds, references=ref_answers)
+    record_raw_output(
+        {
+            "benchmark": "ROUGE",
+            "variant": "base",
+            "scores": base_rouge,
+            "prompts": eval_prompts,
+            "predictions": base_preds,
+            "references": ref_answers,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+    )
+    record_raw_output(
+        {
+            "benchmark": "ROUGE",
+            "variant": "lora",
+            "scores": lora_rouge,
+            "prompts": eval_prompts,
+            "predictions": lora_preds,
+            "references": ref_answers,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+    )
 
     # -------------------------------------------------------------
     # 5. GENERATE SCIENTIFIC REPORT
@@ -1330,30 +1484,24 @@ def run_official_academic_benchmarks(
     with open(output_md, "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines))
 
-    # Save JSON matrix
+    matrix_res = {
+        "humaneval_pass_at_1": pass_at_1,
+        "humaneval_pass_at_1_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in humaneval_ci.items()},
+        "rummlu_accuracy": rummlu_acc,
+        "rummlu_accuracy_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in rummlu_ci.items()},
+        "sample_sizes": {
+            "humaneval_tasks": len(HUMANEVAL_TASKS),
+            "rummlu_questions": len(RUMMLU_CS_QUESTIONS),
+        },
+        "perplexity": {"base": base_ppl, "lora": lora_ppl},
+        "rouge": {"base": base_rouge, "lora": lora_rouge},
+    }
     output_json = Path("reports/academic_scientific_benchmarks_matrix.json")
     with open(output_json, "w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "humaneval_pass_at_1": pass_at_1,
-                "humaneval_pass_at_1_ci95": {
-                    k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in humaneval_ci.items()
-                },
-                "rummlu_accuracy": rummlu_acc,
-                "rummlu_accuracy_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in rummlu_ci.items()},
-                "sample_sizes": {
-                    "humaneval_tasks": len(HUMANEVAL_TASKS),
-                    "rummlu_questions": len(RUMMLU_CS_QUESTIONS),
-                },
-                "perplexity": {"base": base_ppl, "lora": lora_ppl},
-                "rouge": {"base": base_rouge, "lora": lora_rouge},
-            },
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
+        json.dump(matrix_res, f, ensure_ascii=False, indent=2)
 
     logger.info(f"Academic Benchmark evaluation finished! Report written to {output_md}")
+    return matrix_res
 
 
 def main():
