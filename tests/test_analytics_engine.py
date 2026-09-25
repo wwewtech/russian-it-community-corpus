@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
 from unittest.mock import MagicMock, patch
-
-import pandas as pd
 
 from src.analytics.engine import DeepChatAnalyzer
 from src.ingestion.schema import CleanedMessage
@@ -50,7 +46,10 @@ def _make_msg(
 
 class TestDeepChatAnalyzerConstruction(unittest.TestCase):
     def test_constructor_initializes_all_attributes(self):
-        msgs = [_make_msg(1, "hello world"), _make_msg(2, "foo bar", author="user2", author_id="u2", unixtime_offset=86400)]
+        msgs = [
+            _make_msg(1, "hello world"),
+            _make_msg(2, "foo bar", author="user2", author_id="u2", unixtime_offset=86400),
+        ]
         analyzer = DeepChatAnalyzer(msgs)
         self.assertEqual(analyzer.total_messages, 2)
         self.assertEqual(len(analyzer.authors), 2)
@@ -127,7 +126,6 @@ class TestComputeVolumeStatistics(unittest.TestCase):
 
 class TestComputeTemporalDynamics(unittest.TestCase):
     def setUp(self):
-        base = 1767225600  # 2026-01-01 00:00:00 (Thursday)
         msgs = [
             _make_msg(1, "msg1", unixtime_offset=0),  # 00:00 Thu
             _make_msg(2, "msg2", unixtime_offset=3600),  # 01:00 Thu
@@ -336,7 +334,6 @@ class TestComputeTopicClustersLDA(unittest.TestCase):
 
 class TestComputeLongitudinalTrends(unittest.TestCase):
     def test_groups_by_year(self):
-        base = datetime(2023, 6, 15).timestamp()
         msgs = [
             _make_msg(1, "python ai ml", unixtime_offset=0),  # 2026
             _make_msg(2, "docker kubernetes", unixtime_offset=-365 * 86400),  # 2025

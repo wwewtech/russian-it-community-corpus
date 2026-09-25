@@ -18,16 +18,29 @@ def _make_synthetic_parquet(path: Path) -> None:
     """Create a synthetic RAG knowledge base parquet file for testing."""
     data = {
         "chunk_id": [
-            "chunk_001", "chunk_002", "chunk_003", "chunk_004", "chunk_005",
-            "chunk_006", "chunk_007", "chunk_008", "chunk_009", "chunk_010",
+            "chunk_001",
+            "chunk_002",
+            "chunk_003",
+            "chunk_004",
+            "chunk_005",
+            "chunk_006",
+            "chunk_007",
+            "chunk_008",
+            "chunk_009",
+            "chunk_010",
         ],
-        "thread_id": [
-            "t1", "t1", "t2", "t2", "t3", "t3", "t4", "t4", "t5", "t5"
-        ],
+        "thread_id": ["t1", "t1", "t2", "t2", "t3", "t3", "t4", "t4", "t5", "t5"],
         "chat_name": [
-            "kafka-setup", "kafka-setup", "k8s-deployment", "k8s-deployment",
-            "nginx-config", "nginx-config", "python-asyncio", "python-asyncio",
-            "postgres-tuning", "postgres-tuning"
+            "kafka-setup",
+            "kafka-setup",
+            "k8s-deployment",
+            "k8s-deployment",
+            "nginx-config",
+            "nginx-config",
+            "python-asyncio",
+            "python-asyncio",
+            "postgres-tuning",
+            "postgres-tuning",
         ],
         "title": [
             "Kafka Idempotent Producer Setup",
@@ -42,9 +55,16 @@ def _make_synthetic_parquet(path: Path) -> None:
             "PostgreSQL Connection Pooling",
         ],
         "topic_domain": [
-            "kafka", "kafka", "kubernetes", "kubernetes",
-            "nginx", "nginx", "python", "python",
-            "postgresql", "postgresql"
+            "kafka",
+            "kafka",
+            "kubernetes",
+            "kubernetes",
+            "nginx",
+            "nginx",
+            "python",
+            "python",
+            "postgresql",
+            "postgresql",
         ],
         "topic_tags": [
             ["kafka", "producer", "idempotent"],
@@ -91,9 +111,16 @@ def _make_synthetic_parquet(path: Path) -> None:
             "Monitor pool usage with SHOW POOLS command.",
         ],
         "date_range": [
-            "2024-01", "2024-01", "2024-02", "2024-02",
-            "2024-03", "2024-03", "2024-04", "2024-04",
-            "2024-05", "2024-05"
+            "2024-01",
+            "2024-01",
+            "2024-02",
+            "2024-02",
+            "2024-03",
+            "2024-03",
+            "2024-04",
+            "2024-04",
+            "2024-05",
+            "2024-05",
         ],
         "participants_count": [3, 3, 4, 4, 2, 2, 3, 3, 2, 2],
         "message_count": [15, 12, 20, 18, 10, 8, 14, 16, 11, 9],
@@ -138,7 +165,7 @@ class TestRAGPipelineInitialization(unittest.TestCase):
         """Initialization with use_tfidf=False disables vector reranking."""
         pipeline = LocalRAGPipeline(self.parquet_path, use_tfidf=False)
         self.assertFalse(pipeline.use_tfidf)
-        results = pipeline.search("kafka idempotent producer", top_k=3)
+        pipeline.search("kafka idempotent producer", top_k=3)
         self.assertEqual(pipeline.retriever, "lexical")
 
     def test_init_with_custom_prefilter_cap(self):
@@ -239,11 +266,21 @@ class TestRAGPipelineSearch(unittest.TestCase):
     def test_search_on_empty_kb(self):
         """Search on empty knowledge base returns empty list."""
         empty_path = Path(self.temp_dir.name) / "empty.parquet"
-        pd.DataFrame(columns=[
-            "chunk_id", "thread_id", "chat_name", "title", "topic_domain",
-            "topic_tags", "content", "date_range", "participants_count",
-            "message_count", "token_count"
-        ]).to_parquet(empty_path, index=False)
+        pd.DataFrame(
+            columns=[
+                "chunk_id",
+                "thread_id",
+                "chat_name",
+                "title",
+                "topic_domain",
+                "topic_tags",
+                "content",
+                "date_range",
+                "participants_count",
+                "message_count",
+                "token_count",
+            ]
+        ).to_parquet(empty_path, index=False)
 
         pipeline = LocalRAGPipeline(empty_path)
         results = pipeline.search("anything", top_k=5)
@@ -265,15 +302,18 @@ class TestRAGPipelineRowToHit(unittest.TestCase):
     def test_row_to_hit_handles_missing_fields(self):
         """_row_to_hit handles missing/NaN fields gracefully."""
         import pandas as pd
-        row = pd.Series({
-            "chunk_id": "test_001",
-            "title": "Test Title",
-            "topic_domain": "test",
-            "topic_tags": ["tag1", "tag2"],
-            "content": "Test content",
-            "date_range": "2024-01",
-            "relevance_score": 5.5,
-        })
+
+        row = pd.Series(
+            {
+                "chunk_id": "test_001",
+                "title": "Test Title",
+                "topic_domain": "test",
+                "topic_tags": ["tag1", "tag2"],
+                "content": "Test content",
+                "date_range": "2024-01",
+                "relevance_score": 5.5,
+            }
+        )
         hit = LocalRAGPipeline._row_to_hit(row)
         self.assertEqual(hit["chunk_id"], "test_001")
         self.assertEqual(hit["title"], "Test Title")
@@ -286,17 +326,21 @@ class TestRAGPipelineRowToHit(unittest.TestCase):
     def test_row_to_hit_handles_non_list_tags(self):
         """_row_to_hit converts non-list tags to empty list."""
         import pandas as pd
-        row = pd.Series({
-            "chunk_id": "test_001",
-            "topic_tags": "not-a-list",
-            "relevance_score": 1.0,
-        })
+
+        row = pd.Series(
+            {
+                "chunk_id": "test_001",
+                "topic_tags": "not-a-list",
+                "relevance_score": 1.0,
+            }
+        )
         hit = LocalRAGPipeline._row_to_hit(row)
         self.assertEqual(hit["tags"], [])
 
     def test_row_to_hit_defaults_for_missing(self):
         """_row_to_hit provides defaults for missing fields."""
         import pandas as pd
+
         row = pd.Series({"relevance_score": 2.0})
         hit = LocalRAGPipeline._row_to_hit(row)
         self.assertEqual(hit["chunk_id"], "")
@@ -430,18 +474,23 @@ class TestRAGPipelineEdgeCases(unittest.TestCase):
     def test_keyword_extraction_limit(self):
         """Only first 10 keywords are used for matching."""
         from src.rag.rag_pipeline import _extract_keywords
+
         keywords = _extract_keywords(" ".join([f"word{i}" for i in range(20)]))
         self.assertEqual(len(keywords), 10)
 
     def test_lexical_scoring(self):
         """Lexical scoring counts keyword occurrences."""
-        from src.rag.rag_pipeline import _lexical_scores
         import pandas as pd
-        contents = pd.Series([
-            "kafka producer idempotent",
-            "kafka consumer group",
-            "nginx proxy",
-        ])
+
+        from src.rag.rag_pipeline import _lexical_scores
+
+        contents = pd.Series(
+            [
+                "kafka producer idempotent",
+                "kafka consumer group",
+                "nginx proxy",
+            ]
+        )
         scores = _lexical_scores(contents, ["kafka", "producer"])
         self.assertEqual(scores[0], 3.0)
         self.assertEqual(scores[1], 1.5)

@@ -84,8 +84,16 @@ class TechnicalTagger:
             for end_index, (keyword, _domain) in self.automaton.iter(text_lower):
                 start_index = end_index - len(keyword) + 1
                 # Check word boundaries: character before and after must not be alphanumeric/_/-
-                before_ok = start_index == 0 or not text_lower[start_index - 1].isalnum() and text_lower[start_index - 1] not in "_-"
-                after_ok = end_index == len(text_lower) - 1 or not text_lower[end_index + 1].isalnum() and text_lower[end_index + 1] not in "_-"
+                before_ok = (
+                    start_index == 0
+                    or not text_lower[start_index - 1].isalnum()
+                    and text_lower[start_index - 1] not in "_-"
+                )
+                after_ok = (
+                    end_index == len(text_lower) - 1
+                    or not text_lower[end_index + 1].isalnum()
+                    and text_lower[end_index + 1] not in "_-"
+                )
                 if before_ok and after_ok:
                     matched.add(keyword)
             return sorted(matched)

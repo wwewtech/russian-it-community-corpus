@@ -3,7 +3,7 @@ Global Configuration for IT Community Data Engineering & Curation Pipeline
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -238,7 +238,7 @@ def _load_domain_taxonomy() -> dict[str, dict[str, Any]]:
                 for domain, info in taxonomy.items():
                     if not isinstance(info, dict) or "title" not in info or "keywords" not in info:
                         raise ValueError(f"Invalid taxonomy structure for domain '{domain}'")
-                return taxonomy
+                return cast(dict[str, dict[str, Any]], taxonomy)
         except Exception:
             pass  # Fall through to hardcoded default
 

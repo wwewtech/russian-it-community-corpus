@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from src.graph.thread_builder import ThreadDAGBuilder
 from src.ingestion.schema import CleanedMessage
@@ -134,13 +134,13 @@ class TestThreadDAGBuilder(unittest.TestCase):
     def test_mixed_scenario(self):
         base_time = 1767225600
         msgs = [
-            _make_msg(msg_id=1, unixtime=base_time),              # root of reply chain
+            _make_msg(msg_id=1, unixtime=base_time),  # root of reply chain
             _make_msg(msg_id=2, unixtime=base_time + 60, reply_to_id=1),
             _make_msg(msg_id=3, unixtime=base_time + 120, reply_to_id=2),  # chain of 3
-            _make_msg(msg_id=10, unixtime=base_time + 10000),     # orphan
-            _make_msg(msg_id=11, unixtime=base_time + 10060),     # burst with 12
-            _make_msg(msg_id=12, unixtime=base_time + 10120),     # burst (within 5 min)
-            _make_msg(msg_id=20, unixtime=base_time + 20000),     # another orphan
+            _make_msg(msg_id=10, unixtime=base_time + 10000),  # orphan
+            _make_msg(msg_id=11, unixtime=base_time + 10060),  # burst with 12
+            _make_msg(msg_id=12, unixtime=base_time + 10120),  # burst (within 5 min)
+            _make_msg(msg_id=20, unixtime=base_time + 20000),  # another orphan
         ]
         updated, threads = self.builder.build_threads(msgs)
 
@@ -254,13 +254,13 @@ class TestThreadDAGBuilder(unittest.TestCase):
         msgs = [
             _make_msg(msg_id=1, unixtime=base_time),
             _make_msg(msg_id=2, unixtime=base_time + 60),  # burst start
-            _make_msg(msg_id=3, unixtime=base_time + 120), # burst continues
+            _make_msg(msg_id=3, unixtime=base_time + 120),  # burst continues
             # Explicit thread root with valid child (but parent far in time to avoid linking to burst)
             _make_msg(msg_id=10, unixtime=base_time + 10000),  # root of explicit thread
             _make_msg(msg_id=11, unixtime=base_time + 10060, reply_to_id=10),  # child
             # New burst after explicit thread
-            _make_msg(msg_id=4, unixtime=base_time + 20000), # should start new burst
-            _make_msg(msg_id=5, unixtime=base_time + 20060), # burst continues
+            _make_msg(msg_id=4, unixtime=base_time + 20000),  # should start new burst
+            _make_msg(msg_id=5, unixtime=base_time + 20060),  # burst continues
         ]
         updated, threads = self.builder.build_threads(msgs)
 

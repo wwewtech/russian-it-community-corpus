@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 # Type Definitions for Return Types
 # =========================================================================
 
+
 class PercentileStats(TypedDict, total=False):
     mean: float
     median: float
@@ -62,6 +63,7 @@ class PercentileStats(TypedDict, total=False):
     p90: float
     p95: float
     p99: float
+
 
 class VolumeStatistics(TypedDict):
     total_messages: int
@@ -80,6 +82,7 @@ class VolumeStatistics(TypedDict):
     token_count_distribution: PercentileStats
     author_activity_distribution: PercentileStats
 
+
 class TemporalDynamics(TypedDict, total=False):
     peak_hour: int
     peak_weekday: str
@@ -90,6 +93,7 @@ class TemporalDynamics(TypedDict, total=False):
     monthly_avg_character_length: dict[str, float]
     inter_arrival_seconds_distribution: PercentileStats
 
+
 class LexicalAnalytics(TypedDict):
     shannon_entropy: float
     type_token_ratio_ttr: float
@@ -99,11 +103,13 @@ class LexicalAnalytics(TypedDict):
     top_trigrams: list[dict[str, Any]]
     top_fourgrams: list[dict[str, Any]]
 
+
 class DomainSlangAnalytics(TypedDict):
     slang_terms_detected_count: int
     top_slang_terms: list[dict[str, Any]]
     domain_message_distribution: dict[str, dict[str, Any]]
     top_technical_tags: list[dict[str, Any]]
+
 
 class SentimentAndSyntax(TypedDict):
     sentiment: dict[str, Any]
@@ -111,6 +117,7 @@ class SentimentAndSyntax(TypedDict):
     questions_ratio_percentage: float
     code_snippets_count: int
     code_snippets_ratio_percentage: float
+
 
 class SocialNetworkAnalytics(TypedDict, total=False):
     nodes: int
@@ -120,15 +127,18 @@ class SocialNetworkAnalytics(TypedDict, total=False):
     top_influential: list[dict[str, Any]]
     communities: list[list[str]]
 
+
 class TopicCluster(TypedDict, total=False):
     topic_id: int
     label: str
     top_keywords: list[str]
 
+
 class LongitudinalTrend(TypedDict, total=False):
     message_count: int
     top_general_words: list[str]
     top_tech_keywords: list[str]
+
 
 class NoiseAndQuality(TypedDict):
     short_messages_under_20_chars: int
@@ -138,6 +148,7 @@ class NoiseAndQuality(TypedDict):
     high_emotion_messages_count: int
     high_emotion_ratio_percentage: float
 
+
 class QualityBreakdown(TypedDict):
     volume_score: int
     author_diversity_score: int
@@ -146,12 +157,14 @@ class QualityBreakdown(TypedDict):
     lexical_diversity_score: int
     pii_compliance_score: int
 
+
 class DatasetQualityScore(TypedDict):
     total_score: int
     max_score: int
     score_breakdown: QualityBreakdown
     quality_tier: str
     tier_description: str
+
 
 class FullAnalysisReport(TypedDict, total=False):
     report_metadata: dict[str, Any]
@@ -166,6 +179,7 @@ class FullAnalysisReport(TypedDict, total=False):
     longitudinal_evolution_8_years: dict[int, LongitudinalTrend]
     noise_and_quality: NoiseAndQuality
     quality_and_readiness: DatasetQualityScore
+
 
 # Russian IT Domain Lexicon and Slang for targeted entity discovery
 RUSSIAN_IT_SLANG_TERMS: set[str] = {
