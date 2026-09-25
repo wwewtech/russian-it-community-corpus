@@ -9,7 +9,7 @@ import re
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime
-from typing import Any
+from typing import Any, TypedDict, cast
 
 try:
     import pymorphy3 as pymorphy
@@ -46,6 +46,126 @@ from src.config import DOMAIN_TAXONOMY, STOPWORDS_RU
 from src.ingestion.schema import CleanedMessage
 
 logger = logging.getLogger(__name__)
+
+# =========================================================================
+# Type Definitions for Return Types
+# =========================================================================
+
+class PercentileStats(TypedDict, total=False):
+    mean: float
+    median: float
+    std: float
+    min: float
+    max: float
+    p25: float
+    p75: float
+    p90: float
+    p95: float
+    p99: float
+
+class VolumeStatistics(TypedDict):
+    total_messages: int
+    unique_authors: int
+    date_start: str
+    date_end: str
+    total_days_active: int
+    messages_per_day: float
+    tokens_per_day: float
+    total_characters: int
+    total_words: int
+    total_tokens_estimated: int
+    vocabulary_unique_words: int
+    character_length_distribution: PercentileStats
+    word_count_distribution: PercentileStats
+    token_count_distribution: PercentileStats
+    author_activity_distribution: PercentileStats
+
+class TemporalDynamics(TypedDict, total=False):
+    peak_hour: int
+    peak_weekday: str
+    hourly_distribution: dict[str, int]
+    weekday_distribution: dict[str, int]
+    yearly_volume: dict[int, int]
+    monthly_volume: dict[str, int]
+    monthly_avg_character_length: dict[str, float]
+    inter_arrival_seconds_distribution: PercentileStats
+
+class LexicalAnalytics(TypedDict):
+    shannon_entropy: float
+    type_token_ratio_ttr: float
+    root_ttr: float
+    top_unigrams: list[dict[str, Any]]
+    top_bigrams: list[dict[str, Any]]
+    top_trigrams: list[dict[str, Any]]
+    top_fourgrams: list[dict[str, Any]]
+
+class DomainSlangAnalytics(TypedDict):
+    slang_terms_detected_count: int
+    top_slang_terms: list[dict[str, Any]]
+    domain_message_distribution: dict[str, dict[str, Any]]
+    top_technical_tags: list[dict[str, Any]]
+
+class SentimentAndSyntax(TypedDict):
+    sentiment: dict[str, Any]
+    questions_count: int
+    questions_ratio_percentage: float
+    code_snippets_count: int
+    code_snippets_ratio_percentage: float
+
+class SocialNetworkAnalytics(TypedDict, total=False):
+    nodes: int
+    edges: int
+    density: float
+    average_degree: float
+    top_influential: list[dict[str, Any]]
+    communities: list[list[str]]
+
+class TopicCluster(TypedDict, total=False):
+    topic_id: int
+    label: str
+    top_keywords: list[str]
+
+class LongitudinalTrend(TypedDict, total=False):
+    message_count: int
+    top_general_words: list[str]
+    top_tech_keywords: list[str]
+
+class NoiseAndQuality(TypedDict):
+    short_messages_under_20_chars: int
+    short_messages_ratio_percentage: float
+    empty_messages_count: int
+    empty_messages_ratio_percentage: float
+    high_emotion_messages_count: int
+    high_emotion_ratio_percentage: float
+
+class QualityBreakdown(TypedDict):
+    volume_score: int
+    author_diversity_score: int
+    technical_density_score: int
+    dialogue_continuity_score: int
+    lexical_diversity_score: int
+    pii_compliance_score: int
+
+class DatasetQualityScore(TypedDict):
+    total_score: int
+    max_score: int
+    score_breakdown: QualityBreakdown
+    quality_tier: str
+    tier_description: str
+
+class FullAnalysisReport(TypedDict, total=False):
+    report_metadata: dict[str, Any]
+    volume_statistics: VolumeStatistics
+    temporal_dynamics: TemporalDynamics
+    lexical_analytics: LexicalAnalytics
+    domain_slang_analytics: DomainSlangAnalytics
+    sentiment_and_syntax: SentimentAndSyntax
+    social_network: SocialNetworkAnalytics
+    author_signature_phrases: dict[str, list[str]]
+    topic_clusters_lda: list[TopicCluster]
+    longitudinal_evolution_8_years: dict[int, LongitudinalTrend]
+    noise_and_quality: NoiseAndQuality
+    quality_and_readiness: DatasetQualityScore
 
 # Russian IT Domain Lexicon and Slang for targeted entity discovery
 RUSSIAN_IT_SLANG_TERMS: set[str] = {
@@ -236,15 +356,15 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 1. GENERAL VOLUME & DESCRIPTIVE STATISTICS
     # =========================================================================
-    def compute_volume_statistics(self) -> dict[str, Any]:
+    def compute_volume_statistics(self) -> VolumeStatistics:
         """Compute exhaustive volume, length, and token statistics."""
         char_lengths = [len(m.text_clean) for m in self.messages]
         word_counts = [len(m.text_clean.split()) for m in self.messages]
         token_estimates = [m.token_count_approx for m in self.messages]
 
-        char_stats = compute_percentiles(char_lengths)
-        word_stats = compute_percentiles(word_counts)
-        token_stats = compute_percentiles(token_estimates)
+        char_stats = cast(PercentileStats, compute_percentiles(char_lengths))
+        word_stats = cast(PercentileStats, compute_percentiles(word_counts))
+        token_stats = cast(PercentileStats, compute_percentiles(token_estimates))
 
         total_tokens = sum(token_estimates)
         total_chars = sum(char_lengths)
@@ -252,7 +372,7 @@ class DeepChatAnalyzer:
 
         # Messages per author stats
         msgs_per_author = [len(msgs) for msgs in self.author_messages.values()]
-        author_msg_stats = compute_percentiles(msgs_per_author)
+        author_msg_stats = cast(PercentileStats, compute_percentiles(msgs_per_author))
 
         # Daily message rate
         msgs_per_day = round(self.total_messages / max(1, self.total_days), 2)
@@ -279,7 +399,7 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 2. TEMPORAL DYNAMICS & ACTIVITY PATTERNS
     # =========================================================================
-    def compute_temporal_dynamics(self) -> dict[str, Any]:
+    def compute_temporal_dynamics(self) -> TemporalDynamics:
         """Analyze temporal activity patterns by hour, day of week, month, and year."""
         if not self.timestamps:
             return {}
@@ -314,7 +434,7 @@ class DeepChatAnalyzer:
             if delta >= 0 and delta <= 86400:
                 inter_arrival_times.append(delta)
 
-        arrival_stats = compute_percentiles(inter_arrival_times) if inter_arrival_times else {}
+        arrival_stats = cast(PercentileStats, compute_percentiles(inter_arrival_times)) if inter_arrival_times else {}
 
         return {
             "peak_hour": peak_hour,
@@ -330,7 +450,7 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 3. LEXICAL & N-GRAM ANALYSIS
     # =========================================================================
-    def compute_lexical_analytics(self) -> dict[str, Any]:
+    def compute_lexical_analytics(self) -> LexicalAnalytics:
         """Compute vocabulary distributions, N-grams, and Shannon entropy."""
         # Top unigrams
         top_unigrams = self.word_freq.most_common(50)
@@ -371,7 +491,7 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 4. RUSSIAN IT DOMAIN SLANG & TECH ENTITIES
     # =========================================================================
-    def compute_domain_slang_analytics(self) -> dict[str, Any]:
+    def compute_domain_slang_analytics(self) -> DomainSlangAnalytics:
         """Detect and quantify authentic Russian IT slang and technology keywords."""
         slang_counts: Counter[str] = Counter()
         for w, c in self.word_freq.items():
@@ -401,7 +521,7 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 5. SENTIMENT, EMOTIONALITY & CODE ANALYSIS
     # =========================================================================
-    def compute_sentiment_and_syntax(self) -> dict[str, Any]:
+    def compute_sentiment_and_syntax(self) -> SentimentAndSyntax:
         """Calculate sentiment, question ratio, and code presence."""
         texts = [m.text_clean for m in self.messages]
         sentiment_res = analyze_sentiment(texts)
@@ -430,10 +550,10 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 6. SOCIAL NETWORK & INFLUENCE CENTRALITY
     # =========================================================================
-    def compute_social_network_analytics(self) -> dict[str, Any]:
+    def compute_social_network_analytics(self) -> SocialNetworkAnalytics:
         """Construct directed interaction network and compute influence centrality."""
         sna = SocialNetworkAnalyzer(reply_window_minutes=30)
-        return sna.analyze(self.messages)
+        return cast(SocialNetworkAnalytics, sna.analyze(self.messages))
 
     # =========================================================================
     # 7. AUTHOR SIGNATURE KEY PHRASES (TF-IDF)
@@ -469,7 +589,7 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 8. TOPIC MODELING & LDA CLUSTERING
     # =========================================================================
-    def compute_topic_clusters_lda(self, n_topics: int = 8) -> list[dict[str, Any]]:
+    def compute_topic_clusters_lda(self, n_topics: int = 8) -> list[TopicCluster]:
         """Latent Dirichlet Allocation (LDA) topic modeling over message clusters."""
         if not HAS_SKLEARN or self.total_messages < 50:
             return []
@@ -512,7 +632,7 @@ class DeepChatAnalyzer:
                     }
                 )
 
-            return topics_result
+            return cast(list[TopicCluster], topics_result)
         except Exception as e:
             logger.warning(f"LDA topic clustering failed: {e}")
             return []
@@ -520,7 +640,7 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 9. 8-YEAR LONGITUDINAL EVOLUTION (2018 - 2026)
     # =========================================================================
-    def compute_longitudinal_trends(self) -> dict[int, dict[str, Any]]:
+    def compute_longitudinal_trends(self) -> dict[int, LongitudinalTrend]:
         """Track tech topics and vocabulary shifts year-by-year across the 8-year dataset."""
         yearly_tokens: dict[int, list[str]] = defaultdict(list)
         yearly_msg_counts: dict[int, int] = defaultdict(int)
@@ -548,12 +668,12 @@ class DeepChatAnalyzer:
                 "top_tech_keywords": top_tech[:8],
             }
 
-        return evolution
+        return cast(dict[int, LongitudinalTrend], evolution)
 
     # =========================================================================
     # 10. NOISE & DATA INTEGRITY METRICS
     # =========================================================================
-    def compute_noise_and_quality(self) -> dict[str, Any]:
+    def compute_noise_and_quality(self) -> NoiseAndQuality:
         """Compute noise ratios, short message percentages, and cleanliness indicators."""
         short_msgs = sum(1 for m in self.messages if len(m.text_clean.strip()) < 20)
         empty_or_no_words = sum(1 for m in self.messages if len(m.text_clean.split()) == 0)
@@ -577,13 +697,20 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 11. COMMERCIAL READINESS & VALUATION SCORING
     # =========================================================================
-    def compute_dataset_quality_score(self) -> dict[str, Any]:
+    def compute_dataset_quality_score(self) -> DatasetQualityScore:
         """
         Calculates an objective dataset quality index (0-100) based on
         volume, author diversity, technical domain density, dialogue ratio, and Shannon entropy.
         """
         score = 0
-        breakdown = {}
+        breakdown: QualityBreakdown = {
+            "volume_score": 0,
+            "author_diversity_score": 0,
+            "technical_density_score": 0,
+            "dialogue_continuity_score": 0,
+            "lexical_diversity_score": 0,
+            "pii_compliance_score": 0,
+        }
 
         # 1. Dataset Volume (>300k msgs = 25 pts, >100k = 18 pts, >30k = 10 pts)
         if self.total_messages >= 300000:
@@ -665,11 +792,11 @@ class DeepChatAnalyzer:
     # =========================================================================
     # 12. MASTER REPORT EXECUTION & EXPORT
     # =========================================================================
-    def run_full_analysis(self) -> dict[str, Any]:
+    def run_full_analysis(self) -> FullAnalysisReport:
         """Execute complete suite of analytical evaluations and return dictionary report."""
         logger.info("Executing comprehensive analytics suite...")
 
-        report = {
+        report: FullAnalysisReport = {
             "report_metadata": {
                 "generated_at": datetime.now().isoformat(),
                 "engine_version": "1.0.0-OpenSource",

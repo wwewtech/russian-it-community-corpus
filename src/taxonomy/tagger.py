@@ -7,6 +7,13 @@ import re
 
 from tqdm import tqdm
 
+try:
+    import ahocorasick
+
+    HAS_AHO = True
+except ImportError:
+    HAS_AHO = False
+
 from src.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
 from src.ingestion.schema import CleanedMessage
 from src.taxonomy.classifier import DomainClassifier
@@ -17,18 +24,43 @@ logger = logging.getLogger(__name__)
 class TechnicalTagger:
     """
     High-speed extractor of technical keyword tags, domain assignment, and sentiment.
+    Uses Aho-Corasick algorithm for O(text_length + matches) multi-pattern matching.
     """
 
     def __init__(self) -> None:
         self.classifier = DomainClassifier()
         self.sentiment_dict = SENTIMENT_DICT
 
-        # Flatten all known keywords for fast set intersection
-        self.all_keywords: dict[str, str] = {}
-        for domain, info in DOMAIN_TAXONOMY.items():
-            for kw in info["keywords"]:
-                self.all_keywords[kw.lower()] = domain
-        self.all_keywords_set: set[str] = set(self.all_keywords.keys())
+        # Build Aho-Corasick automaton for fast multi-keyword matching
+        self.automaton = None
+        if HAS_AHO:
+            self.automaton = ahocorasick.Automaton()
+            for domain, info in DOMAIN_TAXONOMY.items():
+                for kw in info["keywords"]:
+                    kw_lower = kw.lower()
+                    # Store (keyword, domain) as value
+                    self.automaton.add_word(kw_lower, (kw_lower, domain))
+            self.automaton.make_automaton()
+        else:
+            # Fallback to set intersection
+            self.all_keywords: dict[str, str] = {}
+            for domain, info in DOMAIN_TAXONOMY.items():
+                for kw in info["keywords"]:
+                    self.all_keywords[kw.lower()] = domain
+            self.all_keywords_set: set[str] = set(self.all_keywords.keys())
+            logger.warning("ahocorasick not installed; falling back to set intersection (slower)")
+
+    @property
+    def all_keywords_set(self) -> set[str]:
+        """Backward compatibility: return all keywords as a set."""
+        if HAS_AHO and self.automaton is not None:
+            # Rebuild from taxonomy for consistency
+            return {kw.lower() for info in DOMAIN_TAXONOMY.values() for kw in info["keywords"]}
+        return self._all_keywords_set_fallback
+
+    @all_keywords_set.setter
+    def all_keywords_set(self, value: set[str]) -> None:
+        self._all_keywords_set_fallback = value
 
     def compute_sentiment(self, text: str) -> int:
         """Calculate sentiment score based on lexicon matches."""
@@ -42,12 +74,26 @@ class TechnicalTagger:
         return score
 
     def extract_tags(self, text: str) -> list[str]:
-        """Extract matched technical keyword tags from text via set intersection."""
+        """Extract matched technical keyword tags from text using Aho-Corasick."""
         if not text:
             return []
-        tokens = set(re.findall(r"[a-zA-Zа-яё0-9_\-\+\#\.]+", text.lower()))
+        text_lower = text.lower()
+
+        if HAS_AHO and self.automaton is not None:
+            matched = set()
+            for end_index, (keyword, _domain) in self.automaton.iter(text_lower):
+                start_index = end_index - len(keyword) + 1
+                # Check word boundaries: character before and after must not be alphanumeric/_/-
+                before_ok = start_index == 0 or not text_lower[start_index - 1].isalnum() and text_lower[start_index - 1] not in "_-"
+                after_ok = end_index == len(text_lower) - 1 or not text_lower[end_index + 1].isalnum() and text_lower[end_index + 1] not in "_-"
+                if before_ok and after_ok:
+                    matched.add(keyword)
+            return sorted(matched)
+
+        # Fallback: set intersection
+        tokens = set(re.findall(r"[a-zA-Zа-яё0-9_\-\+\#\.]+", text_lower))
         matched = tokens.intersection(self.all_keywords_set)
-        return sorted(list(matched))
+        return sorted(matched)
 
     def tag_message(self, msg: CleanedMessage) -> CleanedMessage:
         """

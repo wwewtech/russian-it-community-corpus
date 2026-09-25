@@ -2,10 +2,10 @@
 MinHash LSH (Locality-Sensitive Hashing) for fuzzy deduplication of chat messages and threads.
 """
 
-import hashlib
 import logging
 import re
 
+import xxhash
 from tqdm import tqdm
 
 from src.config import MINHASH_NUM_PERM, MINHASH_SHINGLE_SIZE, MINHASH_THRESHOLD
@@ -58,11 +58,8 @@ class MinHashLSH:
         if not shingles:
             return [0] * self.num_perm
 
-        # Hash each shingle to uint32
-        shingle_hashes = []
-        for s in shingles:
-            h = int(hashlib.md5(s.encode("utf-8")).hexdigest()[:8], 16)
-            shingle_hashes.append(h)
+        # Hash each shingle to uint32 using xxh32 (faster than MD5)
+        shingle_hashes = [xxhash.xxh32(s.encode("utf-8"), seed=0).intdigest() & 0xFFFFFFFF for s in shingles]
 
         sig = []
         for i in range(self.num_perm):

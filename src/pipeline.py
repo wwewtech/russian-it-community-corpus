@@ -6,9 +6,9 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from src.analytics.engine import DeepChatAnalyzer
+from src.analytics.engine import DeepChatAnalyzer, FullAnalysisReport
 from src.analytics.report_generator import ReportGenerator
 from src.config import (
     JSONL_OUTPUT_DIR,
@@ -67,7 +67,7 @@ class MasterDataPipeline:
         self.sft_dialogues: list[SFTDialogue] = []
         self.rag_chunks: list[RAGChunk] = []
         self.dpo_pairs: list[dict[str, Any]] = []
-        self.analytics_report: dict[str, Any] = {}
+        self.analytics_report: FullAnalysisReport = {}
         self.validation_report: dict[str, Any] = {}
 
     def run_all(self) -> dict[str, Any]:
@@ -166,7 +166,7 @@ class MasterDataPipeline:
 
         # Generate Reports
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        report_gen = ReportGenerator(self.analytics_report)
+        report_gen = ReportGenerator(cast(dict[str, Any], self.analytics_report))
         report_gen.export_json(REPORTS_DIR / "analytics_summary.json")
         report_gen.export_markdown(REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md")
 

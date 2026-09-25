@@ -14,6 +14,7 @@ quantifies drift with three standard data-quality metrics:
 
 The monitor is dependency-free (numpy/pandas only) and emits a
 machine-readable JSON verdict consumed by CI and the Prefect flow.
+Thresholds are loaded from `params.yaml` (single source of truth).
 """
 
 from __future__ import annotations
@@ -29,15 +30,25 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.config import load_params
+
 logger = logging.getLogger(__name__)
 
-# PSI interpretation thresholds (industry convention)
-PSI_STABLE = 0.10
-PSI_MODERATE = 0.25
+# Load thresholds from params.yaml (single source of truth)
+_params = load_params()
+_drift_params = _params.get("drift", {})
+
+# PSI interpretation thresholds
+PSI_STABLE = _drift_params.get("psi_stable", 0.10)
+PSI_MODERATE = _drift_params.get("psi_moderate", 0.25)
 
 # JS divergence thresholds (bits, base-2 log)
-JS_STABLE = 0.05
-JS_MODERATE = 0.20
+JS_STABLE = _drift_params.get("js_stable", 0.05)
+JS_MODERATE = _drift_params.get("js_moderate", 0.20)
+
+# Vocabulary Jaccard thresholds
+VOCAB_STABLE = _drift_params.get("vocab_jaccard_stable", 0.90)
+VOCAB_MODERATE = _drift_params.get("vocab_jaccard_moderate", 0.75)
 
 _TOKEN_RE = re.compile(r"[a-zA-Zа-яё0-9]{3,}")
 
@@ -169,9 +180,9 @@ class DatasetDriftMonitor:
             return "significant_drift"
 
         def _vocab_verdict(v: float) -> str:
-            if v >= 0.90:
+            if v >= VOCAB_STABLE:
                 return "stable"
-            if v >= 0.75:
+            if v >= VOCAB_MODERATE:
                 return "moderate_drift"
             return "significant_drift"
 
@@ -192,7 +203,7 @@ class DatasetDriftMonitor:
             "thresholds": {
                 "psi": {"stable": PSI_STABLE, "moderate": PSI_MODERATE},
                 "js_divergence_bits": {"stable": JS_STABLE, "moderate": JS_MODERATE},
-                "vocab_jaccard": {"stable": 0.90, "moderate": 0.75},
+                "vocab_jaccard": {"stable": VOCAB_STABLE, "moderate": VOCAB_MODERATE},
             },
             "metrics": metrics,
             "overall_verdict": overall,

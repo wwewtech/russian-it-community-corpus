@@ -6,9 +6,9 @@
 
 <br />
 
-**High-throughput data engineering and Zero-PII curation platform for language models**
+**High-throughput data engineering and Probabilistic PII Audit platform for language models**
 
-2,816,434 discussions · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
+2,816,434 discussions (Hub) · 2,418,695 (local) · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
 
 <br />
 
@@ -20,7 +20,7 @@
 [![Parquet](https://img.shields.io/badge/Apache%20Parquet-zstd-017CEE?style=flat-square&logo=apache)](#)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Data%20Studio-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](#)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](#)
-[![Zero-PII](https://img.shields.io/badge/Security-Zero--PII%20Verified-10B981?style=flat-square)](#security-and-zero-pii-protocol)
+[![Probabilistic PII Audit](https://img.shields.io/badge/Security-Probabilistic%20PII%20Audit%20(99%25%20CI%20%E2%89%A4%200.01%25)-10B981?style=flat-square)](#security-and-probabilistic-pii-audit)
 </div>
 
 > [!TIP]
@@ -37,7 +37,9 @@
 
 ## Overview
 
-**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures 2,816,434 engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
+**RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
+
+> **⚠️ Row count discrepancy**: The Hugging Face Hub snapshot (2,816,434 messages) differs from the local working copy (2,418,695 messages, −14%). The Hub contains an earlier pipeline run; local `dataset_output/` reflects the latest pipeline execution. See [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) for exact SHA256/row deltas against the pinned Hub revision `81a3495`.
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval.
 
@@ -45,7 +47,7 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 |---|---|---|
 | Privacy & Anonymization | Multi-pass Regex + Natasha NER + case declension | 11 community nodes anonymized (`community_node_01`..`11`) |
 | Deduplication | MinHash LSH (128 permutations, 0.80 Jaccard threshold) | 95,300+ duplicate / spam messages removed |
-| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues |
+| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues (Hub) / 173,216 (local) |
 | Local LoRA execution | PEFT QLoRA adaptation on consumer hardware | ~4.35 GB VRAM on RTX 3060 (12GB) |
 
 ---
@@ -140,17 +142,22 @@ JSONL counts below are published report values, not independently verified local
 
 > [!WARNING]
 > **Benchmark section withdrawn from README.**
-> Earlier numbers in this section were officially retracted in
-> [`reports/DATASET_AND_ANALYTICS.md`](reports/DATASET_AND_ANALYTICS.md), section
-> "Empirical Evaluation — Honest Status". A code audit of the benchmark harness
-> (`src/evaluation/official_academic_benchmarks.py`) found three defects
-> (substring-based MCQ scoring, PPL on empty placeholders, silent copy of
-> Base results into LoRA/Hybrid columns when the adapter failed to load).
-> The numbers will be republished only after a fresh GPU re-run; meanwhile we
-> ship the dataset and adapters without any accuracy claim on this README page.
-> The 100-question **non-executing** benchmark suite remains available in
-> [`reports/domain_benchmark_100.json`](reports/domain_benchmark_100.json) as
-> a corpus, not as a leaderboard.
+>
+> **Benchmark results RETRACTED — do not cite.**
+>
+> The comparison table previously shown here was removed after a code audit of
+> [`src/evaluation/official_academic_benchmarks.py`](src/evaluation/official_academic_benchmarks.py)
+> revealed three critical defects:
+>
+> 1. **Substring MCQ scoring** — "A" matched "Answer: A", inflating accuracy
+> 2. **PPL on empty placeholders** — perplexity computed on blank generations
+> 3. **Silent Base→LoRA copy** — when adapter failed to load, Base results were copied into LoRA/Hybrid columns without warning
+>
+> All published numbers are **invalid**. A fresh GPU re-run is required before any accuracy claims can be made.
+> The dataset and adapters are shipped **without benchmark scores**.
+>
+> The 100-question **non-executing** domain benchmark suite remains available in
+> [`reports/domain_benchmark_100.json`](reports/domain_benchmark_100.json) as a corpus only.
 
 ---
 
@@ -291,13 +298,16 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 
 ---
 
-## Privacy and Anonymization Protocol
+## Privacy and Probabilistic PII Audit
 
 1. **Morphological Name Redaction**: Detects author display names and inflects them across 6 Russian grammatical cases to eliminate conversational mentions.
 2. **Deterministic Pattern Scrubbing**: Removes phone numbers in international formats, email addresses, cryptocurrency wallet addresses, API keys, tokens, and database connection strings.
 3. **Source Community Anonymization**: Replaces all source channel titles with surrogate identifiers (`community_node_01`..`11`) and re-indexes technical IDs.
 4. **Terminology Protection**: Whitelists common technical terms, programming languages, libraries, and hosting providers to prevent false positives.
-5. **Automated Sanity Suite**: Regression tests against synthetic adversarial vectors verify regex pattern coverage in [`reports/pii_validation_report.json`](reports/pii_validation_report.json).
+5. **Probabilistic PII Audit**: Stratified sampling (50,000 messages, 99% confidence) with Wilson score intervals. **Verdict: PASSED** — the 99% upper bound on message-level leak rate is ≤ 0.01% (configurable tolerance). See [`reports/probabilistic_pii_audit.json`](reports/probabilistic_pii_audit.json) and [`src/validation/probabilistic_audit.py`](src/validation/probabilistic_audit.py).
+6. **Automated Red-Team Suite**: 25,000-message sample + adversarial vectors (declensions, obfuscated phones, DB URLs, API keys, crypto wallets, Telegram forwards). Pass threshold: ≤1 vector failure AND zero production leaks. Report: [`reports/pii_validation_report.json`](reports/pii_validation_report.json).
+
+> **Note**: "Zero-PII" is an aspirational target. The technical guarantee is a *statistical upper bound* on leak rate, not an absolute full-corpus scan.
 
 ---
 

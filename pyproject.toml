@@ -51,6 +51,7 @@ dependencies = [
     "evaluate>=0.4.0",
     "streamlit>=1.32.0",
     "rich>=13.7.0",
+    "ahocorasick>=2.0.0",
 ]
 
 [project.optional-dependencies]
