@@ -42,6 +42,10 @@ dataset_output/jsonl/*.jsonl
 # Trained LoRA adapter binary weights (hosted on Hugging Face: wwewtech/russian-it-community-lora)
 lora_adapters/**/*.safetensors
 lora_adapters/**/checkpoint-*/
+# Duplicated base-model tokenizer blobs (~590MB) — re-downloadable from HF Hub, never commit
+lora_adapters/**/tokenizer.json
+lora_adapters/**/vocab.json
+lora_adapters/**/merges.txt
 outputs/
 checkpoints/
 
