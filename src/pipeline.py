@@ -26,6 +26,15 @@ from src.observability import (
 )
 from src.pii.anonymizer import UnifiedPIIAnonymizer
 from src.settings import settings
+
+# Backward compatibility for tests that patch these module-level constants
+OUTPUT_DIR = settings.OUTPUT_DIR
+PARQUET_OUTPUT_DIR = settings.PARQUET_OUTPUT_DIR
+JSONL_OUTPUT_DIR = settings.JSONL_OUTPUT_DIR
+SAMPLES_OUTPUT_DIR = settings.SAMPLES_OUTPUT_DIR
+REPORTS_DIR = settings.REPORTS_DIR
+RAW_EXPORT_DIRS = settings.RAW_EXPORT_DIRS
+
 from src.taxonomy.tagger import TechnicalTagger
 from src.validation.benchmark import BenchmarkRunner
 from src.validation.validator import DatasetValidator
