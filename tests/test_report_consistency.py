@@ -45,6 +45,9 @@ def _has_real_artifacts() -> bool:
         return stats.get("cleaned_messages_count", 0) > 1000
     except Exception:
         return False
+
+
+def parse_markdown_table_rows(content: str, min_cols: int = 3) -> list[list[str]]:
     """Extract rows from all markdown tables in content.
 
     Returns a list of cell lists (stripped, outer pipe delimiters omitted).
@@ -76,6 +79,12 @@ def parse_int_clean(val: str) -> int:
 # --------------------------------------------------------------------------- #
 # Consistency verification functions (pure logic, testable with mocks)
 # --------------------------------------------------------------------------- #
+
+
+skip_without_real_artifacts = unittest.skipIf(
+    not _has_real_artifacts(),
+    "Real pipeline artifacts not available (CI uses synthetic data)",
+)
 
 
 def verify_hf_model_card(card_text: str, zoo_index: dict) -> None:
