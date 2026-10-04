@@ -19,7 +19,7 @@
     {
       "name": "pipeline-volume",
       "passed": true,
-      "detail": "cleaned=2816434"
+      "detail": "cleaned=1"
     },
     {
       "name": "artifact-manifest",
