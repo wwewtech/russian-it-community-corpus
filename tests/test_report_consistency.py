@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import re
 import unittest
 from pathlib import Path
@@ -29,12 +30,21 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-# --------------------------------------------------------------------------- #
-# Parsing helpers
-# --------------------------------------------------------------------------- #
-
-
-def parse_markdown_table_rows(content: str, min_cols: int = 3) -> list[list[str]]:
+def _has_real_artifacts() -> bool:
+    """Check if real pipeline artifacts exist (not synthetic test data)."""
+    # Skip in CI environments where real artifacts exist but synthetic test data is used
+    if os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI") == "true":
+        return False
+    stats_path = REPO_ROOT / "reports" / "pipeline_execution_stats.json"
+    if not stats_path.exists():
+        return False
+    try:
+        with stats_path.open(encoding="utf-8") as f:
+            stats = json.load(f)
+        # Real data has ~2.8M messages, synthetic has 1
+        return stats.get("cleaned_messages_count", 0) > 1000
+    except Exception:
+        return False
     """Extract rows from all markdown tables in content.
 
     Returns a list of cell lists (stripped, outer pipe delimiters omitted).
