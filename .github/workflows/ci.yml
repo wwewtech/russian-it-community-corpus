@@ -156,6 +156,15 @@ jobs:
       - name: Verify Dataset Reconciliation Against Pinned Hub Revision
         run: python -m src.validation.hub_reconciliation
 
+      - name: Upload pipeline artifacts for SLO gate
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-artifacts
+          path: |
+            dataset_output/
+            reports/
+          retention-days: 1
+
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
@@ -218,6 +227,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Download pipeline artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-artifacts
+          path: .
 
       - name: Run SLO Gate (SHIP/HOLD)
         run: make slo
