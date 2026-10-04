@@ -93,11 +93,7 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
         checks.append(Check("pipeline-volume", n > 0, f"cleaned={n}"))
 
     # Provenance gate: artifact identity must be verified against the manifest snapshot.
-    # Fail-closed for provenance: missing manifest → HOLD.
-    # Exception: CI synthetic environment (no artifacts, no manifest) → skip with warning.
-    import os
-
-    is_ci = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI") == "true"
+    # Fail-closed: missing manifest → HOLD.
     canonical_artifacts_exist = all(
         (reports_dir.parent / p).exists()
         for p in (
@@ -108,11 +104,11 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
     )
     manifest_path = reports_dir / "dataset_manifest.json"
 
-    if not canonical_artifacts_exist and is_ci:
-        # CI synthetic environment: no artifacts, no manifest expected
-        checks.append(Check("artifact-manifest", True, "canonical artifacts missing — skip (CI)"))
+    if not canonical_artifacts_exist:
+        # No artifacts to verify — fail-closed for provenance
+        checks.append(Check("artifact-manifest", False, "canonical artifacts missing — fail-closed"))
     elif not manifest_path.exists():
-        # Fail-closed: artifacts exist (or not CI) but manifest missing
+        # Artifacts exist but manifest missing
         checks.append(Check("artifact-manifest", False, "dataset_manifest.json missing — fail-closed"))
     else:
         try:

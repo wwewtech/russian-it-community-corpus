@@ -125,6 +125,15 @@ jobs:
             echo "Real parquet present, skipping synthetic fixture generation."
           fi
 
+      - name: Create dataset manifest for SLO gate
+        if: ${{ hashFiles('dataset_output/parquet/full_clean_messages.parquet') != '' }}
+        run: |
+          python -c "
+          from src.validation.artifact_manifest import create_manifest
+          from pathlib import Path
+          create_manifest(Path('.'), Path('reports/dataset_manifest.json'))
+          "
+
       - name: Run Domain Benchmark Generation
         run: python cli.py benchmark
 
