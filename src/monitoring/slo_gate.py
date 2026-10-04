@@ -94,7 +94,6 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
 
     # Provenance gate: artifact identity must be verified against the manifest snapshot.
     # Fail-open with warning if canonical artifacts don't exist (e.g., CI synthetic environment).
-    artifact_manifest_path = reports_dir.parent / "dataset_manifest.json"
     canonical_artifacts_exist = all(
         (reports_dir.parent / p).exists() for p in (
             "dataset_output/parquet/full_clean_messages.parquet",
