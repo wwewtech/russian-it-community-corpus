@@ -14,7 +14,7 @@ try:
 except ImportError:
     HAS_AHO = False
 
-from src.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
+from src.settings import settings
 from src.ingestion.schema import CleanedMessage
 from src.taxonomy.classifier import DomainClassifier
 
@@ -29,13 +29,13 @@ class TechnicalTagger:
 
     def __init__(self) -> None:
         self.classifier = DomainClassifier()
-        self.sentiment_dict = SENTIMENT_DICT
+        self.sentiment_dict = settings.SENTIMENT_DICT
 
         # Build Aho-Corasick automaton for fast multi-keyword matching
         self.automaton = None
         if HAS_AHO:
             self.automaton = ahocorasick.Automaton()
-            for domain, info in DOMAIN_TAXONOMY.items():
+            for domain, info in settings.DOMAIN_TAXONOMY.items():
                 for kw in info["keywords"]:
                     kw_lower = kw.lower()
                     # Store (keyword, domain) as value
@@ -44,7 +44,7 @@ class TechnicalTagger:
         else:
             # Fallback to set intersection
             self.all_keywords: dict[str, str] = {}
-            for domain, info in DOMAIN_TAXONOMY.items():
+            for domain, info in settings.DOMAIN_TAXONOMY.items():
                 for kw in info["keywords"]:
                     self.all_keywords[kw.lower()] = domain
             self.all_keywords_set: set[str] = set(self.all_keywords.keys())
@@ -55,7 +55,7 @@ class TechnicalTagger:
         """Backward compatibility: return all keywords as a set."""
         if HAS_AHO and self.automaton is not None:
             # Rebuild from taxonomy for consistency
-            return {kw.lower() for info in DOMAIN_TAXONOMY.values() for kw in info["keywords"]}
+            return {kw.lower() for info in settings.DOMAIN_TAXONOMY.values() for kw in info["keywords"]}
         return self._all_keywords_set_fallback
 
     @all_keywords_set.setter

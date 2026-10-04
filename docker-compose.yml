@@ -9,12 +9,15 @@ services:
       - ./dataset_output:/app/dataset_output
       - ./reports:/app/reports
       - hf-cache:/app/.hf_cache
+      - type: tmpfs
+        target: /app/.hf_cache
+        tmpfs:
+          size: 2G
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONIOENCODING=utf-8
       - HF_HOME=/app/.hf_cache
       - TOKENIZERS_PARALLELISM=false
-      # HF_TOKEN is optional; only needed for gated models / Hub sync.
       - HF_TOKEN=${HF_TOKEN:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
@@ -23,6 +26,13 @@ services:
       retries: 3
       start_period: 20s
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/tmp
+      - /app/.streamlit
     deploy:
       resources:
         limits:
@@ -40,6 +50,10 @@ services:
       - ./dataset_output:/app/dataset_output
       - ./reports:/app/reports
       - hf-cache:/app/.hf_cache
+      - type: tmpfs
+        target: /app/.hf_cache
+        tmpfs:
+          size: 4G
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONIOENCODING=utf-8
@@ -48,6 +62,12 @@ services:
       - HF_TOKEN=${HF_TOKEN:-}
     profiles:
       - pipeline
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/tmp
     deploy:
       resources:
         limits:

@@ -9,6 +9,7 @@ previously copy-pasted (7+ times):
 * HF/tokenizers env defaults that must be set BEFORE importing
   torch/transformers (TOKENIZERS_PARALLELISM, symlink warnings,
   CUDA allocator config).
+* Structured logging via structlog (JSON output, context binding).
 
 Usage — call once at module top, before any heavy third-party import::
 
@@ -25,6 +26,8 @@ import contextlib
 import os
 import sys
 from pathlib import Path
+
+from src.observability import configure_logging
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -53,8 +56,10 @@ def setup_runtime_env(
     *,
     hf_cache_dir: Path | None = None,
     pytorch_alloc_conf: bool = False,
+    json_logs: bool = True,
+    log_level: int = 20,  # logging.INFO
 ) -> None:
-    """Configure env vars and UTF-8 stdio for the current process.
+    """Configure env vars, UTF-8 stdio, and structured logging for the current process.
 
     Idempotent: ``os.environ.setdefault`` never overrides values the user
     set explicitly, and stdio reconfiguration is safe to repeat.
@@ -64,6 +69,8 @@ def setup_runtime_env(
             ``<repo_root>/.hf_cache``.
         pytorch_alloc_conf: Also set ``PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True``
             (needed by the LoRA training scripts to reduce VRAM fragmentation).
+        json_logs: Output logs as JSON (True) or human-readable console (False).
+        log_level: Logging level (default: logging.INFO).
     """
     _force_utf8_stdio()
 
@@ -73,3 +80,6 @@ def setup_runtime_env(
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     if pytorch_alloc_conf:
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+    # Configure structured logging
+    configure_logging(json_output=json_logs, level=log_level)

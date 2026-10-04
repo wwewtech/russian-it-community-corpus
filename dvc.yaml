@@ -1,57 +1,396 @@
-# DVC pipeline for the RICC data platform.
-#
-# The corpus artifacts (dataset_output/) are large binaries hosted on
-# Hugging Face, not in git. DVC versions them and makes the curation
-# pipeline reproducible: `dvc repro` re-runs only the stages whose
-# dependencies changed.
-#
-# Remote storage (S3 / Hugging Face DVC remote) is configured per-machine:
-#   dvc remote add -d storage s3://your-bucket/ricc
-#   dvc remote add hf-storage https://huggingface.co/datasets/wwewtech/russian-it-community-corpus
+# dvc.yaml
+# Reproducible data pipeline matching MasterDataPipeline stages
+# Run: dvc repro
+# Parameters from params.yaml
 
 stages:
-  curate:
-    cmd: python main.py
+  # Stage 1: Ingestion - Load and merge raw Telegram exports
+  ingest:
+    cmd: |
+      python -c "
+      from src.ingestion.loader import merge_multiple_exports
+      from src.config import RAW_EXPORT_DIRS
+      import pickle, gzip
+      chats, msgs = merge_multiple_exports(RAW_EXPORT_DIRS)
+      with gzip.open('dataset_output/intermediate/raw_messages.pkl.gz', 'wb') as f:
+          pickle.dump((chats, msgs), f)
+      print(f'Ingested {len(msgs)} messages from {len(chats)} chats')
+      "
     deps:
-      - main.py
-      - src/
-      - params.yaml
+      - src/ingestion/loader.py
+      - src/ingestion/schema.py
+      - src/config.py
+      - src/bootstrap.py
+    params:
+      - pii_audit.sample_size
     outs:
-      - dataset_output/parquet:
+      - dataset_output/intermediate/raw_messages.pkl.gz:
           cache: true
-      - dataset_output/jsonl:
-          cache: true
-      - dataset_output/samples:
-          cache: true
-    metrics:
-      - reports/pipeline_execution_stats.json:
-          cache: false
-    always_changed: false
 
+  # Stage 2: PII Anonymization - Deep scrubbing + pseudonymization
+  pii_anonymize:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.pii.deep_anonymizer import DeepPIIAnonymizer
+      from src.ingestion.schema import CleanedMessage
+
+      with gzip.open('dataset_output/intermediate/raw_messages.pkl.gz', 'rb') as f:
+          chats, raw_messages = pickle.load(f)
+
+      anonymizer = DeepPIIAnonymizer(enable_ner=True)
+      author_pairs = [(m.author_id_raw, m.author_raw) for m in raw_messages]
+      anonymizer.register_authors(author_pairs)
+      cleaned = [anonymizer.anonymize_message(m) for m in raw_messages]
+
+      with gzip.open('dataset_output/intermediate/cleaned_messages.pkl.gz', 'wb') as f:
+          pickle.dump(cleaned, f)
+      print(f'Anonymized {len(cleaned)} messages')
+      print(f'PII stats: {anonymizer.stats}')
+      "
+    deps:
+      - src/pii/deep_anonymizer.py
+      - src/pii/regex_scrubber.py
+      - src/pii/ner_scrubber.py
+      - src/pii/anonymizer.py
+      - src/ingestion/schema.py
+      - src/config.py
+    outs:
+      - dataset_output/intermediate/cleaned_messages.pkl.gz:
+          cache: true
+
+  # Stage 3: Exact Deduplication - Remove exact duplicate messages
+  exact_dedup:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.deduplication.exact_dedup import ExactDeduplicator
+
+      with gzip.open('dataset_output/intermediate/cleaned_messages.pkl.gz', 'rb') as f:
+          cleaned = pickle.load(f)
+
+      dedup = ExactDeduplicator()
+      unique, exact_dupes = dedup.deduplicate(cleaned)
+
+      with gzip.open('dataset_output/intermediate/dedup_exact.pkl.gz', 'wb') as f:
+          pickle.dump(unique, f)
+      print(f'Exact dedup: removed {exact_dupes} duplicates, {len(unique)} remaining')
+      "
+    deps:
+      - src/deduplication/exact_dedup.py
+      - src/ingestion/schema.py
+    outs:
+      - dataset_output/intermediate/dedup_exact.pkl.gz:
+          cache: true
+
+  # Stage 4: MinHash LSH Deduplication - Fuzzy near-duplicate removal
+  minhash_dedup:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.deduplication.minhash_lsh import MinHashLSH
+      from src.config import MINHASH_NUM_PERM, MINHASH_THRESHOLD, MINHASH_SHINGLE_SIZE
+
+      with gzip.open('dataset_output/intermediate/dedup_exact.pkl.gz', 'rb') as f:
+          messages = pickle.load(f)
+
+      lsh = MinHashLSH(num_perm=MINHASH_NUM_PERM, threshold=MINHASH_THRESHOLD, shingle_size=MINHASH_SHINGLE_SIZE)
+      unique, lsh_dupes = lsh.deduplicate_messages(messages)
+
+      with gzip.open('dataset_output/intermediate/dedup_minhash.pkl.gz', 'wb') as f:
+          pickle.dump(unique, f)
+      print(f'MinHash LSH dedup: removed {lsh_dupes} near-duplicates, {len(unique)} remaining')
+      "
+    deps:
+      - src/deduplication/minhash_lsh.py
+      - src/config.py
+    params:
+      - pii_audit.sample_size
+    outs:
+      - dataset_output/intermediate/dedup_minhash.pkl.gz:
+          cache: true
+
+  # Stage 5: Taxonomy Classification - Domain + keyword tagging
+  taxonomy:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.taxonomy.tagger import TechnicalTagger
+
+      with gzip.open('dataset_output/intermediate/dedup_minhash.pkl.gz', 'rb') as f:
+          messages = pickle.load(f)
+
+      tagger = TechnicalTagger()
+      tagged = tagger.tag_batch(messages)
+
+      with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'wb') as f:
+          pickle.dump(tagged, f)
+      domains = {}
+      for m in tagged:
+          domains[m.domain] = domains.get(m.domain, 0) + 1
+      print(f'Tagged {len(tagged)} messages')
+      print(f'Domain distribution: {domains}')
+      "
+    deps:
+      - src/taxonomy/tagger.py
+      - src/taxonomy/classifier.py
+      - src/config.py
+    outs:
+      - dataset_output/intermediate/tagged_messages.pkl.gz:
+          cache: true
+
+  # Stage 6: Thread DAG Reconstruction - Build conversation threads
+  graph:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.graph.thread_builder import ThreadDAGBuilder
+      from src.config import MAX_REPLY_TIME_GAP_HOURS
+
+      with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'rb') as f:
+          messages = pickle.load(f)
+
+      builder = ThreadDAGBuilder(max_reply_gap_hours=MAX_REPLY_TIME_GAP_HOURS)
+      messages_with_threads, threads = builder.build_threads(messages)
+
+      with gzip.open('dataset_output/intermediate/threaded_messages.pkl.gz', 'wb') as f:
+          pickle.dump((messages_with_threads, threads), f)
+      print(f'Built {len(threads)} threads from {len(messages_with_threads)} messages')
+      "
+    deps:
+      - src/graph/thread_builder.py
+      - src/graph/conversation_extractor.py
+      - src/ingestion/schema.py
+      - src/config.py
+    params:
+      - pii_audit.sample_size
+    outs:
+      - dataset_output/intermediate/threaded_messages.pkl.gz:
+          cache: true
+
+  # Stage 7: Extract SFT, DPO, RAG datasets from threads
+  extract:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.graph.conversation_extractor import ConversationExtractor
+      from src.config import MIN_QUESTION_WORDS, MIN_ANSWER_WORDS, MAX_SFT_TURNS
+
+      with gzip.open('dataset_output/intermediate/threaded_messages.pkl.gz', 'rb') as f:
+          messages, threads = pickle.load(f)
+
+      extractor = ConversationExtractor(
+          min_question_words=MIN_QUESTION_WORDS,
+          min_answer_words=MIN_ANSWER_WORDS,
+      )
+      sft = extractor.extract_sft_dialogues(threads)
+      rag = extractor.extract_rag_chunks(threads)
+      dpo = extractor.extract_dpo_pairs(threads)
+
+      with gzip.open('dataset_output/intermediate/extracted.pkl.gz', 'wb') as f:
+          pickle.dump((sft, rag, dpo), f)
+      print(f'Extracted: {len(sft)} SFT, {len(rag)} RAG, {len(dpo)} DPO')
+      "
+    deps:
+      - src/graph/conversation_extractor.py
+      - src/ingestion/schema.py
+      - src/config.py
+    outs:
+      - dataset_output/intermediate/extracted.pkl.gz:
+          cache: true
+
+  # Stage 8: Export to Parquet and JSONL formats
+  export:
+    cmd: |
+      python -c "
+      import gzip, pickle
+      from src.exporter.parquet_exporter import ParquetExporter
+      from src.exporter.jsonl_exporter import JSONLExporter
+      from src.exporter.rag_exporter import RAGExporter
+      from src.exporter.dpo_exporter import DPOExporter
+      from src.config import PARQUET_OUTPUT_DIR, JSONL_OUTPUT_DIR, SAMPLES_OUTPUT_DIR
+
+      with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'rb') as f:
+          messages = pickle.load(f)
+      with gzip.open('dataset_output/intermediate/extracted.pkl.gz', 'rb') as f:
+          sft, rag, dpo = pickle.load(f)
+
+      # Parquet
+      pe = ParquetExporter(PARQUET_OUTPUT_DIR)
+      pe.export_messages(messages)
+      pe.export_sft_dialogues(sft)
+      pe.export_rag_chunks(rag)
+
+      # JSONL
+      je = JSONLExporter(JSONL_OUTPUT_DIR)
+      je.export_sharegpt(sft)
+      je.export_alpaca(sft)
+      je.export_openai_chatml(sft)
+
+      re = RAGExporter(JSONL_OUTPUT_DIR)
+      re.export_rag_jsonl(rag)
+
+      de = DPOExporter(JSONL_OUTPUT_DIR)
+      de.export_dpo_pairs(dpo)
+
+      # Samples
+      import json
+      SAMPLES_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+      with open(SAMPLES_OUTPUT_DIR / 'sft_sample_preview.json', 'w', encoding='utf-8') as f:
+          json.dump([d.model_dump() for d in sft[:15]], f, ensure_ascii=False, indent=2)
+      with open(SAMPLES_OUTPUT_DIR / 'rag_sample_preview.json', 'w', encoding='utf-8') as f:
+          json.dump([c.model_dump() for c in rag[:15]], f, ensure_ascii=False, indent=2)
+      with open(SAMPLES_OUTPUT_DIR / 'dpo_sample_preview.json', 'w', encoding='utf-8') as f:
+          json.dump(dpo[:15], f, ensure_ascii=False, indent=2)
+
+      print('Export complete')
+      "
+    deps:
+      - src/exporter/parquet_exporter.py
+      - src/exporter/jsonl_exporter.py
+      - src/exporter/rag_exporter.py
+      - src/exporter/dpo_exporter.py
+      - src/ingestion/schema.py
+      - src/config.py
+    outs:
+      - dataset_output/parquet/full_clean_messages.parquet:
+          cache: true
+      - dataset_output/parquet/sft_dialogues.parquet:
+          cache: true
+      - dataset_output/parquet/rag_knowledge_base.parquet:
+          cache: true
+      - dataset_output/jsonl/sft_sharegpt_format.jsonl:
+          cache: true
+      - dataset_output/jsonl/sft_alpaca_format.jsonl:
+          cache: true
+      - dataset_output/jsonl/sft_openai_messages.jsonl:
+          cache: true
+      - dataset_output/jsonl/rag_chunks_kb.jsonl:
+          cache: true
+      - dataset_output/jsonl/dpo_preference_pairs.jsonl:
+          cache: true
+
+  # Stage 9: Analytics & Reports
+  analytics:
+    cmd: |
+      python -c "
+      from src.analytics.engine import DeepChatAnalyzer
+      from src.analytics.report_generator import ReportGenerator
+      from src.validation.benchmark import BenchmarkRunner
+      from src.config import REPORTS_DIR
+      import gzip, pickle
+
+      with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'rb') as f:
+          messages = pickle.load(f)
+
+      analyzer = DeepChatAnalyzer(messages, sample_limit_for_nlp=100000)
+      report = analyzer.run_full_analysis()
+
+      REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+      gen = ReportGenerator(report)
+      gen.export_json(REPORTS_DIR / 'analytics_summary.json')
+      gen.export_markdown(REPORTS_DIR / 'DEEP_ANALYTICAL_REPORT.md')
+
+      # Benchmark
+      bench = BenchmarkRunner()
+      bench.export_benchmark_file(REPORTS_DIR / 'domain_benchmark_100.json')
+      print('Analytics & benchmark complete')
+      "
+    deps:
+      - src/analytics/engine.py
+      - src/analytics/report_generator.py
+      - src/analytics/metrics.py
+      - src/analytics/network.py
+      - src/validation/benchmark.py
+      - src/config.py
+    outs:
+      - reports/analytics_summary.json:
+          cache: true
+      - reports/DEEP_ANALYTICAL_REPORT.md:
+          cache: true
+      - reports/domain_benchmark_100.json:
+          cache: true
+
+  # Stage 10: Validation & PII Audit
   validate:
-    cmd: python cli.py validate
-    deps:
-      - dataset_output/parquet
-      - dataset_output/jsonl
-      - src/validation/
-    metrics:
-      - reports/validation_results.json:
-          cache: false
+    cmd: |
+      python -c "
+      from src.validation.validator import DatasetValidator
+      from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
+      from src.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, REPORTS_DIR
+      import json
 
-  probabilistic_audit:
-    cmd: python scripts/run_probabilistic_pii_audit.py
+      # Dataset validation
+      validator = DatasetValidator(OUTPUT_DIR)
+      val_result = validator.validate_all()
+      with open(REPORTS_DIR / 'validation_results.json', 'w', encoding='utf-8') as f:
+          json.dump(val_result, f, ensure_ascii=False, indent=2)
+
+      # Probabilistic PII Audit
+      auditor = ProbabilisticPIIAuditor(PARQUET_OUTPUT_DIR / 'full_clean_messages.parquet')
+      audit_report = auditor.run_audit(sample_size=50000, confidence=0.99, max_leak_tolerance=1e-4)
+      with open(REPORTS_DIR / 'probabilistic_pii_audit.json', 'w', encoding='utf-8') as f:
+          json.dump(audit_report, f, ensure_ascii=False, indent=2)
+
+      print(f'Validation: {\"PASSED\" if val_result[\"overall_passed\"] else \"FAILED\"}')
+      print(f'PII Audit: {audit_report[\"verdict\"]}')
+      "
     deps:
-      - dataset_output/parquet/full_clean_messages.parquet
+      - src/validation/validator.py
       - src/validation/probabilistic_audit.py
-    metrics:
+      - src/validation/artifact_manifest.py
+      - src/validation/hub_reconciliation.py
+      - src/pii/regex_scrubber.py
+      - src/config.py
+    outs:
+      - reports/validation_results.json:
+          cache: true
       - reports/probabilistic_pii_audit.json:
-          cache: false
+          cache: true
 
-  drift_monitoring:
-    cmd: python scripts/run_drift_monitoring.py
+  # Stage 11: Drift Monitoring (compare against reference)
+  drift:
+    cmd: |
+      python -c "
+      from src.monitoring.drift import DatasetDriftMonitor
+      from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR
+      import pandas as pd
+
+      ref_path = PARQUET_OUTPUT_DIR / 'full_clean_messages.parquet'
+      cur_path = PARQUET_OUTPUT_DIR / 'full_clean_messages.parquet'
+
+      if ref_path.exists() and cur_path.exists():
+          ref = pd.read_parquet(ref_path)
+          cur = pd.read_parquet(cur_path)
+          monitor = DatasetDriftMonitor(ref, cur)
+          report = monitor.run()
+          monitor.generate_report(REPORTS_DIR / 'drift_report.json')
+          print(f'Drift verdict: {report[\"overall_verdict\"]}')
+      else:
+          print('Skipping drift: reference or current snapshot missing')
+      "
     deps:
-      - dataset_output/parquet/full_clean_messages.parquet
       - src/monitoring/drift.py
-    metrics:
+      - src/config.py
+    params:
+      - drift.psi_stable
+      - drift.psi_moderate
+      - drift.js_stable
+      - drift.js_moderate
+      - drift.vocab_jaccard_stable
+      - drift.vocab_jaccard_moderate
+    outs:
       - reports/drift_report.json:
-          cache: false
+          cache: true
+
+  # Stage 12: SLO Gate - Final release decision
+  slo:
+    cmd: python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+    deps:
+      - src/monitoring/slo_gate.py
+      - src/validation/artifact_manifest.py
+      - src/validation/hub_reconciliation.py
+      - src/config.py
+    outs:
+      - reports/slo_verdict.json:
+          cache: true

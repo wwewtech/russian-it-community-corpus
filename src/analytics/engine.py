@@ -42,7 +42,7 @@ from src.analytics.metrics import (
     compute_shannon_entropy,
 )
 from src.analytics.network import SocialNetworkAnalyzer
-from src.config import DOMAIN_TAXONOMY, STOPWORDS_RU
+from src.settings import settings
 from src.ingestion.schema import CleanedMessage
 
 logger = logging.getLogger(__name__)
@@ -354,7 +354,7 @@ class DeepChatAnalyzer:
         if not text:
             return []
         raw_tokens = re.findall(r"[а-яёa-z0-9]+(?:[-\'][а-яёa-z0-9]+)?", text.lower())
-        tokens = [t for t in raw_tokens if len(t) >= 2 and not t.isdigit() and t not in STOPWORDS_RU]
+        tokens = [t for t in raw_tokens if len(t) >= 2 and not t.isdigit() and t not in settings.STOPWORDS_RU]
 
         if HAS_MORPH and MORPH is not None and len(tokens) <= 50:
             lemmas = []
@@ -364,7 +364,7 @@ class DeepChatAnalyzer:
                     lemmas.append(p.normal_form)
                 except Exception:
                     lemmas.append(t)
-            return [lemma for lemma in lemmas if lemma not in STOPWORDS_RU and len(lemma) >= 2]
+            return [lemma for lemma in lemmas if lemma not in settings.STOPWORDS_RU and len(lemma) >= 2]
         return tokens
 
     # =========================================================================
@@ -623,7 +623,7 @@ class DeepChatAnalyzer:
                 max_df=0.6,
                 min_df=2,
                 max_features=5000,
-                stop_words=list(STOPWORDS_RU),
+                stop_words=list(settings.STOPWORDS_RU),
             )
             dtm = vectorizer.fit_transform(docs)
             lda = LatentDirichletAllocation(n_components=n_topics, random_state=42, max_iter=15)
@@ -672,9 +672,9 @@ class DeepChatAnalyzer:
                 w
                 for w, c in counter.most_common(40)
                 if w in RUSSIAN_IT_SLANG_TERMS
-                or w in DOMAIN_TAXONOMY["ai_ml_nlp"]["keywords"]
-                or w in DOMAIN_TAXONOMY["backend_databases"]["keywords"]
-                or w in DOMAIN_TAXONOMY["devops_infra"]["keywords"]
+                or w in settings.DOMAIN_TAXONOMY["ai_ml_nlp"]["keywords"]
+                or w in settings.DOMAIN_TAXONOMY["backend_databases"]["keywords"]
+                or w in settings.DOMAIN_TAXONOMY["devops_infra"]["keywords"]
             ]
             evolution[year] = {
                 "message_count": yearly_msg_counts[year],

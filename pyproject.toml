@@ -31,6 +31,7 @@ dependencies = [
     "pandas>=2.2.0",
     "pyarrow>=15.0.0",
     "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
     "xxhash>=3.4.0",
     "ujson>=5.9.0",
     "tqdm>=4.66.0",
@@ -51,7 +52,8 @@ dependencies = [
     "evaluate>=0.4.0",
     "streamlit>=1.32.0",
     "rich>=13.7.0",
-    "ahocorasick>=2.0.0",
+    "prometheus-client>=0.19.0",
+    "structlog>=24.1.0",
 ]
 
 [project.optional-dependencies]
@@ -82,12 +84,12 @@ it-pipeline = "cli:main"
 # script outside the Streamlit runtime and render nothing.
 
 [tool.setuptools]
-# Root-level entry modules (cli.py, main.py) plus the src/ package tree,
-# so `pip install .` produces a working `it-pipeline` console command.
+# Root-level entry modules (cli.py, main.py)
 py-modules = ["cli", "main"]
 
 [tool.setuptools.packages.find]
-include = ["src*"]
+where = ["src"]
+include = ["*"]
 
 [tool.ruff]
 line-length = 120

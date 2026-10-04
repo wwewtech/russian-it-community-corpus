@@ -12,7 +12,7 @@ from typing import Any
 import tiktoken
 from tiktoken import Encoding
 
-from src.config import SENTIMENT_DICT
+from src.settings import settings
 
 # Try to initialize tiktoken cl100k_base for precise BPE token metrics
 try:
@@ -94,7 +94,7 @@ def analyze_sentiment(texts: list[str]) -> dict[str, Any]:
 
     for t in texts:
         words = re.findall(r"\w+", t.lower())
-        s = sum(SENTIMENT_DICT.get(w, 0) for w in words)
+        s = sum(settings.SENTIMENT_DICT.get(w, 0) for w in words)
         scores.append(s)
         if s > 0:
             pos += 1

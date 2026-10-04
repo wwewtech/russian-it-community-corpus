@@ -30,12 +30,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.config import load_params
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 
 # Load thresholds from params.yaml (single source of truth)
-_params = load_params()
+_params = settings.load_params()
 _drift_params = _params.get("drift", {})
 
 # PSI interpretation thresholds

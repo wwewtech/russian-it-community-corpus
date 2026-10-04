@@ -1,0 +1,143 @@
+site_name: RICC — Russian IT Community Corpus
+site_description: Data Engineering & Zero-PII Curation Platform for LLM Dataset Curation
+site_author: wwewtech
+site_url: https://github.com/wwewtech/russian-it-community-corpus
+repo_url: https://github.com/wwewtech/russian-it-community-corpus
+repo_name: wwewtech/russian-it-community-corpus
+edit_uri: edit/main/docs/
+
+copyright: Copyright &copy; 2026 wwewtech
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Pipeline Stages: architecture/pipeline-stages.md
+      - Data Models: architecture/data-models.md
+  - API Reference:
+      - ricc: api/ricc.md
+      - Pipeline: api/pipeline.md
+      - Settings: api/settings.md
+      - Observability: api/observability.md
+      - Errors: api/errors.md
+  - User Guide:
+      - Running the Pipeline: user-guide/running-pipeline.md
+      - PII Anonymization: user-guide/pii-anonymization.md
+      - Deduplication: user-guide/deduplication.md
+      - Taxonomy & Tagging: user-guide/taxonomy-tagging.md
+      - Graph Extraction: user-guide/graph-extraction.md
+      - Export Formats: user-guide/export-formats.md
+      - Analytics & Reports: user-guide/analytics-reports.md
+      - Validation & Audits: user-guide/validation-audits.md
+      - Drift Monitoring: user-guide/drift-monitoring.md
+      - SLO Gate: user-guide/slo-gate.md
+      - LoRA Training: user-guide/lora-training.md
+      - RAG Pipeline: user-guide/rag-pipeline.md
+  - CLI Reference:
+      - Overview: cli/overview.md
+      - Commands: cli/commands.md
+  - Streamlit Data Studio:
+      - Overview: studio/overview.md
+      - Features: studio/features.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Testing: development/testing.md
+      - Type Checking: development/type-checking.md
+      - CI/CD: development/ci-cd.md
+      - DVC Pipeline: development/dvc-pipeline.md
+      - Docker: development/docker.md
+  - Changelog: changelog.md
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_source: false
+            members_order: source
+            filters:
+              - "!^_"
+              - "!^__.*__$"
+            merge_init_into_class: true
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+  - footnotes
+  - attr_list
+  - md_in_html
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/wwewtech/russian-it-community-corpus
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/ricc/
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js

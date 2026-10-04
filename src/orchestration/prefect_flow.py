@@ -84,10 +84,10 @@ def task_validate_dataset(output_dir: str | Path | None = None) -> dict[str, Any
     """Validate dataset schema, JSONL integrity, and zero-PII leakage."""
     log = get_run_logger()
     try:
-        from src.config import OUTPUT_DIR
+        from src.settings import settings
         from src.validation.validator import DatasetValidator
 
-        validator = DatasetValidator(Path(output_dir) if output_dir else OUTPUT_DIR)
+        validator = DatasetValidator(Path(output_dir) if output_dir else settings.OUTPUT_DIR)
         result = validator.validate_all()
         return {
             "task": "validate-dataset",
@@ -109,12 +109,12 @@ def task_probabilistic_pii_audit(
     """Run the stratified probabilistic PII audit with confidence bounds."""
     log = get_run_logger()
     try:
-        from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR
+        from src.settings import settings
         from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
 
-        path = Path(parquet_path) if parquet_path else PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
+        path = Path(parquet_path) if parquet_path else PARQUET_settings.OUTPUT_DIR / "full_clean_messages.parquet"
         report = ProbabilisticPIIAuditor(path).run_audit(sample_size=sample_size)
-        out = Path(report_path) if report_path else REPORTS_DIR / "probabilistic_pii_audit.json"
+        out = Path(report_path) if report_path else settings.REPORTS_DIR / "probabilistic_pii_audit.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         import json
 
@@ -141,11 +141,11 @@ def task_drift_monitoring(
     try:
         import pandas as pd
 
-        from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR
+        from src.settings import settings
         from src.monitoring.drift import DatasetDriftMonitor
 
-        ref = Path(reference_path) if reference_path else PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
-        cur = Path(current_path) if current_path else PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
+        ref = Path(reference_path) if reference_path else PARQUET_settings.OUTPUT_DIR / "full_clean_messages.parquet"
+        cur = Path(current_path) if current_path else PARQUET_settings.OUTPUT_DIR / "full_clean_messages.parquet"
         if not ref.exists() or not cur.exists():
             return {
                 "task": "drift-monitoring",
@@ -154,7 +154,7 @@ def task_drift_monitoring(
             }
         monitor = DatasetDriftMonitor(pd.read_parquet(ref), pd.read_parquet(cur))
         report = monitor.run()
-        out = Path(report_path) if report_path else REPORTS_DIR / "drift_report.json"
+        out = Path(report_path) if report_path else settings.REPORTS_DIR / "drift_report.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         import json
 

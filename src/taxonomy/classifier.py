@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from typing import Any
 
-from src.config import DOMAIN_TAXONOMY
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +17,10 @@ class DomainClassifier:
     High-throughput Domain Classifier using token set intersections.
     """
 
-    def __init__(self, taxonomy: dict[str, dict[str, Any]] = DOMAIN_TAXONOMY):
-        self.taxonomy = taxonomy
+    def __init__(self, taxonomy: dict[str, dict[str, Any]] | None = None):
+        self.taxonomy = taxonomy or settings.DOMAIN_TAXONOMY
         self.kw_to_domains: dict[str, list[str]] = defaultdict(list)
-        for domain, info in taxonomy.items():
+        for domain, info in self.taxonomy.items():
             for kw in info["keywords"]:
                 self.kw_to_domains[kw.lower()].append(domain)
         self.all_keywords_set: set[str] = set(self.kw_to_domains.keys())

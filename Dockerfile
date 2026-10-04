@@ -29,9 +29,11 @@ RUN pip install --upgrade pip setuptools wheel \
     && pip install -r requirements.txt
 
 # Non-root runtime user (hardening: no container-as-root).
+# Pre-create writable dirs for read-only rootfs + tmpfs mounts.
 RUN useradd -m -u 10001 appuser \
-    && mkdir -p /app/.hf_cache /app/dataset_output /app/reports \
-    && chown -R appuser:appuser /app
+    && mkdir -p /app/.hf_cache /app/dataset_output /app/reports /app/.streamlit /tmp /var/tmp \
+    && chown -R appuser:appuser /app /tmp /var/tmp
+
 USER appuser
 
 # Application code last (changes most often).

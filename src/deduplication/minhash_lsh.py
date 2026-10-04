@@ -8,14 +8,14 @@ import re
 import xxhash
 from tqdm import tqdm
 
-from src.config import MINHASH_NUM_PERM, MINHASH_SHINGLE_SIZE, MINHASH_THRESHOLD
+from src.settings import settings
 from src.ingestion.schema import CleanedMessage
 
 logger = logging.getLogger(__name__)
 
 # Precomputed deterministic random seeds for 128 hash permutations
-_PERM_A = [(i * 10007 + 34229) & 0xFFFFFFFF for i in range(MINHASH_NUM_PERM)]
-_PERM_B = [(i * 49999 + 88123) & 0xFFFFFFFF for i in range(MINHASH_NUM_PERM)]
+_PERM_A = [(i * 10007 + 34229) & 0xFFFFFFFF for i in range(settings.MINHASH_NUM_PERM)]
+_PERM_B = [(i * 49999 + 88123) & 0xFFFFFFFF for i in range(settings.MINHASH_NUM_PERM)]
 _PRIME = 4294967311  # 2^32 + 15 (large 32-bit prime)
 
 
@@ -26,9 +26,9 @@ class MinHashLSH:
 
     def __init__(
         self,
-        num_perm: int = MINHASH_NUM_PERM,
-        threshold: float = MINHASH_THRESHOLD,
-        shingle_size: int = MINHASH_SHINGLE_SIZE,
+        num_perm: int = settings.MINHASH_NUM_PERM,
+        threshold: float = settings.MINHASH_THRESHOLD,
+        shingle_size: int = settings.MINHASH_SHINGLE_SIZE,
     ):
         self.num_perm = num_perm
         self.threshold = threshold

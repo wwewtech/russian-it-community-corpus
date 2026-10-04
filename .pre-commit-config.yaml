@@ -1,22 +1,81 @@
-# Pre-commit hooks: run `pip install pre-commit && pre-commit install`
-# once per clone; hooks then run automatically on every `git commit`.
-# See https://pre-commit.com for usage and customization.
-repos:
-  # Basic safety checks (huge files, merge conflict markers, broken symlinks)
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-added-large-files
-        args: ["--maxkb=2048"]
-      - id: check-merge-conflict
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
+# .pre-commit-config.yaml
+# Mirrors CI exactly: ruff==0.16.2, black, mypy==2.3.1
+# Run: pre-commit install && pre-commit run --all-files
 
-  # Ruff linting — same version as pinned in .github/workflows/ci.yml
+repos:
+  # Ruff - fast Python linter & formatter (replaces flake8, isort, pyupgrade, black)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.2
     hooks:
       - id: ruff
-        args: [--fix]
+        name: Ruff Lint
+        args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
+        name: Ruff Format
+
+  # Black - code formatter (backup, ruff-format is primary)
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        name: Black Format (fallback)
+        language_version: python3.12
+        args: [--check]
+
+  # MyPy - static type checker
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.1
+    hooks:
+      - id: mypy
+        name: MyPy Typecheck
+        additional_dependencies:
+          - pydantic>=2.5.0
+          - pandas>=2.2.0
+          - pyarrow>=15.0.0
+          - torch>=2.2.0
+          - transformers>=4.40.0
+          - datasets>=2.18.0
+          - evaluate>=0.4.0
+          - peft>=0.10.0
+          - trl>=0.8.0
+          - accelerate>=0.28.0
+          - scikit-learn>=1.4.0
+          - natasha>=1.6.0
+          - slovnet>=0.6.0
+          - razdel>=0.5.0
+          - yargy>=0.16.0
+          - pymorphy3>=2.0.2
+          - tiktoken>=0.7.0
+          - xxhash>=3.4.0
+          - ujson>=5.9.0
+          - tqdm>=4.66.0
+          - streamlit>=1.32.0
+          - rich>=13.7.0
+        args: [--strict, src/config.py, src/bootstrap.py, src/ingestion/schema.py, src/ingestion/loader.py, src/analytics/metrics.py, src/analytics/network.py, src/analytics/report_generator.py, src/analytics/engine.py, src/taxonomy/classifier.py, src/taxonomy/tagger.py, src/deduplication/exact_dedup.py, src/deduplication/minhash_lsh.py, src/monitoring/drift.py, src/monitoring/sft_quality.py, src/monitoring/slo_gate.py, src/rag/rag_pipeline.py, src/rag/__init__.py, src/evaluation/__init__.py, src/evaluation/statistical_power.py, src/evaluation/benchmark_comparator.py, src/lora/__init__.py, src/graph/__init__.py, src/validation/artifact_manifest.py, src/validation/hub_reconciliation.py, src/validation/validator.py, src/pii/regex_scrubber.py, src/pii/ner_scrubber.py, src/pii/deep_anonymizer.py, src/inference.py, src/pipeline.py, src/exporter/finalize_sync_all.py]
+        verbose: true
+
+  # Check for merge conflicts
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Validate pyproject.toml
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-toml
+
+ci:
+  autofix_commit_msg: |
+    [pre-commit] Auto fixes from ruff
+
+  # Skip on CI if already run locally (speed up)
+  skip: [mypy]
