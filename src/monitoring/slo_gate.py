@@ -93,7 +93,11 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
         checks.append(Check("pipeline-volume", n > 0, f"cleaned={n}"))
 
     # Provenance gate: artifact identity must be verified against the manifest snapshot.
-    # Fail-open with warning if canonical artifacts don't exist (e.g., CI synthetic environment).
+    # Fail-closed for provenance: missing manifest → HOLD.
+    # Exception: CI synthetic environment (no artifacts, no manifest) → skip with warning.
+    import os
+
+    is_ci = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI") == "true"
     canonical_artifacts_exist = all(
         (reports_dir.parent / p).exists()
         for p in (
@@ -102,13 +106,19 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
             "dataset_output/parquet/rag_knowledge_base.parquet",
         )
     )
-    if not canonical_artifacts_exist:
+    manifest_path = reports_dir / "dataset_manifest.json"
+
+    if not canonical_artifacts_exist and is_ci:
+        # CI synthetic environment: no artifacts, no manifest expected
         checks.append(Check("artifact-manifest", True, "canonical artifacts missing — skip (CI)"))
+    elif not manifest_path.exists():
+        # Fail-closed: artifacts exist (or not CI) but manifest missing
+        checks.append(Check("artifact-manifest", False, "dataset_manifest.json missing — fail-closed"))
     else:
         try:
             from src.validation.artifact_manifest import verify_manifest
 
-            verify_manifest(reports_dir.parent, reports_dir / "dataset_manifest.json")
+            verify_manifest(reports_dir.parent, manifest_path)
             checks.append(Check("artifact-manifest", True, "dataset_manifest.json verified"))
         except Exception as exc:  # noqa: BLE001 - fail-closed on any provenance failure
             reason = str(exc) or type(exc).__name__
