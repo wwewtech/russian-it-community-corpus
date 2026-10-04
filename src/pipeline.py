@@ -9,7 +9,6 @@ from typing import Any, cast
 
 from src.analytics.engine import DeepChatAnalyzer, FullAnalysisReport
 from src.analytics.report_generator import ReportGenerator
-from src.settings import settings
 from src.deduplication.exact_dedup import ExactDeduplicator
 from src.deduplication.minhash_lsh import MinHashLSH
 from src.exporter.dpo_exporter import DPOExporter
@@ -21,15 +20,12 @@ from src.graph.thread_builder import ThreadDAGBuilder
 from src.ingestion.loader import merge_multiple_exports
 from src.ingestion.schema import CleanedMessage, NormalizedMessage, RAGChunk, SFTDialogue
 from src.observability import (
-    PIPELINE_MESSAGES_PROCESSED,
-    PIPELINE_STAGE_DURATION,
-    PIPELINE_STAGE_TOTAL,
-    get_logger,
     pipeline_logger,
     record_stage_messages,
     time_stage,
 )
 from src.pii.anonymizer import UnifiedPIIAnonymizer
+from src.settings import settings
 from src.taxonomy.tagger import TechnicalTagger
 from src.validation.benchmark import BenchmarkRunner
 from src.validation.validator import DatasetValidator

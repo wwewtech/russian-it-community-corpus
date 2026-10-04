@@ -56,7 +56,7 @@ custom = Settings(
     pii_audit=Settings.PIIAuditSettings(
         sample_size=100000,
         confidence=0.995,
-    )
+    ),
 )
 ```
 
@@ -94,6 +94,7 @@ from ricc import settings, get_settings
 # Global instance
 print(settings.BASE_DIR)
 print(settings.DOMAIN_TAXONOMY)
+
 
 # Dependency injection friendly
 def my_func(settings: Settings = get_settings()):

@@ -112,7 +112,7 @@ def task_probabilistic_pii_audit(
         from src.settings import settings
         from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
 
-        path = Path(parquet_path) if parquet_path else PARQUET_settings.OUTPUT_DIR / "full_clean_messages.parquet"
+        path = Path(parquet_path) if parquet_path else settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
         report = ProbabilisticPIIAuditor(path).run_audit(sample_size=sample_size)
         out = Path(report_path) if report_path else settings.REPORTS_DIR / "probabilistic_pii_audit.json"
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -141,11 +141,11 @@ def task_drift_monitoring(
     try:
         import pandas as pd
 
-        from src.settings import settings
         from src.monitoring.drift import DatasetDriftMonitor
+        from src.settings import settings
 
-        ref = Path(reference_path) if reference_path else PARQUET_settings.OUTPUT_DIR / "full_clean_messages.parquet"
-        cur = Path(current_path) if current_path else PARQUET_settings.OUTPUT_DIR / "full_clean_messages.parquet"
+        ref = Path(reference_path) if reference_path else settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
+        cur = Path(current_path) if current_path else settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
         if not ref.exists() or not cur.exists():
             return {
                 "task": "drift-monitoring",

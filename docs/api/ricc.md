@@ -2,6 +2,7 @@
 
 ```python
 import ricc
+
 print(ricc.__version__)  # "12.0.4"
 ```
 
@@ -125,10 +126,12 @@ All exceptions include:
 ```python
 from ricc import Result, Ok, Err
 
+
 def risky_operation() -> Result[str, ValidationError]:
     if not valid:
         return Err(ValidationError("invalid input"))
     return Ok("success")
+
 
 result = risky_operation()
 if result.is_ok:

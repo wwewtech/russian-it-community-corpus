@@ -12,18 +12,18 @@ from __future__ import annotations
 import logging
 import sys
 import time
+from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, Generator, Iterable, Optional, Union
+from typing import Any
 
 import structlog
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
-from structlog.processors import JSONRenderer
-from structlog.dev import ConsoleRenderer
 
 # =============================================================================
 # Structlog Configuration
 # =============================================================================
+
 
 def configure_logging(
     json_output: bool = True,
@@ -45,11 +45,7 @@ def configure_logging(
         structlog.dev.set_exc_info,
     ]
 
-    renderer: Union[JSONRenderer, ConsoleRenderer]
-    if json_output:
-        renderer = structlog.processors.JSONRenderer()
-    else:
-        renderer = structlog.dev.ConsoleRenderer(colors=True)
+    renderer = structlog.processors.JSONRenderer() if json_output else structlog.dev.ConsoleRenderer(colors=True)
 
     processors: Iterable[Any] = shared_processors
     if timestamper:
@@ -227,6 +223,7 @@ ERRORS_TOTAL = Counter(
 # Metric Helpers
 # =============================================================================
 
+
 @contextmanager
 def time_stage(stage: str) -> Generator[None, None, None]:
     """Context manager to time a pipeline stage and record metrics."""
@@ -277,20 +274,25 @@ def start_metrics_server(port: int = 9090) -> None:
 # Decorators
 # =============================================================================
 
+
 def timed_stage(stage: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to time a function as a pipeline stage."""
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             with time_stage(stage):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 # =============================================================================
 # Logging Helpers
 # =============================================================================
+
 
 class PipelineLogger:
     """Convenience logger for pipeline stages with automatic context."""

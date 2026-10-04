@@ -42,8 +42,8 @@ from src.analytics.metrics import (
     compute_shannon_entropy,
 )
 from src.analytics.network import SocialNetworkAnalyzer
-from src.settings import settings
 from src.ingestion.schema import CleanedMessage
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 

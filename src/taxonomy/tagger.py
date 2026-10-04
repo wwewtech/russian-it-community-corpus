@@ -14,8 +14,8 @@ try:
 except ImportError:
     HAS_AHO = False
 
-from src.settings import settings
 from src.ingestion.schema import CleanedMessage
+from src.settings import settings
 from src.taxonomy.classifier import DomainClassifier
 
 logger = logging.getLogger(__name__)

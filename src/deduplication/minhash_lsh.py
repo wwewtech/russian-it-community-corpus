@@ -8,8 +8,8 @@ import re
 import xxhash
 from tqdm import tqdm
 
-from src.settings import settings
 from src.ingestion.schema import CleanedMessage
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 

@@ -7,13 +7,14 @@ monitoring, and error handling across the platform.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Union
-
+from typing import Any
 
 # =============================================================================
 # Base Exception Classes
 # =============================================================================
+
 
 class RICCError(Exception):
     """Base exception for all RICC platform errors."""
@@ -44,6 +45,7 @@ class RICCError(Exception):
 # =============================================================================
 # Pipeline Errors
 # =============================================================================
+
 
 class PipelineError(RICCError):
     """Base error for pipeline execution failures."""
@@ -114,6 +116,7 @@ class AnalyticsError(PipelineError):
 # Validation Errors
 # =============================================================================
 
+
 class ValidationError(RICCError):
     """Base error for validation failures."""
 
@@ -170,9 +173,7 @@ class ParquetValidationError(ValidationError):
 class SLOValidationError(ValidationError):
     """SLO gate check failed."""
 
-    def __init__(
-        self, message: str, failed_checks: list[str] | None = None, **kwargs: Any
-    ) -> None:
+    def __init__(self, message: str, failed_checks: list[str] | None = None, **kwargs: Any) -> None:
         super().__init__(message, check="slo_gate", **kwargs)
         if failed_checks:
             self.context["failed_checks"] = failed_checks
@@ -181,6 +182,7 @@ class SLOValidationError(ValidationError):
 # =============================================================================
 # Data Quality Errors
 # =============================================================================
+
 
 class DataQualityError(RICCError):
     """Base error for data quality issues."""
@@ -259,6 +261,7 @@ class HubReconciliationError(DataQualityError):
 # Configuration Errors
 # =============================================================================
 
+
 class ConfigurationError(RICCError):
     """Configuration loading or validation error."""
 
@@ -285,6 +288,7 @@ class MissingDependencyError(ConfigurationError):
 # =============================================================================
 # External Service Errors
 # =============================================================================
+
 
 class ExternalServiceError(RICCError):
     """Error interacting with external services (HF Hub, cloud providers, etc.)."""
@@ -326,6 +330,7 @@ class PrefectError(ExternalServiceError):
 # =============================================================================
 # Resource Errors
 # =============================================================================
+
 
 class ResourceError(RICCError):
     """Resource exhaustion or availability error."""
@@ -408,10 +413,10 @@ class Result:
     """
 
     _value: Any
-    _error: Optional[Exception]
+    _error: Exception | None
     _is_ok: bool
 
-    def __init__(self, value: Any = None, error: Optional[Exception] = None) -> None:
+    def __init__(self, value: Any = None, error: Exception | None = None) -> None:
         if error is not None and value is not None:
             raise ValueError("Result cannot have both value and error")
         if error is None and value is None:
@@ -435,7 +440,7 @@ class Result:
         return self._value
 
     @property
-    def error(self) -> Optional[Exception]:
+    def error(self) -> Exception | None:
         if self._is_ok:
             return None
         return self._error
@@ -453,7 +458,7 @@ class Result:
         """Return value or default if error."""
         return self._value if self._is_ok else default
 
-    def map(self, func: Callable[[Any], Any]) -> "Result":
+    def map(self, func: Callable[[Any], Any]) -> Result:
         """Transform the value if Ok, pass through Err."""
         if self._is_ok:
             try:
@@ -462,7 +467,7 @@ class Result:
                 return Result(error=e)
         return Result(error=self._error)
 
-    def map_err(self, func: Callable[[Exception], Exception]) -> "Result":
+    def map_err(self, func: Callable[[Exception], Exception]) -> Result:
         """Transform the error if Err, pass through Ok."""
         if not self._is_ok:
             # At this point we know self._error is not None
