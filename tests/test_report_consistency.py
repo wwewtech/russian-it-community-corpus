@@ -462,21 +462,6 @@ def verify_local_registry_and_summary(registry: dict, summary_text: str, lora_di
 # --------------------------------------------------------------------------- #
 
 
-def _has_real_artifacts() -> bool:
-    """Check if real pipeline artifacts exist (not synthetic test data)."""
-    repo_root = Path(__file__).resolve().parent.parent
-    stats_path = repo_root / "reports" / "pipeline_execution_stats.json"
-    if not stats_path.exists():
-        return False
-    try:
-        with stats_path.open(encoding="utf-8") as f:
-            stats = json.load(f)
-        # Real data has ~2.8M messages, synthetic has 1
-        return stats.get("cleaned_messages_count", 0) > 1000
-    except Exception:
-        return False
-
-
 skip_without_real_artifacts = unittest.skipIf(
     not _has_real_artifacts(),
     "Real pipeline artifacts not available (CI uses synthetic data)",
