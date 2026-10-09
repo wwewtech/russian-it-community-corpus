@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from src.pipeline import MasterDataPipeline
+from src.settings import settings
 
 
 def _build_synthetic_chat_export(root: Path) -> Path:
@@ -107,6 +108,20 @@ class TestMasterDataPipelineRunAll(unittest.TestCase):
             patch("src.pipeline.SAMPLES_OUTPUT_DIR", self.data_dir / "samples"),
             patch("src.pipeline.OUTPUT_DIR", self.data_dir),
             patch("src.pipeline.REPORTS_DIR", self.tmpdir / "reports"),
+            # run_all() writes validation_results.json,
+            # pipeline_execution_stats.json and the sample previews through
+            # the settings singleton (settings.REPORTS_DIR /
+            # settings.SAMPLES_OUTPUT_DIR properties read these lowercase
+            # fields), NOT through the module-level constants patched above.
+            # Without redirecting the fields too, this test overwrites the
+            # committed reports/ with fixture values (cleaned=1) and any
+            # later test in the same session (e.g. test_report_consistency)
+            # fails against the real docs — that is exactly how CI broke.
+            patch.object(settings, "reports_dir", self.tmpdir / "reports"),
+            patch.object(settings, "samples_output_dir", self.data_dir / "samples"),
+            patch.object(settings, "output_dir", self.data_dir),
+            patch.object(settings, "parquet_output_dir", self.data_dir / "parquet"),
+            patch.object(settings, "jsonl_output_dir", self.data_dir / "jsonl"),
         ]
         for p in self.patches:
             p.start()
