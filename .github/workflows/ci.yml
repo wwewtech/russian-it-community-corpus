@@ -159,6 +159,7 @@ jobs:
               'pii_stats': {},
               'validation_passed': True,
               '_note': 'Auto-refreshed in CI from the active parquet trio so downstream assertions use the same volume.',
+              '_source': {'synthetic': False, 'generator': 'ci refresh step'},
           }
           Path('reports/pipeline_execution_stats.json').write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding='utf-8')
           print('stats refreshed:', stats)
