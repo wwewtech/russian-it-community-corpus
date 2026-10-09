@@ -70,12 +70,12 @@ class RegexPIIScrubber:
         # 8. Source Community Names Redaction Pattern.
         # The previous regex only matched the original 9 hand-picked channel
         # names — any new community that appeared in the source data would
-        # leak through untouched. We now anchor on two patterns:
-        #   (a) the original explicit names (kept for backward compatibility)
-        #   (b) any channel / supergroup title that looks like a Russian IT
-        #       media handle, plus Telegram-specific chat / channel suffixes.
-        # Strict redaction (not a "whitelist") — every match becomes
-        # `[COMMUNITY_REDACTED]` so downstream consumers never see the raw name.
+        # leak through untouched. We anchor on the explicit seed list of
+        # known source titles only. A generic catch-all (e.g. "<words> chat")
+        # is intentionally NOT used: it false-positives on ordinary technical
+        # prose ("qwen chat", "starting a youtube channel", "deepseek web chat")
+        # and turns the validator into noise. New source communities must be
+        # added to the seed list explicitly (fail-closed by review, not by regex).
         self.community_names_pattern = re.compile(
             r"(?i)\b(?:"
             # Original seed list (kept for exact-string compatibility)
@@ -85,11 +85,7 @@ class RegexPIIScrubber:
             r"русский\s+ит\s+бизнес|"
             r"полезная\s+нагрузка|"
             r"forgetme\s*\|\s*comms|"
-            r"внутри\s+ai|"
-            # Heuristic catch-all: title-like name + chat/channel suffix
-            # e.g. "Backend Podcast Chat", "Python Digest", "AI Talks Channel"
-            r"[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9 _\-]{2,40}?"
-            r"(?:\s+(?:chat|channel|chatgpt|комментарии|обсуждение|диалоги|notes|podcast|digest|feed))"
+            r"внутри\s+ai"
             r")\b"
         )
 

@@ -1,4 +1,4 @@
-.PHONY: all install run analyze validate benchmark audit audit-prob drift slo orchestrate dvc-repro test coverage lint format typecheck typecheck-strict ui docker-build docker-up k8s-dry-run clean help
+.PHONY: all install run analyze validate benchmark audit audit-prob drift slo orchestrate dvc-repro test coverage lint format typecheck typecheck-strict ui docker-build docker-up k8s-dry-run clean help reports-real help
 
 help:
 	@echo "Russian IT Community Data Platform — Command Shortcuts:"
@@ -83,6 +83,10 @@ typecheck-strict:
 # Markdown model zoo catalog is generated from local & hub models.
 reports:
 	python scripts/regenerate_model_catalog.py
+
+# JSON reports regenerated from REAL local parquet (no synthetic markers).
+reports-real:
+	python scripts/regenerate_real_reports.py --sample 10000 --drift-sample 50000
 
 ui:
 	streamlit run app.py

@@ -68,5 +68,13 @@
       "rougeL": 0.3875,
       "rougeLsum": 0.3875
     }
+  },
+  "raw_outputs_sha256": "74f873ae0a35f7c353028bee8e0d104437c08a1f3d6946b087f9dcf948675dee",
+  "generated_at_utc": "2026-09-17T13:16:34+00:00",
+  "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
+  "adapter_id": "qwen2.5_1.5b_instruct",
+  "_source": {
+    "synthetic": false,
+    "note": "generated_at_utc = max raw_outputs timestamp; raw_outputs_sha256 pins the raw log"
   }
 }

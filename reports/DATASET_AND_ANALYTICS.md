@@ -131,7 +131,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 | **Estimated BPE Tokens** | `49,085,532` | BPE token count approximation (~49.09M tokens) |
 | **SFT Dialogues** | `171,520` | Multi-turn threads scored for technical depth ($\ge 3.0$) |
 | **RAG Knowledge Chunks** | `325,690` | Cohesive problem-solving context blocks |
-| **DPO Preference Pairs** | `60,899` | Pairs with chosen answers and heuristic negative baselines |
+| **DPO Preference Pairs** | `57,501` | Pairs with chosen answers and heuristic negative baselines |
 
 ---
 

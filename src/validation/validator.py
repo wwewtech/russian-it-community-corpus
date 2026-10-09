@@ -23,12 +23,12 @@ class DatasetValidator:
         self.dataset_dir = Path(dataset_dir)
         self.regex_scrubber = RegexPIIScrubber()
 
-    def validate_all(self) -> dict[str, Any]:
+    def validate_all(self, sample_lines: int = 10000) -> dict[str, Any]:
         """Run all validation checks and return test results dictionary."""
         results = {
             "parquet_files": self.validate_parquet_files(),
             "jsonl_files": self.validate_jsonl_files(),
-            "pii_leakage_audit": self.audit_pii_leakage(),
+            "pii_leakage_audit": self.audit_pii_leakage(sample_lines=sample_lines),
             "sft_turn_conformance": self.validate_sft_turn_structures(),
         }
 

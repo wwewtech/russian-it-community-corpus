@@ -11,6 +11,7 @@ GPU re-evaluation due to earlier answer-parsing and column-mapping defects.
 """
 
 import argparse
+import hashlib
 import json
 import logging
 import math
@@ -18,6 +19,7 @@ import re
 import subprocess
 import sys
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -1495,6 +1497,13 @@ def run_official_academic_benchmarks(
         },
         "perplexity": {"base": base_ppl, "lora": lora_ppl},
         "rouge": {"base": base_rouge, "lora": lora_rouge},
+        # Provenance: every number above must be recomputable from the raw
+        # generation logs; the sha256 pins the exact log this matrix was
+        # derived from (verified by tests/test_academic_benchmark_matrix_consistency.py).
+        "raw_outputs_sha256": hashlib.sha256(raw_outputs_path.read_bytes()).hexdigest(),
+        "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "model_name": model_name,
+        "adapter_id": adapter_id,
     }
     output_json = Path("reports/academic_scientific_benchmarks_matrix.json")
     with open(output_json, "w", encoding="utf-8") as f:

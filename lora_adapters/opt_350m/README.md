@@ -3,205 +3,82 @@ base_model: facebook/opt-350m
 library_name: peft
 pipeline_tag: text-generation
 tags:
-- base_model:adapter:facebook/opt-350m
 - lora
-- transformers
+- peft
+- russian
+- ru
 ---
 
-# Model Card for Model ID
+# opt_350m
 
-<!-- Provide a quick summary of what the model is/does. -->
-
-
+Domain-adaptation LoRA adapter for `facebook/opt-350m`, part of the Russian IT
+Community Corpus (RICC) LoRA Zoo.
 
 ## Model Details
 
-### Model Description
+- **Developed by:** wwewtech (Russian IT Community Corpus project)
+- **Model type:** LORA adapter (rank r=8, alpha=16, dropout=0.05), task type `CAUSAL_LM`
+- **Target modules:** v_proj, c_attn, k_proj, q_proj, out_proj, fc2, fc1, c_proj
+- **Adapter weights:** 13.54 MB, sha256 `434c43b416cb7a3c52fb94ef39f352dfc67a29e09358c2bd6e91f35306a90e1e`
+- **Language(s) (NLP):** Russian (ru), English technical terms
+- **License:** MIT (repository license, see `LICENSE`); the base model retains its own license
+- **Finetuned from model:** `facebook/opt-350m`
 
-<!-- Provide a longer summary of what this model is. -->
+### Model Sources
 
-
-
-- **Developed by:** [More Information Needed]
-- **Funded by [optional]:** [More Information Needed]
-- **Shared by [optional]:** [More Information Needed]
-- **Model type:** [More Information Needed]
-- **Language(s) (NLP):** [More Information Needed]
-- **License:** [More Information Needed]
-- **Finetuned from model [optional]:** [More Information Needed]
-
-### Model Sources [optional]
-
-<!-- Provide the basic links for the model. -->
-
-- **Repository:** [More Information Needed]
-- **Paper [optional]:** [More Information Needed]
-- **Demo [optional]:** [More Information Needed]
+- **Repository (adapter):** https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_350m
+- **Repository (code & pipeline):** https://github.com/wwewtech/russian-it-community-corpus
+- **Training corpus:** https://huggingface.co/datasets/wwewtech/russian-it-community-corpus
 
 ## Uses
 
-<!-- Address questions around how the model is intended to be used, including the foreseeable users of the model and those affected by the model. -->
-
 ### Direct Use
 
-<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->
+Fine-tuned variant of `facebook/opt-350m` for Russian-language IT discourse
+(backend, DevOps, AI/ML, infrastructure). Load with PEFT against the same
+base model:
 
-[More Information Needed]
+```python
+from peft import PeftModel
 
-### Downstream Use [optional]
-
-<!-- This section is for the model use when fine-tuned for a task, or when plugged into a larger ecosystem/app -->
-
-[More Information Needed]
+model = PeftModel.from_pretrained(base_model, "lora_adapters/opt_350m/")
+```
 
 ### Out-of-Scope Use
 
-<!-- This section addresses misuse, malicious use, and uses that the model will not work well for. -->
+- Not a general assistant: capability scores are **not published** (see
+  benchmark retraction notice in the repository `README.md`).
+- Not validated for safety-critical or legally binding advice.
 
-[More Information Needed]
+## Bias, Risks and Limitations
 
-## Bias, Risks, and Limitations
-
-<!-- This section is meant to convey both technical and sociotechnical limitations. -->
-
-[More Information Needed]
-
-### Recommendations
-
-<!-- This section is meant to convey recommendations with respect to the bias, risk, and technical limitations. -->
-
-Users (both direct and downstream) should be made aware of the risks, biases and limitations of the model. More information needed for further recommendations.
-
-## How to Get Started with the Model
-
-Use the code below to get started with the model.
-
-[More Information Needed]
+- Training data is de-identified community chat: heuristic + probabilistic
+  PII audit with a documented statistical upper bound (see
+  `reports/probabilistic_pii_audit.json`), not a zero-leak guarantee.
+- Chat-derived content may contain outdated or opinionated technical advice.
+- Notice and takedown: see `DATASET_TERMS.md`.
 
 ## Training Details
 
-### Training Data
-
-<!-- This should link to a Dataset Card, perhaps with a short stub of information on what the training data is all about as well as documentation related to data pre-processing or additional filtering. -->
-
-[More Information Needed]
-
-### Training Procedure
-
-<!-- This relates heavily to the Technical Specifications. Content here should link to that section when it is relevant to the training procedure. -->
-
-#### Preprocessing [optional]
-
-[More Information Needed]
-
-
-#### Training Hyperparameters
-
-- **Training regime:** [More Information Needed] <!--fp32, fp16 mixed precision, bf16 mixed precision, bf16 non-mixed precision, fp16 non-mixed precision, fp8 mixed precision -->
-
-#### Speeds, Sizes, Times [optional]
-
-<!-- This section provides information about throughput, start/end time, checkpoint size if relevant, etc. -->
-
-[More Information Needed]
+- **Training data:** RICC SFT dialogues (171,520 curated multi-turn dialogues).
+- **Training regime:** pilot domain-adaptation checkpoint — 50-100 training
+  steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),
+  **not** multi-epoch training over the whole corpus.
+- **Framework:** PEFT 0.20.0 (see `adapter_config.json` in this directory).
 
 ## Evaluation
 
-<!-- This section describes the evaluation protocols and provides the results. -->
+No benchmark scores are claimed for this adapter. Published academic
+benchmark numbers were retracted (answer-parsing and column-mapping defects);
+see the retraction notice in `README.md` before citing any evaluation figures.
 
-### Testing Data, Factors & Metrics
+## Citation
 
-#### Testing Data
-
-<!-- This should link to a Dataset Card if possible. -->
-
-[More Information Needed]
-
-#### Factors
-
-<!-- These are the things the evaluation is disaggregating by, e.g., subpopulations or domains. -->
-
-[More Information Needed]
-
-#### Metrics
-
-<!-- These are the evaluation metrics being used, ideally with a description of why. -->
-
-[More Information Needed]
-
-### Results
-
-[More Information Needed]
-
-#### Summary
-
-
-
-## Model Examination [optional]
-
-<!-- Relevant interpretability work for the model goes here -->
-
-[More Information Needed]
-
-## Environmental Impact
-
-<!-- Total emissions (in grams of CO2eq) and additional considerations, such as electricity usage, go here. Edit the suggested text below accordingly -->
-
-Carbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).
-
-- **Hardware Type:** [More Information Needed]
-- **Hours used:** [More Information Needed]
-- **Cloud Provider:** [More Information Needed]
-- **Compute Region:** [More Information Needed]
-- **Carbon Emitted:** [More Information Needed]
-
-## Technical Specifications [optional]
-
-### Model Architecture and Objective
-
-[More Information Needed]
-
-### Compute Infrastructure
-
-[More Information Needed]
-
-#### Hardware
-
-[More Information Needed]
-
-#### Software
-
-[More Information Needed]
-
-## Citation [optional]
-
-<!-- If there is a paper or blog post introducing the model, the APA and Bibtex information for that should go in this section. -->
-
-**BibTeX:**
-
-[More Information Needed]
-
-**APA:**
-
-[More Information Needed]
-
-## Glossary [optional]
-
-<!-- If relevant, include terms and calculations in this section that can help readers understand the model or model card. -->
-
-[More Information Needed]
-
-## More Information [optional]
-
-[More Information Needed]
-
-## Model Card Authors [optional]
-
-[More Information Needed]
-
-## Model Card Contact
-
-[More Information Needed]
-### Framework versions
-
-- PEFT 0.20.0
+```bibtex
+@misc{ricc2026,
+  author = {Russian IT Community Open Research Group},
+  title = {RICC: Russian IT Community Corpus},
+  year = {2026},
+  howpublished = {\url{https://github.com/wwewtech/russian-it-community-corpus}}
+}
+```

@@ -161,7 +161,8 @@ def _validate(value: Any) -> Manifest:
             raise ManifestError("Invalid manifest structure or unsupported schema")
 
     require(isinstance(value, dict))
-    require(set(value) == {"schema_version", "created_at", "provenance", "artifacts"})
+    allowed_top = {"schema_version", "created_at", "provenance", "artifacts", "_source"}
+    require(set(value) <= allowed_top and {"schema_version", "created_at", "provenance", "artifacts"} <= set(value))
     require(type(value["schema_version"]) is int and value["schema_version"] == SCHEMA_VERSION)
     require(value["provenance"] == PROVENANCE)
     require(isinstance(value["created_at"], str))

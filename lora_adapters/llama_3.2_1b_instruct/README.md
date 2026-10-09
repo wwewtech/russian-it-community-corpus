@@ -1,28 +1,84 @@
-# Russian IT Community Corpus — LoRA Adapter
-## Base Model: `unsloth/Llama-3.2-1B-Instruct` (Llama 3.2 · 1.0B)
+---
+base_model: unsloth/Llama-3.2-1B-Instruct
+library_name: peft
+pipeline_tag: text-generation
+tags:
+- lora
+- peft
+- russian
+- ru
+---
 
-This LoRA adapter is fine-tuned on the **RICC (Russian IT Community Corpus)** dataset (2.91M messages, 171k multi-turn dialogues) across 11 developer communities.
+# llama_3.2_1b_instruct
 
-### Usage in Python
+Domain-adaptation LoRA adapter for `unsloth/Llama-3.2-1B-Instruct`, part of the Russian IT
+Community Corpus (RICC) LoRA Zoo.
+
+## Model Details
+
+- **Developed by:** wwewtech (Russian IT Community Corpus project)
+- **Model type:** LORA adapter (rank r=16, alpha=32, dropout=0.05), task type `CAUSAL_LM`
+- **Target modules:** o_proj, q_proj, v_proj, k_proj
+- **Adapter weights:** 13.02 MB, sha256 `fc1b0a3ad10045b393a7a9bfcf96f1777d44c5394ed0dd2d0c023e218acebc80`
+- **Language(s) (NLP):** Russian (ru), English technical terms
+- **License:** MIT (repository license, see `LICENSE`); the base model retains its own license
+- **Finetuned from model:** `unsloth/Llama-3.2-1B-Instruct`
+
+### Model Sources
+
+- **Repository (adapter):** https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/llama_3.2_1b_instruct
+- **Repository (code & pipeline):** https://github.com/wwewtech/russian-it-community-corpus
+- **Training corpus:** https://huggingface.co/datasets/wwewtech/russian-it-community-corpus
+
+## Uses
+
+### Direct Use
+
+Fine-tuned variant of `unsloth/Llama-3.2-1B-Instruct` for Russian-language IT discourse
+(backend, DevOps, AI/ML, infrastructure). Load with PEFT against the same
+base model:
 
 ```python
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
-base_model_name = "unsloth/Llama-3.2-1B-Instruct"
-adapter_path = "lora_adapters/llama_3.2_1b_instruct"
+model = PeftModel.from_pretrained(base_model, "lora_adapters/llama_3.2_1b_instruct/")
+```
 
-tokenizer = AutoTokenizer.from_pretrained(adapter_path)
-model = AutoModelForCausalLM.from_pretrained(base_model_name, torch_dtype=torch.float16, device_map="auto")
-model = PeftModel.from_pretrained(model, adapter_path)
+### Out-of-Scope Use
 
-prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket и SSL в Docker?"
-messages = [{"role": "user", "content": prompt}]
-input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-inputs = tokenizer(input_text, return_tensors="pt").to("cuda")
+- Not a general assistant: capability scores are **not published** (see
+  benchmark retraction notice in the repository `README.md`).
+- Not validated for safety-critical or legally binding advice.
 
-with torch.no_grad():
-    outputs = model.generate(**inputs, max_new_tokens=256, temperature=0.7)
-print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+## Bias, Risks and Limitations
+
+- Training data is de-identified community chat: heuristic + probabilistic
+  PII audit with a documented statistical upper bound (see
+  `reports/probabilistic_pii_audit.json`), not a zero-leak guarantee.
+- Chat-derived content may contain outdated or opinionated technical advice.
+- Notice and takedown: see `DATASET_TERMS.md`.
+
+## Training Details
+
+- **Training data:** RICC SFT dialogues (171,520 curated multi-turn dialogues).
+- **Training regime:** pilot domain-adaptation checkpoint — 50-100 training
+  steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),
+  **not** multi-epoch training over the whole corpus.
+- **Framework:** PEFT 0.20.0 (see `adapter_config.json` in this directory).
+
+## Evaluation
+
+No benchmark scores are claimed for this adapter. Published academic
+benchmark numbers were retracted (answer-parsing and column-mapping defects);
+see the retraction notice in `README.md` before citing any evaluation figures.
+
+## Citation
+
+```bibtex
+@misc{ricc2026,
+  author = {Russian IT Community Open Research Group},
+  title = {RICC: Russian IT Community Corpus},
+  year = {2026},
+  howpublished = {\url{https://github.com/wwewtech/russian-it-community-corpus}}
+}
 ```

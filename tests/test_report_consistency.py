@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import copy
 import json
-import os
 import re
 import unittest
 from pathlib import Path
@@ -31,18 +30,20 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _has_real_artifacts() -> bool:
-    """Check if real pipeline artifacts exist (not synthetic test data)."""
-    # Skip in CI environments where real artifacts exist but synthetic test data is used
-    if os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI") == "true":
-        return False
+    """Check if real pipeline artifacts exist (not synthetic test data).
+
+    Real data has ~2.8M messages (cleaned_messages_count > 1_000_000).
+    Synthetic CI fixtures have 100 rows. No environment sniffing: CI must
+    exercise the same assertions as local runs, otherwise the gate is blind.
+    """
     stats_path = REPO_ROOT / "reports" / "pipeline_execution_stats.json"
     if not stats_path.exists():
         return False
     try:
         with stats_path.open(encoding="utf-8") as f:
             stats = json.load(f)
-        # Real data has ~2.8M messages, synthetic has 1
-        return stats.get("cleaned_messages_count", 0) > 1000
+        # Real data has ~2.8M messages, synthetic CI fixtures have ~100 rows.
+        return stats.get("cleaned_messages_count", 0) > 1_000_000
     except Exception:
         return False
 
@@ -695,6 +696,37 @@ class TestReportConsistency(unittest.TestCase):
                 self.benchmark_eval,
             )
         self.assertIn("Benchmark section withdrawn from README", str(ctx.exception))
+
+
+class TestAdapterCards(unittest.TestCase):
+    """Adapter cards must be complete and derived from registry.json."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = json.loads((REPO_ROOT / "lora_adapters" / "registry.json").read_text(encoding="utf-8"))
+        cls.card_paths = sorted(REPO_ROOT.glob("lora_adapters/*/README.md"))
+
+    def test_no_placeholder_cards_remain(self):
+        """No card may ship with '[More Information Needed]' placeholders."""
+        offenders = [
+            str(p.relative_to(REPO_ROOT))
+            for p in self.card_paths
+            if "[More Information Needed]" in p.read_text(encoding="utf-8")
+        ]
+        self.assertEqual(offenders, [], f"placeholder model cards: {offenders}")
+
+    def test_card_sha256_matches_registry(self):
+        """The sha256 printed on each card must be the registry's sha256."""
+        by_slug = {e["slug"]: e for e in self.registry["adapters"]}
+        checked = 0
+        for path in self.card_paths:
+            entry = by_slug.get(path.parent.name)
+            if entry is None or not entry.get("safetensors_sha256"):
+                continue
+            text = path.read_text(encoding="utf-8")
+            self.assertIn(entry["safetensors_sha256"], text, f"{path.parent.name}: registry sha256 missing in card")
+            checked += 1
+        self.assertGreater(checked, 0, "no cards with sha256 were checked")
 
 
 if __name__ == "__main__":

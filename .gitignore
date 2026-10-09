@@ -77,3 +77,9 @@ pytest_output.txt
 pytest_full_output.txt
 pytest_*.txt
 .coverage.json
+
+# Local one-off captures and generated docs site
+check.md
+site/
+_tmp_*.py
+.pytest_tmp_local/

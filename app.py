@@ -135,7 +135,7 @@ if nav == NAV_MAIN:
             - **`sft_alpaca_format.jsonl`**: 933,313 пар инструкций
             - **`sft_sharegpt_format.jsonl`**: 171,520 диалогов ShareGPT
             - **`rag_chunks_kb.jsonl`**: 325,690 документов для Vector DB
-            - **`dpo_preference_pairs.jsonl`**: 60,899 пар предпочтений
+            - **`dpo_preference_pairs.jsonl`**: 57,501 пар предпочтений
             """
         )
 

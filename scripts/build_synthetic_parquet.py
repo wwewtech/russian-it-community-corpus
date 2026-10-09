@@ -377,6 +377,22 @@ def main() -> int:
     for p in written:
         size_kb = round(p.stat().st_size / 1024, 1)
         print(f"  wrote {p} ({size_kb} KB, {args.rows} rows)")
+    # Stamp a marker the SLO gate trusts: synthetic fixtures must never SHIP.
+    marker = args.out.parent / "reports" / "synthetic_fixture.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(
+        json.dumps(
+            {
+                "_source": {"synthetic": True, "generator": "scripts/build_synthetic_parquet.py"},
+                "rows": args.rows,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    print(f"  wrote {marker} (synthetic marker)")
     return 0
 
 

@@ -8,7 +8,7 @@
 
 **High-throughput data engineering and Probabilistic PII Audit platform for language models**
 
-2,816,434 discussions (Hub) · 2,418,695 (local) · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
+2,816,434 discussions (Hub) · 2,816,434 (local) · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
 
 <br />
 
@@ -39,7 +39,7 @@
 
 **RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
 
-> **⚠️ Row count discrepancy**: The Hugging Face Hub snapshot (2,816,434 messages) differs from the local working copy (2,418,695 messages, −14%). The Hub contains an earlier pipeline run; local `dataset_output/` reflects the latest pipeline execution. See [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) for exact SHA256/row deltas against the pinned Hub revision `81a3495`.
+> **⚠️ Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Historical runs diverged (e.g. −14% at 2,418,695 rows); the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval.
 
@@ -47,7 +47,7 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 |---|---|---|
 | Privacy & Anonymization | Multi-pass Regex + Natasha NER + case declension | 11 community nodes anonymized (`community_node_01`..`11`) |
 | Deduplication | MinHash LSH (128 permutations, 0.80 Jaccard threshold) | 95,300+ duplicate / spam messages removed |
-| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues (Hub) / 173,216 (local) |
+| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues (Hub + local) |
 | Local LoRA execution | PEFT QLoRA adaptation on consumer hardware | ~4.35 GB VRAM on RTX 3060 (12GB) |
 
 ---
@@ -134,7 +134,7 @@ JSONL counts below are published report values, not independently verified local
 | `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,520 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
 | `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,313 pairs | Single-turn instruction-response pairs | Local / HF |
 | `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 325,690 chunks | Segmented technical documents | Local / HF |
-| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 60,899 pairs | Chosen / Rejected alignment pairs | Local / HF |
+| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 57,501 pairs | Chosen / Rejected alignment pairs | Local / HF |
 
 ---
 

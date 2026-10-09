@@ -1,8 +1,8 @@
 {
   "report_title": "DATASET DRIFT MONITORING REPORT",
-  "generated_at_utc": "2026-08-28T01:12:09.671976+00:00",
-  "reference_rows": 2,
-  "current_rows": 2,
+  "generated_at_utc": "2026-10-08T13:55:49.128772+00:00",
+  "reference_rows": 50000,
+  "current_rows": 50000,
   "thresholds": {
     "psi": {
       "stable": 0.1,
@@ -19,25 +19,37 @@
   },
   "metrics": {
     "length_psi": {
-      "value": 0.0,
+      "value": 0.0003,
       "verdict": "stable"
     },
     "domain_distribution": {
       "js_divergence_bits": 0.0,
-      "biggest_share_shift_domain": "devops_infra",
-      "biggest_share_shift_pp": 0.0,
+      "biggest_share_shift_domain": "ai_ml_nlp",
+      "biggest_share_shift_pp": -0.102,
       "per_domain_share_delta_pp": {
-        "devops_infra": 0.0
+        "ai_ml_nlp": -0.102,
+        "backend_databases": 0.022,
+        "business_legal_fintech": 0.06,
+        "career_team_management": 0.05,
+        "devops_infra": 0.03,
+        "frontend_ui": 0.044,
+        "general_tech_chat": -0.08,
+        "sysadmin_security": -0.024
       },
       "verdict": "stable"
     },
     "vocabulary": {
-      "jaccard_overlap": 1.0,
-      "new_top_tokens": 0,
-      "dropped_top_tokens": 0,
-      "verdict": "stable"
+      "jaccard_overlap": 0.8832,
+      "new_top_tokens": 31,
+      "dropped_top_tokens": 31,
+      "verdict": "moderate_drift"
     }
   },
-  "overall_verdict": "stable",
-  "_audit_note": "WARNING: This report was generated against a synthetic 2-row dataset (reference_rows=2, current_rows=2), not against the production 2,816,434-row corpus. All drift metrics show 0.0 / stable because reference and current data are identical. Re-run scripts/run_drift_monitor.py with the real parquet snapshots to get meaningful results. The drift monitoring code itself is correctly implemented (see src/monitoring/drift.py)."
+  "overall_verdict": "moderate_drift",
+  "_note": "Self-comparison baseline on real parquet (ref=50000, cur=50000). Point the drift CLI at two frozen snapshots for true temporal drift.",
+  "_source": {
+    "synthetic": false,
+    "generator": "scripts/regenerate_real_reports.py",
+    "generated_at_utc": "2026-10-08T13:55:49.128807+00:00"
+  }
 }

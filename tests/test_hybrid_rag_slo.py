@@ -152,6 +152,23 @@ class TestSloGate(unittest.TestCase):
             verdict = evaluate(root)
             self.assertEqual(verdict.verdict, "HOLD")
 
+    def test_hold_on_synthetic_fixture_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            reports = root / "reports"
+            reports.mkdir()
+            (reports / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (reports / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASS"}), encoding="utf-8")
+            (reports / "drift_report.json").write_text(json.dumps({"overall_verdict": "stable"}), encoding="utf-8")
+            (reports / "synthetic_fixture.json").write_text(
+                json.dumps({"_source": {"synthetic": True, "generator": "scripts/build_synthetic_parquet.py"}}),
+                encoding="utf-8",
+            )
+            _make_artifacts_and_manifest(root)
+            verdict = evaluate(reports)
+            self.assertEqual(verdict.verdict, "HOLD")
+            self.assertTrue(any(c.name == "synthetic-smoke" and not c.passed for c in verdict.checks))
+
 
 if __name__ == "__main__":
     unittest.main()
