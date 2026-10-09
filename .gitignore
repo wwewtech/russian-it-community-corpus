@@ -5,9 +5,11 @@ __pycache__/
 *.so
 .pytest_cache/
 .pytest_temp/
+.pytest_tmp_local/
 .ruff_cache/
 .coverage
 .coverage.*
+coverage.xml
 *.egg-info/
 
 # Environments & IDEs

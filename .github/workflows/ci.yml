@@ -22,13 +22,13 @@ env:
 jobs:
   lint:
     name: Lint & Format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -43,13 +43,13 @@ jobs:
 
   typecheck:
     name: Typecheck (Strict)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -65,7 +65,7 @@ jobs:
 
   test:
     name: Unit Tests (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint, typecheck]
     timeout-minutes: 60
     strategy:
@@ -74,10 +74,10 @@ jobs:
         python-version: [ "3.11", "3.12", "3.13" ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -89,25 +89,25 @@ jobs:
 
       - name: Run Unit Tests with Coverage
         run: |
-          python -m pytest -q --cov=src --cov-report=term-missing --cov-fail-under=85
+          python -m pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=85
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-${{ matrix.python-version }}
-          path: .coverage
+          path: coverage.xml
           retention-days: 7
 
   validate:
     name: Data Validation & Audits
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint, typecheck]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -188,7 +188,7 @@ jobs:
         run: python -m src.validation.hub_reconciliation
 
       - name: Upload pipeline artifacts for SLO gate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pipeline-artifacts
           path: |
@@ -198,7 +198,7 @@ jobs:
 
   docker:
     name: Docker Build & Push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, validate]
     if: github.event_name == 'push' || github.event_name == 'release'
     timeout-minutes: 30
@@ -206,7 +206,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -241,15 +241,15 @@ jobs:
 
   slo-gate:
     name: SLO Release Gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, validate]
     if: github.event_name == 'push' || github.event_name == 'release'
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -260,18 +260,33 @@ jobs:
           pip install -r requirements.txt
 
       - name: Download pipeline artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: pipeline-artifacts
           path: .
 
       - name: Run SLO Gate (SHIP/HOLD)
         run: |
-          make slo || echo "SLO gate HOLD — expected on synthetic CI fixtures (synthetic-smoke guard)"
+          # Synthetic CI fixtures intentionally HOLD (synthetic-smoke guard):
+          # the gate fails closed on reports/synthetic_fixture.json.
+          # Record the verdict for humans instead of failing the smoke job.
+          make slo || true
+          echo "### SLO verdict" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat reports/slo_verdict.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload SLO verdict
+        uses: actions/upload-artifact@v5
+        with:
+          name: slo-verdict
+          path: reports/slo_verdict.json
+          retention-days: 7
+          if-no-files-found: warn
 
   release:
     name: Release to Hugging Face Hub
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, validate, slo-gate]
     if: github.event_name == 'release'
     timeout-minutes: 30
@@ -279,10 +294,10 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
