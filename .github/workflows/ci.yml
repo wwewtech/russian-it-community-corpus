@@ -365,7 +365,7 @@ jobs:
     if: github.event_name == 'release'
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v5
@@ -397,11 +397,9 @@ jobs:
         run: python scripts/sync_to_hub.py --apply
 
       - name: Upload model catalog as release asset
-        uses: actions/upload-release-asset@v1
+        # gh CLI replaces the archived actions/upload-release-asset@v1
+        # (Node 20 + "Resource not accessible by integration" under
+        # contents: read). Requires contents: write above.
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./reports/LORA_MODEL_ZOO.md
-          asset_name: LORA_MODEL_ZOO.md
-          asset_content_type: text/markdown
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" reports/LORA_MODEL_ZOO.md --clobber
