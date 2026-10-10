@@ -71,7 +71,7 @@ def build_lora_zoo_markdown(
     zoo_index: list[dict[str, Any]],
     *,
     model_repo_id: str = MODEL_REPO_ID,
-    corpus_size_label: str = "2.91M сообщений, 171.5k диалогов",
+    corpus_size_label: str = "2.82M сообщений, 171.5k диалогов",
 ) -> str:
     """Render the LoRA-Zoo catalogue as a Markdown string.
 
@@ -275,6 +275,17 @@ def main() -> None:
     # 3. Render and persist the local LoRA-Zoo catalogue (works even
     # when the Hub sync failed, so the GitHub release is always updated).
     zoo_index = compute_lora_zoo_index(adapters_dir)
+    if not zoo_index:
+        # CI checkouts carry no adapter_model.safetensors (gitignored), so
+        # the local walk returns 0 adapters. Regenerating the catalog here
+        # would publish an EMPTY catalog to the Hub and attach it to the
+        # GitHub release (observed in release v12.1.0). Keep the committed
+        # catalog — it is the reviewed artifact.
+        logger.warning(
+            "No local adapters with weights found in %s; keeping committed catalog files",
+            adapters_dir,
+        )
+        return
     Path("reports").mkdir(parents=True, exist_ok=True)
     with open("reports/lora_zoo_index.json", "w", encoding="utf-8") as f:
         json.dump(zoo_index, f, ensure_ascii=False, indent=2)

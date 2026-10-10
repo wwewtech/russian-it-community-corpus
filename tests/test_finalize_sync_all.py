@@ -78,6 +78,19 @@ class TestComputeLoraZooIndex(unittest.TestCase):
         empty.mkdir()
         self.assertEqual(compute_lora_zoo_index(empty), [])
 
+    def test_no_weights_returns_empty_list(self):
+        # A directory full of scaffold-only adapters (no
+        # adapter_model.safetensors, as on a CI checkout where weights are
+        # gitignored) must index zero adapters — and downstream, main() must
+        # refuse to publish an empty catalog instead of overwriting the good
+        # one. Regression test for release v12.1.0 which briefly shipped an
+        # empty catalogue built exactly this way.
+        no_weights = Path(self.tmp.name) / "only_scaffolds"
+        no_weights.mkdir()
+        _make_incomplete_adapter(no_weights, "scaffold_one")
+        _make_incomplete_adapter(no_weights, "scaffold_two")
+        self.assertEqual(compute_lora_zoo_index(no_weights), [])
+
 
 class TestBuildLoraZooMarkdown(unittest.TestCase):
     def test_contains_header_and_table(self):
@@ -114,6 +127,13 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
         md = build_lora_zoo_markdown([])
         self.assertIn("🚀 Быстрый старт", md)
         self.assertIn("PeftModel", md)
+
+    def test_empty_index_still_renders_quickstart(self):
+        # An empty index must keep the boilerplate (the release job's gate
+        # now skips writing when the index is empty, but the renderer itself
+        # must stay total — never raise on []).
+        md = build_lora_zoo_markdown([])
+        self.assertIn("# 🦁 Russian IT Community LoRA Model Zoo", md)
 
 
 class TestUploadDataset(unittest.TestCase):
