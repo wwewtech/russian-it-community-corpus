@@ -284,6 +284,75 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+  slo-real:
+    name: SLO Release Gate (Real Corpus)
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck]
+    if: github.event_name == 'push'
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install huggingface_hub
+
+      - name: Download real corpus at pinned HF revision
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          import os, shutil
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          repo = 'wwewtech/russian-it-community-corpus'
+          rev = '81a3495de997b0690f67d175c4ebd9cfdef35b76'
+          out_dir = Path('dataset_output/parquet')
+          out_dir.mkdir(parents=True, exist_ok=True)
+          for name in ('full_clean_messages', 'sft_dialogues', 'rag_knowledge_base'):
+              cached = hf_hub_download(repo_id=repo, filename=f'data/{name}.parquet', revision=rev, repo_type='dataset', token=os.environ['HF_TOKEN'])
+              target = out_dir / f'{name}.parquet'
+              shutil.copyfile(cached, target)
+              print(f'downloaded {name}.parquet -> {target} ({target.stat().st_size} bytes)')
+          "
+
+      - name: Run real probabilistic PII audit
+        run: python scripts/run_probabilistic_pii_audit.py --parquet dataset_output/parquet/full_clean_messages.parquet --output reports/probabilistic_pii_audit.json
+
+      - name: Run real drift monitoring
+        run: python scripts/run_drift_monitoring.py
+
+      - name: Create dataset manifest for real corpus
+        run: python -m src.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json
+
+      - name: Reconcile against pinned Hub revision
+        run: python -m src.validation.hub_reconciliation
+
+      - name: Run strict SLO gate on real corpus
+        run: python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+
+      - name: Publish real-corpus SLO verdict
+        run: |
+          echo "### Real-corpus SLO verdict" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat reports/slo_verdict.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload real SLO verdict
+        uses: actions/upload-artifact@v7
+        with:
+          name: slo-verdict-real
+          path: reports/slo_verdict.json
+          retention-days: 30
+
   release:
     name: Release to Hugging Face Hub
     runs-on: ubuntu-24.04

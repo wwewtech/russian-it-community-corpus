@@ -85,3 +85,5 @@ check.md
 site/
 _tmp_*.py
 .pytest_tmp_local/
+.ci_check/
+.ci_artifacts/
