@@ -288,7 +288,7 @@ jobs:
     name: SLO Release Gate (Real Corpus)
     runs-on: ubuntu-24.04
     needs: [lint, typecheck]
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'release'
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -361,7 +361,7 @@ jobs:
   release:
     name: Release to Hugging Face Hub
     runs-on: ubuntu-24.04
-    needs: [lint, typecheck, test, validate, slo-gate]
+    needs: [lint, typecheck, test, validate, slo-gate, slo-real]
     if: github.event_name == 'release'
     timeout-minutes: 30
     permissions:
@@ -382,15 +382,19 @@ jobs:
           pip install -r requirements.txt
           pip install huggingface_hub[cli]
 
-      - name: Sync dataset to Hugging Face Hub
+      - name: Regenerate LoRA zoo catalog
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python scripts/sync_to_hub.py --repo wwewtech/russian-it-community-corpus --private
+        # finalize_sync_all: uploads dataset artefacts (no-op without local
+        # parquet, warns), uploads adapters missing on the Hub (no-op when the
+        # zoo is already published) and regenerates reports/LORA_MODEL_ZOO.md.
+        run: python -m src.exporter.finalize_sync_all
 
-      - name: Sync LoRA adapters to Hugging Face Hub
+      - name: Sync LoRA registry to Hugging Face Hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python scripts/sync_to_hub.py --repo wwewtech/russian-it-community-lora --private --adapters-dir lora_adapters
+        # Sanctioned upload path per docs/adr/0001-hf-token-handling.md.
+        run: python scripts/sync_to_hub.py --apply
 
       - name: Upload model catalog as release asset
         uses: actions/upload-release-asset@v1
