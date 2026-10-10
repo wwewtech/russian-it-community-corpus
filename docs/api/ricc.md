@@ -3,7 +3,7 @@
 ```python
 import ricc
 
-print(ricc.__version__)  # "12.0.4"
+print(ricc.__version__)  # "12.1.0"
 ```
 
 ## Configuration

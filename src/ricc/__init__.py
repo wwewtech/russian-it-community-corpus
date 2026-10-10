@@ -190,7 +190,7 @@ __all__ = [
     "timed_stage",
 ]
 
-__version__ = "12.0.4"
+__version__ = "12.1.0"
 __author__ = "wwewtech"
 __license__ = "MIT"
 __description__ = "Russian IT Community Corpus — Data Engineering & Zero-PII Curation Platform"

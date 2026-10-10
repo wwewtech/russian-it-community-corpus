@@ -2,6 +2,23 @@
 
 All notable changes to RICC are documented here.
 
+> Full history: [`CHANGELOG.md`](https://github.com/wwewtech/russian-it-community-corpus/blob/main/CHANGELOG.md) in the repository root.
+
+## [12.1.0] - 2026-10-10
+
+### Added
+- Real-corpus SLO gate job (`slo-real`): downloads the canonical parquet trio at the pinned HF revision `81a3495`, regenerates audit/drift/manifest/reconciliation and runs the strict gate (artifact `slo-verdict-real`).
+- SLO verdict published as artifact and to the GitHub step summary.
+- `requirements.lock.txt` (104 exact pins) + `scripts/lock_requirements.py`.
+- `scripts/generate_adapter_cards.py`: all 56 adapter cards regenerated from `registry.json`.
+
+### Fixed
+- Committed reports regenerated from the real parquet (validation, drift, stats, manifest, reconciliation).
+- PII validator community-names false positives removed (481 → 0 on 10k sample).
+- SLO gate fail-closed only on the explicit synthetic marker.
+- `test_pipeline.py` no longer poisons committed reports mid-session.
+- CI: coverage.xml artifacts, pinned `ubuntu-24.04`, actions bumped (Node 20 warnings cleared).
+
 ## [12.0.4] - 2026-10-04
 
 ### Added

@@ -43,6 +43,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SLO verdict mapping**: accept `PASSED` alongside `PASS/SHIP/OK` from
   `probabilistic_pii_audit.json`.
 
+## [12.1.0] - 2026-10-10
+
+### Added
+- **Real-corpus SLO gate (`slo-real` job)**: new CI job downloads the three
+  canonical parquet from the pinned HF revision `81a3495` (via `HF_TOKEN`
+  secret per ADR 0001), regenerates the probabilistic PII audit (100k
+  stratified sample), drift report, artifact manifest and hub reconciliation
+  from real data, then runs the strict gate. First greenfield `SHIP` verdict
+  on the real 2,816,434-row corpus (artifact `slo-verdict-real`).
+- **SLO verdict visibility**: verdict published as `slo-verdict` artifact and
+  into the GitHub step summary on every push run.
+- **`requirements.lock.txt`**: exact pins of the `requirements.txt`
+  transitive closure (104 entries), with a test enforcing coverage and
+  `scripts/lock_requirements.py` for regeneration.
+- **`scripts/generate_adapter_cards.py`**: regenerates all 56 adapter cards
+  from `lora_adapters/registry.json` — replaces hand-written cards quoting
+  stale corpus figures and stock HF template cards with dozens of
+  `[More Information Needed]` placeholders; CI enforces `--check`.
+- **Benchmark matrix provenance**: `academic_scientific_benchmarks_matrix.json`
+  records `raw_outputs_sha256` / `generated_at_utc`; a new test recomputes
+  every published number from the raw generation logs (364 records).
+
+### Fixed
+- **Committed reports regenerated from the real parquet**:
+  `validation_results.json` (was a `dummy: true` placeholder),
+  `drift_report.json` (was a synthetic 2-row report),
+  `pipeline_execution_stats.json` (`cleaned=2816434`), manifest and
+  reconciliation (`EXACT_MATCH` vs pinned Hub revision).
+- **PII validator false positives**: removed the greedy community-names
+  catch-all regex that produced 481 false positives on a 10k-line sample;
+  the real validation audit now passes with zero leaks.
+- **SLO gate precision**: fail-closed only on the explicit
+  `reports/synthetic_fixture.json` marker (volume heuristics caused false
+  HOLDs on real small runs); `moderate_drift` on small self-comparison
+  baselines is informational, not blocking.
+- **Dataset figures aligned with parquet metadata**: DPO pairs
+  `60,899` → `57,501`; README local row count `2,418,695` → `2,816,434`.
+- **Test isolation**: `tests/test_pipeline.py` `run_all()` writes via the
+  settings singleton — the test now redirects `settings.reports_dir`,
+  `samples_output_dir` and output dirs into a temp tree, so it no longer
+  poisons committed reports mid-session (was breaking the consistency suite
+  in CI when both ran in the same pytest session).
+- **CI hygiene**: coverage.xml artifacts (was: `.coverage` never found),
+  runner pinned to `ubuntu-24.04`, actions bumped (`checkout@v5`,
+  `setup-python@v6`, `upload/download-artifact@v7/v8`, docker actions to
+  latest majors) — all Node.js 20 deprecation warnings cleared.
+
 ## [12.0.4] - 2026-09-08
 
 ### Fixed (ML training & evaluation rigor)
