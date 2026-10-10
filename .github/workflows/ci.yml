@@ -325,7 +325,12 @@ jobs:
           "
 
       - name: Run real probabilistic PII audit
-        run: python scripts/run_probabilistic_pii_audit.py --parquet dataset_output/parquet/full_clean_messages.parquet --output reports/probabilistic_pii_audit.json
+        # Sample size 100000 matches the committed audit methodology: with zero
+        # observed leaks the Wilson 99% upper bound is ~5.41e-5 (z^2/2n with
+        # z=2.326), which is below the 1e-4 tolerance. The script default of
+        # 50000 would give ~1.08e-4 > tolerance -> false LEAKS_DETECTED even
+        # with zero leaks (a statistical power artifact, not data leakage).
+        run: python scripts/run_probabilistic_pii_audit.py --parquet dataset_output/parquet/full_clean_messages.parquet --sample-size 100000 --output reports/probabilistic_pii_audit.json
 
       - name: Run real drift monitoring
         run: python scripts/run_drift_monitoring.py
