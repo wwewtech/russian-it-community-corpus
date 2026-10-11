@@ -1,6 +1,6 @@
 ---
 license: mit
-pretty_name: "Russian IT Community Corpus (2.91M Conversations)"
+pretty_name: "Russian IT Community Corpus (2.82M Conversations)"
 language:
   - ru
   - en
@@ -112,7 +112,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 | Stage | Processing Module | Description & Output |
 | :---: | :--- | :--- |
-| **1. Ingestion** | Multi-Source Export Ingestion | Merging 11 community nodes (`community_node_01`..`11`) across 2017–2026 into 2.91M unified records. |
+| **1. Ingestion** | Multi-Source Export Ingestion | Merging 11 community nodes (`community_node_01`..`11`) across 2017–2026 into 2.82M unified records. |
 | **2. Anonymization** | Natasha NER & Case-Aware Scrubber | Inflection across 6 Russian cases, Telegram handle mapping, and regex scrubbing for phones, crypto, keys. |
 | **3. Deduplication** | MinHash LSH (128 Permutations) | Duplicate and spam removal at 0.80 Jaccard threshold + 8-domain taxonomy classification. |
 | **4. DAG Reconstruction**| Thread Builder & Extractor | Reconstructing reply trees, extracting 171.5k SFT dialogues ($\ge 3.0$ score) and 325.7k RAG chunks. |

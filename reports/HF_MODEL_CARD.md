@@ -16,7 +16,7 @@ tags:
 
 # 🦁 Russian IT Community LoRA Model Zoo
 
-**58 pre-trained adapters** (55 domain adapters + 3 flagship 7B–8B QLoRA), fine-tuned on the RICC corpus (2.91M messages, 171.5k curated SFT dialogues) for Russian-language IT discourse: backend, DevOps, AI/ML, infrastructure.
+**58 pre-trained adapters** (55 domain adapters + 3 flagship 7B–8B QLoRA), fine-tuned on the RICC corpus (2.82M messages, 171.5k curated SFT dialogues) for Russian-language IT discourse: backend, DevOps, AI/ML, infrastructure.
 
 > Catalog regenerated from the Hub file tree on 2026-09-02. Source of truth: the `siblings` listing of this repository.
 

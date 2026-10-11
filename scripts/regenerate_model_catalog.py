@@ -5,11 +5,17 @@ Run:  python scripts/regenerate_model_catalog.py
 """
 
 import json
+import sys
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metrics_source import get_metrics  # noqa: E402
+
+_metrics = get_metrics()
 
 REPO = "wwewtech/russian-it-community-lora"
 API = f"https://huggingface.co/api/{'models'}/{REPO}"
@@ -69,7 +75,8 @@ def main():
         "# 🦁 Russian IT Community LoRA Model Zoo",
         "",
         f"**{total} pre-trained adapters** ({domain_count} domain adapters + {flagship_count} flagship 7B–8B QLoRA), "
-        "fine-tuned on the RICC corpus (2.91M messages, 171.5k curated SFT dialogues) "
+        f"fine-tuned on the RICC corpus ({_metrics.total_messages_label} messages, "
+        f"{_metrics.sft_dialogues_label} curated SFT dialogues) "
         "for Russian-language IT discourse: backend, DevOps, AI/ML, infrastructure.",
         "",
         f"> Catalog regenerated from the Hub file tree on {generated_at}. "
@@ -116,7 +123,7 @@ def main():
         "## 📓 Training Data & Evaluation Status",
         "",
         "- Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) "
-        "(171,520 multi-turn dialogues).",
+        f"({_metrics.sft_dialogues_fmt} multi-turn dialogues).",
         "- Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending "
         "re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible "
         "values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not "

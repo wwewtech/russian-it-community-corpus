@@ -29,9 +29,13 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metrics_source import get_metrics  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PATH = REPO_ROOT / "lora_adapters" / "registry.json"
 PLACEHOLDER = "[More Information Needed]"
+_METRICS = get_metrics()
 
 
 CARD_TEMPLATE = """---
@@ -96,7 +100,7 @@ model = PeftModel.from_pretrained(base_model, "{adapter_path}")
 
 ## Training Details
 
-- **Training data:** RICC SFT dialogues (171,520 curated multi-turn dialogues).
+- **Training data:** RICC SFT dialogues ({sft_dialogues_fmt} curated multi-turn dialogues).
 - **Training regime:** pilot domain-adaptation checkpoint — 50-100 training
   steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),
   **not** multi-epoch training over the whole corpus.
@@ -142,6 +146,7 @@ def build_card(entry: dict) -> str:
         hf_hub_url=entry.get("hf_hub_url") or "",
         adapter_path=entry.get("adapter_path") or entry.get("local_path") or "",
         peft_version=entry.get("peft_version") or "unknown",
+        sft_dialogues_fmt=_METRICS.sft_dialogues_fmt,
     )
 
 

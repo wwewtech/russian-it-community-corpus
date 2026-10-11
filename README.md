@@ -39,7 +39,7 @@
 
 **RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
 
-> **⚠️ Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Historical runs diverged (e.g. −14% at 2,418,695 rows); the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
+> **⚠️ Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Earlier pipeline runs diverged from the published snapshot by up to ~14%; the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval.
 
@@ -122,9 +122,9 @@ All datasets are automatically generated and saved in `dataset_output/`. Exact a
 
 | File Path | Format | Local (verified) | Hub snapshot | Description | Direct Link |
 |---|---|---|---|---|:---:|
-| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,418,695 rows (156.3 MB) | 2,816,434 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
-| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 173,216 dialogues (88.6 MB) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
-| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 332,690 chunks (128.7 MB) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
+| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,434 rows (189.33 MB) | 2,816,434 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
+| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,520 dialogues (132.29 MB) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
+| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks (159.31 MB) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
 
 JSONL counts below are published report values, not independently verified local counts:
 
