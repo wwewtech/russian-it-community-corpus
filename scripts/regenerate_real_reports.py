@@ -69,6 +69,7 @@ def main() -> int:
         n: int(pq.read_metadata(PARQUET / f"{n}.parquet").num_rows)
         for n in ("full_clean_messages", "sft_dialogues", "rag_knowledge_base")
     }
+    thread_ids = {v for v in full["thread_id"].tolist() if v is not None and not (isinstance(v, float) and pd.isna(v))}
     try:
         dpo = sum(1 for _ in (ROOT / "dataset_output" / "jsonl" / "dpo_preference_pairs.jsonl").open(encoding="utf-8"))
     except FileNotFoundError:
@@ -77,13 +78,13 @@ def main() -> int:
         "execution_time_seconds": 0.0,
         "raw_messages_count": rows["full_clean_messages"],
         "cleaned_messages_count": rows["full_clean_messages"],
-        "threads_count": -1,
+        "threads_count": len(thread_ids),
         "sft_dialogues_count": rows["sft_dialogues"],
         "rag_chunks_count": rows["rag_knowledge_base"],
         "dpo_pairs_count": dpo,
         "pii_stats": {},
         "validation_passed": bool(validation["overall_passed"]),
-        "_note": "threads_count=-1 requires full pipeline run; parquet row counts authoritative.",
+        "_note": "threads_count = distinct non-null thread_id values in full_clean_messages.parquet.",
     }
     _atomic_write(REPORTS / "pipeline_execution_stats.json", _stamp(stats, "scripts/regenerate_real_reports.py"))
     print(f"stats: cleaned={stats['cleaned_messages_count']}")
