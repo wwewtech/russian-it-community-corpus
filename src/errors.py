@@ -451,7 +451,7 @@ class Result:
             return self._value
         # At this point we know self._error is not None due to is_ok check
         error = self._error
-        assert error is not None
+        assert error is not None  # nosec B101
         raise error
 
     def unwrap_or(self, default: Any) -> Any:

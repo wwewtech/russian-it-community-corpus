@@ -16,7 +16,7 @@ import json
 import logging
 import math
 import re
-import subprocess
+import subprocess  # nosec B404
 import sys
 import time
 from datetime import UTC, datetime
@@ -898,7 +898,9 @@ def _safe_exec(code_str: str) -> bool:
     """
     safe_globals: dict[str, object] = {"__builtins__": _SAFE_BUILTINS}
     safe_locals: dict[str, object] = {}
-    exec(code_str, safe_globals, safe_locals)
+    # HumanEval-style benchmark MUST exec model code; containment is the 2s
+    # timeout + restricted builtins (see docstring above).
+    exec(code_str, safe_globals, safe_locals)  # nosec B102
     return True
 
 
@@ -945,7 +947,9 @@ def _run_in_isolated_process(code_str: str, timeout_sec: float = 2.0) -> bool:
     )
 
     try:
-        proc = subprocess.Popen(
+        # Fixed interpreter invocation, no shell, no untrusted input — model
+        # code arrives via stdin into the sandbox.
+        proc = subprocess.Popen(  # nosec B603
             [sys.executable, "-I", "-s", "-c", runner_script],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -1002,7 +1006,9 @@ def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "pyt
         runner_script,
     ]
     try:
-        proc = subprocess.Popen(
+        # Fixed docker invocation with pinned flags (--network none,
+        # memory/cpu limits); model code arrives via stdin.
+        proc = subprocess.Popen(  # nosec B603
             cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,

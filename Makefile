@@ -1,4 +1,4 @@
-.PHONY: all install run analyze validate benchmark audit audit-prob drift slo orchestrate dvc-repro test coverage lint format typecheck typecheck-strict ui docker-build docker-up k8s-dry-run clean help reports-real help
+.PHONY: all install run analyze validate benchmark audit audit-prob drift slo orchestrate dvc-repro test coverage lint format typecheck typecheck-strict security ui docker-build docker-up k8s-dry-run clean help reports-real help
 
 help:
 	@echo "Russian IT Community Data Platform — Command Shortcuts:"
@@ -19,6 +19,7 @@ help:
 	@echo "  make format     - Auto-format code with ruff format"
 	@echo "  make typecheck  - Run mypy over src/ (slow-mode rollout)"
 	@echo "  make typecheck-strict - Run mypy --strict on fully-typed modules"
+	@echo "  make security   - Bandit HIGH gate + secret scan (same as CI security job)"
 	@echo "  make reports    - Regenerate markdown reports from JSON sources"
 	@echo "  make ui         - Launch Streamlit Web Data Studio"
 	@echo "  make docker-up  - Launch via Docker Compose"
@@ -79,6 +80,11 @@ typecheck:
 # graph, finalize_sync_all) stay ignored there and are excluded from this path.
 typecheck-strict:
 	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/evaluation/statistical_power.py src/evaluation/benchmark_comparator.py src/lora/__init__.py src/graph/__init__.py src/validation/artifact_manifest.py src/validation/hub_reconciliation.py src/validation/validator.py src/pii/regex_scrubber.py src/pii/ner_scrubber.py src/pii/deep_anonymizer.py src/inference.py src/pipeline.py src/exporter/finalize_sync_all.py --strict
+
+# Supply-chain security: bandit HIGH gate + secret scan (same as CI `security` job).
+security:
+	python -m bandit -r src/ -q --severity-level high
+	python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:

@@ -13,7 +13,9 @@ from typing import Any, TypedDict
 logger = logging.getLogger("HubReconciliation")
 
 PINNED_HUB_REPO_ID = "wwewtech/russian-it-community-corpus"
-PINNED_HUB_REVISION = "81a3495de997b0690f67d175c4ebd9cfdef35b76"
+# Pinned public dataset revision (provable via `git ls-remote` on the Hub repo),
+# not a credential — allowlisted for secret scanners.
+PINNED_HUB_REVISION = "81a3495de997b0690f67d175c4ebd9cfdef35b76"  # pragma: allowlist secret
 
 # Canonical mappings between local path and Hub remote path
 PATH_MAPPINGS: dict[str, str] = {

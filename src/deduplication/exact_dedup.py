@@ -42,7 +42,10 @@ class ExactDeduplicator:
                 unique_msgs.append(msg)
                 continue
 
-            h = hashlib.md5(norm_text.encode("utf-8")).hexdigest()
+            # MD5 here is a non-cryptographic content fingerprint for
+            # duplicate detection only (not passwords/signatures), so
+            # usedforsecurity=False documents that intent for scanners.
+            h = hashlib.md5(norm_text.encode("utf-8"), usedforsecurity=False).hexdigest()
             if h in self.seen_hashes:
                 dupes_count += 1
             else:

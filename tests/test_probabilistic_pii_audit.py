@@ -38,12 +38,12 @@ class TestFindLeaksInText(unittest.TestCase):
         self.assertIn("api_keys", found)
 
     def test_detects_jwt(self):
-        jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"  # pragma: allowlist secret
         found = find_leaks_in_text(f"токен {jwt}")
         self.assertIn("jwt_tokens", found)
 
     def test_detects_ssh_key(self):
-        pem = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA1234\n-----END RSA PRIVATE KEY-----"
+        pem = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA1234\n-----END RSA PRIVATE KEY-----"  # pragma: allowlist secret
         found = find_leaks_in_text(pem)
         self.assertIn("ssh_keys", found)
 

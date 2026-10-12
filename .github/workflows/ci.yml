@@ -358,6 +358,82 @@ jobs:
           path: reports/slo_verdict.json
           retention-days: 30
 
+  security:
+    name: Security Supply Chain
+    runs-on: ubuntu-24.04
+    needs: [lint]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install scanners
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit detect-secrets pip-audit
+
+      - name: Bandit — fail on HIGH severity
+        # Current baseline (2026-10-11): 0 HIGH, 22 MEDIUM (B615 unpinned
+        # from_pretrained — user-supplied model_name, pinning would break the
+        # API), 13 LOW (B110/B112 try/except style). Gate is HIGH-only; the
+        # full report is uploaded for review.
+        run: |
+          python -m bandit -r src/ -f json -o bandit_report.json -q || true
+          python - <<'PY'
+          import json, sys
+          data = json.load(open("bandit_report.json", encoding="utf-8"))
+          high = [x for x in data.get("results", []) if x.get("issue_severity") == "HIGH"]
+          print(f"bandit: {len(data.get('results', []))} total, {len(high)} HIGH")
+          for x in high:
+              print(f"  HIGH {x['test_id']} {x['filename']}:{x['line_number']} :: {x['issue_text'][:150]}")
+          sys.exit(1 if high else 0)
+          PY
+
+      - name: Upload bandit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bandit-report
+          path: bandit_report.json
+          retention-days: 30
+
+      - name: detect-secrets — no new secrets vs baseline
+        # Baseline (.secrets.baseline, UTF-8) was regenerated 2026-10-11:
+        # sha256 provenance hashes, safetensors digests, model names and test
+        # fixtures are allowlisted/excluded. Hook fails only on NEW findings.
+        run: python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
+
+      - name: pip-audit — report known CVEs (non-blocking first run)
+        # Report-only until the CVE background is triaged; artifact is kept
+        # for review. Promote to a hard gate once the baseline is clean.
+        run: |
+          python -m pip_audit -r requirements.txt --desc off -f json -o pip_audit_report.json || true
+          python - <<'PY'
+          import json
+          try:
+              data = json.load(open("pip_audit_report.json", encoding="utf-8"))
+          except Exception as e:
+              print(f"pip-audit produced no JSON report ({e}) — see job log")
+              raise SystemExit(0)
+          vulns = data.get("vulnerabilities", data if isinstance(data, list) else [])
+          print(f"pip-audit: {len(vulns)} vulnerable packages")
+          for v in vulns[:20]:
+              ids = [s.get("id") for s in v.get("vulns", [])][:3]
+              print(f"  {v.get('name')} {v.get('version')}: {ids}")
+          PY
+
+      - name: Upload pip-audit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pip-audit-report
+          path: pip_audit_report.json
+          retention-days: 30
+
   hf-secrets-check:
     name: HF Token & Cache Check
     runs-on: ubuntu-24.04

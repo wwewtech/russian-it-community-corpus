@@ -70,10 +70,10 @@ _PUBLIC_IP_RE = re.compile(
 _REDACTED_TOKEN_RE = re.compile(r"\[(?:[A-Z_]+)_REDACTED\]|@user_anon|@user_\d+|\[PERSON_REDACTED\]")
 
 # Loopback / well-known IPs and semantic versions are NOT leaks.
-_BENIGN_IPS = {"127.0.0.1", "0.0.0.0", "1.1.1.1", "8.8.8.8", "8.8.4.4"}
+_BENIGN_IPS = {"127.0.0.1", "0.0.0.0", "1.1.1.1", "8.8.8.8", "8.8.4.4"}  # nosec B104
 _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
-DETECTORS: dict[str, re.Pattern] = {
+DETECTORS: dict[str, re.Pattern[str]] = {
     "phones": _PHONE_RE,
     "emails": _EMAIL_RE,
     "crypto_wallets": _CRYPTO_RE,

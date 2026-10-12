@@ -73,6 +73,18 @@ repos:
     hooks:
       - id: check-toml
 
+  # Local secret scan — same baseline CI enforces (.secrets.baseline).
+  # Fails only on NEW findings; generated JSON with sha256 provenance
+  # hashes and model identifiers is excluded at scan time (see CI job).
+  - repo: local
+    hooks:
+      - id: detect-secrets-local
+        name: detect-secrets (no new secrets)
+        entry: python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
+        language: system
+        pass_filenames: false
+        always_run: true
+
 ci:
   autofix_commit_msg: |
     [pre-commit] Auto fixes from ruff

@@ -176,7 +176,7 @@ class DeepPIIAnonymizer:
         self.name_forms_to_mask: set[str] = set()
         self.name_regex_patterns: list[re.Pattern[str]] = []
 
-        # Database connection strings pattern (e.g. postgresql://user:pass@host:5432/db)
+        # Database connection strings pattern (e.g. postgresql://user:pass@host:5432/db)  # pragma: allowlist secret
         self.db_url_pattern = re.compile(
             r"\b(?:postgres|postgresql|mysql|mongodb|redis|amqp)://[^\s]+\b", re.IGNORECASE
         )
