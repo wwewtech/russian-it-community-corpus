@@ -7,6 +7,7 @@ defined here are thin Streamlit-aware wrappers around those helpers.
 """
 
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -27,6 +28,7 @@ from app_helpers import (
 from app_helpers import (
     load_parquet_sample as _load_parquet_sample,
 )
+from src.observability import maybe_start_metrics_server
 
 # Configure Streamlit page
 st.set_page_config(
@@ -35,6 +37,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Prometheus metrics endpoint for the ServiceMonitor
+# (deploy/k8s/data-studio-servicemonitor.yaml). Port is env-configurable
+# (RICC_METRICS_PORT, default 9090); the helper is a no-op-safe wrapper
+# that survives Streamlit reruns and never crashes the app on a bound port.
+_metrics_port = int(os.getenv("RICC_METRICS_PORT", "9090"))
+maybe_start_metrics_server(_metrics_port)
 
 # Paths
 BASE_DIR = Path(__file__).resolve().parent

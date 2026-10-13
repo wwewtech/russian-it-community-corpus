@@ -24,8 +24,10 @@ from __future__ import annotations
 
 from src.config import load_params
 from src.errors import (
+    AdapterLoadError,
     AnalyticsError,
     ArtifactIntegrityError,
+    CheckpointError,
     # Configuration errors
     ConfigurationError,
     # Data quality errors
@@ -34,15 +36,22 @@ from src.errors import (
     DiskSpaceError,
     DriftDetectedError,
     Err,
+    EvaluationError,
     ExportError,
     # External service errors
     ExternalServiceError,
+    GPUDriverError,
+    GPUError,
+    GPUNotAvailableError,
+    GPUOutOfMemoryError,
     GraphExtractionError,
     HubReconciliationError,
     HuggingFaceHubError,
+    InferenceError,
     IngestionError,
     JSONLValidationError,
     MissingDependencyError,
+    MLError,
     Ok,
     ParquetValidationError,
     PIIAnonymizationError,
@@ -50,6 +59,7 @@ from src.errors import (
     # Pipeline errors
     PipelineError,
     PrefectError,
+    QuantizationError,
     # Resource errors
     ResourceError,
     # Result type
@@ -60,9 +70,13 @@ from src.errors import (
     SFTValidationError,
     SLOValidationError,
     TaxonomyError,
+    TokenizerError,
+    TrainingError,
     # Validation errors
     ValidationError,
     VRAMExhaustedError,
+    classify_ml_exception,
+    is_oom_error,
 )
 from src.observability import (
     # Dataset metrics
@@ -98,6 +112,7 @@ from src.observability import (
     VALIDATION_RESULT,
     configure_logging,
     get_logger,
+    maybe_start_metrics_server,
     pipeline_logger,
     record_error,
     record_pii_leak,
@@ -150,6 +165,20 @@ __all__ = [
     "ResourceError",
     "VRAMExhaustedError",
     "DiskSpaceError",
+    "MLError",
+    "TrainingError",
+    "InferenceError",
+    "EvaluationError",
+    "TokenizerError",
+    "CheckpointError",
+    "AdapterLoadError",
+    "QuantizationError",
+    "GPUError",
+    "GPUNotAvailableError",
+    "GPUDriverError",
+    "GPUOutOfMemoryError",
+    "is_oom_error",
+    "classify_ml_exception",
     # Result type
     "Result",
     "Ok",
@@ -159,6 +188,7 @@ __all__ = [
     "get_logger",
     "pipeline_logger",
     "start_metrics_server",
+    "maybe_start_metrics_server",
     "PIPELINE_STAGE_DURATION",
     "PIPELINE_STAGE_TOTAL",
     "PIPELINE_MESSAGES_PROCESSED",

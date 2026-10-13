@@ -407,23 +407,27 @@ jobs:
         # fixtures are allowlisted/excluded. Hook fails only on NEW findings.
         run: python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
 
-      - name: pip-audit — report known CVEs (non-blocking first run)
-        # Report-only until the CVE background is triaged; artifact is kept
-        # for review. Promote to a hard gate once the baseline is clean.
+      - name: pip-audit — HARD gate on known CVEs
+        # Promoted from report-only (2026-10-13): the report-only baseline
+        # showed 0 vulnerable packages, so enforcement cannot red-green an
+        # already-clean tree. Any known CVE in the requirements.txt tree now
+        # fails the security job. JSON report is still uploaded for triage.
         run: |
-          python -m pip_audit -r requirements.txt --desc off -f json -o pip_audit_report.json || true
+          python -m pip_audit -r requirements.txt --desc off -f json -o pip_audit_report.json --progress-spinner off
           python - <<'PY'
           import json
           try:
               data = json.load(open("pip_audit_report.json", encoding="utf-8"))
           except Exception as e:
-              print(f"pip-audit produced no JSON report ({e}) — see job log")
-              raise SystemExit(0)
+              print(f"pip-audit produced no JSON report ({e}) — failing closed")
+              raise SystemExit(1)
           vulns = data.get("vulnerabilities", data if isinstance(data, list) else [])
           print(f"pip-audit: {len(vulns)} vulnerable packages")
           for v in vulns[:20]:
               ids = [s.get("id") for s in v.get("vulns", [])][:3]
               print(f"  {v.get('name')} {v.get('version')}: {ids}")
+          if vulns:
+              raise SystemExit(1)
           PY
 
       - name: Upload pip-audit report

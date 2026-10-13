@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -236,19 +236,19 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
 
     try:
         # 1. Tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, use_fast=True)
+        tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, trust_remote_code=True, use_fast=True)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token if tokenizer.eos_token else "<pad>"
 
         # 2. Model Loading
         if cfg.get("quant", False):
-            bnb_config = BitsAndBytesConfig(
+            bnb_config: Any = cast(Any, BitsAndBytesConfig)(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_use_double_quant=True,
             )
-            model = AutoModelForCausalLM.from_pretrained(
+            model: Any = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 quantization_config=bnb_config,
                 device_map="auto",
@@ -264,9 +264,10 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
                 trust_remote_code=True,
             )
 
-        if hasattr(model, "gradient_checkpointing_enable"):
+        grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
+        if callable(grad_ckpt):
             with contextlib.suppress(Exception):
-                model.gradient_checkpointing_enable()
+                grad_ckpt()
 
         # 3. LoRA Configuration
         target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
@@ -286,7 +287,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
         peft_model = get_peft_model(model, peft_config)
 
         # 4. Tokenization Function
-        def format_chat(example, _tokenizer=tokenizer):
+        def format_chat(example: dict[str, Any], _tokenizer: Any = tokenizer) -> dict[str, Any]:
             msgs = example.get("messages", [])
             if not msgs:
                 return {"input_ids": [], "labels": []}
@@ -307,7 +308,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
                         p_len = min(len(p_tokens["input_ids"]), len(labels))
                         labels[:p_len] = [-100] * p_len
                     tokens["labels"] = labels
-                    return tokens
+                    return cast("dict[str, Any]", tokens)
                 except Exception as e:
                     logger.debug(f"Tokenizer chat_template failed for {adapter_id}, falling back: {e}")
 
@@ -324,7 +325,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
             p_len = min(len(p_tokens["input_ids"]), len(labels))
             labels[:p_len] = [-100] * p_len
             tokens["labels"] = labels
-            return tokens
+            return cast("dict[str, Any]", tokens)
 
         tokenized_ds = sft_dataset.map(format_chat, remove_columns=sft_dataset.column_names)
 
@@ -402,7 +403,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
         return False
 
 
-def main():
+def main() -> None:
     api = huggingface_hub.HfApi(token=HF_TOKEN)
     parquet_path = Path("dataset_output/parquet/sft_dialogues.parquet")
     if not parquet_path.exists():

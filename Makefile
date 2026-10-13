@@ -76,15 +76,18 @@ typecheck:
 
 # Strict rollout: modules are added here as they pass `mypy --strict`.
 # Mirrors the [[tool.mypy.overrides]] ignore_errors list in pyproject.toml:
-# heavy GPU/NLP modules (engine, pipeline, inference, lora, evaluation,
-# graph, finalize_sync_all) stay ignored there and are excluded from this path.
+# three heavyweight evaluation suites with untyped payload plumbing
+# (deep_multi_experiment_suite, enterprise_production_eval_suite,
+# sota_expert_benchmark_showcase) stay ignored there and are excluded here.
 typecheck-strict:
-	python -m mypy src/config.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/evaluation/statistical_power.py src/evaluation/benchmark_comparator.py src/lora/__init__.py src/graph/__init__.py src/validation/artifact_manifest.py src/validation/hub_reconciliation.py src/validation/validator.py src/pii/regex_scrubber.py src/pii/ner_scrubber.py src/pii/deep_anonymizer.py src/inference.py src/pipeline.py src/exporter/finalize_sync_all.py --strict
+	python -m mypy src/config.py src/errors.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/evaluation/statistical_power.py src/evaluation/benchmark_comparator.py src/evaluation/official_academic_benchmarks.py src/lora/__init__.py src/lora/train_lora.py src/lora/batch_train_zoo.py src/lora/generate_demo.py src/lora/train_20_popular_models.py src/lora/train_heavyweight_5_sota.py src/graph/__init__.py src/validation/artifact_manifest.py src/validation/hub_reconciliation.py src/validation/validator.py src/pii/regex_scrubber.py src/pii/ner_scrubber.py src/pii/deep_anonymizer.py src/inference.py src/pipeline.py src/exporter/finalize_sync_all.py --strict
 
-# Supply-chain security: bandit HIGH gate + secret scan (same as CI `security` job).
+# Supply-chain security: bandit HIGH gate + secret scan + pip-audit (same as CI `security` job).
+# pip-audit is a HARD gate: any known CVE in the requirements.txt tree fails the build.
 security:
 	python -m bandit -r src/ -q --severity-level high
 	python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
+	python -m pip_audit -r requirements.txt --desc off --progress-spinner off
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:

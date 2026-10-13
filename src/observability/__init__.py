@@ -264,10 +264,76 @@ def record_error(component: str, error_type: str) -> None:
     ERRORS_TOTAL.labels(component=component, error_type=error_type).inc()
 
 
+# Components produced by the P3 GPU/ML taxonomy in src/errors.py.
+# ML_COMPONENTS is the allowlist consumed by the monitoring stack
+# (Grafana error-rate panels, PrometheusRules alerts): it keeps the
+# cardinality of `ricc_errors_total{component=...}` bounded and makes a
+# new component a deliberate, dashboard-visible decision.
+ML_COMPONENTS: tuple[str, ...] = (
+    "ml",
+    "training",
+    "inference",
+    "evaluation",
+    "tokenizer",
+    "checkpoint",
+    "adapter",
+    "quantization",
+    "gpu",
+)
+
+
+def record_ml_error(error: Exception) -> str:
+    """Record a typed GPU/ML exception and return the recorded component.
+
+    Components from the P3 taxonomy (:data:`ML_COMPONENTS`) map 1:1 onto
+    the Grafana "Errors by component" panel. Anything else falls back to
+    ``ml`` so ad-hoc components cannot silently inflate cardinality.
+    The function imports :mod:`src.errors` lazily to keep the
+    ``observability -> errors`` edge out of the import graph.
+    """
+    from src.errors import RICCError
+
+    component = "ml"
+    error_type = type(error).__name__
+    if isinstance(error, RICCError):
+        candidate = error.component or "ml"
+        component = candidate if candidate in ML_COMPONENTS else "ml"
+    record_error(component, error_type)
+    return component
+
+
 def start_metrics_server(port: int = 9090) -> None:
     """Start Prometheus metrics HTTP server on given port."""
     start_http_server(port)
     get_logger("observability").info("metrics_server_started", port=port)
+
+
+_METRICS_SERVER_STARTED = False
+
+
+def maybe_start_metrics_server(port: int = 9090) -> bool:
+    """Start the metrics server once per process; safe under Streamlit reruns.
+
+    Streamlit re-executes ``app.py`` on every interaction, so a bare
+    :func:`start_metrics_server` call would raise ``OSError: address in use``
+    on the second run. This wrapper starts the server exactly once and
+    swallows the already-bound case, returning True when this process owns
+    the server and False when the port was already taken.
+    """
+    global _METRICS_SERVER_STARTED
+    if _METRICS_SERVER_STARTED:
+        return True
+    try:
+        start_http_server(port)
+    except OSError:
+        # Port already bound — either our own server from a previous
+        # Streamlit rerun (same process) or a foreign one. Either way the
+        # caller must not crash; /metrics is served by whoever owns it.
+        get_logger("observability").warning("metrics_port_already_bound", port=port)
+        return False
+    _METRICS_SERVER_STARTED = True
+    get_logger("observability").info("metrics_server_started", port=port)
+    return True
 
 
 # =============================================================================

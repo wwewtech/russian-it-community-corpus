@@ -11,7 +11,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -483,20 +483,21 @@ def train_and_upload_single_model(
     logger.info(f"=== Starting LoRA Training: {model_name} ({meta['family']} · {meta['params']}) ===")
 
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+        tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
 
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-        model = AutoModelForCausalLM.from_pretrained(
+        model: Any = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=dtype,
             device_map="auto" if torch.cuda.is_available() else None,
             trust_remote_code=True,
         )
 
-        if hasattr(model, "gradient_checkpointing_enable"):
-            model.gradient_checkpointing_enable()
+        grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
+        if callable(grad_ckpt):
+            grad_ckpt()
 
         target_mods = detect_target_modules(model)
         peft_config = LoraConfig(
@@ -513,7 +514,7 @@ def train_and_upload_single_model(
         if len(raw_ds) > 400:
             raw_ds = raw_ds.select(range(400))
 
-        def format_dialogue(example, _tokenizer=tokenizer):
+        def format_dialogue(example: dict[str, Any], _tokenizer: Any = tokenizer) -> dict[str, Any]:
             msgs = example.get("messages", [])
             try:
                 txt = _tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
@@ -526,7 +527,7 @@ def train_and_upload_single_model(
                 txt = "\n".join(parts)
             tok = _tokenizer(txt, max_length=max_seq_length, truncation=True, padding=False)
             tok["labels"] = tok["input_ids"].copy()
-            return tok
+            return cast("dict[str, Any]", tok)
 
         tokenized_ds = raw_ds.map(format_dialogue, remove_columns=raw_ds.column_names)
 
@@ -622,7 +623,7 @@ Fine-tuned on the **RICC** 2.91M engineering dataset.
         }
 
 
-def update_catalogs(results: list[dict[str, Any]]):
+def update_catalogs(results: list[dict[str, Any]]) -> None:
     output_json = Path("reports/lora_zoo_index.json")
     output_md = Path("reports/LORA_MODEL_ZOO.md")
 
@@ -655,7 +656,7 @@ def update_catalogs(results: list[dict[str, Any]]):
     logger.info(f"Updated catalog with {len(successful)} models!")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=15)
     args = parser.parse_args()

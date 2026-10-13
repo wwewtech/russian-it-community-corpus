@@ -1,0 +1,37 @@
+{
+  "title": "RICC Data Platform Overview",
+  "uid": "ricc-overview",
+  "tags": ["ricc", "data-platform"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      { "name": "datasource", "label": "Prometheus", "type": "datasource", "query": "prometheus", "current": { "text": "Prometheus", "value": "Prometheus" } },
+      { "name": "stage", "label": "Pipeline stage", "type": "query", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "query": "label_values(ricc_pipeline_stage_total, stage)", "refresh": 2, "includeAll": true, "multi": true, "current": { "text": "All", "value": "$__all" } }
+    ]
+  },
+  "panels": [
+    { "id": 1, "type": "row", "title": "Pipeline health", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 } },
+    { "id": 2, "type": "timeseries", "title": "Stage executions by status (rate, 5m)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 }, "targets": [ { "expr": "sum by (stage, status) (rate(ricc_pipeline_stage_total{stage=~\"$stage\"}[5m]))", "legendFormat": "{{stage}} / {{status}}" } ] },
+    { "id": 3, "type": "timeseries", "title": "Stage duration p95 (5m)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 }, "targets": [ { "expr": "histogram_quantile(0.95, sum by (stage, le) (rate(ricc_pipeline_stage_duration_seconds_bucket{stage=~\"$stage\"}[5m])))", "legendFormat": "{{stage}} p95" } ], "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] } },
+    { "id": 4, "type": "stat", "title": "Messages processed (5m rate)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 4, "w": 6, "x": 0, "y": 9 }, "targets": [ { "expr": "sum(rate(ricc_pipeline_messages_processed_total[5m]))", "legendFormat": "messages/s" } ] },
+    { "id": 5, "type": "stat", "title": "Stage failures (15m)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 4, "w": 6, "x": 6, "y": 9 }, "targets": [ { "expr": "sum(increase(ricc_pipeline_stage_total{status=\"failure\"}[15m]))", "legendFormat": "failures" } ], "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] } },
+    { "id": 6, "type": "row", "title": "Zero-PII quality gates", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 } },
+    { "id": 7, "type": "stat", "title": "PII leaks (10m)", "description": "Any value > 0 pages immediately (RiccPiiLeaksDetected alert).", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 5, "w": 6, "x": 0, "y": 14 }, "targets": [ { "expr": "sum(increase(ricc_pii_audit_leaks_found_total[10m]))", "legendFormat": "leaks" } ], "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] } },
+    { "id": 8, "type": "timeseries", "title": "PII audit verdicts (30m rate)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 5, "w": 9, "x": 6, "y": 14 }, "targets": [ { "expr": "sum by (verdict) (rate(ricc_pii_audit_verdict_total[30m]))", "legendFormat": "{{verdict}}" } ] },
+    { "id": 9, "type": "timeseries", "title": "Drift metrics (current values)", "description": "PSI / JS divergence / vocabulary Jaccard gauges from the drift monitor.", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 5, "w": 9, "x": 15, "y": 14 }, "targets": [ { "expr": "ricc_drift_psi_value", "legendFormat": "PSI" }, { "expr": "ricc_drift_js_value", "legendFormat": "JS bits" }, { "expr": "ricc_drift_vocab_jaccard", "legendFormat": "vocab Jaccard" } ] },
+    { "id": 10, "type": "row", "title": "LoRA training", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 } },
+    { "id": 11, "type": "timeseries", "title": "Training loss by adapter", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 7, "w": 12, "x": 0, "y": 20 }, "targets": [ { "expr": "ricc_lora_train_loss", "legendFormat": "{{model}} / {{adapter}}" } ] },
+    { "id": 12, "type": "timeseries", "title": "VRAM usage by adapter", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 7, "w": 12, "x": 12, "y": 20 }, "targets": [ { "expr": "ricc_lora_vram_usage_bytes", "legendFormat": "{{model}} / {{adapter}}" } ], "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] } },
+    { "id": 13, "type": "row", "title": "Errors (P3 GPU/ML taxonomy)", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 } },
+    { "id": 14, "type": "timeseries", "title": "Errors by component (15m rate)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 }, "targets": [ { "expr": "sum by (component) (rate(ricc_errors_total[15m]))", "legendFormat": "{{component}}" } ] },
+    { "id": 15, "type": "timeseries", "title": "Errors by type (15m rate, top 10)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 }, "targets": [ { "expr": "topk(10, sum by (error_type) (rate(ricc_errors_total[15m])))", "legendFormat": "{{error_type}}" } ] },
+    { "id": 16, "type": "row", "title": "Release gates", "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 } },
+    { "id": 17, "type": "timeseries", "title": "SLO gate verdicts (1h rate)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 6, "w": 12, "x": 0, "y": 37 }, "targets": [ { "expr": "sum by (verdict) (rate(ricc_slo_gate_verdict_total[1h]))", "legendFormat": "{{verdict}}" } ] },
+    { "id": 18, "type": "timeseries", "title": "Validation results (1h rate)", "datasource": { "type": "prometheus", "uid": "${datasource}" }, "gridPos": { "h": 6, "w": 12, "x": 12, "y": 37 }, "targets": [ { "expr": "sum by (check, status) (rate(ricc_validation_result_total[1h]))", "legendFormat": "{{check}} / {{status}}" } ] }
+  ]
+}

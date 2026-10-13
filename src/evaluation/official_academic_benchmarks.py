@@ -21,7 +21,7 @@ import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -43,7 +43,7 @@ logger = logging.getLogger("AcademicBenchmark")
 # ==========================================
 # 1. OFFICIAL OPENAI HUMANEVAL TEST SUITE
 # ==========================================
-HUMANEVAL_TASKS = [
+HUMANEVAL_TASKS: list[dict[str, Any]] = [
     {
         "task_id": "HumanEval/0",
         "prompt": 'from typing import List\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    """ Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    """\n',
@@ -294,7 +294,7 @@ HUMANEVAL_TASKS = [
 # ==========================================
 # 2. SBER AI / HSE RUMMLU COMPUTER SCIENCE QA
 # ==========================================
-RUMMLU_CS_QUESTIONS = [
+RUMMLU_CS_QUESTIONS: list[dict[str, Any]] = [
     {
         "id": "rummlu_cs_01",
         "question": "Какой уровень изоляции транзакций в стандарте ANSI SQL предотвращает аномалию 'Фантомное чтение' (Phantom Read), но может приводить к снижению параллелизма?",
@@ -1028,7 +1028,7 @@ def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "pyt
 
 def execute_humaneval_code(
     generated_code: str,
-    task: dict,
+    task: dict[str, Any],
     timeout_sec: float = 2.0,
     *,
     isolation_mode: str = "process",
@@ -1057,12 +1057,12 @@ def run_official_academic_benchmarks(
     rouge = evaluate.load("rouge")
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model = AutoModelForCausalLM.from_pretrained(
+    base_model: Any = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,
@@ -1071,10 +1071,10 @@ def run_official_academic_benchmarks(
 
     # Attach LoRA
     adapter_path = Path(f"lora_adapters/{adapter_id}")
-    lora_model = None
+    lora_model: Any = None
     if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
         try:
-            lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
+            lora_model = cast(Any, PeftModel).from_pretrained(base_model, str(adapter_path))
             logger.info(f"Attached LoRA Adapter from {adapter_path}")
         except Exception as e:
             logger.warning(f"Could not load LoRA: {e}")
@@ -1086,7 +1086,7 @@ def run_official_academic_benchmarks(
             "base-model results into the LoRA/hybrid columns, producing identical fake metrics."
         )
 
-    def generate_fn(model, prompt_str: str, max_tokens: int = 256) -> str:
+    def generate_fn(model: Any, prompt_str: str, max_tokens: int = 256) -> str:
         messages = [{"role": "user", "content": prompt_str}]
         try:
             inp = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -1105,7 +1105,7 @@ def run_official_academic_benchmarks(
                 do_sample=False,  # Greedy decoding for deterministic benchmark reproduction
                 pad_token_id=tokenizer.pad_token_id,
             )
-        text = tokenizer.decode(out[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
+        text: str = cast(str, tokenizer.decode(out[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True))
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return text.strip()
@@ -1344,7 +1344,7 @@ def run_official_academic_benchmarks(
         if len(test_texts) >= 30:
             break
 
-    def compute_ppl(model_to_eval) -> float:
+    def compute_ppl(model_to_eval: Any) -> float:
         nlls = []
         for text in test_texts:
             enc = tokenizer(text, return_tensors="pt", max_length=256, truncation=True)
@@ -1519,7 +1519,7 @@ def run_official_academic_benchmarks(
     return matrix_res
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")

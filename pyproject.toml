@@ -151,18 +151,21 @@ ignore_missing_imports = true
 #    - src.graph.*                     : conversation DAG traversal + heuristics
 #    - src.exporter.finalize_sync_all  : cross-store sync glue code
 #
-# Status (2026-09-17): src.analytics.engine, src.graph.*, src.inference,
-# src.pipeline, src.exporter.finalize_sync_all, src.evaluation.statistical_power,
-# and src.evaluation.benchmark_comparator now pass `mypy --strict` and are
-# verified in `make typecheck-strict` (31 modules total).
-# Remaining excluded modules:
-# - src.evaluation.official_academic_benchmarks : uses evaluate / transformers stubs
-# - src.lora.*                                  : PEFT / TRL callbacks and trainer plumbing
+# Status (2026-10-12): all src.lora.* modules, plus
+# src.evaluation.official_academic_benchmarks, now pass `mypy --strict`
+# (untyped HF/PEFT calls fenced behind `cast(Any, ...)` — same pattern as
+# src.inference) and are verified in `make typecheck-strict`.
+# Remaining excluded modules (phase 2: 152 errors across 3 files —
+# object-typed payloads, Collection[str] vs str/dict mismatches):
+# - src.evaluation.deep_multi_experiment_suite      (~89 errors)
+# - src.evaluation.enterprise_production_eval_suite (~34 errors)
+# - src.evaluation.sota_expert_benchmark_showcase   (~29 errors)
 
 [[tool.mypy.overrides]]
 module = [
-    "src.evaluation.*",
-    "src.lora.*",
+    "src.evaluation.deep_multi_experiment_suite",
+    "src.evaluation.enterprise_production_eval_suite",
+    "src.evaluation.sota_expert_benchmark_showcase",
 ]
 ignore_errors = true
 

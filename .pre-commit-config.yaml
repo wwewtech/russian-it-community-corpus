@@ -13,46 +13,66 @@ repos:
       - id: ruff-format
         name: Ruff Format
 
-  # Black - code formatter (backup, ruff-format is primary)
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-        name: Black Format (fallback)
-        language_version: python3.12
-        args: [--check]
+  # NOTE: the Black "fallback" hook was removed (2026-10-14): ruff-format is
+  # the single formatter (see pyproject [tool.ruff.format] and the CI lint
+  # job), and black 24.8 disagrees with it on newly typed code, blocking
+  # every commit that touches those files.
 
-  # MyPy - static type checker
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
+  # MyPy - static type checker.
+  # Local system hook instead of mirrors-mypy: runs in the project venv with
+  # all real deps installed (no duplicated additional_dependencies list), and
+  # pass_filenames: false so pre-commit does NOT append staged files on top
+  # of the explicit module list (the previous behavior produced mypy
+  # "Duplicate module named" errors whenever a listed module was staged).
+  # Mirrors `make typecheck-strict` / the CI typecheck job 1:1.
+  - repo: local
     hooks:
-      - id: mypy
-        name: MyPy Typecheck
-        additional_dependencies:
-          - pydantic>=2.5.0
-          - pandas>=2.2.0
-          - pyarrow>=15.0.0
-          - torch>=2.2.0
-          - transformers>=4.40.0
-          - datasets>=2.18.0
-          - evaluate>=0.4.0
-          - peft>=0.10.0
-          - trl>=0.8.0
-          - accelerate>=0.28.0
-          - scikit-learn>=1.4.0
-          - natasha>=1.6.0
-          - slovnet>=0.6.0
-          - razdel>=0.5.0
-          - yargy>=0.16.0
-          - pymorphy3>=2.0.2
-          - tiktoken>=0.7.0
-          - xxhash>=3.4.0
-          - ujson>=5.9.0
-          - tqdm>=4.66.0
-          - streamlit>=1.32.0
-          - rich>=13.7.0
-        args: [--strict, src/config.py, src/bootstrap.py, src/ingestion/schema.py, src/ingestion/loader.py, src/analytics/metrics.py, src/analytics/network.py, src/analytics/report_generator.py, src/analytics/engine.py, src/taxonomy/classifier.py, src/taxonomy/tagger.py, src/deduplication/exact_dedup.py, src/deduplication/minhash_lsh.py, src/monitoring/drift.py, src/monitoring/sft_quality.py, src/monitoring/slo_gate.py, src/rag/rag_pipeline.py, src/rag/__init__.py, src/evaluation/__init__.py, src/evaluation/statistical_power.py, src/evaluation/benchmark_comparator.py, src/lora/__init__.py, src/graph/__init__.py, src/validation/artifact_manifest.py, src/validation/hub_reconciliation.py, src/validation/validator.py, src/pii/regex_scrubber.py, src/pii/ner_scrubber.py, src/pii/deep_anonymizer.py, src/inference.py, src/pipeline.py, src/exporter/finalize_sync_all.py]
-        verbose: true
+      - id: mypy-strict
+        name: MyPy Typecheck (strict, 39 modules)
+        entry: python -m mypy
+        language: system
+        pass_filenames: false
+        args:
+          - --strict
+          - src/config.py
+          - src/errors.py
+          - src/bootstrap.py
+          - src/ingestion/schema.py
+          - src/ingestion/loader.py
+          - src/analytics/metrics.py
+          - src/analytics/network.py
+          - src/analytics/report_generator.py
+          - src/analytics/engine.py
+          - src/taxonomy/classifier.py
+          - src/taxonomy/tagger.py
+          - src/deduplication/exact_dedup.py
+          - src/deduplication/minhash_lsh.py
+          - src/monitoring/drift.py
+          - src/monitoring/sft_quality.py
+          - src/monitoring/slo_gate.py
+          - src/rag/rag_pipeline.py
+          - src/rag/__init__.py
+          - src/evaluation/__init__.py
+          - src/evaluation/statistical_power.py
+          - src/evaluation/benchmark_comparator.py
+          - src/evaluation/official_academic_benchmarks.py
+          - src/lora/__init__.py
+          - src/lora/train_lora.py
+          - src/lora/batch_train_zoo.py
+          - src/lora/generate_demo.py
+          - src/lora/train_20_popular_models.py
+          - src/lora/train_heavyweight_5_sota.py
+          - src/graph/__init__.py
+          - src/validation/artifact_manifest.py
+          - src/validation/hub_reconciliation.py
+          - src/validation/validator.py
+          - src/pii/regex_scrubber.py
+          - src/pii/ner_scrubber.py
+          - src/pii/deep_anonymizer.py
+          - src/inference.py
+          - src/pipeline.py
+          - src/exporter/finalize_sync_all.py
+          - src/observability/__init__.py
 
   # Check for merge conflicts
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -90,4 +110,4 @@ ci:
     [pre-commit] Auto fixes from ruff
 
   # Skip on CI if already run locally (speed up)
-  skip: [mypy]
+  skip: [mypy-strict]

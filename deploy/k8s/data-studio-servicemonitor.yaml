@@ -1,0 +1,25 @@
+# ServiceMonitor for the RICC Data Studio (Streamlit) workload.
+# Requires kube-prometheus-stack (prometheus-operator CRDs).
+#
+# The metrics endpoint is served by the prometheus_client HTTP server
+# started via `maybe_start_metrics_server(9090)` inside the pod (see
+# src/observability/__init__.py). The 9090 port is declared on the
+# Service (data-studio-service.yaml) but NOT published outside the pod.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ricc-data-studio
+  labels:
+    app: ricc-data-studio
+    release: kube-prometheus-stack  # match the Prometheus instance's serviceMonitorSelector
+spec:
+  selector:
+    matchLabels:
+      app: ricc-data-studio
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

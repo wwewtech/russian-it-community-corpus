@@ -18,7 +18,7 @@ from src.rag.rag_pipeline import LocalRAGPipeline
 logger = logging.getLogger(__name__)
 
 # Representative evaluation subset for live benchmarking
-BENCHMARK_SAMPLE = [
+BENCHMARK_SAMPLE: list[dict[str, Any]] = [
     {
         "id": "ai_01",
         "domain": "ai_ml_nlp",

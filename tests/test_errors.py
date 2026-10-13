@@ -7,20 +7,33 @@ from __future__ import annotations
 import unittest
 
 from src.errors import (
+    AdapterLoadError,
+    CheckpointError,
     ConfigurationError,
     DriftDetectedError,
     Err,
+    EvaluationError,
     ExternalServiceError,
+    GPUDriverError,
+    GPUNotAvailableError,
+    GPUOutOfMemoryError,
     HuggingFaceHubError,
+    InferenceError,
     IngestionError,
+    MLError,
     Ok,
     PIIAnonymizationError,
     PIIValidationError,
     PipelineError,
+    QuantizationError,
     RICCError,
     SchemaValidationError,
+    TokenizerError,
+    TrainingError,
     ValidationError,
     VRAMExhaustedError,
+    classify_ml_exception,
+    is_oom_error,
 )
 
 
@@ -96,6 +109,82 @@ class TestErrorHierarchy(unittest.TestCase):
         self.assertEqual(err.context.get("resource_type"), "vram")
         self.assertEqual(err.context.get("current_usage"), 16000)
         self.assertEqual(err.context.get("limit"), 12000)
+
+
+class TestGPUMLErrorTaxonomy(unittest.TestCase):
+    def test_legacy_vram_alias_is_gpu_oom(self):
+        err = VRAMExhaustedError("oom", requested_mb=16000, available_mb=12000)
+        self.assertIsInstance(err, GPUOutOfMemoryError)
+        self.assertEqual(err.component, "gpu")
+        self.assertEqual(err.context.get("resource_type"), "vram")
+
+    def test_ml_base_carries_model_context(self):
+        err = MLError("boom", model_name="Qwen/Qwen2.5-0.5B", adapter_id="qwen05")
+        self.assertEqual(err.component, "ml")
+        self.assertEqual(err.context.get("model_name"), "Qwen/Qwen2.5-0.5B")
+        self.assertEqual(err.context.get("adapter_id"), "qwen05")
+
+    def test_training_error_step_and_phase(self):
+        err = TrainingError("step failed", step=99, phase="trainer.train()")
+        self.assertEqual(err.component, "training")
+        self.assertEqual(err.context.get("step"), 99)
+        self.assertEqual(err.context.get("phase"), "trainer.train()")
+
+    def test_inference_and_evaluation_components(self):
+        self.assertEqual(InferenceError("gen failed").component, "inference")
+        err = EvaluationError("bench failed", benchmark="HumanEval", variant="lora")
+        self.assertEqual(err.component, "evaluation")
+        self.assertEqual(err.context.get("benchmark"), "HumanEval")
+        self.assertEqual(err.context.get("variant"), "lora")
+
+    def test_tokenizer_checkpoint_adapter_quantization_components(self):
+        self.assertEqual(TokenizerError("tok failed").component, "tokenizer")
+        err = CheckpointError("save failed", checkpoint_path="lora_adapters/x")
+        self.assertEqual(err.component, "checkpoint")
+        self.assertEqual(err.context.get("checkpoint_path"), "lora_adapters/x")
+        err = AdapterLoadError("corrupt", adapter_path="lora_adapters/x", base_model="Qwen")
+        self.assertEqual(err.component, "adapter")
+        self.assertEqual(err.context.get("adapter_path"), "lora_adapters/x")
+        err = QuantizationError("bnb failed", quant_type="nf4")
+        self.assertEqual(err.component, "quantization")
+        self.assertEqual(err.context.get("quant_type"), "nf4")
+
+    def test_gpu_unavailable_and_driver(self):
+        err = GPUNotAvailableError("no cuda", device="cuda:0")
+        self.assertEqual(err.component, "gpu")
+        self.assertEqual(err.context.get("reason"), "cuda_not_available")
+        err = GPUDriverError("cublas fail", driver_version="550", cuda_version="12.4")
+        self.assertEqual(err.context.get("driver_version"), "550")
+
+    def test_is_oom_error_markers(self):
+        self.assertTrue(is_oom_error(RuntimeError("CUDA out of memory. Tried to allocate 2GB")))
+        self.assertFalse(is_oom_error(ValueError("bad shape")))
+
+        class FakeTorchOOM(RuntimeError):
+            pass
+
+        FakeTorchOOM.__name__ = "OutOfMemoryError"
+        self.assertTrue(is_oom_error(FakeTorchOOM("boom")))
+
+    def test_classify_ml_exception_oom(self):
+        err = classify_ml_exception(
+            RuntimeError("CUDA out of memory. Tried to allocate 1.5GB"),
+            model_name="Qwen",
+            device="cuda:0",
+        )
+        self.assertIsInstance(err, GPUOutOfMemoryError)
+        self.assertEqual(err.context.get("model_name"), "Qwen")
+
+    def test_classify_ml_exception_unavailable_and_driver(self):
+        err = classify_ml_exception(RuntimeError("CUDA not available, cannot use device cuda:0"))
+        self.assertIsInstance(err, GPUNotAvailableError)
+        err = classify_ml_exception(RuntimeError("NCCL communicator failed to init"))
+        self.assertIsInstance(err, GPUDriverError)
+
+    def test_classify_ml_exception_fallback_training(self):
+        err = classify_ml_exception(ValueError("dataloader shape mismatch"), adapter_id="qwen05")
+        self.assertIsInstance(err, TrainingError)
+        self.assertIn("original_error", err.context)
 
 
 class TestResultType(unittest.TestCase):

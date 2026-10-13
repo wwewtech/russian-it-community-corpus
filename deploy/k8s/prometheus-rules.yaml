@@ -1,0 +1,155 @@
+# PrometheusRule alerts for the RICC data platform.
+# Aligned with the Grafana dashboard (deploy/monitoring/ricc-overview.json)
+# and the metric names defined in src/observability/__init__.py.
+#
+# Runbook notes:
+# - PII leak alerts page immediately: zero-PII is the platform's core SLO.
+# - SLO gate HOLD is a release signal, not an incident: it means the data
+#   quality gate (drift / validation / provenance) currently blocks SHIP.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ricc-data-platform
+  labels:
+    app: ricc-data-studio
+    release: kube-prometheus-stack  # match the Prometheus instance's ruleSelector
+spec:
+  groups:
+    - name: ricc.pipeline
+      rules:
+        - alert: RiccPipelineStageFailing
+          expr: |
+            sum by (stage) (rate(ricc_pipeline_stage_total{status="failure"}[15m]))
+              > 0
+          for: 5m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "RICC pipeline stage {{ $labels.stage }} is failing"
+            description: >-
+              Stage {{ $labels.stage }} recorded failures in the last 15m
+              ({{ $value | humanize }} failures/sec). Check stage logs and
+              the Grafana panel "Stage failures".
+
+        - alert: RiccPipelineStageDown
+          expr: |
+            sum(rate(ricc_pipeline_stage_total[30m])) == 0
+          for: 30m
+          labels:
+            severity: info
+            service: ricc
+          annotations:
+            summary: "No pipeline stage activity for 30m"
+            description: >-
+              ricc_pipeline_stage_total has not been incremented for 30m.
+              Either the pipeline-runner pod is down or no runs were
+              triggered. Verify `make orchestrate` / the Prefect flow.
+
+    - name: ricc.pii
+      rules:
+        - alert: RiccPiiLeaksDetected
+          expr: |
+            sum(rate(ricc_pii_audit_leaks_found_total[10m])) > 0
+          for: 0m
+          labels:
+            severity: critical
+            service: ricc
+          annotations:
+            summary: "PII leak detected (category {{ $labels.category }})"
+            description: >-
+              The zero-PII guarantee is violated: leaks found in category
+              {{ $labels.category }} during the audit. Release gate must
+              be HOLD; re-run `make audit` and `make audit-prob`.
+
+        - alert: RiccPiiAuditVerdictLeaks
+          expr: |
+            sum by (verdict) (rate(ricc_pii_audit_verdict_total{verdict="LEAKS_DETECTED"}[30m]))
+              > 0
+          for: 0m
+          labels:
+            severity: critical
+            service: ricc
+          annotations:
+            summary: "PII audit verdict: LEAKS_DETECTED"
+            description: >-
+              The audit harness itself reported LEAKS_DETECTED. Zero-PII
+              SLO breached — block any SHIP until the audit passes.
+
+    - name: ricc.quality
+      rules:
+        - alert: RiccDriftSignificant
+          expr: |
+            sum by (verdict) (rate(ricc_drift_verdict_total{verdict="significant_drift"}[1h]))
+              > 0
+          for: 0m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "Significant dataset drift detected"
+            description: >-
+              PSI / JS / vocabulary drift crossed the significant threshold
+              (params.yaml). Investigate the two snapshots referenced in
+              reports/drift_report.json before the next release.
+
+        - alert: RiccSloGateHold
+          expr: |
+            sum by (verdict) (rate(ricc_slo_gate_verdict_total{verdict="HOLD"}[1h]))
+              > 0
+          for: 0m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "SLO release gate verdict: HOLD"
+            description: >-
+              The SLO gate returned HOLD — a data-quality check failed.
+              Inspect reports/slo_verdict.json checks before tagging a
+              release.
+
+        - alert: RiccValidationFailures
+          expr: |
+            sum by (check) (rate(ricc_validation_result_total{status="fail"}[30m]))
+              > 0
+          for: 5m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "Validation check {{ $labels.check }} failing"
+            description: >-
+              Dataset validation check {{ $labels.check }} recorded failures
+              in the last 30m. Run `make validate` for the full report.
+
+    - name: ricc.errors
+      rules:
+        - alert: RiccMLComponentErrorSpike
+          expr: |
+            sum by (component) (rate(ricc_errors_total{component=~"ml|training|inference|evaluation|tokenizer|checkpoint|adapter|quantization|gpu"}[15m]))
+              > 0.05
+          for: 10m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "GPU/ML error spike in component {{ $labels.component }}"
+            description: >-
+              Component {{ $labels.component }} (P3 GPU/ML taxonomy in
+              src/errors.py) is erroring at {{ $value | humanize }}/sec.
+              For GPUOutOfMemoryError: lower batch size or enable 4-bit
+              quantization. For AdapterLoadError: fail fast, do not fall
+              back to the base model.
+
+        - alert: RiccAnyErrorBurst
+          expr: |
+            sum(rate(ricc_errors_total[10m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "Error burst across RICC components"
+            description: >-
+              Total RICC error rate exceeded 1/sec for 5m. Check the
+              Grafana "Errors by component" panel and structlog JSON logs.

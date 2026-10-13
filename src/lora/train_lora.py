@@ -6,6 +6,7 @@ Optimized for NVIDIA GeForce RTX 3060 (12GB VRAM).
 import argparse
 import logging
 from pathlib import Path
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -33,7 +34,7 @@ def train_lora(
     batch_size: int = 2,
     learning_rate: float = 2e-4,
     max_seq_length: int = 1024,
-):
+) -> Path:
     """
     Execute LoRA domain adaptation on RTX 3060 with PEFT.
     """
@@ -44,22 +45,24 @@ def train_lora(
     print(f"📚 Dataset: {dataset_path}")
 
     # 1. Load Tokenizer & Model
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     device_map = "auto" if torch.cuda.is_available() else None
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-    model = AutoModelForCausalLM.from_pretrained(
+    base_model: Any = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         device_map=device_map,
     )
 
     # Enable gradient checkpointing for VRAM saving on RTX 3060
-    if hasattr(model, "gradient_checkpointing_enable"):
-        model.gradient_checkpointing_enable()
+    grad_ckpt: Any = getattr(base_model, "gradient_checkpointing_enable", None)
+    if callable(grad_ckpt):
+        grad_ckpt()
+    model: Any = base_model
 
     # 2. Configure LoRA
     peft_config = LoraConfig(
@@ -70,8 +73,10 @@ def train_lora(
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
         bias="none",
     )
-    model = get_peft_model(model, peft_config)
-    model.print_trainable_parameters()
+    model = cast(Any, get_peft_model)(model, peft_config)
+    trainable_params: Any = getattr(model, "print_trainable_parameters", None)
+    if callable(trainable_params):
+        trainable_params()
 
     # 3. Load & Format Dataset.
     # The previous version silently truncated to the first 1000 rows
@@ -82,7 +87,7 @@ def train_lora(
     raw_dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"📚 Loaded {len(raw_dataset):,} SFT examples from {dataset_path}")
 
-    def format_chatml(example):
+    def format_chatml(example: dict[str, Any]) -> dict[str, Any]:
         messages = example.get("messages", [])
         if not messages:
             return {"input_ids": [], "labels": []}
@@ -104,7 +109,7 @@ def train_lora(
                     labels[:prompt_len] = [-100] * prompt_len
 
                 tokenized["labels"] = labels
-                return tokenized
+                return cast("dict[str, Any]", tokenized)
             except Exception as e:
                 logger.debug(f"Tokenizer chat_template failed, using fallback: {e}")
 
@@ -118,7 +123,7 @@ def train_lora(
         prompt_len = min(len(tokenized_prompt["input_ids"]), len(labels))
         labels[:prompt_len] = [-100] * prompt_len
         tokenized["labels"] = labels
-        return tokenized
+        return cast("dict[str, Any]", tokenized)
 
     tokenized_dataset = raw_dataset.map(format_chatml, remove_columns=raw_dataset.column_names)
 

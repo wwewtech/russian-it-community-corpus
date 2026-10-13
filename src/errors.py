@@ -353,26 +353,6 @@ class ResourceError(RICCError):
             self.context["limit"] = limit
 
 
-class VRAMExhaustedError(ResourceError):
-    """GPU VRAM exhausted during training/inference."""
-
-    def __init__(
-        self,
-        message: str,
-        *,
-        requested_mb: int | None = None,
-        available_mb: int | None = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            message,
-            resource_type="vram",
-            current_usage=requested_mb,
-            limit=available_mb,
-            **kwargs,
-        )
-
-
 class DiskSpaceError(ResourceError):
     """Insufficient disk space."""
 
@@ -394,6 +374,283 @@ class DiskSpaceError(ResourceError):
         )
         if path:
             self.context["path"] = path
+
+
+# =============================================================================
+# GPU / ML Errors
+#
+# Typed taxonomy for GPU training / inference failures. Motivation: LoRA
+# training and eval harnesses previously raised bare RuntimeError / let
+# torch exceptions propagate, which made it impossible to distinguish
+# "retry with smaller batch / gradient checkpointing" (OOM) from
+# "fail fast, weights are corrupt" (adapter load) in logs and in the
+# `ricc_errors_total{component=...}` Prometheus counter.
+# =============================================================================
+
+
+class MLError(RICCError):
+    """Base error for ML training / inference / evaluation failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        model_name: str | None = None,
+        adapter_id: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, component="ml", **kwargs)
+        if model_name:
+            self.context["model_name"] = model_name
+        if adapter_id:
+            self.context["adapter_id"] = adapter_id
+
+
+class TrainingError(MLError):
+    """LoRA / fine-tuning loop failure (trainer step, optimizer, dataloader)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        step: int | None = None,
+        phase: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "training"
+        if step is not None:
+            self.context["step"] = step
+        if phase:
+            self.context["phase"] = phase
+
+
+class InferenceError(MLError):
+    """Text generation / model serving failure."""
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "inference"
+
+
+class EvaluationError(MLError):
+    """Benchmark / eval harness failure (HumanEval, RuMMLU, perplexity, ROUGE)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        benchmark: str | None = None,
+        variant: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "evaluation"
+        if benchmark:
+            self.context["benchmark"] = benchmark
+        if variant:
+            self.context["variant"] = variant
+
+
+class TokenizerError(MLError):
+    """Tokenizer load / chat-template / encode-decode failure."""
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "tokenizer"
+
+
+class CheckpointError(MLError):
+    """Checkpoint save / load / resume failure (partial runs must stay recoverable)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        checkpoint_path: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "checkpoint"
+        if checkpoint_path:
+            self.context["checkpoint_path"] = checkpoint_path
+
+
+class AdapterLoadError(MLError):
+    """LoRA adapter attach failure (corrupt weights / base-model mismatch).
+
+    Must fail fast — silently falling back to the base model produces
+    misleading "attached" metrics (see src/inference.py).
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        adapter_path: str | None = None,
+        base_model: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "adapter"
+        if adapter_path:
+            self.context["adapter_path"] = adapter_path
+        if base_model:
+            self.context["base_model"] = base_model
+
+
+class QuantizationError(MLError):
+    """4-bit NF4 / bitsandbytes quantization setup failure (QLoRA path)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        quant_type: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, **kwargs)
+        self.component = "quantization"
+        if quant_type:
+            self.context["quant_type"] = quant_type
+
+
+class GPUError(RICCError):
+    """Base error for GPU device failures."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        device: str | None = None,
+        device_name: str | None = None,
+        model_name: str | None = None,
+        adapter_id: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, component="gpu", **kwargs)
+        if device:
+            self.context["device"] = device
+        if device_name:
+            self.context["device_name"] = device_name
+        if model_name:
+            self.context["model_name"] = model_name
+        if adapter_id:
+            self.context["adapter_id"] = adapter_id
+
+
+class GPUNotAvailableError(GPUError):
+    """CUDA requested (device_map='auto', fp16) but no GPU is visible."""
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(message, **kwargs)
+        self.context["reason"] = "cuda_not_available"
+
+
+class GPUDriverError(GPUError):
+    """CUDA driver / runtime mismatch (e.g. NVML, cuBLAS, NCCL init failures)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        driver_version: str | None = None,
+        cuda_version: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, **kwargs)
+        if driver_version:
+            self.context["driver_version"] = driver_version
+        if cuda_version:
+            self.context["cuda_version"] = cuda_version
+
+
+class GPUOutOfMemoryError(ResourceError):
+    """GPU VRAM exhausted during training / inference.
+
+    A ResourceError with resource_type="vram" (same context keys as the
+    legacy VRAMExhaustedError) plus the GPU device that OOMed, so OOMs
+    stay visible both in resource dashboards and GPU dashboards.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        requested_mb: int | None = None,
+        available_mb: int | None = None,
+        device: str | None = None,
+        device_name: str | None = None,
+        model_name: str | None = None,
+        adapter_id: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(
+            message,
+            resource_type="vram",
+            current_usage=requested_mb,
+            limit=available_mb,
+            **kwargs,
+        )
+        self.component = "gpu"
+        if device:
+            self.context["device"] = device
+        if device_name:
+            self.context["device_name"] = device_name
+        if model_name:
+            self.context["model_name"] = model_name
+        if adapter_id:
+            self.context["adapter_id"] = adapter_id
+
+
+class VRAMExhaustedError(GPUOutOfMemoryError):
+    """Legacy alias kept for backward compatibility (now a GPU OOM)."""
+
+
+_OOM_MARKERS = ("out of memory", "outofmemory", "memory exhausted")
+
+
+def is_oom_error(exc: BaseException) -> bool:
+    """Return True if an exception looks like a GPU/CPU OOM.
+
+    Matches torch.cuda.OutOfMemoryError by class name and CUDA OOMs by
+    message ("CUDA out of memory. Tried to allocate ...").
+    """
+    if "OutOfMemory" in type(exc).__name__:
+        return True
+    message = str(exc).lower()
+    return any(marker in message for marker in _OOM_MARKERS)
+
+
+_GPU_UNAVAILABLE_MARKERS = ("no cuda", "cuda not available", "no gpu", "device not found")
+_GPU_DRIVER_MARKERS = ("cuda driver", "cublas", "nccl", "nvml", "cuda initialization failure")
+
+
+def classify_ml_exception(
+    exc: BaseException,
+    *,
+    model_name: str | None = None,
+    adapter_id: str | None = None,
+    device: str | None = None,
+) -> RICCError:
+    """Map a raw torch/HF exception to the typed GPU/ML taxonomy.
+
+    OOM -> GPUOutOfMemoryError (retryable: smaller batch, checkpointing,
+    4-bit quantization); missing CUDA -> GPUNotAvailableError; driver /
+    NCCL failures -> GPUDriverError; anything else -> TrainingError with
+    the original exception chained in context.
+    """
+    message = str(exc) or f"{type(exc).__name__}: <no message>"
+    if is_oom_error(exc):
+        return GPUOutOfMemoryError(message, model_name=model_name, adapter_id=adapter_id, device=device)
+    lowered = message.lower()
+    if any(marker in lowered for marker in _GPU_UNAVAILABLE_MARKERS):
+        return GPUNotAvailableError(message, model_name=model_name, adapter_id=adapter_id, device=device)
+    if any(marker in lowered for marker in _GPU_DRIVER_MARKERS):
+        return GPUDriverError(message, model_name=model_name, adapter_id=adapter_id, device=device)
+    typed = TrainingError(message, model_name=model_name, adapter_id=adapter_id)
+    typed.context["original_error"] = f"{type(exc).__name__}: {exc}"
+    return typed
 
 
 # =============================================================================

@@ -12,3 +12,8 @@ spec:
     - port: 8501
       targetPort: 8501
       name: http
+    # Prometheus metrics endpoint served by prometheus_client inside the
+    # pod (maybe_start_metrics_server(9090)); cluster-internal only.
+    - port: 9090
+      targetPort: 9090
+      name: metrics

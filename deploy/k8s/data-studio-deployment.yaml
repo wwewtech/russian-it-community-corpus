@@ -25,11 +25,18 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8501
+              name: http
+            - containerPort: 9090
+              name: metrics
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
             - name: HF_HOME
               value: /app/.hf_cache
+            # Expose prometheus_client metrics on 9090 for the ServiceMonitor
+            # (deploy/k8s/data-studio-servicemonitor.yaml).
+            - name: RICC_METRICS_PORT
+              value: "9090"
           livenessProbe:
             httpGet:
               path: /_stcore/health

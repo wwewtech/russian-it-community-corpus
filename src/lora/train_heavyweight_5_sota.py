@@ -14,7 +14,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -86,7 +86,7 @@ def load_sft_dataset(parquet_path: Path, max_samples: int = 600) -> Dataset:
     return Dataset.from_pandas(df)
 
 
-def format_chat_prompt(example: dict, tokenizer: Any) -> dict:
+def format_chat_prompt(example: dict[str, Any], tokenizer: Any) -> dict[str, Any]:
     """Format dialogue into conversational prompt."""
     conv = example.get("conversations") or example.get("messages")
     if conv and isinstance(conv, list):
@@ -111,7 +111,7 @@ def format_chat_prompt(example: dict, tokenizer: Any) -> dict:
 
 
 def train_single_heavyweight(
-    spec: dict,
+    spec: dict[str, Any],
     dataset: Dataset,
     output_dir: Path,
     steps: int = 50,
@@ -130,7 +130,7 @@ def train_single_heavyweight(
     t0 = time.time()
 
     # 1. Quantization Configuration
-    bnb_config = BitsAndBytesConfig(
+    bnb_config: Any = cast(Any, BitsAndBytesConfig)(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.float16,
@@ -138,19 +138,21 @@ def train_single_heavyweight(
     )
 
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+        tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
-        model = AutoModelForCausalLM.from_pretrained(
+        model: Any = AutoModelForCausalLM.from_pretrained(
             model_name,
             quantization_config=bnb_config,
             device_map="auto",
             trust_remote_code=True,
         )
 
-        model = prepare_model_for_kbit_training(model)
-        model.gradient_checkpointing_enable()
+        model = cast(Any, prepare_model_for_kbit_training)(model)
+        grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
+        if callable(grad_ckpt):
+            grad_ckpt()
 
         # LoRA Config targeting all linear projection layers
         target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
@@ -166,7 +168,7 @@ def train_single_heavyweight(
         peft_model.print_trainable_parameters()
 
         # Tokenize Dataset with prompt loss masking (-100)
-        def tokenize_example(example):
+        def tokenize_example(example: dict[str, Any]) -> dict[str, Any]:
             conv = example.get("conversations") or example.get("messages")
             if conv and isinstance(conv, list):
                 role_map = {
@@ -208,7 +210,7 @@ def train_single_heavyweight(
                         labels[:p_len] = [-100] * p_len
 
                     tokenized["labels"] = labels
-                    return tokenized
+                    return cast("dict[str, Any]", tokenized)
                 except Exception as e:
                     logger.debug(f"Chat template formatting failed: {e}")
 
@@ -221,7 +223,7 @@ def train_single_heavyweight(
             p_len = min(len(p_tokens["input_ids"]), len(labels))
             labels[:p_len] = [-100] * p_len
             tokenized["labels"] = labels
-            return tokenized
+            return cast("dict[str, Any]", tokenized)
 
         tokenized_ds = dataset.map(tokenize_example, remove_columns=dataset.column_names)
 
@@ -274,7 +276,7 @@ def train_single_heavyweight(
         return False
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=40)
     args = parser.parse_args()
