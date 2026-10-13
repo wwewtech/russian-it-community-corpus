@@ -11,7 +11,7 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -27,7 +27,7 @@ from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("EnterpriseEval")
 
-ENTERPRISE_SCENARIOS = [
+ENTERPRISE_SCENARIOS: list[dict[str, Any]] = [
     # --- DOMAIN 1: FINTECH, BANKING & TRANSACTIONAL INTEGRITY (8 scenarios) ---
     {
         "id": "fintech_01_outbox_pattern",
@@ -865,12 +865,12 @@ def evaluate_enterprise_production_matrix(
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
 
     # 2. Load Model & Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model = AutoModelForCausalLM.from_pretrained(
+    base_model: Any = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,
@@ -879,7 +879,7 @@ def evaluate_enterprise_production_matrix(
 
     scenarios = ENTERPRISE_SCENARIOS[:max_scenarios]
 
-    def run_inference(model, prompt: str) -> tuple[str, float, float]:
+    def run_inference(model: Any, prompt: str) -> tuple[str, float, float]:
         messages = [{"role": "user", "content": prompt}]
         try:
             inp = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -902,14 +902,14 @@ def evaluate_enterprise_production_matrix(
         elapsed = time.time() - t0
         gen_tokens = len(output_ids[0]) - len(inputs["input_ids"][0])
         tps = gen_tokens / max(elapsed, 0.001)
-        text = tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
+        text: str = cast(str, tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True))
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return text, elapsed, tps
 
     # Step A: Evaluate Base and RAG
-    base_results = []
-    rag_results = []
+    base_results: list[dict[str, Any]] = []
+    rag_results: list[dict[str, Any]] = []
     logger.info("Executing Phase A: Base Model and RAG Evaluations...")
     for sc in scenarios:
         prompt = sc["prompt"]
@@ -971,7 +971,14 @@ def evaluate_enterprise_production_matrix(
         prompt = sc["prompt"]
         req = sc["required_concepts"]
 
-        # LoRA
+        # LoRA (l_text etc. annotated up-front: the fallback branch reads
+        # values from dict[str, Any] which mypy sees as object)
+        l_text: str
+        l_lat: float
+        l_tps: float
+        l_ast: float
+        l_concept_score: float
+        l_total: float
         if lora_model:
             l_text, l_lat, l_tps = run_inference(lora_model, prompt)
             l_ast = score_ast_compilation(l_text, sc["code_language"])
@@ -979,16 +986,15 @@ def evaluate_enterprise_production_matrix(
             l_concept_score = (l_concept_hits / len(req)) * 100.0
             l_total = (l_concept_score * 0.7) + (l_ast * 0.3)
         else:
-            l_text, l_lat, l_tps = (
-                base_results[idx - 1]["text"],
-                base_results[idx - 1]["latency"],
-                base_results[idx - 1]["tps"],
-            )
-            l_ast = base_results[idx - 1]["ast_score"]
-            l_concept_score = base_results[idx - 1]["concept_score"]
-            l_total = base_results[idx - 1]["score"]
+            prev = base_results[idx - 1]
+            l_text = cast(str, prev["text"])
+            l_lat = cast(float, prev["latency"])
+            l_tps = cast(float, prev["tps"])
+            l_ast = cast(float, prev["ast_score"])
+            l_concept_score = cast(float, prev["concept_score"])
+            l_total = cast(float, prev["score"])
 
-        # Hybrid
+        # Hybrid (annotated like the LoRA branch — see above)
         rag_hits = rag_kb.search(prompt, top_k=2)
         rag_context = "\n".join(f"- {str(h.get('content', ''))[:200]}" for h in rag_hits) if rag_hits else ""
         rag_prompt = (
@@ -1001,14 +1007,13 @@ def evaluate_enterprise_production_matrix(
             h_concept_score = (h_concept_hits / len(req)) * 100.0
             h_total = (h_concept_score * 0.7) + (h_ast * 0.3)
         elif rag_hits:
-            h_text, h_lat, h_tps = (
-                rag_results[idx - 1]["text"],
-                rag_results[idx - 1]["latency"],
-                rag_results[idx - 1]["tps"],
-            )
-            h_ast = rag_results[idx - 1]["ast_score"]
-            h_concept_score = rag_results[idx - 1]["concept_score"]
-            h_total = rag_results[idx - 1]["score"]
+            rprev = rag_results[idx - 1]
+            h_text = cast(str, rprev["text"])
+            h_lat = cast(float, rprev["latency"])
+            h_tps = cast(float, rprev["tps"])
+            h_ast = cast(float, rprev["ast_score"])
+            h_concept_score = cast(float, rprev["concept_score"])
+            h_total = cast(float, rprev["score"])
         else:
             h_text, h_lat, h_tps = l_text, l_lat, l_tps
             h_ast = l_ast
@@ -1065,7 +1070,7 @@ def evaluate_enterprise_production_matrix(
     lora_ast_avg = round(float(np.mean([r["lora"]["ast_score"] for r in detailed_records])), 1)
     hybrid_ast_avg = round(float(np.mean([r["hybrid"]["ast_score"] for r in detailed_records])), 1)
 
-    output_data = {
+    output_data: dict[str, Any] = {
         "metadata": {
             "framework": "Russian IT Domain Scenario Benchmark Suite (50 Scenarios)",
             "total_scenarios": len(detailed_records),
@@ -1163,7 +1168,7 @@ def evaluate_enterprise_production_matrix(
     return output_data
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")

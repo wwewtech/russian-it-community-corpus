@@ -130,44 +130,22 @@ line-ending = "lf"
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
-# Slow-mode rollout: strict checks only for the modules listed in
-# `make typecheck-strict`; extend module-by-module, not all of src/ at once.
-
-# Modules excluded from strict type checking, grouped by reason.
-# Re-enable one at a time as they get typed; see `make typecheck-strict`.
-
-# 1) Heavy third-party dependencies (torch, peft, trl) with weak/incomplete
-#    type stubs. Removing these will surface dozens of "no overload variant"
-#    and "Any" errors that are not actionable for us.
-#    Candidates for re-enable: per-file typing effort, not a one-shot move.
-#    - src.evaluation.*  : uses transformers / evaluate / scikit-learn stubs
-#    - src.lora.*        : PEFT / TRL callbacks and trainer plumbing
-#    - src.inference     : torch + transformers generate()/pipeline()
-#    - src.pipeline      : orchestrates torch-backed stages end-to-end
-
-# 2) Internal modules with high cyclomatic complexity / dict-heavy payloads
-#    that would require a large refactor before strict pays off.
-#    - src.analytics.engine            : ~700 LoC (27,665 bytes), dict-based metric accumulators
-#    - src.graph.*                     : conversation DAG traversal + heuristics
-#    - src.exporter.finalize_sync_all  : cross-store sync glue code
+# Strict rollout COMPLETE (2026-10-14): no [[tool.mypy.overrides]]
+# ignore_errors blocks remain. Every src/ module passes `mypy --strict`;
+# untyped third-party calls (HF/PEFT/transformers) are fenced behind
+# `cast(Any, ...)` — the single sanctioned pattern, see src/inference.py.
+# The full module list is verified by `make typecheck-strict` and the
+# pre-commit mypy-strict hook.
 #
-# Status (2026-10-12): all src.lora.* modules, plus
-# src.evaluation.official_academic_benchmarks, now pass `mypy --strict`
-# (untyped HF/PEFT calls fenced behind `cast(Any, ...)` — same pattern as
-# src.inference) and are verified in `make typecheck-strict`.
-# Remaining excluded modules (phase 2: 152 errors across 3 files —
-# object-typed payloads, Collection[str] vs str/dict mismatches):
-# - src.evaluation.deep_multi_experiment_suite      (~89 errors)
-# - src.evaluation.enterprise_production_eval_suite (~34 errors)
-# - src.evaluation.sota_expert_benchmark_showcase   (~29 errors)
-
-[[tool.mypy.overrides]]
-module = [
-    "src.evaluation.deep_multi_experiment_suite",
-    "src.evaluation.enterprise_production_eval_suite",
-    "src.evaluation.sota_expert_benchmark_showcase",
-]
-ignore_errors = true
+# History: rollout started 2026-09-17 with src.analytics.engine,
+# src.graph.*, src.inference, src.pipeline, src.exporter.finalize_sync_all
+# already strict. Phase 1 (2026-10-12): src.lora.* (5 modules) +
+# src.evaluation.official_academic_benchmarks + benchmark_comparator.
+# Phase 2 (2026-10-14): the last 3 heavy eval suites —
+# deep_multi_experiment_suite (89 errors), enterprise_production_eval_suite
+# (34), sota_expert_benchmark_showcase (29) — typed via list[dict[str, Any]]
+# annotations on the data tables + up-front local annotations with
+# `cast()` in fallback branches that read dict[str, Any] values.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -28,7 +28,7 @@ repos:
   - repo: local
     hooks:
       - id: mypy-strict
-        name: MyPy Typecheck (strict, 39 modules)
+        name: MyPy Typecheck (strict, 42 modules)
         entry: python -m mypy
         language: system
         pass_filenames: false
@@ -56,6 +56,9 @@ repos:
           - src/evaluation/statistical_power.py
           - src/evaluation/benchmark_comparator.py
           - src/evaluation/official_academic_benchmarks.py
+          - src/evaluation/deep_multi_experiment_suite.py
+          - src/evaluation/enterprise_production_eval_suite.py
+          - src/evaluation/sota_expert_benchmark_showcase.py
           - src/lora/__init__.py
           - src/lora/train_lora.py
           - src/lora/batch_train_zoo.py
@@ -73,6 +76,7 @@ repos:
           - src/pipeline.py
           - src/exporter/finalize_sync_all.py
           - src/observability/__init__.py
+          - src/ricc/__init__.py
 
   # Check for merge conflicts
   - repo: https://github.com/pre-commit/pre-commit-hooks

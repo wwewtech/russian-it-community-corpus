@@ -8,7 +8,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("DeepBenchmarkSuite")
 
 # 16 Comprehensive Engineering Benchmark Test Dimensions
-BENCHMARK_SUITES = [
+BENCHMARK_SUITES: list[dict[str, Any]] = [
     {
         "id": "suite_01_devops_docker_nginx",
         "name": "DevOps: Nginx Reverse Proxy with SSL & WebSocket in Docker Compose",
@@ -252,19 +252,19 @@ def run_benchmark_experiment_suite(
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
 
     # 2. Load Base Model & Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model = AutoModelForCausalLM.from_pretrained(
+    base_model: Any = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,
         trust_remote_code=True,
     )
 
-    results = {
+    results: dict[str, Any] = {
         "metadata": {
             "model_name": model_name,
             "adapter_id": adapter_id,
@@ -279,7 +279,7 @@ def run_benchmark_experiment_suite(
         "aggregate_metrics": {},
     }
 
-    def generate_response(model_to_use, prompt_text: str) -> tuple[str, float, float, float]:
+    def generate_response(model_to_use: Any, prompt_text: str) -> tuple[str, float, float, float]:
         """Generate text with bounded token length and memory cleanup."""
         messages = [{"role": "user", "content": prompt_text}]
         try:
@@ -308,7 +308,9 @@ def run_benchmark_experiment_suite(
         generated_tokens = len(output_ids[0]) - len(inputs["input_ids"][0])
         tok_per_sec = generated_tokens / max(elapsed, 0.001)
         vram_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0
-        output_text = tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
+        output_text: str = cast(
+            str, tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
+        )
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -316,8 +318,8 @@ def run_benchmark_experiment_suite(
         return output_text, elapsed, tok_per_sec, vram_mb
 
     # Step A: Evaluate Base and RAG
-    base_evals = []
-    rag_evals = []
+    base_evals: list[dict[str, Any]] = []
+    rag_evals: list[dict[str, Any]] = []
     for idx, suite in enumerate(BENCHMARK_SUITES, 1):
         prompt = suite["prompt"]
         kw = suite["ground_truth_keywords"]
@@ -353,19 +355,24 @@ def run_benchmark_experiment_suite(
         kw = suite["ground_truth_keywords"]
         logger.info(f"[{idx}/{len(BENCHMARK_SUITES)}] LoRA & Hybrid: {suite['name']}...")
 
-        # 3. LoRA Model
+        # 3. LoRA Model (l_out etc. annotated up-front: the fallback branch
+        # reads values from dict[str, Any] which mypy sees as object)
+        l_out: str
+        l_lat: float
+        l_tps: float
+        l_vram: float
+        l_score: float
         if lora_model:
             l_out, l_lat, l_tps, l_vram = generate_response(lora_model, prompt)
             l_matches = sum(1 for k in kw if k.lower() in l_out.lower())
             l_score = (l_matches / len(kw)) * 100.0
         else:
-            l_out, l_lat, l_tps, l_vram = (
-                base_evals[idx - 1]["out"],
-                base_evals[idx - 1]["latency"],
-                base_evals[idx - 1]["tps"],
-                base_evals[idx - 1]["vram"],
-            )
-            l_score = base_evals[idx - 1]["score"]
+            bprev = base_evals[idx - 1]
+            l_out = cast(str, bprev["out"])
+            l_lat = cast(float, bprev["latency"])
+            l_tps = cast(float, bprev["tps"])
+            l_vram = cast(float, bprev["vram"])
+            l_score = cast(float, bprev["score"])
 
         # 4. Hybrid (LoRA + RAG)
         rag_chunks = rag_kb.search(prompt, top_k=2)
@@ -376,13 +383,12 @@ def run_benchmark_experiment_suite(
             h_matches = sum(1 for k in kw if k.lower() in h_out.lower())
             h_score = (h_matches / len(kw)) * 100.0
         elif rag_chunks:
-            h_out, h_lat, h_tps, h_vram = (
-                rag_evals[idx - 1]["out"],
-                rag_evals[idx - 1]["latency"],
-                rag_evals[idx - 1]["tps"],
-                rag_evals[idx - 1]["vram"],
-            )
-            h_score = rag_evals[idx - 1]["score"]
+            rprev = rag_evals[idx - 1]
+            h_out = cast(str, rprev["out"])
+            h_lat = cast(float, rprev["latency"])
+            h_tps = cast(float, rprev["tps"])
+            h_vram = cast(float, rprev["vram"])
+            h_score = cast(float, rprev["score"])
         else:
             h_out, h_lat, h_tps, h_vram = l_out, l_lat, l_tps, l_vram
             h_score = l_score
@@ -494,7 +500,7 @@ def run_benchmark_experiment_suite(
     return results
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")

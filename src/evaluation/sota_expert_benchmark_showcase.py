@@ -11,7 +11,7 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from src.bootstrap import setup_runtime_env
 
@@ -30,7 +30,7 @@ logger = logging.getLogger("EnterpriseShowcase")
 SYSTEM_PROMPT = """Ты — опытный инженер-разработчик и архитектор распределённых систем.
 Твои ответы должны быть глубокими, архитектурно точными, использовать принятую терминологию российского IT-сообщества, содержать корректный production-ready код, конфигурации и разбор граничных случаев (edge cases, race conditions, failover)."""
 
-FLAGSHIP_CHALLENGES = [
+FLAGSHIP_CHALLENGES: list[dict[str, Any]] = [
     {
         "id": "chal_01_outbox_debezium",
         "title": "Финтех: Exactly-Once Transactional Outbox + Debezium CDC + Kafka",
@@ -219,19 +219,19 @@ def run_sota_showcase(
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
 
     # 2. Load Model & Tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model = AutoModelForCausalLM.from_pretrained(
+    base_model: Any = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,
         trust_remote_code=True,
     )
 
-    def generate_expert(model, prompt_text: str, context: str = "") -> str:
+    def generate_expert(model: Any, prompt_text: str, context: str = "") -> str:
         if context:
             full_prompt = f"Контекст из корпоративной базы знаний:\n{context}\n\nИнженерная задача:\n{prompt_text}"
         else:
@@ -260,7 +260,7 @@ def run_sota_showcase(
                 pad_token_id=tokenizer.pad_token_id,
             )
 
-        text = tokenizer.decode(out_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
+        text: str = cast(str, tokenizer.decode(out_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True))
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         return text.strip()
@@ -399,7 +399,7 @@ def run_sota_showcase(
     logger.info(f"Showcase report generated at {output_path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")
