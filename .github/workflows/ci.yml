@@ -55,9 +55,10 @@ jobs:
           cache: "pip"
 
       - name: Install mkdocs
-        # mkdocs-material declares `autorefs` in mkdocs.yml plugins — must be
-        # installed explicitly (mkdocs build aborts on a missing plugin).
-        run: python -m pip install mkdocs==1.6.1 mkdocs-material mkdocs-autorefs mkdocs-minify-plugin
+        # Full plugin set declared in mkdocs.yml: material's `autorefs` and
+        # `mkdocstrings` must be installed explicitly (mkdocs build aborts
+        # on a missing plugin; each was discovered one CI run at a time).
+        run: python -m pip install mkdocs==1.6.1 mkdocs-material mkdocs-autorefs mkdocstrings[python] mkdocs-minify-plugin
 
       - name: Build docs strictly
         # Fails on broken nav links and any build warning — keeps the docs
