@@ -1,0 +1,26 @@
+# Prometheus scrape config for the local RICC observability stack.
+# Scrapes the Streamlit Data Studio metrics endpoint (prometheus_client
+# HTTP server started by maybe_start_metrics_server(RICC_METRICS_PORT)).
+# In k8s the same scrape is done by ServiceMonitor
+# deploy/k8s/data-studio-servicemonitor.yaml.
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+
+rule_files:
+  - /etc/prometheus/rules/ricc-rules.yaml
+
+scrape_configs:
+  # data-studio service inside the compose network. The app container
+  # exposes 9090 only on the compose network (not published to the host).
+  - job_name: ricc-data-studio
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["data-studio:9090"]
+        labels:
+          service: ricc
+          environment: local-compose
+  # Prometheus self-monitoring (up metric, TSDB health).
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

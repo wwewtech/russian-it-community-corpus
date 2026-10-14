@@ -34,6 +34,49 @@ from src.settings import settings
 
 logger = logging.getLogger(__name__)
 
+
+def record_drift_metrics(report: dict[str, Any]) -> None:
+    """Push a drift report's gauges/verdicts into the observability registry.
+
+    Called with the dict produced by :meth:`DatasetDriftMonitor.run` (also
+    accepted: the same JSON loaded back from reports/drift_report.json).
+    Feeds the Grafana "Drift metrics" panel (PSI / JS bits / vocab Jaccard
+    gauges) and the RiccDriftSignificant alert (verdict counter).
+    Safe to call on partial reports: missing keys are skipped.
+    """
+    # Imported lazily: src.observability has no dependency on
+    # src.monitoring, and keeping monitoring -> observability one-way
+    # avoids an import cycle via src.settings.
+    from src.observability import (
+        DRIFT_JS_VALUE,
+        DRIFT_PSI_VALUE,
+        DRIFT_VERDICT,
+        DRIFT_VOCAB_JACCARD,
+    )
+
+    metrics = report.get("metrics") or {}
+    if not isinstance(metrics, dict):
+        return
+
+    length_psi = metrics.get("length_psi")
+    if isinstance(length_psi, dict) and "value" in length_psi:
+        DRIFT_PSI_VALUE.set(float(length_psi["value"]))
+        verdict = str(length_psi.get("verdict", "stable"))
+        DRIFT_VERDICT.labels(verdict=verdict).inc()
+
+    domain = metrics.get("domain_distribution")
+    if isinstance(domain, dict) and "js_divergence_bits" in domain:
+        DRIFT_JS_VALUE.set(float(domain["js_divergence_bits"]))
+
+    vocab = metrics.get("vocabulary")
+    if isinstance(vocab, dict) and "jaccard_overlap" in vocab:
+        DRIFT_VOCAB_JACCARD.set(float(vocab["jaccard_overlap"]))
+
+    overall = str(report.get("overall_verdict", "stable"))
+    DRIFT_VERDICT.labels(verdict=overall).inc()
+    logger.info("drift metrics recorded: overall_verdict=%s", overall)
+
+
 # Load thresholds from params.yaml (single source of truth)
 _params = settings.load_params()
 _drift_params = _params.get("drift", {})
@@ -210,8 +253,9 @@ class DatasetDriftMonitor:
         }
 
     def generate_report(self, output_path: str | Path) -> Path:
-        """Run the monitor and persist the JSON report."""
+        """Run the monitor, persist the JSON report, and record drift metrics."""
         report = self.run()
+        record_drift_metrics(report)
         out = Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         with open(out, "w", encoding="utf-8") as f:

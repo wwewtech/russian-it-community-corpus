@@ -22,6 +22,7 @@ import torch  # noqa: E402
 from peft import PeftModel  # noqa: E402
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
+from src.observability import record_classified_ml_error  # noqa: E402
 from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -295,7 +296,8 @@ def run_sota_showcase(
             lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
             logger.info(f"Attached LoRA Adapter from {adapter_path}")
         except Exception as e:
-            logger.warning(f"Failed to attach LoRA: {e}")
+            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
+            logger.warning(f"Failed to attach LoRA: {typed}")
 
     logger.info("Evaluating LoRA & Hybrid...")
     for idx, item in enumerate(FLAGSHIP_CHALLENGES, 1):

@@ -136,6 +136,7 @@ class TestInferenceBranches(unittest.TestCase):
 
     def test_adapter_attach_failure_raises(self) -> None:
         import src.inference as inference
+        from src.errors import AdapterLoadError
 
         with (
             patch("transformers.AutoTokenizer.from_pretrained", return_value=self._tok()),
@@ -143,7 +144,7 @@ class TestInferenceBranches(unittest.TestCase):
             patch("src.inference.validate_adapter_path", return_value=Path("/tmp/adapter")),
             patch("peft.PeftModel.from_pretrained", side_effect=RuntimeError("corrupt")),
             patch("builtins.input", side_effect=["hi"]),
-            self.assertRaises(RuntimeError),
+            self.assertRaises(AdapterLoadError),
         ):
             inference.interactive_chat_session(model_name="m", adapter_id="bad", use_rag=False)
 

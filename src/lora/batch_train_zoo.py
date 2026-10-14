@@ -29,6 +29,8 @@ from transformers import (  # noqa: E402
     TrainingArguments,
 )
 
+from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("LoRAZoo44")
 
@@ -572,6 +574,15 @@ Fine-tuned on the **RICC** 2.91M engineering dataset.
 
         elapsed = time.time() - start_time
         logger.info(f"Finished {model_name} in {elapsed:.1f}s | Loss: {train_loss:.4f}")
+        record_lora_result(
+            model=model_name,
+            adapter=model_id,
+            status="success",
+            duration_sec=elapsed,
+            loss=train_loss,
+            steps=max_steps,
+            vram_bytes=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None,
+        )
 
         # Auto-upload to Hugging Face Model Zoo
         try:
@@ -608,7 +619,9 @@ Fine-tuned on the **RICC** 2.91M engineering dataset.
         }
 
     except Exception as e:
-        logger.error(f"Failed training {model_name}: {e}")
+        typed = record_classified_ml_error(e, model_name=model_name, adapter_id=model_id)
+        record_lora_result(model=model_name, adapter=model_id, status="failure")
+        logger.error(f"Failed training {model_name}: {typed}")
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()

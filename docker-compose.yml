@@ -74,5 +74,50 @@ services:
           cpus: "8"
           memory: 16G
 
+  # Observability stack (optional): `docker compose --profile observability up`
+  # Scrapes the Streamlit metrics endpoint (RICC_METRICS_PORT, default 9090)
+  # and provisions the RICC overview dashboard + alert rules from
+  # deploy/monitoring/ and deploy/k8s/prometheus-rules.yaml.
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: ricc_prometheus
+    profiles:
+      - observability
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/k8s/prometheus-rules.yaml:/etc/prometheus/rules/ricc-rules.yaml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: ricc_grafana
+    profiles:
+      - observability
+    environment:
+      # Anonymous viewer by default — local demo stack, no secrets stored.
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./deploy/monitoring/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/ricc.yaml:ro
+      - ./deploy/monitoring/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/ricc.yaml:ro
+      - ./deploy/monitoring/ricc-overview.json:/var/lib/grafana/dashboards/ricc-overview.json:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   hf-cache:
+  prometheus-data:
+  grafana-data:

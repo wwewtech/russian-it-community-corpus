@@ -33,6 +33,8 @@ from transformers import (  # noqa: E402
     TrainingArguments,
 )
 
+from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("Heavyweight5")
 
@@ -256,7 +258,17 @@ def train_single_heavyweight(
         tokenizer.save_pretrained(str(save_path))
 
         elapsed = time.time() - t0
+        train_loss = float(trainer.state.log_history[-1]["train_loss"]) if trainer.state.log_history else None
         logger.info(f"✅ Heavyweight {model_name} trained successfully in {elapsed:.1f}s!")
+        record_lora_result(
+            model=model_name,
+            adapter=model_id,
+            status="success",
+            duration_sec=elapsed,
+            loss=train_loss,
+            steps=steps,
+            vram_bytes=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None,
+        )
 
         # Free GPU Memory
         del peft_model
@@ -269,7 +281,9 @@ def train_single_heavyweight(
         return True
 
     except Exception as e:
-        logger.error(f"❌ Failed heavyweight training for {model_name}: {e}")
+        typed = record_classified_ml_error(e, model_name=model_name, adapter_id=model_id)
+        record_lora_result(model=model_name, adapter=model_id, status="failure")
+        logger.error(f"❌ Failed heavyweight training for {model_name}: {typed}")
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()

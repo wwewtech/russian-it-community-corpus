@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pandas as pd  # noqa: E402
 import pyarrow.parquet as pq  # noqa: E402
 
-from src.monitoring.drift import DatasetDriftMonitor  # noqa: E402
+from src.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
 from src.monitoring.slo_gate import evaluate  # noqa: E402
 from src.validation.artifact_manifest import create_manifest  # noqa: E402
 from src.validation.hub_reconciliation import generate_reconciliation_report  # noqa: E402
@@ -63,6 +63,7 @@ def main() -> int:
         f"Self-comparison baseline on real parquet (ref={drift['reference_rows']}, cur={drift['current_rows']}). "
         "Point the drift CLI at two frozen snapshots for true temporal drift."
     )
+    record_drift_metrics(drift)
     _atomic_write(REPORTS / "drift_report.json", _stamp(drift, "scripts/regenerate_real_reports.py"))
     print(f"drift: {drift['overall_verdict']} ref={drift['reference_rows']}")
     rows = {

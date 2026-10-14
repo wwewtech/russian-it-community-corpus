@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pandas as pd  # noqa: E402
 
 from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
-from src.monitoring.drift import DatasetDriftMonitor  # noqa: E402
+from src.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
 
 
 def main() -> None:
@@ -53,6 +53,7 @@ def main() -> None:
 
     monitor = DatasetDriftMonitor(pd.read_parquet(args.reference), pd.read_parquet(args.current))
     report = monitor.run()
+    record_drift_metrics(report)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -15,10 +15,16 @@ import time
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
+
+if TYPE_CHECKING:
+    # Annotation-only import: keeps the runtime observability -> errors
+    # edge out of the import graph (src.errors imports nothing from here,
+    # but the lazy imports below stay lazy for import-cost reasons).
+    from src.errors import RICCError
 
 # =============================================================================
 # Structlog Configuration
@@ -172,6 +178,12 @@ LORA_VRAM_USAGE = Gauge(
     ["model", "adapter"],
 )
 
+LORA_TRAIN_TOTAL = Counter(
+    "ricc_lora_train_total",
+    "LoRA train/eval run outcomes",
+    ["model", "adapter", "status"],  # status: success, failure
+)
+
 # Dataset metrics
 DATASET_MESSAGES_TOTAL = Gauge(
     "ricc_dataset_messages_total",
@@ -300,6 +312,53 @@ def record_ml_error(error: Exception) -> str:
         component = candidate if candidate in ML_COMPONENTS else "ml"
     record_error(component, error_type)
     return component
+
+
+def record_classified_ml_error(exc: BaseException, **kwargs: Any) -> RICCError:
+    """Classify a raw train/eval exception via the P3 taxonomy and record it.
+
+    Convenience wrapper over :func:`src.errors.classify_ml_exception` +
+    :func:`record_ml_error` for the train/eval scripts' broad ``except``
+    blocks: one call maps e.g. ``torch.cuda.OutOfMemoryError`` to
+    ``GPUOutOfMemoryError``, increments ``ricc_errors_total{component="gpu",
+    error_type="GPUOutOfMemoryError"}`` and returns the typed exception for
+    the caller to log/raise.
+    """
+    from src.errors import classify_ml_exception
+
+    typed = classify_ml_exception(exc, **kwargs)
+    record_ml_error(typed)
+    return typed
+
+
+def record_lora_result(
+    *,
+    model: str,
+    adapter: str,
+    status: str,
+    duration_sec: float | None = None,
+    loss: float | None = None,
+    steps: int | None = None,
+    vram_bytes: float | None = None,
+) -> None:
+    """Record one LoRA train/eval run outcome into the LORA_* metric family.
+
+    Feeds the Grafana "Training loss by adapter" and "VRAM usage by adapter"
+    panels. ``status`` should be ``success`` or ``failure`` (it feeds
+    ``ricc_lora_train_total{status=...}``, the alert source for
+    RiccLoraTrainFailing). Gauges are only set on success — a failed run
+    must not clobber the last known good loss/VRAM reading.
+    """
+    if status == "success":
+        if duration_sec is not None:
+            LORA_TRAIN_DURATION.labels(model=model, adapter=adapter).observe(duration_sec)
+        if loss is not None:
+            LORA_TRAIN_LOSS.labels(model=model, adapter=adapter).set(loss)
+        if steps is not None and steps > 0:
+            LORA_TRAIN_STEPS.labels(model=model, adapter=adapter).inc(steps)
+        if vram_bytes is not None:
+            LORA_VRAM_USAGE.labels(model=model, adapter=adapter).set(vram_bytes)
+    LORA_TRAIN_TOTAL.labels(model=model, adapter=adapter, status=status).inc()
 
 
 def start_metrics_server(port: int = 9090) -> None:

@@ -8,6 +8,7 @@ import gc
 import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any, cast
 
@@ -28,6 +29,8 @@ from transformers import (  # noqa: E402
     Trainer,
     TrainingArguments,
 )
+
+from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("Train20Popular")
@@ -351,7 +354,10 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
         )
 
         logger.info(f"Training {adapter_id} for 50 steps on RTX 3060...")
+        t0 = time.time()
         trainer.train()
+        duration = time.time() - t0
+        train_loss = float(trainer.state.log_history[-1]["train_loss"]) if trainer.state.log_history else None
 
         # 6. Save Adapter & Tokenizer
         peft_model.save_pretrained(str(output_dir))
@@ -384,6 +390,15 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
             ignore_patterns=["checkpoint-*"],
         )
         logger.info(f"🎉 Successfully uploaded {adapter_id} to Hugging Face Hub!")
+        record_lora_result(
+            model=model_name,
+            adapter=adapter_id,
+            status="success",
+            duration_sec=duration,
+            loss=train_loss,
+            steps=50,
+            vram_bytes=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None,
+        )
 
         # Cleanup memory
         del peft_model
@@ -396,7 +411,9 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
 
         return True
     except Exception as e:
-        logger.error(f"❌ Failed training/uploading {adapter_id}: {e}")
+        typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
+        record_lora_result(model=model_name, adapter=adapter_id, status="failure")
+        logger.error(f"❌ Failed training/uploading {adapter_id}: {typed}")
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()

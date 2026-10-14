@@ -1,0 +1,16 @@
+# Grafana dashboard provisioning for the local RICC observability stack.
+# Mounts deploy/monitoring/ricc-overview.json read-only; the dashboard
+# uid "ricc-overview" matches the PrometheusRules alerts' runbook links.
+apiVersion: 1
+
+providers:
+  - name: RICC dashboards
+    orgId: 1
+    folder: RICC
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 60
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

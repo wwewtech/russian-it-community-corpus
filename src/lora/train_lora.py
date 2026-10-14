@@ -5,6 +5,7 @@ Optimized for NVIDIA GeForce RTX 3060 (12GB VRAM).
 
 import argparse
 import logging
+import time
 from pathlib import Path
 from typing import Any, cast
 
@@ -22,6 +23,8 @@ from transformers import (  # noqa: E402
     Trainer,
     TrainingArguments,
 )
+
+from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -156,13 +159,33 @@ def train_lora(
 
     # 5. Execute Training
     print("⚡ Starting LoRA training loop...")
-    trainer.train()
+    adapter_id = Path(output_dir).name
+    t0 = time.time()
+    try:
+        trainer.train()
+    except Exception as exc:
+        typed = record_classified_ml_error(exc, model_name=model_name, adapter_id=adapter_id)
+        record_lora_result(model=model_name, adapter=adapter_id, status="failure")
+        logger.error(f"Training failed for {model_name}: {typed}")
+        raise
+    duration = time.time() - t0
+    train_loss = float(trainer.state.log_history[-1]["train_loss"]) if trainer.state.log_history else None
+    vram_bytes = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None
 
     # 6. Save Adapter
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
     model.save_pretrained(out_path)
     tokenizer.save_pretrained(out_path)
+    record_lora_result(
+        model=model_name,
+        adapter=adapter_id,
+        status="success",
+        duration_sec=duration,
+        loss=train_loss,
+        steps=max_steps,
+        vram_bytes=vram_bytes,
+    )
     print(f"🎉 LoRA adapter successfully saved to {out_path}!")
     return out_path
 

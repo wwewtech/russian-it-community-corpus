@@ -19,6 +19,7 @@ import torch  # noqa: E402
 from peft import PeftModel  # noqa: E402
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
+from src.observability import record_classified_ml_error  # noqa: E402
 from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -348,7 +349,8 @@ def run_benchmark_experiment_suite(
             lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
             logger.info(f"Attached LoRA Adapter from {adapter_path}")
         except Exception as e:
-            logger.warning(f"Could not attach LoRA adapter {adapter_path}: {e}")
+            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
+            logger.warning(f"Could not attach LoRA adapter {adapter_path}: {typed}")
 
     for idx, suite in enumerate(BENCHMARK_SUITES, 1):
         prompt = suite["prompt"]

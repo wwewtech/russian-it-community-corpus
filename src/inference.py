@@ -30,6 +30,9 @@ setup_runtime_env()
 
 import torch  # noqa: E402  (must stay below setup_runtime_env)
 
+from src.errors import AdapterLoadError  # noqa: E402
+from src.observability import record_classified_ml_error  # noqa: E402
+
 # Heavy third-party imports are deferred to interactive_chat_session() so
 # that test modules (which only need the pure helpers) do not require
 # torch / transformers / peft at collection time.
@@ -180,16 +183,21 @@ def interactive_chat_session(
 
     # 3. Attach LoRA Adapter. Loading a corrupted adapter must NOT be
     # silently swallowed — that masks weight corruption / base-model
-    # mismatch. Raise RuntimeError so the caller (Streamlit button, CLI)
-    # can show a real error instead of running the base model and
-    # printing a misleading "✅ Attached".
+    # mismatch. Raise AdapterLoadError (P3 taxonomy) so the caller
+    # (Streamlit button, CLI) can show a real error instead of running
+    # the base model and printing a misleading "✅ Attached".
     if adapter_id:
         adapter_path = validate_adapter_path(adapter_id, root_dir / "lora_adapters")
         try:
             model = PeftModel.from_pretrained(model, str(adapter_path))
             print(f"✅ Attached LoRA Adapter from {adapter_path}")
         except Exception as e:
-            raise RuntimeError(f"Failed to attach LoRA adapter from {adapter_path}: {e}") from e
+            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
+            raise AdapterLoadError(
+                f"Failed to attach LoRA adapter from {adapter_path}: {typed}",
+                adapter_path=str(adapter_path),
+                base_model=model_name,
+            ) from e
 
     streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 

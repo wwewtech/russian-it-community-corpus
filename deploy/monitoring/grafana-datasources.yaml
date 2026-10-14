@@ -1,0 +1,16 @@
+# Grafana datasource provisioning for the local RICC observability stack.
+# The dashboard (deploy/monitoring/ricc-overview.json) references the
+# default Prometheus datasource by name "Prometheus".
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: ricc-prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 30s
+      httpMethod: POST

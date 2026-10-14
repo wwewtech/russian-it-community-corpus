@@ -19,6 +19,11 @@ from pathlib import Path
 
 import pytest
 
+from src.observability import (
+    record_classified_ml_error,
+    record_lora_result,
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEPLOY_K8S = REPO_ROOT / "deploy" / "k8s"
 DEPLOY_MONITORING = REPO_ROOT / "deploy" / "monitoring"
@@ -225,6 +230,7 @@ def test_rules_use_real_metric_names(rules_docs: list[dict]) -> None:
         "ricc_slo_gate_verdict_total",
         "ricc_validation_result_total",
         "ricc_errors_total",
+        "ricc_lora_train_total",
     }
     referenced: set[str] = set()
     for group in rule["spec"]["groups"]:
@@ -232,3 +238,123 @@ def test_rules_use_real_metric_names(rules_docs: list[dict]) -> None:
             referenced.update(metric_re.findall(str(alert["expr"])))
     unknown = referenced - known_bases
     assert not unknown, f"PrometheusRules reference unknown metrics: {sorted(unknown)}"
+
+
+# ---------------------------------------------------------------------------
+# Wire-in: helpers + recorders must exist and behave (P3 taxonomy -> metrics)
+# ---------------------------------------------------------------------------
+
+
+def test_record_classified_ml_error_maps_oom_to_gpu_component() -> None:
+    import src.observability as obs
+    from src.errors import GPUOutOfMemoryError
+
+    typed = obs.record_classified_ml_error(RuntimeError("CUDA out of memory. Tried to allocate 2GB"), model_name="Qwen")
+    assert isinstance(typed, GPUOutOfMemoryError)
+    assert typed.context.get("model_name") == "Qwen"
+
+
+def test_record_classified_ml_error_fallback_is_training() -> None:
+    from src.errors import TrainingError
+
+    typed = record_classified_ml_error(ValueError("dataloader shape mismatch"), adapter_id="qwen05")
+    assert isinstance(typed, TrainingError)
+
+
+def test_record_lora_result_success_sets_gauges() -> None:
+    from src.observability import LORA_TRAIN_LOSS, LORA_VRAM_USAGE
+
+    record_lora_result(
+        model="test-model",
+        adapter="test-adapter",
+        status="success",
+        duration_sec=10.0,
+        loss=0.42,
+        steps=5,
+        vram_bytes=1024**3,
+    )
+    assert LORA_TRAIN_LOSS.labels(model="test-model", adapter="test-adapter")._value.get() == pytest.approx(0.42)
+    assert LORA_VRAM_USAGE.labels(model="test-model", adapter="test-adapter")._value.get() == pytest.approx(1024**3)
+
+
+def test_record_lora_result_failure_does_not_clobber_gauges() -> None:
+    from src.observability import LORA_TRAIN_LOSS
+
+    LORA_TRAIN_LOSS.labels(model="test-model", adapter="test-adapter").set(0.11)
+    record_lora_result(model="test-model", adapter="test-adapter", status="failure")
+    assert LORA_TRAIN_LOSS.labels(model="test-model", adapter="test-adapter")._value.get() == pytest.approx(0.11)
+
+
+def test_record_drift_metrics_sets_gauges_and_verdicts() -> None:
+    from src.monitoring.drift import record_drift_metrics
+    from src.observability import DRIFT_JS_VALUE, DRIFT_PSI_VALUE, DRIFT_VOCAB_JACCARD
+
+    report = {
+        "overall_verdict": "stable",
+        "metrics": {
+            "length_psi": {"value": 0.05, "verdict": "stable"},
+            "domain_distribution": {"js_divergence_bits": 0.02, "verdict": "stable"},
+            "vocabulary": {"jaccard_overlap": 0.97, "verdict": "stable"},
+        },
+    }
+    record_drift_metrics(report)
+    assert DRIFT_PSI_VALUE._value.get() == pytest.approx(0.05)
+    assert DRIFT_JS_VALUE._value.get() == pytest.approx(0.02)
+    assert DRIFT_VOCAB_JACCARD._value.get() == pytest.approx(0.97)
+
+
+def test_record_drift_metrics_safe_on_partial_report() -> None:
+    from src.monitoring.drift import record_drift_metrics
+
+    # Missing keys / wrong shapes must not raise.
+    record_drift_metrics({})
+    record_drift_metrics({"metrics": "not-a-dict"})
+    record_drift_metrics({"metrics": {"length_psi": "garbage"}})
+
+
+# ---------------------------------------------------------------------------
+# Compose observability profile
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def compose() -> dict:
+    import yaml
+
+    return yaml.safe_load((REPO_ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
+
+
+def test_compose_observability_profile_services(compose: dict) -> None:
+    for name in ("prometheus", "grafana"):
+        svc = compose.get("services", {}).get(name)
+        assert svc, f"docker-compose.yml is missing the {name} service"
+        assert "observability" in svc.get("profiles", []), f"{name} must belong to the observability profile"
+
+
+def test_compose_prometheus_mounts_rules_and_scrapes_app(compose: dict) -> None:
+    svc = compose["services"]["prometheus"]
+    mounts = " ".join(svc.get("volumes", []))
+    assert "prometheus.yml" in mounts
+    assert "prometheus-rules.yaml" in mounts, "prometheus must load the RICC alert rules"
+    commands = " ".join(str(c) for c in svc.get("command", []))
+    assert "/etc/prometheus/prometheus.yml" in commands, "config.file must point at the provisioned config"
+
+
+def test_compose_grafana_provisions_dashboard_and_datasource(compose: dict) -> None:
+    svc = compose["services"]["grafana"]
+    mounts = " ".join(svc.get("volumes", []))
+    assert "ricc-overview.json" in mounts, "grafana must mount the RICC dashboard"
+    assert "grafana-datasources.yaml" in mounts, "grafana must provision the Prometheus datasource"
+    assert "grafana-dashboards.yaml" in mounts, "grafana must provision the dashboard provider"
+
+
+def test_compose_prometheus_config_targets_data_studio() -> None:
+    import yaml
+
+    cfg = yaml.safe_load((DEPLOY_MONITORING / "prometheus.yml").read_text(encoding="utf-8"))
+    jobs = {j["job_name"]: j for j in cfg.get("scrape_configs", [])}
+    assert "ricc-data-studio" in jobs, "prometheus.yml must scrape the data-studio app"
+    targets = jobs["ricc-data-studio"]["static_configs"][0]["targets"]
+    assert "data-studio:9090" in targets, "app target must be the compose-network data-studio:9090"
+    rule_files = cfg.get("rule_files", [])
+    assert any("ricc-rules.yaml" in rf for rf in rule_files), "prometheus.yml must include the RICC alert rules"

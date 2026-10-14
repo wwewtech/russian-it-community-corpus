@@ -153,3 +153,21 @@ spec:
             description: >-
               Total RICC error rate exceeded 1/sec for 5m. Check the
               Grafana "Errors by component" panel and structlog JSON logs.
+
+    - name: ricc.lora
+      rules:
+        - alert: RiccLoraTrainFailing
+          expr: |
+            sum by (adapter) (rate(ricc_lora_train_total{status="failure"}[30m]))
+              > 0
+          for: 0m
+          labels:
+            severity: warning
+            service: ricc
+          annotations:
+            summary: "LoRA training failures for adapter {{ $labels.adapter }}"
+            description: >-
+              Failed LoRA train runs recorded in the last 30m. Classify via
+              the P3 taxonomy (see ricc_errors_total{component="gpu"} for
+              OOM vs adapter corruption): OOM -> smaller batch / 4-bit;
+              AdapterLoadError -> fail fast.
