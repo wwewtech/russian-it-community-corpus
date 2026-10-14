@@ -3,6 +3,7 @@ Extended 20 Popular LLMs LoRA Fine-Tuning & Model Hub Synchronizer.
 Trains PEFT LoRA domain adapters on NVIDIA GeForce RTX 3060 and uploads to Hugging Face Model Hub.
 """
 
+import argparse
 import contextlib
 import gc
 import json
@@ -16,12 +17,12 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env(pytorch_alloc_conf=True)
 
-import huggingface_hub  # noqa: E402
-import pandas as pd  # noqa: E402
-import torch  # noqa: E402
-from datasets import Dataset  # noqa: E402
-from peft import LoraConfig, TaskType, get_peft_model  # noqa: E402
-from transformers import (  # noqa: E402
+import huggingface_hub
+import pandas as pd
+import torch
+from datasets import Dataset
+from peft import LoraConfig, TaskType, get_peft_model
+from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
@@ -30,7 +31,8 @@ from transformers import (  # noqa: E402
     TrainingArguments,
 )
 
-from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
+from src.ml_runtime import set_deterministic_seed, with_retries
+from src.observability import record_classified_ml_error, record_lora_result
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("Train20Popular")
@@ -210,7 +212,7 @@ def load_conversations(parquet_path: Path, max_samples: int = 400) -> Dataset:
     return Dataset.from_pandas(df)
 
 
-def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingface_hub.HfApi) -> bool:
+def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingface_hub.HfApi, seed: int = 42) -> bool:
     adapter_id = cfg["id"]
     model_name = cfg["model_name"]
     output_dir = Path(f"lora_adapters/{adapter_id}")
@@ -220,12 +222,15 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
     if weights_exist:
         logger.info(f"[{adapter_id}] Weights already exist locally. Uploading to Hub...")
         try:
-            api.upload_folder(
-                folder_path=str(output_dir),
-                path_in_repo=adapter_id,
-                repo_id=MODEL_REPO_ID,
-                repo_type="model",
-                ignore_patterns=["checkpoint-*"],
+            with_retries(
+                lambda: api.upload_folder(
+                    folder_path=str(output_dir),
+                    path_in_repo=adapter_id,
+                    repo_id=MODEL_REPO_ID,
+                    repo_type="model",
+                    ignore_patterns=["checkpoint-*"],
+                ),
+                what=f"HF upload {adapter_id}",
             )
             logger.info(f"[{adapter_id}] Successfully verified & uploaded to HF!")
             return True
@@ -237,9 +242,16 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
     logger.info(f"🚀 Training LoRA Adapter: {adapter_id} ({model_name}) | Family: {cfg['family']}")
     logger.info("=" * 70)
 
+    set_deterministic_seed(seed)
     try:
         # 1. Tokenizer
-        tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, trust_remote_code=True, use_fast=True)
+        tokenizer: Any = cast(
+            Any,
+            with_retries(
+                lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, trust_remote_code=True, use_fast=True),
+                what=f"tokenizer load {model_name}",
+            ),
+        )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token if tokenizer.eos_token else "<pad>"
 
@@ -251,20 +263,26 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_use_double_quant=True,
             )
-            model: Any = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                quantization_config=bnb_config,
-                device_map="auto",
-                trust_remote_code=True,
+            model: Any = with_retries(
+                lambda: AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    quantization_config=bnb_config,
+                    device_map="auto",
+                    trust_remote_code=True,
+                ),
+                what=f"model load {model_name}",
             )
         else:
             device_map = "auto" if torch.cuda.is_available() else None
             dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-            model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                torch_dtype=dtype,
-                device_map=device_map,
-                trust_remote_code=True,
+            model = with_retries(
+                lambda: AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    torch_dtype=dtype,
+                    device_map=device_map,
+                    trust_remote_code=True,
+                ),
+                what=f"model load {model_name}",
             )
 
         grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
@@ -382,12 +400,15 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
 
         # 7. Upload to Hugging Face
         logger.info(f"Uploading {adapter_id} to Hugging Face Model Hub: {MODEL_REPO_ID}...")
-        api.upload_folder(
-            folder_path=str(output_dir),
-            path_in_repo=adapter_id,
-            repo_id=MODEL_REPO_ID,
-            repo_type="model",
-            ignore_patterns=["checkpoint-*"],
+        with_retries(
+            lambda: api.upload_folder(
+                folder_path=str(output_dir),
+                path_in_repo=adapter_id,
+                repo_id=MODEL_REPO_ID,
+                repo_type="model",
+                ignore_patterns=["checkpoint-*"],
+            ),
+            what=f"HF upload {adapter_id}",
         )
         logger.info(f"🎉 Successfully uploaded {adapter_id} to Hugging Face Hub!")
         record_lora_result(
@@ -421,6 +442,10 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
+    args = parser.parse_args()
+
     api = huggingface_hub.HfApi(token=HF_TOKEN)
     parquet_path = Path("dataset_output/parquet/sft_dialogues.parquet")
     if not parquet_path.exists():
@@ -434,7 +459,7 @@ def main() -> None:
     successful = 0
     for idx, cfg in enumerate(POPULAR_20_MODELS, 1):
         logger.info(f"\n>>> Processing model [{idx}/{len(POPULAR_20_MODELS)}]: {cfg['id']} <<<")
-        ok = train_single_model(cfg, sft_ds, api)
+        ok = train_single_model(cfg, sft_ds, api, seed=args.seed)
         if ok:
             successful += 1
 

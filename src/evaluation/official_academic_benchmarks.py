@@ -27,16 +27,17 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env(pytorch_alloc_conf=True)
 
-import evaluate  # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-import torch  # noqa: E402
-from peft import PeftModel  # noqa: E402
-from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+import evaluate
+import numpy as np
+import pandas as pd
+import torch
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.evaluation.statistical_power import wilson_interval  # noqa: E402
-from src.observability import record_classified_ml_error  # noqa: E402
-from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
+from src.evaluation.statistical_power import wilson_interval
+from src.ml_runtime import set_deterministic_seed
+from src.observability import record_classified_ml_error
+from src.rag.rag_pipeline import LocalRAGPipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("AcademicBenchmark")
@@ -888,23 +889,6 @@ _SAFE_BUILTINS = {
 }
 
 
-def _safe_exec(code_str: str) -> bool:
-    """Execute HumanEval-style code with a restricted builtin namespace.
-
-    Still NOT a full sandbox (model code can still allocate memory, loop
-    forever, etc.) — the 2-second timeout in ``execute_humaneval_code``
-    remains the primary containment. The builtin allowlist prevents the
-    most obvious exfiltration / RCE patterns (os.system, subprocess.run,
-    socket.connect, shutil.rmtree, file open for write, etc.).
-    """
-    safe_globals: dict[str, object] = {"__builtins__": _SAFE_BUILTINS}
-    safe_locals: dict[str, object] = {}
-    # HumanEval-style benchmark MUST exec model code; containment is the 2s
-    # timeout + restricted builtins (see docstring above).
-    exec(code_str, safe_globals, safe_locals)  # nosec B102
-    return True
-
-
 # Cyrillic homoglyphs that map onto Latin multiple-choice letters.
 _CYRILLIC_TO_LATIN = str.maketrans({"А": "A", "В": "B", "С": "C"})
 
@@ -969,14 +953,14 @@ def _run_in_isolated_process(code_str: str, timeout_sec: float = 2.0) -> bool:
             proc.kill()
             proc.communicate()
         except Exception:
-            pass
+            pass  # deliberate: process already terminating, nothing to report
         return False
     except Exception as err:
         try:
             proc.kill()
             proc.communicate()
         except Exception:
-            pass
+            pass  # deliberate: cleanup-of-cleanup; err is logged below
         logger.debug(f"Execution error in isolated process: {err}")
         return False
 
@@ -1023,7 +1007,7 @@ def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "pyt
             proc.kill()
             proc.communicate()
         except Exception:
-            pass
+            pass  # deliberate: process already terminating, nothing to report
         return False
 
 
@@ -1052,8 +1036,10 @@ def execute_humaneval_code(
 def run_official_academic_benchmarks(
     model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
     adapter_id: str = "qwen2.5_1.5b_instruct",
+    seed: int = 42,
 ) -> dict[str, Any]:
     logger.info(f"=== 🎓 Running Official Academic Scientific Benchmarks for {model_name} ===")
+    set_deterministic_seed(seed)
 
     rouge = evaluate.load("rouge")
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
@@ -1525,9 +1511,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     args = parser.parse_args()
 
-    run_official_academic_benchmarks(model_name=args.model, adapter_id=args.adapter)
+    run_official_academic_benchmarks(model_name=args.model, adapter_id=args.adapter, seed=args.seed)
 
 
 if __name__ == "__main__":

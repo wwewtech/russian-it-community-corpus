@@ -17,11 +17,11 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import huggingface_hub  # noqa: E402
-import torch  # noqa: E402
-from datasets import load_dataset  # noqa: E402
-from peft import LoraConfig, TaskType, get_peft_model  # noqa: E402
-from transformers import (  # noqa: E402
+import huggingface_hub
+import torch
+from datasets import load_dataset
+from peft import LoraConfig, TaskType, get_peft_model
+from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,
@@ -29,7 +29,8 @@ from transformers import (  # noqa: E402
     TrainingArguments,
 )
 
-from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
+from src.ml_runtime import set_deterministic_seed, with_retries
+from src.observability import record_classified_ml_error, record_lora_result
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("LoRAZoo44")
@@ -461,6 +462,7 @@ def train_and_upload_single_model(
     base_output_dir: Path = Path("lora_adapters"),
     max_steps: int = 20,
     max_seq_length: int = 512,
+    seed: int = 42,
 ) -> dict[str, Any]:
     model_id = meta["id"]
     model_name = meta["model_name"]
@@ -483,18 +485,28 @@ def train_and_upload_single_model(
 
     start_time = time.time()
     logger.info(f"=== Starting LoRA Training: {model_name} ({meta['family']} · {meta['params']}) ===")
+    set_deterministic_seed(seed)
 
     try:
-        tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+        tokenizer: Any = cast(
+            Any,
+            with_retries(
+                lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True),
+                what=f"tokenizer load {model_name}",
+            ),
+        )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
 
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-        model: Any = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=dtype,
-            device_map="auto" if torch.cuda.is_available() else None,
-            trust_remote_code=True,
+        model: Any = with_retries(
+            lambda: AutoModelForCausalLM.from_pretrained(
+                model_name,
+                torch_dtype=dtype,
+                device_map="auto" if torch.cuda.is_available() else None,
+                trust_remote_code=True,
+            ),
+            what=f"model load {model_name}",
         )
 
         grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
@@ -587,12 +599,15 @@ Fine-tuned on the **RICC** 2.91M engineering dataset.
         # Auto-upload to Hugging Face Model Zoo
         try:
             api = huggingface_hub.HfApi(token=HF_TOKEN)
-            api.upload_folder(
-                folder_path=str(out_dir),
-                path_in_repo=model_id,
-                repo_id=MODEL_REPO_ID,
-                repo_type="model",
-                ignore_patterns=["checkpoint-*"],
+            with_retries(
+                lambda: api.upload_folder(
+                    folder_path=str(out_dir),
+                    path_in_repo=model_id,
+                    repo_id=MODEL_REPO_ID,
+                    repo_type="model",
+                    ignore_patterns=["checkpoint-*"],
+                ),
+                what=f"HF upload {model_id}",
             )
             logger.info(f"Uploaded {model_id} directly to HF Hub: {MODEL_REPO_ID}")
         except Exception as upload_err:
@@ -672,12 +687,13 @@ def update_catalogs(results: list[dict[str, Any]]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=15)
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     args = parser.parse_args()
 
     results = []
     for idx, meta in enumerate(ZOO_44_MODELS, 1):
         logger.info(f"[{idx}/{len(ZOO_44_MODELS)}] Processing {meta['model_name']} ({meta['params']})...")
-        res = train_and_upload_single_model(meta, max_steps=args.steps)
+        res = train_and_upload_single_model(meta, max_steps=args.steps, seed=args.seed)
         results.append(res)
         update_catalogs(results)
 

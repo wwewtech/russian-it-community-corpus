@@ -10,9 +10,9 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import torch  # noqa: E402
-from peft import PeftModel  # noqa: E402
-from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+import torch
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def generate_answer(

@@ -263,7 +263,7 @@ class TestOfficialBranches(unittest.TestCase):
             patch("src.evaluation.official_academic_benchmarks.run_official_academic_benchmarks") as run,
         ):
             bench.main()
-        run.assert_called_once_with(model_name="m", adapter_id="a")
+        run.assert_called_once_with(model_name="m", adapter_id="a", seed=42)
 
 
 class TestReportBranches(unittest.TestCase):

@@ -28,7 +28,7 @@ repos:
   - repo: local
     hooks:
       - id: mypy-strict
-        name: MyPy Typecheck (strict, 42 modules)
+        name: MyPy Typecheck (strict, 44 modules)
         entry: python -m mypy
         language: system
         pass_filenames: false
@@ -76,6 +76,7 @@ repos:
           - src/pipeline.py
           - src/exporter/finalize_sync_all.py
           - src/observability/__init__.py
+          - src/ml_runtime.py
           - src/ricc/__init__.py
 
   # Check for merge conflicts

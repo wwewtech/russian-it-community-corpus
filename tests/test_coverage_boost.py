@@ -628,13 +628,11 @@ class TestRagExtra(unittest.TestCase):
 
 class TestOfficialBenchmarksExtra(unittest.TestCase):
     def test_safe_exec_and_humaneval(self) -> None:
-        from src.evaluation.official_academic_benchmarks import _safe_exec, execute_humaneval_code
+        # `_safe_exec` was removed (dead code — production path is
+        # `_run_in_isolated_process`); its allowlist still backs the
+        # sandboxed runner, so keep exercising `execute_humaneval_code`.
+        from src.evaluation.official_academic_benchmarks import execute_humaneval_code
 
-        self.assertTrue(_safe_exec("x = 1"))
-        # Restricted builtins break normal exception machinery, so any
-        # raising payload must surface as *some* exception, never True.
-        with self.assertRaises(Exception):  # noqa: B017 - sandbox mangles exception types by design
-            _safe_exec("raise ValueError('boom')")
         task = {"entry_point": "add", "prompt": "def add(a, b):\n    return a + b", "test": "assert add(1, 2) == 3"}
         self.assertTrue(execute_humaneval_code("```python\ndef add(a, b):\n    return a + b\n```", task))
         self.assertFalse(execute_humaneval_code("def add(a, b):\n    return 0", task))

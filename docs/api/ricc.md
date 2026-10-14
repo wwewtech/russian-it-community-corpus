@@ -121,21 +121,9 @@ All exceptions include:
 - `context` — Structured context dict
 - `recoverable` — Boolean hint for retry logic
 
-### Functional Result Type
+### GPU/ML Error Taxonomy (12.2.0+)
 
-```python
-from ricc import Result, Ok, Err
-
-
-def risky_operation() -> Result[str, ValidationError]:
-    if not valid:
-        return Err(ValidationError("invalid input"))
-    return Ok("success")
-
-
-result = risky_operation()
-if result.is_ok:
-    print(result.value)
-else:
-    print(result.error)
-```
+Train/eval entry points classify raw torch/HF exceptions via
+`classify_ml_exception()` / `record_classified_ml_error()` — see
+[Errors API](errors.md) for the full `MLError`/`GPUError` hierarchy and
+retry-vs-fail-fast policy.

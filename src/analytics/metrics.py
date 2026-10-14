@@ -29,7 +29,7 @@ def count_tokens(text: str) -> int:
         try:
             return len(TIKTOKEN_ENC.encode(text))
         except Exception:
-            pass
+            pass  # deliberate: token-estimate fallback to chars/4 heuristic
     return max(1, int(len(text.split()) * 1.35))
 
 

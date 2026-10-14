@@ -20,11 +20,11 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env(pytorch_alloc_conf=True)
 
-import pandas as pd  # noqa: E402
-import torch  # noqa: E402
-from datasets import Dataset  # noqa: E402
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training  # noqa: E402
-from transformers import (  # noqa: E402
+import pandas as pd
+import torch
+from datasets import Dataset
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
@@ -33,7 +33,8 @@ from transformers import (  # noqa: E402
     TrainingArguments,
 )
 
-from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
+from src.ml_runtime import set_deterministic_seed, with_retries
+from src.observability import record_classified_ml_error, record_lora_result
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("Heavyweight5")
@@ -88,36 +89,13 @@ def load_sft_dataset(parquet_path: Path, max_samples: int = 600) -> Dataset:
     return Dataset.from_pandas(df)
 
 
-def format_chat_prompt(example: dict[str, Any], tokenizer: Any) -> dict[str, Any]:
-    """Format dialogue into conversational prompt."""
-    conv = example.get("conversations") or example.get("messages")
-    if conv and isinstance(conv, list):
-        messages = [
-            {"role": msg.get("from") or msg.get("role"), "content": msg.get("value") or msg.get("content")}
-            for msg in conv
-        ]
-        role_map = {"human": "user", "gpt": "assistant", "system": "system", "user": "user", "assistant": "assistant"}
-        clean_msgs = [
-            {"role": role_map.get(m["role"], "user"), "content": str(m["content"])} for m in messages if m["content"]
-        ]
-    else:
-        q = example.get("query") or example.get("instruction") or "Расскажи про IT архитектуру"
-        r = example.get("response") or example.get("output") or example.get("content") or ""
-        clean_msgs = [{"role": "user", "content": str(q)}, {"role": "assistant", "content": str(r)}]
-
-    try:
-        text = tokenizer.apply_chat_template(clean_msgs, tokenize=False, add_generation_prompt=False)
-    except Exception:
-        text = "\n".join(f"[{m['role'].upper()}]: {m['content']}" for m in clean_msgs)
-    return {"text": text}
-
-
 def train_single_heavyweight(
     spec: dict[str, Any],
     dataset: Dataset,
     output_dir: Path,
     steps: int = 50,
     lr: float = 2e-4,
+    seed: int = 42,
 ) -> bool:
     """Train a single 7B-8B model with 4-bit NF4 QLoRA."""
     model_name = spec["model_name"]
@@ -129,6 +107,7 @@ def train_single_heavyweight(
         return True
 
     logger.info(f"=== 🏋️ Starting Heavyweight 4-bit QLoRA: {model_name} ({spec['params']}) ===")
+    set_deterministic_seed(seed)
     t0 = time.time()
 
     # 1. Quantization Configuration
@@ -140,15 +119,24 @@ def train_single_heavyweight(
     )
 
     try:
-        tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+        tokenizer: Any = cast(
+            Any,
+            with_retries(
+                lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True),
+                what=f"tokenizer load {model_name}",
+            ),
+        )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
-        model: Any = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            quantization_config=bnb_config,
-            device_map="auto",
-            trust_remote_code=True,
+        model: Any = with_retries(
+            lambda: AutoModelForCausalLM.from_pretrained(
+                model_name,
+                quantization_config=bnb_config,
+                device_map="auto",
+                trust_remote_code=True,
+            ),
+            what=f"model load {model_name}",
         )
 
         model = cast(Any, prepare_model_for_kbit_training)(model)
@@ -293,6 +281,7 @@ def train_single_heavyweight(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=40)
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     args = parser.parse_args()
 
     sft_path = Path("dataset_output/parquet/sft_dialogues.parquet")
@@ -304,7 +293,7 @@ def main() -> None:
 
     for idx, spec in enumerate(HEAVYWEIGHT_5_MODELS, 1):
         logger.info(f"\n--- [{idx}/{len(HEAVYWEIGHT_5_MODELS)}] {spec['family']} ({spec['params']}) ---")
-        train_single_heavyweight(spec, dataset, output_dir, steps=args.steps)
+        train_single_heavyweight(spec, dataset, output_dir, steps=args.steps, seed=args.seed)
 
     logger.info("🎉 All 5 Heavyweight SOTA models processed!")
 

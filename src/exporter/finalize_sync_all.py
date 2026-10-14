@@ -27,7 +27,7 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import huggingface_hub  # noqa: E402  (deferred after setup_runtime_env)
+import huggingface_hub
 
 logger = logging.getLogger("FinalizeSync")
 

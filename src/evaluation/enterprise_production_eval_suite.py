@@ -17,13 +17,13 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import numpy as np  # noqa: E402
-import torch  # noqa: E402
-from peft import PeftModel  # noqa: E402
-from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+import numpy as np
+import torch
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.observability import record_classified_ml_error  # noqa: E402
-from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
+from src.observability import record_classified_ml_error
+from src.rag.rag_pipeline import LocalRAGPipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("EnterpriseEval")

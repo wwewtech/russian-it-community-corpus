@@ -634,7 +634,3 @@ class BenchmarkRunner:
             json.dump(self.questions, f, ensure_ascii=False, indent=2)
         logger.info(f"Saved {len(self.questions)} benchmark evaluation test cases to {out}")
         return out
-
-    def get_benchmark_by_domain(self, domain: str) -> list[dict[str, Any]]:
-        """Filter benchmark questions by domain."""
-        return [q for q in self.questions if q.get("domain") == domain]

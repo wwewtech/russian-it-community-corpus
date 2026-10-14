@@ -118,6 +118,17 @@ ignore = [
     "B008", # do not perform function calls in argument defaults
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Entry-point scripts call setup_runtime_env() (UTF-8 stdio, HF cache, env
+# defaults) BEFORE importing torch/transformers/peft — those imports are
+# intentionally below the setup call and carry no per-line noqa anymore
+# (the 65 stale `# noqa: E402` markers were removed; policy is here).
+"src/evaluation/*.py" = ["E402"]
+"src/lora/*.py" = ["E402"]
+"src/inference.py" = ["E402"]
+"src/exporter/finalize_sync_all.py" = ["E402"]
+"src/observability/__init__.py" = ["E402"]
+
 # NOTE: per-file E402 ignores were removed — runtime env setup is centralized
 # in src/bootstrap.py (setup_runtime_env()); imports below the call carry an
 # explicit `# noqa: E402` where needed.

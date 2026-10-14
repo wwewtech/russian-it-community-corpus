@@ -50,7 +50,7 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
             ts = datetime.fromtimestamp(int(unixtime))
             return ts, int(unixtime)
         except Exception:
-            pass
+            pass  # deliberate: fall through to date-string parsing variants
 
     date_str = raw_msg.get("date") or raw_msg.get("datetime") or raw_msg.get("timestamp")
     if date_str:
@@ -62,13 +62,13 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
             ts = datetime.fromisoformat(clean_date)
             return ts, int(ts.timestamp())
         except Exception:
-            pass
+            pass  # deliberate: fall through to strptime format list
         for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y %H:%M:%S"):
             try:
                 ts = datetime.strptime(str(date_str), fmt)
                 return ts, int(ts.timestamp())
             except Exception:
-                continue
+                continue  # deliberate: try next format in the list
 
     # Fallback to epoch
     epoch = datetime(1970, 1, 1)

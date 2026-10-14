@@ -28,10 +28,10 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import torch  # noqa: E402  (must stay below setup_runtime_env)
+import torch
 
-from src.errors import AdapterLoadError  # noqa: E402
-from src.observability import record_classified_ml_error  # noqa: E402
+from src.errors import AdapterLoadError
+from src.observability import record_classified_ml_error
 
 # Heavy third-party imports are deferred to interactive_chat_session() so
 # that test modules (which only need the pure helpers) do not require
@@ -141,10 +141,10 @@ def interactive_chat_session(
     """
     # Deferred imports keep test collection light and let the pure
     # helpers above be tested in CPU-only environments.
-    from peft import PeftModel  # noqa: E402
-    from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer  # noqa: E402
+    from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
-    from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
+    from src.rag.rag_pipeline import LocalRAGPipeline
 
     print("=" * 70)
     print("🤖 Russian IT Community LLM & RAG Interactive Terminal")

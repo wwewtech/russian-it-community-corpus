@@ -299,7 +299,7 @@ class Settings(BaseSettings):
                             self.domain_taxonomy[domain] = DomainTaxonomyItem(**info)
                     return
             except Exception:
-                pass  # Fall through to hardcoded
+                pass  # deliberate: params.yaml unreadable/corrupt -> hardcoded fallback (platform must boot)
 
         # Hardcoded fallback
         self.domain_taxonomy = {
@@ -709,14 +709,9 @@ class Settings(BaseSettings):
                 with params_path.open("r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             except Exception:
-                pass
+                pass  # deliberate: load_params returns {} on unreadable yaml; callers use defaults
         return {}
 
 
 # Global instance
 settings = Settings()
-
-
-def get_settings() -> Settings:
-    """Dependency injection friendly getter."""
-    return settings

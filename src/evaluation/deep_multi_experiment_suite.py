@@ -14,13 +14,14 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env()
 
-import numpy as np  # noqa: E402
-import torch  # noqa: E402
-from peft import PeftModel  # noqa: E402
-from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+import numpy as np
+import torch
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.observability import record_classified_ml_error  # noqa: E402
-from src.rag.rag_pipeline import LocalRAGPipeline  # noqa: E402
+from src.ml_runtime import set_deterministic_seed
+from src.observability import record_classified_ml_error
+from src.rag.rag_pipeline import LocalRAGPipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("DeepBenchmarkSuite")
@@ -245,9 +246,11 @@ def run_benchmark_experiment_suite(
     model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
     adapter_id: str = "qwen2.5_1.5b_instruct",
     max_new_tokens: int = 192,
+    seed: int = 42,
 ) -> dict[str, Any]:
     """Execute all 16 benchmark suites across Base, RAG, LoRA, and Hybrid."""
     logger.info(f"=== Initializing 16-Suite Deep Empirical Benchmark for {model_name} ===")
+    set_deterministic_seed(seed)
 
     # 1. Load RAG Knowledge Base
     rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
@@ -506,9 +509,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     args = parser.parse_args()
 
-    run_benchmark_experiment_suite(model_name=args.model, adapter_id=args.adapter)
+    run_benchmark_experiment_suite(model_name=args.model, adapter_id=args.adapter, seed=args.seed)
 
 
 if __name__ == "__main__":

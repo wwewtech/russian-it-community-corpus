@@ -164,7 +164,7 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
 
             verify_manifest(reports_dir.parent, manifest_path)
             checks.append(Check("artifact-manifest", True, "dataset_manifest.json verified"))
-        except Exception as exc:  # noqa: BLE001 - fail-closed on any provenance failure
+        except Exception as exc:
             reason = str(exc) or type(exc).__name__
             checks.append(Check("artifact-manifest", False, f"manifest verify failed: {reason}"))
 

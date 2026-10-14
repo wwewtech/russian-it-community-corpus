@@ -27,10 +27,6 @@ class UnifiedPIIAnonymizer(DeepPIIAnonymizer):
         """Anonymize text using multi-pass scrubbers."""
         return self.scrub_text(text)
 
-    def process_message(self, msg: NormalizedMessage) -> CleanedMessage:
-        """Anonymize and clean a single NormalizedMessage."""
-        return self.anonymize_message(msg)
-
     def process_batch(self, messages: list[NormalizedMessage]) -> list[CleanedMessage]:
         """Process a list of NormalizedMessages in batch with author name harvesting."""
         return self.process_all(messages)

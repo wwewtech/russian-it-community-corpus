@@ -15,7 +15,6 @@ Public API:
     - Settings: unified configuration (pydantic-settings)
     - MasterDataPipeline: end-to-end data curation pipeline
     - PipelineError, ValidationError, etc.: typed exception hierarchy
-    - Result, Ok, Err: functional error handling
     - configure_logging, get_logger: structured logging (structlog)
     - Prometheus metrics: PIPELINE_STAGE_DURATION, PII_AUDIT_LEAKS_FOUND, etc.
 """
@@ -35,7 +34,6 @@ from src.errors import (
     DeduplicationError,
     DiskSpaceError,
     DriftDetectedError,
-    Err,
     EvaluationError,
     ExportError,
     # External service errors
@@ -52,7 +50,6 @@ from src.errors import (
     JSONLValidationError,
     MissingDependencyError,
     MLError,
-    Ok,
     ParquetValidationError,
     PIIAnonymizationError,
     PIIValidationError,
@@ -62,8 +59,6 @@ from src.errors import (
     QuantizationError,
     # Resource errors
     ResourceError,
-    # Result type
-    Result,
     # Base
     RICCError,
     SchemaValidationError,
@@ -180,9 +175,6 @@ __all__ = [
     "is_oom_error",
     "classify_ml_exception",
     # Result type
-    "Result",
-    "Ok",
-    "Err",
     # Observability
     "configure_logging",
     "get_logger",

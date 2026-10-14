@@ -13,10 +13,10 @@ from src.bootstrap import setup_runtime_env
 
 setup_runtime_env(pytorch_alloc_conf=True)
 
-import torch  # noqa: E402
-from datasets import load_dataset  # noqa: E402
-from peft import LoraConfig, TaskType, get_peft_model  # noqa: E402
-from transformers import (  # noqa: E402
+import torch
+from datasets import load_dataset
+from peft import LoraConfig, TaskType, get_peft_model
+from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,
@@ -24,7 +24,8 @@ from transformers import (  # noqa: E402
     TrainingArguments,
 )
 
-from src.observability import record_classified_ml_error, record_lora_result  # noqa: E402
+from src.ml_runtime import set_deterministic_seed, with_retries
+from src.observability import record_classified_ml_error, record_lora_result
 
 logger = logging.getLogger(__name__)
 
@@ -37,28 +38,40 @@ def train_lora(
     batch_size: int = 2,
     learning_rate: float = 2e-4,
     max_seq_length: int = 1024,
+    seed: int = 42,
 ) -> Path:
     """
     Execute LoRA domain adaptation on RTX 3060 with PEFT.
     """
+    seed_state = set_deterministic_seed(seed)
+    print(f"🎲 Deterministic seed: {seed_state}")
     print(
         f"🚀 Initializing LoRA Fine-Tuning on GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
     )
     print(f"📦 Base Model: {model_name}")
     print(f"📚 Dataset: {dataset_path}")
 
-    # 1. Load Tokenizer & Model
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True)
+    # 1. Load Tokenizer & Model (network calls wrapped with bounded retry)
+    tokenizer: Any = cast(
+        Any,
+        with_retries(
+            lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True),
+            what=f"tokenizer load {model_name}",
+        ),
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     device_map = "auto" if torch.cuda.is_available() else None
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-    base_model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map=device_map,
+    base_model: Any = with_retries(
+        lambda: AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=dtype,
+            device_map=device_map,
+        ),
+        what=f"model load {model_name}",
     )
 
     # Enable gradient checkpointing for VRAM saving on RTX 3060
@@ -194,5 +207,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-0.5B-Instruct")
     parser.add_argument("--steps", type=int, default=30)
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     args = parser.parse_args()
-    train_lora(model_name=args.model, max_steps=args.steps)
+    train_lora(model_name=args.model, max_steps=args.steps, seed=args.seed)

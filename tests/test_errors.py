@@ -11,7 +11,6 @@ from src.errors import (
     CheckpointError,
     ConfigurationError,
     DriftDetectedError,
-    Err,
     EvaluationError,
     ExternalServiceError,
     GPUDriverError,
@@ -21,7 +20,6 @@ from src.errors import (
     InferenceError,
     IngestionError,
     MLError,
-    Ok,
     PIIAnonymizationError,
     PIIValidationError,
     PipelineError,
@@ -185,49 +183,6 @@ class TestGPUMLErrorTaxonomy(unittest.TestCase):
         err = classify_ml_exception(ValueError("dataloader shape mismatch"), adapter_id="qwen05")
         self.assertIsInstance(err, TrainingError)
         self.assertIn("original_error", err.context)
-
-
-class TestResultType(unittest.TestCase):
-    def test_ok_creation(self):
-        r = Ok("success")
-        self.assertTrue(r.is_ok)
-        self.assertFalse(r.is_err)
-        self.assertEqual(r.value, "success")
-        self.assertIsNone(r.error)
-
-    def test_err_creation(self):
-        r = Err(ValueError("bad"))
-        self.assertFalse(r.is_ok)
-        self.assertTrue(r.is_err)
-        self.assertIsInstance(r.error, ValueError)
-
-    def test_unwrap_ok(self):
-        r = Ok(42)
-        self.assertEqual(r.unwrap(), 42)
-
-    def test_unwrap_err_raises(self):
-        r = Err(RuntimeError("boom"))
-        with self.assertRaises(RuntimeError):
-            r.unwrap()
-
-    def test_unwrap_or(self):
-        self.assertEqual(Ok(1).unwrap_or(0), 1)
-        self.assertEqual(Err(ValueError("x")).unwrap_or(0), 0)
-
-    def test_map_ok(self):
-        r = Ok(2).map(lambda x: x * 3)
-        self.assertTrue(r.is_ok)
-        self.assertEqual(r.value, 6)
-
-    def test_map_err(self):
-        r = Err(ValueError("x")).map_err(lambda e: RuntimeError("wrapped"))
-        self.assertTrue(r.is_err)
-        self.assertIsInstance(r.error, RuntimeError)
-
-    def test_map_err_on_ok_passes_through(self):
-        r = Ok(5).map_err(lambda e: RuntimeError("wrapped"))
-        self.assertTrue(r.is_ok)
-        self.assertEqual(r.value, 5)
 
 
 if __name__ == "__main__":

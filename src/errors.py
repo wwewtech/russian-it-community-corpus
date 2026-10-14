@@ -7,8 +7,6 @@ monitoring, and error handling across the platform.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 # =============================================================================
@@ -651,97 +649,3 @@ def classify_ml_exception(
     typed = TrainingError(message, model_name=model_name, adapter_id=adapter_id)
     typed.context["original_error"] = f"{type(exc).__name__}: {exc}"
     return typed
-
-
-# =============================================================================
-# Result Type (for functional error handling)
-# =============================================================================
-
-
-@dataclass(frozen=True)
-class Result:
-    """Result type for operations that can fail without exceptions.
-
-    Usage:
-        def risky_operation() -> Result:
-            if not valid:
-                return Err(ValidationError("invalid input"))
-            return Ok("success")
-    """
-
-    _value: Any
-    _error: Exception | None
-    _is_ok: bool
-
-    def __init__(self, value: Any = None, error: Exception | None = None) -> None:
-        if error is not None and value is not None:
-            raise ValueError("Result cannot have both value and error")
-        if error is None and value is None:
-            raise ValueError("Result must have either value or error")
-        object.__setattr__(self, "_value", value)
-        object.__setattr__(self, "_error", error)
-        object.__setattr__(self, "_is_ok", error is None)
-
-    @property
-    def is_ok(self) -> bool:
-        return self._is_ok
-
-    @property
-    def is_err(self) -> bool:
-        return not self._is_ok
-
-    @property
-    def value(self) -> Any:
-        if not self._is_ok:
-            raise RuntimeError("Cannot access value of Err Result")
-        return self._value
-
-    @property
-    def error(self) -> Exception | None:
-        if self._is_ok:
-            return None
-        return self._error
-
-    def unwrap(self) -> Any:
-        """Return value or raise the contained error."""
-        if self._is_ok:
-            return self._value
-        # At this point we know self._error is not None due to is_ok check
-        error = self._error
-        assert error is not None  # nosec B101
-        raise error
-
-    def unwrap_or(self, default: Any) -> Any:
-        """Return value or default if error."""
-        return self._value if self._is_ok else default
-
-    def map(self, func: Callable[[Any], Any]) -> Result:
-        """Transform the value if Ok, pass through Err."""
-        if self._is_ok:
-            try:
-                return Result(func(self._value))
-            except Exception as e:
-                return Result(error=e)
-        return Result(error=self._error)
-
-    def map_err(self, func: Callable[[Exception], Exception]) -> Result:
-        """Transform the error if Err, pass through Ok."""
-        if not self._is_ok:
-            # At this point we know self._error is not None
-            return Result(error=func(self._error))  # type: ignore[arg-type]
-        return self
-
-
-def Ok(value: Any) -> Result:
-    """Create a successful Result."""
-    return Result(value=value)
-
-
-def Err(error: Exception) -> Result:
-    """Create an error Result."""
-    return Result(error=error)
-
-
-# Type alias for common result types (for documentation/type hints)
-PipelineResult = "Result"
-ValidationResult = "Result"

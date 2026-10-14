@@ -165,7 +165,7 @@ class DatasetValidator:
                     leaks["unmasked_crypto"] += reg_stats.get("crypto_wallets", 0)
                     leaks["unmasked_community_names"] += reg_stats.get("community_names", 0)
                 except Exception:
-                    pass
+                    pass  # deliberate: scrubber-stats probe is best-effort; leak accounting continues
 
         total_leaks = sum(leaks.values())
         return {

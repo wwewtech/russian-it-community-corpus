@@ -251,7 +251,7 @@ class DeepPIIAnonymizer:
                                 if inflected and inflected.word not in TECH_WHITELIST and len(inflected.word) >= 3:
                                     self.name_forms_to_mask.add(inflected.word.lower())
                     except Exception:
-                        pass
+                        pass  # deliberate: pymorphy inflection probe on a single word must not abort scrubbing
 
     def _recompile_name_patterns(self) -> None:
         """Compile regex patterns from harvested inflected names."""
