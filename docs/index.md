@@ -14,17 +14,20 @@
 - **Probabilistic PII Audit**: Stratified sampling + Wilson CI + power analysis (α=0.01)
 - **Drift Monitoring**: PSI + Jensen-Shannon + Vocabulary Jaccard with thresholds
 - **SLO Gate**: Fail-closed privacy, fail-open informational — SHIP/HOLD verdicts
-- **LoRA Training**: Multi-model batch training with MLflow tracking & model registry
-- **RAG Pipeline**: Hybrid dense+sparse retrieval with BM25 + embeddings
-- **Observability**: Structured logging (structlog) + Prometheus metrics
-- **Typed Exceptions**: Complete error hierarchy with context & recoverability
+- **LoRA Training**: Multi-model batch training with typed GPU/ML error taxonomy & model zoo
+- **RAG Pipeline**: Hybrid lexical pre-filter + per-query TF-IDF cosine re-rank (CPU-only)
+- **Observability**: Structured logging (structlog) + Prometheus metrics + Grafana stack
+- **Typed Exceptions**: Complete error hierarchy with GPU/ML taxonomy, context & recoverability
 
 ## Quick Links
 
 - [Installation](getting-started/installation.md)
 - [Quick Start](getting-started/quickstart.md)
 - [Architecture Overview](architecture/overview.md)
+- [Pipeline Stages](architecture/pipeline-stages.md)
 - [API Reference](api/ricc.md)
+- [Error Taxonomy](api/errors.md)
+- [Observability](api/observability.md)
 
 ## Installation
 

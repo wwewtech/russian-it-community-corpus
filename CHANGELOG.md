@@ -7,7 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [12.2.0] - 2026-10-14
+
+### Added
+- **GPU/ML error taxonomy (P3)**: `src/errors.py` extended with `MLError`
+  (`TrainingError`, `InferenceError`, `EvaluationError`, `TokenizerError`,
+  `CheckpointError`, `AdapterLoadError`, `QuantizationError`) and `GPUError`
+  (`GPUNotAvailableError`, `GPUDriverError`, `GPUOutOfMemoryError`).
+  `VRAMExhaustedError` is now an alias of `GPUOutOfMemoryError`
+  (backward compatible). Helpers `is_oom_error()` and
+  `classify_ml_exception()` map raw torch/HF exceptions to the taxonomy;
+  `record_classified_ml_error()` records them into
+  `ricc_errors_total{component=...}`. `inference.py` raises
+  `AdapterLoadError` on corrupt adapters (was bare `RuntimeError`).
+- **Monitoring stack (P4)**: `deploy/k8s/data-studio-servicemonitor.yaml`
+  (scrapes the app's prometheus_client endpoint on 9090),
+  `deploy/k8s/prometheus-rules.yaml` (12 alerts; PII leaks are
+  `severity: critical`), Grafana dashboard
+  `deploy/monitoring/ricc-overview.json` (18 panels: pipeline, Zero-PII
+  gates, LoRA loss/VRAM, errors by component, release gates). The Streamlit
+  app starts the metrics server via `maybe_start_metrics_server()`
+  (survives reruns; `RICC_METRICS_PORT`, default 9090). Docker Compose
+  profile `observability` runs Prometheus + Grafana with provisioned
+  datasource/dashboard (`docker compose --profile observability up`).
+- **LoRA run metrics**: new `ricc_lora_train_total{model,adapter,status}`
+  counter + `record_lora_result()` helper; all 4 train scripts record
+  success (duration/loss/steps/vram) and classified failures. Alert
+  `RiccLoraTrainFailing` fires on failure-rate increase.
+- **Drift gauges wired in**: `record_drift_metrics()` in
+  `src/monitoring/drift.py` pushes PSI / JS-divergence / vocab-Jaccard
+  gauges and verdict counters; called by `generate_report()`,
+  `scripts/run_drift_monitoring.py` and `scripts/regenerate_real_reports.py`
+  — the Grafana "Drift metrics" panel now receives data.
+- **Security gate hardening (P5)**: pip-audit promoted from report-only to
+  a hard gate (CI `Security Supply Chain` job + `make security`): any known
+  CVE in the requirements.txt tree fails the build; missing JSON report
+  fails closed. Baseline at promotion: 0 vulnerable packages.
+- **mkdocs docs gate**: `mkdocs build --strict` in CI — nav references must
+  resolve and pages must build without warnings.
+- **Documentation**: API reference for the error taxonomy
+  (`docs/api/errors.md`) and observability stack
+  (`docs/api/observability.md`), strict-typing guide
+  (`docs/development/type-checking.md`), drift-monitoring user guide with
+  the new gauges (`docs/user-guide/drift-monitoring.md`).
+
+### Changed
+- **mypy strict rollout complete**: `[[tool.mypy.overrides]]
+  ignore_errors` removed entirely — every `src/` module passes
+  `mypy --strict`. `make typecheck-strict` and the pre-commit
+  `mypy-strict` hook now verify 43 modules (was 31). Phase 1: all
+  `src/lora/*` + `official_academic_benchmarks` + `benchmark_comparator`
+  (43 errors fixed via the `cast(Any, ...)` pattern). Phase 2: the three
+  heavy eval suites — `deep_multi_experiment_suite` (89),
+  `enterprise_production_eval_suite` (34), `sota_expert_benchmark_showcase`
+  (29) — typed via `list[dict[str, Any]]` data-table annotations and
+  up-front locals with `cast()` in fallback branches.
+- **pre-commit hygiene**: Black "fallback" hook removed (disagreed with
+  ruff-format, blocking commits); the mypy hook is now a local system hook
+  with `pass_filenames: false` (fixes "Duplicate module named" when a
+  listed module was staged).
 
 ### Added
 - **Hybrid RAG retrieval**: `src/rag/rag_pipeline.py` upgraded from lexical-only to
