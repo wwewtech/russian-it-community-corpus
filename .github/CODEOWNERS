@@ -1,0 +1,32 @@
+# Code Owners
+
+Ownership is enforced on pull requests: the listed owners are
+automatically requested for review, and (if branch protection requires
+it) their approval is mandatory for the matched paths.
+
+# Default: everything needs the maintainer's review
+* @wwewtech
+
+# Security-sensitive surfaces — supply chain, secrets, tokens
+/.github/workflows/ @wwewtech
+/.secrets.baseline @wwewtech
+/scripts/sync_to_hub.py @wwewtech
+/docs/adr/0001-hf-token-handling.md @wwewtech
+
+# Release gates: provenance, PII proof, SLO verdicts
+/src/monitoring/slo_gate.py @wwewtech
+/src/validation/artifact_manifest.py @wwewtech
+/src/validation/hub_reconciliation.py @wwewtech
+/scripts/regenerate_real_reports.py @wwewtech
+
+# Typed error taxonomy + observability contract
+/src/errors.py @wwewtech
+/src/observability/ @wwewtech
+/deploy/k8s/ @wwewtech
+/deploy/monitoring/ @wwewtech
+
+# Packaging: version bumps must touch all four places
+/pyproject.toml @wwewtech
+/CITATION.cff @wwewtech
+/src/__init__.py @wwewtech
+/src/ricc/__init__.py @wwewtech

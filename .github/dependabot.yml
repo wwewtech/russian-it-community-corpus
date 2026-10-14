@@ -1,0 +1,51 @@
+# Dependabot keeps the supply-chain gates meaningful: pip-audit detects CVEs,
+# Dependabot proposes the fixes. All three ecosystems are pinned in this repo
+# (requirements.txt/pyproject, Dockerfile FROM, workflow `uses:`), so all three
+# are watched. Weekly cadence — the security job blocks new CVEs in the
+# meantime, so weekly batching balances noise vs exposure.
+version: 2
+
+updates:
+  # Runtime + dev Python dependencies.
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Group patch+minor bumps so CI runs once per wave instead of per package.
+    groups:
+      python-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - dependencies
+      - python
+
+  # GitHub Actions (checkout, setup-python, upload-artifact, docker actions...).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - dependencies
+      - ci
+
+  # Docker base images (python:3.13-slim, prom/prometheus, grafana).
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker

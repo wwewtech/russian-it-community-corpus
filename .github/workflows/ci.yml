@@ -14,6 +14,13 @@ permissions:
   packages: write
   id-token: write
 
+# One run per ref: a new push to main cancels the superseded run instead of
+# racing it through 12 jobs (and two concurrent Docker pushes fighting over
+# the same tag).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 env:
   PYTHON_VERSION: "3.12"
   RUFF_VERSION: "0.16.2"

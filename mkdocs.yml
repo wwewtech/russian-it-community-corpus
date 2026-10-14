@@ -77,6 +77,11 @@ nav:
       - CI/CD: development/ci-cd.md
       - DVC Pipeline: development/dvc-pipeline.md
       - Docker: development/docker.md
+  - Architecture Records:
+      - ADR 0001 — HF Token Handling: adr/0001-hf-token-handling.md
+      - ADR 0002 — mypy strict Rollout: adr/0002-mypy-strict-rollout.md
+      - ADR 0003 — Fail-Closed SLO Gates: adr/0003-fail-closed-slo-gates.md
+      - ADR 0004 — Monitoring Stack: adr/0004-monitoring-stack.md
   - Changelog: changelog.md
 
 plugins:

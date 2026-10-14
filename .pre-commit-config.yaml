@@ -84,6 +84,10 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: check-yaml
+        # mkdocs.yml uses python/name: tags (material emoji registry) that
+        # pyyaml cannot resolve; the file is validated by
+        # `mkdocs build --strict` in CI instead.
+        exclude: ^mkdocs\.yml$
       - id: check-json
       - id: check-toml
       - id: end-of-file-fixer

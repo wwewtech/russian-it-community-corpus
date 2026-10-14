@@ -12,6 +12,7 @@
 
 <br />
 
+[![CI](https://github.com/wwewtech/russian-it-community-corpus/actions/workflows/ci.yml/badge.svg)](https://github.com/wwewtech/russian-it-community-corpus/actions/workflows/ci.yml)
 [![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-FFD21E?style=flat-square)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
 [![Hugging Face Models](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-LoRA%20Zoo-orange?style=flat-square)](https://huggingface.co/wwewtech/russian-it-community-lora)
 [![Python](https://img.shields.io/badge/Python-%3E%3D3.11-3776AB?style=flat-square&logo=python&logoColor=white)](#)
