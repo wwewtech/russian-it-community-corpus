@@ -1,5 +1,5 @@
 # Production Dockerfile for Russian IT Community Data Platform
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 LABEL org.opencontainers.image.title="RICC Data Platform" \
       org.opencontainers.image.description="Russian IT Community Corpus — Zero-PII curation + SFT/DPO/RAG + LoRA" \
