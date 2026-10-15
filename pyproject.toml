@@ -69,10 +69,10 @@ dev = [
     "pytest-cov>=4.1",
     # Pinned to the exact ruff version used by pre-commit (.pre-commit-config.yaml)
     # and CI (.github/workflows/ci.yml) so local, hook, and CI lint always agree.
-    "ruff==0.16.2",
+    "ruff==0.17.0",
     "black>=24.0.0",
     # Pinned so typechecking results remain deterministic between local and CI.
-    "mypy==2.3.1",
+    "mypy==2.4.0",
     "pre-commit>=3.6.0",
 ]
 
