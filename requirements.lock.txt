@@ -100,7 +100,7 @@ toml==0.10.2
 torch==2.14.1
 tornado==6.5.10
 tqdm==4.70.1
-transformers==4.57.1
+transformers==5.19.0
 trl==1.15.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
