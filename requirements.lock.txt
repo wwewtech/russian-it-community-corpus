@@ -51,7 +51,7 @@ navec==0.10.0
 networkx==3.6.1
 numpy==2.4.6
 packaging==25.0
-pandas==2.2.3
+pandas==3.0.6
 peft==0.21.2
 pillow==11.3.0
 pluggy==1.6.0
