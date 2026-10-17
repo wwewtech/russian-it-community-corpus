@@ -4,6 +4,8 @@ Master Pipeline Orchestrator for IT Community Data Engineering & Curation.
 
 import json
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -11,6 +13,16 @@ from src.analytics.engine import DeepChatAnalyzer, FullAnalysisReport
 from src.analytics.report_generator import ReportGenerator
 from src.deduplication.exact_dedup import ExactDeduplicator
 from src.deduplication.minhash_lsh import MinHashLSH
+from src.errors import (
+    AnalyticsError,
+    DeduplicationError,
+    ExportError,
+    GraphExtractionError,
+    IngestionError,
+    PIIAnonymizationError,
+    PipelineError,
+    TaxonomyError,
+)
 from src.exporter.dpo_exporter import DPOExporter
 from src.exporter.jsonl_exporter import JSONLExporter
 from src.exporter.parquet_exporter import ParquetExporter
@@ -37,6 +49,38 @@ JSONL_OUTPUT_DIR = settings.JSONL_OUTPUT_DIR
 SAMPLES_OUTPUT_DIR = settings.SAMPLES_OUTPUT_DIR
 REPORTS_DIR = settings.REPORTS_DIR
 RAW_EXPORT_DIRS = settings.RAW_EXPORT_DIRS
+
+# Stage name -> typed error raised when the stage body fails. Documented
+# in docs/api/pipeline.md: run_all() surfaces PipelineError subclasses.
+_STAGE_ERRORS: dict[str, type[PipelineError]] = {
+    "ingestion": IngestionError,
+    "pii_anonymization": PIIAnonymizationError,
+    "deduplication": DeduplicationError,
+    "taxonomy_tagging": TaxonomyError,
+    "graph_extraction": GraphExtractionError,
+    "export": ExportError,
+    "analytics_validation": AnalyticsError,
+}
+
+
+@contextmanager
+def _stage_guard(stage: str) -> Iterator[None]:
+    """Log stage failure and re-raise as the stage-specific typed error.
+
+    Any exception escaping a stage body becomes a PipelineError subclass
+    (with ``stage`` set) so ``main.py``/``cli.py`` can report the failing
+    stage and exit non-zero instead of dumping a bare traceback.
+    """
+    try:
+        yield
+    except PipelineError as exc:
+        pipeline_logger.stage_end(stage, success=False, error=exc.message)
+        raise
+    except Exception as exc:  # noqa: BLE001 — deliberately re-wrapped into typed error
+        typed = _STAGE_ERRORS[stage](f"{type(exc).__name__}: {exc}")
+        typed.context["original_error"] = f"{type(exc).__name__}: {exc}"
+        pipeline_logger.stage_end(stage, success=False, error=typed.message)
+        raise typed from exc
 
 
 class MasterDataPipeline:
@@ -76,14 +120,21 @@ class MasterDataPipeline:
         pipeline_logger.progress("🚀 STARTING MASTER DATA ENGINEERING & CURATION PIPELINE")
 
         # Stage 1: Ingestion
-        with time_stage("ingestion"):
+        with _stage_guard("ingestion"), time_stage("ingestion"):
             pipeline_logger.stage_start("ingestion")
             chats_info, self.raw_messages = merge_multiple_exports(self.raw_export_dirs)
+            if not self.raw_messages:
+                # Fail closed: an empty ingestion must never masquerade as a
+                # successful run that overwrites the published artifacts.
+                raise IngestionError(
+                    f"ingestion produced 0 messages from {self.raw_export_dirs} "
+                    "(empty RAW_EXPORT_DIRS?) — refusing to continue"
+                )
             record_stage_messages("ingestion", len(self.raw_messages))
             pipeline_logger.stage_end("ingestion", success=True, messages=len(self.raw_messages))
 
         # Stage 2: PII Removal & User Pseudonymization
-        with time_stage("pii_anonymization"):
+        with _stage_guard("pii_anonymization"), time_stage("pii_anonymization"):
             pipeline_logger.stage_start("pii_anonymization")
             self.cleaned_messages = self.anonymizer.process_batch(self.raw_messages)
             pii_stats = self.anonymizer.get_stats_summary()
@@ -98,7 +149,7 @@ class MasterDataPipeline:
             )
 
         # Stage 3: Exact & MinHash LSH Deduplication
-        with time_stage("deduplication"):
+        with _stage_guard("deduplication"), time_stage("deduplication"):
             pipeline_logger.stage_start("deduplication")
             unique_exact, exact_dupes = self.exact_dedup.deduplicate(self.cleaned_messages)
             self.cleaned_messages, lsh_dupes = self.minhash_lsh.deduplicate_messages(unique_exact)
@@ -107,19 +158,28 @@ class MasterDataPipeline:
             pipeline_logger.stage_end("deduplication", success=True, removed=total_removed)
 
         # Stage 4: Domain Taxonomy & Technical Keyword Tagging
-        with time_stage("taxonomy_tagging"):
+        with _stage_guard("taxonomy_tagging"), time_stage("taxonomy_tagging"):
             pipeline_logger.stage_start("taxonomy_tagging")
             self.cleaned_messages = self.tagger.tag_batch(self.cleaned_messages)
             record_stage_messages("taxonomy_tagging", len(self.cleaned_messages))
             pipeline_logger.stage_end("taxonomy_tagging", success=True)
 
         # Stage 5: Conversation Graph DAG & SFT/RAG Extraction
-        with time_stage("graph_extraction"):
+        with _stage_guard("graph_extraction"), time_stage("graph_extraction"):
             pipeline_logger.stage_start("graph_extraction")
             self.cleaned_messages, self.threads = self.dag_builder.build_threads(self.cleaned_messages)
             self.sft_dialogues = self.conv_extractor.extract_sft_dialogues(self.threads)
             self.rag_chunks = self.conv_extractor.extract_rag_chunks(self.threads)
             self.dpo_pairs = self.conv_extractor.extract_dpo_pairs(self.threads)
+            # Empty extraction is warned loudly but not fatal here: the
+            # validation stage marks the run as failed (exit code 1 at the
+            # entry points), and analytics may legitimately run on a subset.
+            if not self.sft_dialogues:
+                pipeline_logger.warning("graph_extraction produced 0 SFT dialogues; validation will fail")
+            if not self.rag_chunks:
+                pipeline_logger.warning("graph_extraction produced 0 RAG chunks; validation will fail")
+            if not self.dpo_pairs:
+                pipeline_logger.warning("graph_extraction produced 0 DPO pairs; validation will fail")
             pipeline_logger.stage_end(
                 "graph_extraction",
                 success=True,
@@ -130,7 +190,7 @@ class MasterDataPipeline:
             )
 
         # Stage 6: Multi-Format Production Exporter
-        with time_stage("export"):
+        with _stage_guard("export"), time_stage("export"):
             pipeline_logger.stage_start("export")
             # Parquet
             self.parquet_exporter.export_messages(self.cleaned_messages)
@@ -160,7 +220,7 @@ class MasterDataPipeline:
             pipeline_logger.stage_end("export", success=True)
 
         # Stage 7: Analytics, Reports & Validation
-        with time_stage("analytics_validation"):
+        with _stage_guard("analytics_validation"), time_stage("analytics_validation"):
             pipeline_logger.stage_start("analytics_validation")
             analyzer = DeepChatAnalyzer(self.cleaned_messages, sample_limit_for_nlp=100000)
             self.analytics_report = analyzer.run_full_analysis()

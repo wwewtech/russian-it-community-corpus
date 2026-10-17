@@ -10,7 +10,7 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -147,7 +147,9 @@ class TestCLICommands(unittest.TestCase):
                 patch("cli.OUTPUT_DIR", data_dir),
                 redirect_stdout(f),
             ):
-                main()
+                with self.assertRaises(SystemExit) as exc:
+                    main()
+                self.assertEqual(exc.exception.code, 1)
 
             result = json.loads(f.getvalue()[f.getvalue().index("{") :])
             self.assertFalse(result["overall_passed"])
@@ -177,12 +179,59 @@ class TestCLICommands(unittest.TestCase):
                 patch("cli.OUTPUT_DIR", data_dir),
                 redirect_stdout(f),
             ):
-                main()
+                with self.assertRaises(SystemExit) as exc:
+                    main()
+                self.assertEqual(exc.exception.code, 1)
 
             raw = f.getvalue()
             result = json.loads(raw[raw.index("{") :])
             self.assertFalse(result["pii_leakage_audit"]["passed"])
             self.assertGreaterEqual(result["pii_leakage_audit"]["leaks_found"]["unmasked_emails"], 1)
+
+    def test_cli_run_exits_1_on_validation_failure(self):
+        # `run` must propagate a failed validation as a non-zero exit code
+        # (previously run_all()'s result was ignored → exit 0 on bad data).
+        f, err = io.StringIO(), io.StringIO()
+        with (
+            patch("sys.argv", ["cli.py", "run"]),
+            patch("src.pipeline.MasterDataPipeline") as pipeline_cls,
+            redirect_stdout(f),
+            redirect_stderr(err),
+        ):
+            pipeline_cls.return_value.run_all.return_value = {
+                "validation_passed": False,
+                "threads_count": 1,
+            }
+            with self.assertRaises(SystemExit) as exc:
+                main()
+            self.assertEqual(exc.exception.code, 1)
+        self.assertIn("validation FAILED", err.getvalue())
+
+    def test_cli_run_exits_1_on_typed_pipeline_error(self):
+        from src.errors import IngestionError
+
+        f, err = io.StringIO(), io.StringIO()
+        with (
+            patch("sys.argv", ["cli.py", "run"]),
+            patch("src.pipeline.MasterDataPipeline") as pipeline_cls,
+            redirect_stdout(f),
+            redirect_stderr(err),
+        ):
+            pipeline_cls.return_value.run_all.side_effect = IngestionError("0 messages ingested")
+            with self.assertRaises(SystemExit) as exc:
+                main()
+            self.assertEqual(exc.exception.code, 1)
+        self.assertIn("stage 'ingestion'", err.getvalue())
+
+    def test_cli_run_succeeds_with_valid_pipeline(self):
+        f = io.StringIO()
+        with (
+            patch("sys.argv", ["cli.py", "run"]),
+            patch("src.pipeline.MasterDataPipeline") as pipeline_cls,
+            redirect_stdout(f),
+        ):
+            pipeline_cls.return_value.run_all.return_value = {"validation_passed": True}
+            main()  # must NOT raise SystemExit
 
     def test_cli_benchmark(self):
         f = io.StringIO()
