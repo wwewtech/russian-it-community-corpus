@@ -124,6 +124,10 @@ def main():
         "",
         "- Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) "
         f"({_metrics.sft_dialogues_fmt} multi-turn dialogues).",
+        "- Training regime: published adapters are domain-adaptation pilot checkpoints "
+        "(50–100 training steps on sampled domain batches) demonstrating PEFT compatibility "
+        "and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints "
+        "over the entire corpus.",
         "- Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending "
         "re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible "
         "values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not "
@@ -142,6 +146,11 @@ def main():
         "дообученных на корпусе **RICC (2.82M очищенных сообщений, 171.5k диалогов)** для русскоязычного IT-дискурса, бэкенда, DevOps, AI/ML и системного администрирования.",
         "",
         "Все адаптеры доступны как локально в каталоге [`lora_adapters/`](../lora_adapters/), так и на Hugging Face Hub: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora).",
+        "",
+        "> **Provenance:** a local adapter carries `training_meta.json` "
+        "(`prompt_masking: true`) only if it was trained with the prompt-masked "
+        "objective. Adapters without it predate the 2026-10-17 masking fix — "
+        "retrain with `python -m src.lora.batch_train_zoo --force --only <id>`.",
         "",
         "---",
         "",
@@ -197,7 +206,8 @@ def main():
         "",
         "## ⚙️ Аппаратные требования и воспроизводимость",
         "",
-        "- **Потребление VRAM при обучении:** ~4.35 GB на NVIDIA GeForce RTX 3060 (12 GB) с gradient accumulation = 4, batch size = 1.",
+        "- **Режим обучения адаптеров:** Опубликованные адаптеры получены в режиме легковесной доменной адаптации (pilot runs, 50–100 шагов на подмножествах диалогов) для подтверждения совместимости весов, PEFT-пайплайна и инференса на потребительских GPU (RTX 3060 12GB). Они не являются финальными многоэпоховыми чекпоинтами на всём объёме 171k диалогов.",
+        "- **Потребление VRAM при обучении:** ~4.35 GB на NVIDIA GeForce RTX 3060 (12 GB) с gradient accumulation = 4, batch size = 1. *(Логи обучения не хранятся в репозитории — цифра приведена как ориентир для воспроизведения.)*",
         "- **Флагманские 7B–8B модели:** используют 4-битное квантование BitsAndBytes (NF4) для инференса в пределах 6 GB VRAM.",
         "- **Статус метрик:** ранее опубликованные академические метрики (HumanEval / RuMMLU / PPL) **отозваны до переоценки** — аудит тестового контура выявил дефекты парсинга ответов и маппинга колонок (см. историю коммитов). Оценки enterprise-сценариев являются эвристиками на основе рубрик, а не измерениями способностей.",
         "",
@@ -213,7 +223,9 @@ def main():
         "adapters": [{"id": r["id"], "base_model": r["base"]} for r in rows],
         "generated_at_utc": generated_at,
     }
-    Path("reports/lora_zoo_index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
+    Path("reports/lora_zoo_index.json").write_text(
+        json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
     print(f"Wrote {out_md}, {card}, lora_zoo_index.json; total adapters: {total}")
 

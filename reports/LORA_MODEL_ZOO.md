@@ -4,6 +4,8 @@
 
 Все адаптеры доступны как локально в каталоге [`lora_adapters/`](../lora_adapters/), так и на Hugging Face Hub: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora).
 
+> **Provenance:** a local adapter carries `training_meta.json` (`prompt_masking: true`) only if it was trained with the prompt-masked objective. Adapters without it predate the 2026-10-17 masking fix — retrain with `python -m src.lora.batch_train_zoo --force --only <id>`.
+
 ---
 
 ## 💻 Локальный запуск через CLI и Python

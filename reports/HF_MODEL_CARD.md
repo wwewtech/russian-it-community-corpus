@@ -18,7 +18,7 @@ tags:
 
 **58 pre-trained adapters** (55 domain adapters + 3 flagship 7B–8B QLoRA), fine-tuned on the RICC corpus (2.82M messages, 171.5k curated SFT dialogues) for Russian-language IT discourse: backend, DevOps, AI/ML, infrastructure.
 
-> Catalog regenerated from the Hub file tree on 2026-09-02. Source of truth: the `siblings` listing of this repository.
+> Catalog regenerated from the Hub file tree on 2026-10-17. Source of truth: the `siblings` listing of this repository.
 
 ## ⚡ Quick Start: 3-Line Inference
 
@@ -112,5 +112,5 @@ Full-precision copies also live under [`models/`](https://huggingface.co/wwewtec
 ## 📓 Training Data & Evaluation Status
 
 - Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) (171,520 multi-turn dialogues).
-- Training regime: Published adapters are domain-adaptation pilot checkpoints (50–100 training steps on sampled domain batches) demonstrating PEFT compatibility and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints over the entire corpus.
+- Training regime: published adapters are domain-adaptation pilot checkpoints (50–100 training steps on sampled domain batches) demonstrating PEFT compatibility and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints over the entire corpus.
 - Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not capability measurements.

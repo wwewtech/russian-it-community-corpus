@@ -53,3 +53,24 @@ plot the gauges; the `RiccLoraTrainFailing` alert fires on failures.
 trained adapters; `make reports` regenerates the catalog from local +
 Hub state. Release-side sync (finalize + upload + catalog) runs in the
 release workflow via `src.exporter.finalize_sync_all`.
+
+## Provenance & Retraining (prompt-masking rollout)
+
+An adapter carries `training_meta.json` (with `prompt_masking: true`,
+final loss, steps, seed, LoRA config) only if it was trained with the
+fixed prompt-masked objective. Adapters **without** that file predate the
+2026-10-17 masking fix — their loss included user-prompt tokens — and
+should be retrained:
+
+```bash
+# validate the fixed objective on one adapter, without touching the repo
+python -m src.lora.batch_train_zoo --only qwen2.5_1.5b_instruct \
+    --steps 15 --output-dir /tmp/lora_smoke --no-upload --no-catalogs
+
+# full zoo rollout: retrain every existing adapter in place
+python -m src.lora.batch_train_zoo --force --steps 15
+```
+
+Useful `batch_train_zoo.py` flags: `--only <ids>` (comma-separated filter),
+`--output-dir`, `--no-upload`, `--no-catalogs`, `--force` (retrain adapters
+that already exist).

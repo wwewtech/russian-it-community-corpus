@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Derived CI stats** — `scripts/refresh_ci_stats.py` computes
+  `reports/pipeline_execution_stats.json` from the active artifacts
+  (real `DatasetValidator` run, distinct non-null `thread_id` count,
+  valid DPO JSONL lines, synthetic-fixture marker) replacing the inline
+  CI step that hardcoded `validation_passed: true`, `threads_count: -1`
+  and `_source.synthetic: false`.
+- **Fail-closed typed pipeline errors** — `run_all()` wraps every stage
+  failure into the `PipelineError` hierarchy from `src/errors.py`; empty
+  ingestion raises `IngestionError`; `main.py` and `cli.py run` exit `1`
+  on typed errors or failed validation; `cli.py validate` exits `1` when
+  `overall_passed=false` (docs/cli/commands.md already promised this).
+- **JSONL metrics in the single source of truth** — `scripts/metrics_source.py`
+  now exposes `valid_lines` for the five canonical JSONL exports
+  (173,216 / 173,216 / 660,900 / 332,690 / 57,501), cross-checked against
+  `reports/validation_results.json` and pipeline DPO stats.
+- **Retraction gate for academic benchmarks** — the matrix carries
+  `status: RETRACTED` + `retraction_reason`, the markdown report carries a
+  RETRACTED banner, and heuristic suites (`enterprise`, `sota`, `deep`)
+  stamp a `disclaimer` (rubric-based scores, not capability measurements).
+- **LoRA zoo provenance & retraining tooling** — `batch_train_zoo.py` adds
+  `--only/--output-dir/--no-upload/--no-catalogs/--force`; every retrained
+  adapter gets a `training_meta.json` (`prompt_masking: true`) that marks
+  the post-fix objective.
+
+### Fixed
+- README JSONL table now shows verified `valid_lines` instead of stale
+  reported volumes (was 171,520/933,313/325,690); `app.py` wording and the
+  metrics-consistency forbidden list updated accordingly.
+- `scripts/regenerate_real_reports.py` now refuses to run while the
+  synthetic-fixture marker is present (previously it stamped
+  `synthetic: false` onto synthetic data).
+
+---
+
 ## [12.2.0] - 2026-10-14
 
 ### Added
