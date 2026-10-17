@@ -22,6 +22,7 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from src.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
 from src.observability import record_classified_ml_error
 from src.rag.rag_pipeline import LocalRAGPipeline
 
@@ -1102,12 +1103,14 @@ def evaluate_enterprise_production_matrix(
     md_path = Path("reports/ENTERPRISE_PRODUCTION_BENCHMARK_REPORT.md")
 
     with open(json_path, "w", encoding="utf-8") as f:
+        output_data["disclaimer"] = HEURISTIC_DISCLAIMER
         json.dump(output_data, f, ensure_ascii=False, indent=2)
 
     md_lines = [
         "# 📊 Отчет об оценке качества на 50 доменных IT-сценариях",
         f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **Устройство:** `{output_data['metadata']['gpu']}`",
         f"**Дата прогона:** `{output_data['metadata']['timestamp']}` | **Количество сценариев:** `{len(detailed_records)}`",
+        HEURISTIC_DISCLAIMER_MD,
         "",
         "---",
         "",

@@ -6,6 +6,7 @@
     "total_scenarios": 50,
     "source": "src/evaluation/enterprise_production_eval_suite.py (50 Enterprise Engineering Scenarios)"
   },
+  "_disclaimer": "Rubric-based heuristic scores (concept-overlap + AST-parseability), not capability measurements. Academic benchmark numbers (HumanEval / RuMMLU / PPL / ROUGE) are RETRACTED — do not cite these scores as model capabilities.",
   "setups": {
     "Base Model (Qwen 2.5 1.5B)": {
       "heuristic_score": 32.9,

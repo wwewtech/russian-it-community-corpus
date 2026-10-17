@@ -76,5 +76,7 @@
   "_source": {
     "synthetic": false,
     "note": "generated_at_utc = max raw_outputs timestamp; raw_outputs_sha256 pins the raw log"
-  }
+  },
+  "status": "RETRACTED",
+  "retraction_reason": "harness defects in the original run: substring MCQ scoring, perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load"
 }
