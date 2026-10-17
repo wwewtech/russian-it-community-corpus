@@ -463,10 +463,15 @@ def train_and_upload_single_model(
     max_steps: int = 20,
     max_seq_length: int = 512,
     seed: int = 42,
+    upload: bool = True,
+    force: bool = False,
 ) -> dict[str, Any]:
     model_id = meta["id"]
     model_name = meta["model_name"]
     out_dir = base_output_dir / model_id
+    if force and out_dir.exists():
+        logger.info(f"♻️ --force: removing existing adapter at {out_dir} for retraining")
+        shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if (out_dir / "adapter_model.safetensors").exists() and (out_dir / "adapter_config.json").exists():
@@ -597,13 +602,39 @@ def train_and_upload_single_model(
             f"""# Russian IT Community Corpus — LoRA Adapter
 ## Base Model: `{model_name}` ({meta["family"]} · {meta["params"]})
 
-Fine-tuned on the **RICC** 2.91M engineering dataset.
+Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
 """,
             encoding="utf-8",
         )
 
         elapsed = time.time() - start_time
         logger.info(f"Finished {model_name} in {elapsed:.1f}s | Loss: {train_loss:.4f}")
+
+        # Provenance manifest: its presence marks an adapter retrained with the
+        # prompt-masking objective. Legacy adapters (no training_meta.json)
+        # predate the masking fix and need --force retraining to acquire it.
+        (out_dir / "training_meta.json").write_text(
+            json.dumps(
+                {
+                    "model_id": model_id,
+                    "base_model": model_name,
+                    "dataset": dataset_path,
+                    "max_steps": max_steps,
+                    "max_seq_length": max_seq_length,
+                    "seed": seed,
+                    "lora": {"r": 16, "lora_alpha": 32, "lora_dropout": 0.05, "target_modules": target_mods},
+                    "prompt_masking": True,
+                    "train_loss": round(train_loss, 4),
+                    "training_time_sec": round(elapsed, 1),
+                    "generator": "src/lora/batch_train_zoo.py",
+                    "generated_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         record_lora_result(
             model=model_name,
             adapter=model_id,
@@ -614,22 +645,25 @@ Fine-tuned on the **RICC** 2.91M engineering dataset.
             vram_bytes=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None,
         )
 
-        # Auto-upload to Hugging Face Model Zoo
-        try:
-            api = huggingface_hub.HfApi(token=HF_TOKEN)
-            with_retries(
-                lambda: api.upload_folder(
-                    folder_path=str(out_dir),
-                    path_in_repo=model_id,
-                    repo_id=MODEL_REPO_ID,
-                    repo_type="model",
-                    ignore_patterns=["checkpoint-*"],
-                ),
-                what=f"HF upload {model_id}",
-            )
-            logger.info(f"Uploaded {model_id} directly to HF Hub: {MODEL_REPO_ID}")
-        except Exception as upload_err:
-            logger.warning(f"HF upload skipped for {model_id}: {upload_err}")
+        # Auto-upload to Hugging Face Model Zoo (opt-out with --no-upload)
+        if upload:
+            try:
+                api = huggingface_hub.HfApi(token=HF_TOKEN)
+                with_retries(
+                    lambda: api.upload_folder(
+                        folder_path=str(out_dir),
+                        path_in_repo=model_id,
+                        repo_id=MODEL_REPO_ID,
+                        repo_type="model",
+                        ignore_patterns=["checkpoint-*"],
+                    ),
+                    what=f"HF upload {model_id}",
+                )
+                logger.info(f"Uploaded {model_id} directly to HF Hub: {MODEL_REPO_ID}")
+            except Exception as upload_err:
+                logger.warning(f"HF upload skipped for {model_id}: {upload_err}")
+        else:
+            logger.info(f"HF upload disabled for {model_id} (--no-upload)")
 
         del peft_model
         del model
@@ -685,6 +719,12 @@ def update_catalogs(results: list[dict[str, Any]]) -> None:
         "",
         "Все адаптеры можно загружать локально из репозитория или через Hugging Face Hub: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora).",
         "",
+        "> **Provenance:** an adapter carries `training_meta.json` (with "
+        "`prompt_masking: true`) only if it was trained with the prompt-masked "
+        "objective. Adapters without it were trained before the 2026-10-17 "
+        "masking fix (loss included user-prompt tokens) — retrain with "
+        "`python -m src.lora.batch_train_zoo --force --only <id>`.",
+        "",
         "---",
         "",
         "## 📊 Доступные LoRA-адаптеры",
@@ -703,19 +743,61 @@ def update_catalogs(results: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--steps", type=int, default=15)
     parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
+    parser.add_argument(
+        "--only",
+        type=str,
+        default=None,
+        help="Comma-separated adapter ids to train (default: all models in the zoo)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("lora_adapters"),
+        help="Adapter output root (default: lora_adapters)",
+    )
+    parser.add_argument("--no-upload", action="store_true", help="Skip Hugging Face upload")
+    parser.add_argument(
+        "--no-catalogs",
+        action="store_true",
+        help="Do not rewrite reports/lora_zoo_index.json and reports/LORA_MODEL_ZOO.md",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Retrain adapters that already exist (prompt-masking fix rollout)",
+    )
     args = parser.parse_args()
 
-    results = []
-    for idx, meta in enumerate(ZOO_44_MODELS, 1):
-        logger.info(f"[{idx}/{len(ZOO_44_MODELS)}] Processing {meta['model_name']} ({meta['params']})...")
-        res = train_and_upload_single_model(meta, max_steps=args.steps, seed=args.seed)
-        results.append(res)
-        update_catalogs(results)
+    models = ZOO_44_MODELS
+    if args.only:
+        wanted = {m.strip() for m in args.only.split(",") if m.strip()}
+        known = {m["id"] for m in ZOO_44_MODELS}
+        unknown = wanted - known
+        if unknown:
+            parser.error(f"unknown adapter id(s): {', '.join(sorted(unknown))}")
+        models = [m for m in ZOO_44_MODELS if m["id"] in wanted]
+        if not models:
+            parser.error("--only matched no models")
 
-    logger.info("🎉 44-Model LoRA Zoo fully trained, cataloged, and synchronized!")
+    results = []
+    for idx, meta in enumerate(models, 1):
+        logger.info(f"[{idx}/{len(models)}] Processing {meta['model_name']} ({meta['params']})...")
+        res = train_and_upload_single_model(
+            meta,
+            base_output_dir=args.output_dir,
+            max_steps=args.steps,
+            seed=args.seed,
+            upload=not args.no_upload,
+            force=args.force,
+        )
+        results.append(res)
+        if not args.no_catalogs:
+            update_catalogs(results)
+
+    logger.info(f"🎉 LoRA Zoo run finished: {len(models)} model(s) processed.")
 
 
 if __name__ == "__main__":
