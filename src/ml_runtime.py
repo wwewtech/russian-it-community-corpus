@@ -80,6 +80,8 @@ def with_retries(
         base_delay: seconds before the first retry; doubles per attempt.
         retryable: exception classes eligible for retry; others propagate
             immediately (an OOM must not be retried into a longer OOM).
+            Narrowing this tuple also disables the message-marker check —
+            only the listed classes are retried.
         what: human-readable label for log lines.
 
     The last exception is re-raised if all attempts fail — callers keep
@@ -88,13 +90,18 @@ def with_retries(
     if attempts < 1:
         raise ValueError(f"attempts must be >= 1, got {attempts}")
     delay = base_delay
+    default_scope = retryable == (Exception,)
     last_exc: BaseException | None = None
     for attempt in range(1, attempts + 1):
         try:
             return func()
         except retryable as exc:
             last_exc = exc
-            if attempt == attempts or not _is_retryable(exc):
+            # With the default (Exception,) scope, message/content markers
+            # filter transient failures; with an explicit class tuple the
+            # caller already decided what is retryable.
+            transient = _is_retryable(exc) if default_scope else True
+            if attempt == attempts or not transient:
                 raise
             logger.warning(
                 "%s failed (attempt %d/%d): %s — retrying in %.1fs",
