@@ -50,7 +50,11 @@ class TestLoaderEdgeCases(unittest.TestCase):
     def test_parse_unixtime(self) -> None:
         ts, ux = parse_timestamp({"date_unixtime": 1704000000})
         self.assertEqual(ux, 1704000000)
-        self.assertEqual(int(ts.timestamp()), 1704000000)
+        # Wall-clock is UTC by contract (see parse_timestamp docstring):
+        # 1704000000 == 2023-12-31 05:20:00 UTC on every host timezone.
+        # (The old assertion round-tripped through naive .timestamp(),
+        # which bakes in the machine-local UTC offset.)
+        self.assertEqual((ts.year, ts.month, ts.day, ts.hour, ts.minute), (2023, 12, 31, 5, 20))
 
     def test_parse_bad_unixtime_falls_back_to_date(self) -> None:
         ts, ux = parse_timestamp({"date_unixtime": "not-a-number", "date": "2024-02-01T12:00:00"})
@@ -345,10 +349,10 @@ class TestInferenceExtra(unittest.TestCase):
             patch("transformers.TextStreamer", return_value=MagicMock()),
             patch("src.rag.rag_pipeline.LocalRAGPipeline", return_value=rag),
             patch.object(Path, "exists", return_value=True),
-            patch("builtins.input", side_effect=["exit"]),
+            patch("builtins.input", side_effect=["kafka exactly once semantics", "exit"]),
         ):
             inference.interactive_chat_session(model_name="m", adapter_id=None, use_rag=True)
-        self.assertTrue(rag.search.called or True)
+        self.assertTrue(rag.search.called)
 
     def test_interactive_bad_adapter_raises(self) -> None:
         import src.inference as inference

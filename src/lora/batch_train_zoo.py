@@ -477,8 +477,8 @@ def train_and_upload_single_model(
             "family": meta["family"],
             "params": meta["params"],
             "description": meta["desc"],
-            "status": "SUCCESS",
-            "train_loss": 2.45,
+            "status": "SKIPPED",
+            "train_loss": None,
             "training_time_sec": 0,
             "adapter_dir": str(out_dir),
         }
@@ -530,6 +530,14 @@ def train_and_upload_single_model(
 
         def format_dialogue(example: dict[str, Any], _tokenizer: Any = tokenizer) -> dict[str, Any]:
             msgs = example.get("messages", [])
+            if not msgs:
+                return cast("dict[str, Any]", {"input_ids": [], "labels": []})
+            # Standard SFT: mask the user prompt with -100 so the loss is
+            # computed only over the assistant's response tokens. Training
+            # on prompt tokens (the old `labels = input_ids.copy()`
+            # behaviour) teaches the model to parrot the user instead of
+            # answering — see the v12.0.4 prompt-loss-masking fix in
+            # src/lora/train_lora.py, mirrored here.
             try:
                 txt = _tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
             except Exception:
@@ -540,7 +548,17 @@ def train_and_upload_single_model(
                     parts.append(f"[{role.upper()}]: {content}")
                 txt = "\n".join(parts)
             tok = _tokenizer(txt, max_length=max_seq_length, truncation=True, padding=False)
-            tok["labels"] = tok["input_ids"].copy()
+            labels = list(tok["input_ids"])
+            if len(msgs) >= 2 and msgs[-1].get("role") in ("assistant", "gpt"):
+                try:
+                    prompt_text = _tokenizer.apply_chat_template(msgs[:-1], tokenize=False, add_generation_prompt=True)
+                except Exception:
+                    prompt_parts = [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in msgs[:-1]]
+                    prompt_text = "\n".join(prompt_parts) + "\nassistant:"
+                tokenized_prompt = _tokenizer(prompt_text, max_length=max_seq_length, truncation=True, padding=False)
+                prompt_len = min(len(tokenized_prompt["input_ids"]), len(labels))
+                labels[:prompt_len] = [-100] * prompt_len
+            tok["labels"] = labels
             return cast("dict[str, Any]", tok)
 
         tokenized_ds = raw_ds.map(format_dialogue, remove_columns=raw_ds.column_names)
@@ -655,7 +673,7 @@ def update_catalogs(results: list[dict[str, Any]]) -> None:
     output_json = Path("reports/lora_zoo_index.json")
     output_md = Path("reports/LORA_MODEL_ZOO.md")
 
-    successful = [r for r in results if r["status"] == "SUCCESS"]
+    successful = [r for r in results if r["status"] in ("SUCCESS", "SKIPPED")]
 
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(successful, f, ensure_ascii=False, indent=2)

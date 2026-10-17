@@ -139,9 +139,12 @@ extra:
       link: https://github.com/wwewtech/russian-it-community-corpus
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/ricc/
-  analytics:
-    provider: google
-    property: G-XXXXXXXXXX
+  # Analytics intentionally disabled: the previous G-XXXXXXXXXX placeholder
+  # is not a valid Measurement ID and only produces failing network requests
+  # on the docs site. To enable, set a real ID:
+  # analytics:
+  #   provider: google
+  #   property: G-YYYYYYYYYY
 
 extra_javascript:
   - javascripts/mathjax.js

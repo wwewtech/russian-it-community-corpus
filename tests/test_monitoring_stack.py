@@ -348,6 +348,26 @@ def test_compose_grafana_provisions_dashboard_and_datasource(compose: dict) -> N
     assert "grafana-dashboards.yaml" in mounts, "grafana must provision the dashboard provider"
 
 
+def test_compose_no_shadowed_mount_targets(compose: dict) -> None:
+    """No service may mount two volumes/tmpfs on the same target path.
+
+    A tmpfs on /app/.hf_cache used to shadow the named hf-cache volume,
+    silently discarding the persisted model cache on every restart.
+    """
+    for name, svc in compose.get("services", {}).items():
+        targets: list[str] = []
+        for vol in svc.get("volumes", []):
+            if isinstance(vol, str):
+                parts = vol.split(":")
+                targets.append(parts[1] if len(parts) > 1 else parts[0])
+            elif isinstance(vol, dict):
+                targets.append(str(vol.get("target", "")))
+        for entry in svc.get("tmpfs", []):
+            targets.append(entry if isinstance(entry, str) else str(entry.get("target", "")))
+        dupes = {t for t in targets if targets.count(t) > 1}
+        assert not dupes, f"{name} mounts {sorted(dupes)} more than once (shadowing)"
+
+
 def test_compose_prometheus_config_targets_data_studio() -> None:
     import yaml
 

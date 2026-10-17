@@ -4,6 +4,7 @@ MinHash LSH (Locality-Sensitive Hashing) for fuzzy deduplication of chat message
 
 import logging
 import re
+from collections.abc import Hashable
 
 import xxhash
 from tqdm import tqdm
@@ -17,6 +18,21 @@ logger = logging.getLogger(__name__)
 _PERM_A = [(i * 10007 + 34229) & 0xFFFFFFFF for i in range(settings.MINHASH_NUM_PERM)]
 _PERM_B = [(i * 49999 + 88123) & 0xFFFFFFFF for i in range(settings.MINHASH_NUM_PERM)]
 _PRIME = 4294967311  # 2^32 + 15 (large 32-bit prime)
+
+
+def _band_key(band_sig: tuple[int, ...]) -> int:
+    """Stable bucket key for one LSH band.
+
+    The builtin ``hash()`` is SipHash with a per-process random seed
+    (PYTHONHASHSEED), so bucket placement — and therefore which
+    near-duplicate survives — changed between runs. xxh64 with a fixed
+    seed is deterministic across processes, machines and restarts.
+    Signature values are < _PRIME (< 2**33), hence 8 bytes LE each.
+    """
+    h = xxhash.xxh64(seed=0)
+    for v in band_sig:
+        h.update(int(v).to_bytes(8, "little", signed=False))
+    return h.intdigest()
 
 
 class MinHashLSH:
@@ -38,9 +54,13 @@ class MinHashLSH:
         self.b = 32
         self.r = num_perm // self.b
 
-        # LSH buckets: band_idx -> bucket_hash -> list of item_ids
-        self.buckets: list[dict[int, list[int]]] = [dict() for _ in range(self.b)]
-        self.signatures: dict[int, list[int]] = {}
+        # LSH buckets: band_idx -> bucket_hash -> list of item_ids.
+        # Item ids are opaque hashables: deduplicate_messages() uses
+        # (chat_id, msg_id) tuples because msg_id is unique only within
+        # one chat — a bare msg_id collides across community nodes and
+        # would overwrite foreign signatures/candidates.
+        self.buckets: list[dict[int, list[Hashable]]] = [dict() for _ in range(self.b)]
+        self.signatures: dict[Hashable, list[int]] = {}
 
     def _get_shingles(self, text: str) -> set[str]:
         """Extract word shingles of length k."""
@@ -77,7 +97,7 @@ class MinHashLSH:
         matches = sum(1 for a, b in zip(sig1, sig2, strict=False) if a == b)
         return matches / float(self.num_perm)
 
-    def insert(self, item_id: int, text: str) -> tuple[bool, int | None, float]:
+    def insert(self, item_id: Hashable, text: str) -> tuple[bool, Hashable | None, float]:
         """
         Check if text is a near-duplicate of an already indexed item.
         If duplicate found (Jaccard >= threshold), returns (True, duplicate_of_item_id, similarity).
@@ -87,12 +107,12 @@ class MinHashLSH:
             return False, None, 0.0
 
         sig = self.compute_minhash(text)
-        candidates: set[int] = set()
+        candidates: set[Hashable] = set()
 
         # Query buckets for each band
         for band_idx in range(self.b):
             band_sig = tuple(sig[band_idx * self.r : (band_idx + 1) * self.r])
-            bucket_key = hash(band_sig)
+            bucket_key = _band_key(band_sig)
             bucket = self.buckets[band_idx]
             if bucket_key in bucket:
                 candidates.update(bucket[bucket_key])
@@ -109,7 +129,7 @@ class MinHashLSH:
         self.signatures[item_id] = sig
         for band_idx in range(self.b):
             band_sig = tuple(sig[band_idx * self.r : (band_idx + 1) * self.r])
-            bucket_key = hash(band_sig)
+            bucket_key = _band_key(band_sig)
             bucket = self.buckets[band_idx]
             if bucket_key not in bucket:
                 bucket[bucket_key] = []
@@ -131,7 +151,7 @@ class MinHashLSH:
                 unique_msgs.append(m)
                 continue
 
-            is_dup, dup_of, sim = self.insert(m.msg_id, m.text_clean)
+            is_dup, dup_of, sim = self.insert((m.chat_id, m.msg_id), m.text_clean)
             if is_dup:
                 dupes_count += 1
             else:

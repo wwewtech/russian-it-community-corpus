@@ -74,10 +74,12 @@ format:
 typecheck:
 	python -m mypy src/ --ignore-missing-imports
 
-# Strict rollout COMPLETE: every src/ module passes `mypy --strict`.
-# This list mirrors the full strict set; pyproject.toml has no
-# ignore_errors overrides left. Keep in sync with the pre-commit
-# mypy-strict hook (.pre-commit-config.yaml).
+# Strict rollout COMPLETE: every listed src/ module passes `mypy --strict`.
+# This list is explicit (not `mypy src --strict`) on purpose:
+# src/orchestration/prefect_flow.py is excluded — its optional-Prefect
+# no-op stubs are untyped by design (14 strict errors; verified 2026-10-16).
+# When adding a module, add it here AND to the pre-commit mypy-strict hook
+# (.pre-commit-config.yaml); pyproject.toml has no ignore_errors overrides.
 typecheck-strict:
 	python -m mypy src/config.py src/errors.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/evaluation/statistical_power.py src/evaluation/benchmark_comparator.py src/evaluation/official_academic_benchmarks.py src/evaluation/deep_multi_experiment_suite.py src/evaluation/enterprise_production_eval_suite.py src/evaluation/sota_expert_benchmark_showcase.py src/lora/__init__.py src/lora/train_lora.py src/lora/batch_train_zoo.py src/lora/generate_demo.py src/lora/train_20_popular_models.py src/lora/train_heavyweight_5_sota.py src/graph/__init__.py src/validation/artifact_manifest.py src/validation/hub_reconciliation.py src/validation/validator.py src/pii/regex_scrubber.py src/pii/ner_scrubber.py src/pii/deep_anonymizer.py src/inference.py src/pipeline.py src/exporter/finalize_sync_all.py src/observability/__init__.py src/ml_runtime.py src/ricc/__init__.py --strict
 
@@ -100,10 +102,10 @@ ui:
 	streamlit run app.py
 
 docker-build:
-	docker-compose build
+	docker compose build
 
 docker-up:
-	docker-compose up data-studio
+	docker compose up data-studio
 
 k8s-dry-run:
 	kubectl apply --dry-run=client -f deploy/k8s/

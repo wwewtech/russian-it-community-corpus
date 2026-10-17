@@ -8,11 +8,10 @@ services:
     volumes:
       - ./dataset_output:/app/dataset_output
       - ./reports:/app/reports
+      # NOTE: no tmpfs on /app/.hf_cache — a tmpfs mount shadows the
+      # named hf-cache volume, so downloaded models would never persist
+      # and every restart would re-download gigabytes from the Hub.
       - hf-cache:/app/.hf_cache
-      - type: tmpfs
-        target: /app/.hf_cache
-        tmpfs:
-          size: 2G
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONIOENCODING=utf-8
@@ -49,11 +48,8 @@ services:
     volumes:
       - ./dataset_output:/app/dataset_output
       - ./reports:/app/reports
+      # See data-studio above: no tmpfs here, it would shadow hf-cache.
       - hf-cache:/app/.hf_cache
-      - type: tmpfs
-        target: /app/.hf_cache
-        tmpfs:
-          size: 4G
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONIOENCODING=utf-8
