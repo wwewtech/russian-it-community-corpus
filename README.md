@@ -107,7 +107,7 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
   - 📄 [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows (2,816,434 records, 189 MB)
   - 💬 [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171,520 multi-turn dialogues (132 MB)
   - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
-  - ⚙️ [Heuristic Benchmark Evaluation (JSON)](reports/heuristic_benchmark_eval.json) — 50-scenario domain heuristic evaluation matrix
+  - ⚙️ [Heuristic Benchmark Evaluation (JSON)](reports/heuristic_benchmark_eval.json) — 50-scenario matrix of **rubric-based heuristics** (concept-overlap + AST-parseability), not capability measurements
 
 - 🦁 **Model Hub (58 LoRA Adapters on Hub / 56 Local Adapters)**:
   👉 [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
@@ -127,14 +127,14 @@ All datasets are automatically generated and saved in `dataset_output/`. Exact a
 | `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,520 dialogues (132.29 MB) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
 | `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks (159.31 MB) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
 
-JSONL counts below are published report values, not independently verified local counts:
+JSONL counts below are line-validator `valid_lines` from [`reports/validation_results.json`](reports/validation_results.json), surfaced through [`scripts/metrics_source.py`](scripts/metrics_source.py):
 
-| File Path | Format | Reported volume | Description | Availability |
+| File Path | Format | Verified volume | Description | Availability |
 |---|---|---|---|---|
-| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 171,520 dialogues | OpenAI format for Unsloth / TRL | Local / HF |
-| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 171,520 dialogues | Axolotl & LLaMA-Factory format | Local / HF |
-| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 933,313 pairs | Single-turn instruction-response pairs | Local / HF |
-| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 325,690 chunks | Segmented technical documents | Local / HF |
+| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 173,216 records | OpenAI format for Unsloth / TRL | Local / HF |
+| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 173,216 records | Axolotl & LLaMA-Factory format | Local / HF |
+| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 660,900 pairs | Single-turn instruction-response pairs | Local / HF |
+| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 332,690 chunks | Segmented technical documents | Local / HF |
 | `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 57,501 pairs | Chosen / Rejected alignment pairs | Local / HF |
 
 ---
