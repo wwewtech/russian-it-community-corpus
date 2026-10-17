@@ -6,7 +6,7 @@ import contextlib
 import json
 import logging
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,11 +43,19 @@ def extract_raw_text(raw_text: Any) -> str:
 
 
 def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
-    """Parse timestamp and unixtime from raw message object."""
+    """Parse timestamp and unixtime from raw message object.
+
+    All wall-clock inputs are interpreted as UTC so identical exports
+    produce identical ``(timestamp, unixtime)`` pairs on any machine:
+    the old ``datetime.fromtimestamp()`` / naive ``.timestamp()`` calls
+    used the process-local timezone and shifted every message by the
+    host UTC offset. Returned datetimes stay naive (downstream schema
+    assumes naive) but always denote UTC.
+    """
     unixtime = raw_msg.get("date_unixtime")
     if unixtime is not None:
         try:
-            ts = datetime.fromtimestamp(int(unixtime))
+            ts = datetime.fromtimestamp(int(unixtime), tz=UTC).replace(tzinfo=None)
             return ts, int(unixtime)
         except Exception:
             pass  # deliberate: fall through to date-string parsing variants
@@ -55,24 +63,32 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
     date_str = raw_msg.get("date") or raw_msg.get("datetime") or raw_msg.get("timestamp")
     if date_str:
         if isinstance(date_str, (int, float)):
-            return datetime.fromtimestamp(date_str), int(date_str)
+            ts = datetime.fromtimestamp(date_str, tz=UTC).replace(tzinfo=None)
+            return ts, int(date_str)
         # Try ISO format
         try:
             clean_date = str(date_str).replace("Z", "+00:00")
             ts = datetime.fromisoformat(clean_date)
-            return ts, int(ts.timestamp())
+            return ts, _to_unixtime(ts)
         except Exception:
             pass  # deliberate: fall through to strptime format list
         for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y %H:%M:%S"):
             try:
                 ts = datetime.strptime(str(date_str), fmt)
-                return ts, int(ts.timestamp())
+                return ts, _to_unixtime(ts)
             except Exception:
                 continue  # deliberate: try next format in the list
 
     # Fallback to epoch
     epoch = datetime(1970, 1, 1)
     return epoch, 0
+
+
+def _to_unixtime(ts: datetime) -> int:
+    """Convert ``ts`` to epoch seconds treating naive wall-clock as UTC."""
+    if ts.tzinfo is not None:
+        return int(ts.timestamp())
+    return int(ts.replace(tzinfo=UTC).timestamp())
 
 
 def load_export_file(file_path: str | Path, node_index: int = 1) -> tuple[dict[str, Any], list[NormalizedMessage]]:

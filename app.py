@@ -6,7 +6,6 @@ unit-testable without spinning up a Streamlit runtime. The functions
 defined here are thin Streamlit-aware wrappers around those helpers.
 """
 
-import json
 import os
 from pathlib import Path
 
@@ -21,6 +20,9 @@ from app_helpers import (
 )
 from app_helpers import (
     load_json_file as _load_json_file,
+)
+from app_helpers import (
+    load_jsonl_sample as _load_jsonl_sample,
 )
 from app_helpers import (
     load_markdown_file as _load_markdown_file,
@@ -70,6 +72,12 @@ def load_markdown_file(file_path: Path) -> str:
     return _load_markdown_file(file_path)
 
 
+@st.cache_data(show_spinner=False)
+def load_dpo_sample(max_rows: int = 200) -> list[dict]:
+    """Cached DPO pairs sample — avoids re-reading JSONL on every rerun."""
+    return _load_jsonl_sample(JSONL_DIR / "dpo_preference_pairs.jsonl", max_lines=max_rows)
+
+
 # Navigation Constants
 NAV_MAIN = "📊 Главная и метрики"
 NAV_MESSAGES = "🔍 Просмотр сообщений"
@@ -107,7 +115,7 @@ st.sidebar.info(
     "- 👤 **210 890** участников\n"
     "- 🧠 **171 520** SFT диалогов\n"
     "- 📚 **325 690** RAG чанков\n"
-    "- ⚡ **60 899** DPO пар\n"
+    "- ⚡ **57 501** DPO пар\n"
     "- 🦁 **56** LoRA адаптеров\n"
     "- 🔒 **11 community nodes** анонимизировано"
 )
@@ -135,15 +143,19 @@ if nav == NAV_MAIN:
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("📦 Экспортированные ML датасеты")
+        # Counts below mirror reports/validation_results.json (valid_lines per
+        # JSONL file, rows per parquet), NOT the README "reported volume"
+        # table. Any change here must keep tests/test_metrics_consistency.py
+        # green — it scans this file for stale figures.
         st.markdown(
             """
             - **`full_clean_messages.parquet`**: 2,816,434 сообщений (`189 MB`)
             - **`sft_dialogues.parquet`**: 171,520 многоходовых диалогов (`132 MB`)
             - **`rag_knowledge_base.parquet`**: 325,690 чанков базы знаний (`159 MB`)
-            - **`sft_openai_messages.jsonl`**: 171,520 диалогов ChatML
-            - **`sft_alpaca_format.jsonl`**: 933,313 пар инструкций
-            - **`sft_sharegpt_format.jsonl`**: 171,520 диалогов ShareGPT
-            - **`rag_chunks_kb.jsonl`**: 325,690 документов для Vector DB
+            - **`sft_openai_messages.jsonl`**: 173,216 диалогов ChatML
+            - **`sft_alpaca_format.jsonl`**: 660,900 пар инструкций
+            - **`sft_sharegpt_format.jsonl`**: 173,216 диалогов ShareGPT
+            - **`rag_chunks_kb.jsonl`**: 332,690 документов для Vector DB
             - **`dpo_preference_pairs.jsonl`**: 57,501 пар предпочтений
             """
         )
@@ -151,7 +163,12 @@ if nav == NAV_MAIN:
     with col_b:
         st.subheader("🛡️ Аудит безопасности и комплаенса")
         val_data = load_json_file(REPORTS_DIR / "validation_results.json")
-        cert_data = load_json_file(REPORTS_DIR / "zero_pii_audit_certificate.json")
+        # The red-team suite writes reports/pii_validation_report.json
+        # (see Makefile `audit` target and src/validation/pii_redteam.py).
+        # `zero_pii_audit_certificate.json` is kept as a legacy fallback only.
+        cert_data = load_json_file(REPORTS_DIR / "pii_validation_report.json")
+        if not cert_data:
+            cert_data = load_json_file(REPORTS_DIR / "zero_pii_audit_certificate.json")
 
         # Delegate the verdict / breakdown maths to :mod:`app_helpers`
         # so the same logic is covered by ``tests/test_app.py`` and a
@@ -171,7 +188,10 @@ if nav == NAV_MAIN:
         st.write(f"- Утечек email: **{breakdown['emails']}**")
         st.write(f"- Утечек API-токенов/ключей: **{breakdown['api_keys']}**")
         st.write(f"- Утечек криптокошельков: **{breakdown['crypto_wallets']}**")
-        st.write(f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_rate:.1f}%)**")
+        if adv_total == 0:
+            st.warning("⚠️ Adversarial-отчёт отсутствует — стресс-тесты деидентификации не подтверждены.")
+        else:
+            st.write(f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_rate:.1f}%)**")
 
 # =============================================================================
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)
@@ -193,7 +213,10 @@ elif nav == NAV_MESSAGES:
 
         filtered_df = df
         if search_query:
-            filtered_df = filtered_df[filtered_df["text_clean"].str.contains(search_query, case=False, na=False)]
+            # regex=False: the query is a literal substring, not a pattern.
+            filtered_df = filtered_df[
+                filtered_df["text_clean"].str.contains(search_query, case=False, na=False, regex=False)
+            ]
         if selected_domain != "Все домены":
             filtered_df = filtered_df[filtered_df["domain"] == selected_domain]
         if is_q_only:
@@ -214,7 +237,7 @@ elif nav == NAV_MESSAGES:
 elif nav == NAV_SFT_DPO:
     st.title("💬 SFT & DPO Диалоговая Студия")
 
-    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (171,520)", "⚖️ DPO Пары Предпочтений (60,899)"])
+    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (171,520)", "⚖️ DPO Пары Предпочтений (57,501)"])
 
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)
@@ -257,17 +280,10 @@ elif nav == NAV_SFT_DPO:
                             st.write(content)
 
     with tab2:
-        dpo_path = JSONL_DIR / "dpo_preference_pairs.jsonl"
-        if not dpo_path.exists():
+        dpo_samples = load_dpo_sample(200)
+        if not dpo_samples:
             st.warning("DPO датасет не найден.")
         else:
-            dpo_samples = []
-            with open(dpo_path, encoding="utf-8") as f:
-                for idx, line in enumerate(f):
-                    if idx >= 200:
-                        break
-                    dpo_samples.append(json.loads(line))
-
             st.caption(f"Загружено DPO пар: **{len(dpo_samples):,}**")
             dpo_idx = st.selectbox(
                 "Выберите пару предпочтений:",
@@ -304,7 +320,7 @@ elif nav == NAV_RAG:
         )
 
         if search_kw:
-            matches = rag_df[rag_df["content"].str.contains(search_kw, case=False, na=False)]
+            matches = rag_df[rag_df["content"].str.contains(search_kw, case=False, na=False, regex=False)]
             st.caption(f"Найдено релевантных чанков: **{len(matches):,}**")
 
             for _idx, row in matches.head(5).iterrows():

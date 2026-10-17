@@ -97,7 +97,14 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.command in ("run", None):
+    if args.command is None:
+        # A bare `python cli.py` must NEVER start the multi-hour full
+        # pipeline by accident (the old `("run", None)` default did).
+        # Require an explicit subcommand instead.
+        parser.print_help()
+        sys.exit(2)
+
+    if args.command == "run":
         from src.pipeline import MasterDataPipeline
 
         print("🚀 Starting full data curation pipeline...")
@@ -207,8 +214,18 @@ def main() -> None:
 
         print("📊 Running dataset drift monitoring...")
         if not args.reference.exists() or not args.current.exists():
-            print(f"Snapshots missing: reference={args.reference.exists()} current={args.current.exists()}")
-            sys.exit(0)
+            print(
+                f"❌ Snapshots missing: reference={args.reference.exists()} current={args.current.exists()}",
+                file=sys.stderr,
+            )
+            print("Refusing to emit a vacuous drift report (fail-closed).", file=sys.stderr)
+            sys.exit(2)
+        try:
+            same_snapshot = args.reference.resolve() == args.current.resolve()
+        except OSError:
+            same_snapshot = args.reference == args.current
+        if same_snapshot:
+            print("⚠️ reference == current: self-comparison verdict is informational, not a real drift check.")
         monitor = DatasetDriftMonitor(pd.read_parquet(args.reference), pd.read_parquet(args.current))
         report = monitor.run()
         out = Path(args.output)

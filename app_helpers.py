@@ -66,6 +66,31 @@ def load_markdown_file(file_path: Path, missing_message: str = "Файл отч�
         return f.read()
 
 
+def load_jsonl_sample(file_path: Path, max_lines: int = 200) -> list[dict]:
+    """Return up to ``max_lines`` parsed JSON objects from a JSONL file.
+
+    Blank/corrupt lines are skipped so one bad record never breaks a UI
+    tab (use ``DatasetValidator`` for integrity auditing). Returns ``[]``
+    when the file is missing.
+    """
+    p = Path(file_path)
+    if not p.exists():
+        return []
+    out: list[dict] = []
+    with open(p, encoding="utf-8") as f:
+        for line in f:
+            if len(out) >= max_lines:
+                break
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return out
+
+
 def derive_pii_verdict(
     validation_results: dict,
     audit_certificate: dict,
@@ -124,11 +149,21 @@ def leak_breakdown(audit_certificate: dict, validation_results: dict) -> dict[st
 
 
 def adversarial_summary(audit_certificate: dict) -> tuple[int, int, float]:
-    """Return ``(passed, total, success_rate_percentage)`` for the adversarial suite."""
-    adv_suite = audit_certificate.get("adversarial_suite", {})
-    passed = int(adv_suite.get("adversarial_tests_passed", 14))
-    total = int(adv_suite.get("total_adversarial_tests", 14))
-    rate = float(adv_suite.get("success_rate_percentage", 100.0))
+    """Return ``(passed, total, success_rate_percentage)`` for the adversarial suite.
+
+    Fail-closed: when the certificate (or its ``adversarial_suite`` block)
+    is missing, return ``(0, 0, 0.0)`` — never a fabricated ``14/14 (100%)``.
+    A green badge on absent evidence is exactly the fail-open failure mode
+    fixed for the main PII verdict in CHANGELOG 12.0.2; the adversarial
+    widget must follow the same rule. Callers should treat ``total == 0``
+    as "report missing" and render a warning, not a success badge.
+    """
+    adv_suite = audit_certificate.get("adversarial_suite")
+    if not isinstance(adv_suite, dict) or not adv_suite:
+        return 0, 0, 0.0
+    passed = int(adv_suite.get("adversarial_tests_passed", 0))
+    total = int(adv_suite.get("total_adversarial_tests", 0))
+    rate = float(adv_suite.get("success_rate_percentage", 0.0))
     return passed, total, rate
 
 
@@ -145,7 +180,9 @@ def filter_messages(
     """
     out = df
     if search_query:
-        out = out[out["text_clean"].str.contains(search_query, case=False, na=False)]
+        # Literal substring search: user input must never be interpreted
+        # as a regex (re.error crashes the tab, crafted input = ReDoS).
+        out = out[out["text_clean"].str.contains(search_query, case=False, na=False, regex=False)]
     if selected_domain and selected_domain != "Все домены":
         out = out[out["domain"] == selected_domain]
     if is_q_only and "is_question" in out.columns:

@@ -22,6 +22,7 @@ from app_helpers import (
     filter_sft,
     leak_breakdown,
     load_json_file,
+    load_jsonl_sample,
     load_markdown_file,
     load_parquet_sample,
 )
@@ -71,6 +72,27 @@ class TestLoadJsonFile(unittest.TestCase):
         path = self.root / "x.json"
         path.write_text(json.dumps({"a": 1, "b": [1, 2]}), encoding="utf-8")
         self.assertEqual(load_json_file(path), {"a": 1, "b": [1, 2]})
+
+
+class TestLoadJsonlSample(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_returns_empty_list_when_missing(self):
+        self.assertEqual(load_jsonl_sample(self.root / "ghost.jsonl"), [])
+
+    def test_respects_max_lines_and_skips_bad_rows(self):
+        path = self.root / "x.jsonl"
+        path.write_text(
+            '{"a": 1}\nnot-json\n\n{"b": 2}\n{"c": 3}\n',
+            encoding="utf-8",
+        )
+        out = load_jsonl_sample(path, max_lines=2)
+        self.assertEqual(out, [{"a": 1}, {"b": 2}])
 
 
 class TestLoadMarkdownFile(unittest.TestCase):
@@ -195,8 +217,10 @@ class TestLeakBreakdown(unittest.TestCase):
 
 
 class TestAdversarialSummary(unittest.TestCase):
-    def test_defaults(self):
-        self.assertEqual(adversarial_summary({}), (14, 14, 100.0))
+    def test_missing_certificate_is_fail_closed(self):
+        # Absent evidence must NOT render as a green 14/14 (100%) badge.
+        self.assertEqual(adversarial_summary({}), (0, 0, 0.0))
+        self.assertEqual(adversarial_summary({"adversarial_suite": {}}), (0, 0, 0.0))
 
     def test_overrides(self):
         cert = {
@@ -247,6 +271,21 @@ class TestFilterMessages(unittest.TestCase):
         df = self.df.drop(columns=["is_question"])
         out = filter_messages(df, is_q_only=True)
         self.assertEqual(len(out), 4)
+
+    def test_search_is_literal_not_regex(self):  # Regex metacharacters in user input must not raise re.error and
+        # must match literally: "c++" hits only the c++ row, "(nginx"
+        # (an invalid pattern) matches nothing instead of crashing.
+        df = pd.DataFrame(
+            {
+                "text_clean": ["c++ templates guide", "nginx reverse proxy", "c templates guide"],
+                "domain": ["backend", "devops", "backend"],
+                "is_question": [False, False, False],
+            }
+        )
+        out = filter_messages(df, search_query="c++")
+        self.assertEqual(list(out["text_clean"]), ["c++ templates guide"])
+        out = filter_messages(df, search_query="(nginx")
+        self.assertEqual(len(out), 0)
 
 
 class TestFilterSft(unittest.TestCase):

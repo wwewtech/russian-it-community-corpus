@@ -117,3 +117,29 @@ class TestDeduplicateMessages:
         unique, removed = lsh.deduplicate_messages([])
         assert unique == []
         assert removed == 0
+
+    def test_same_msg_id_across_chats_does_not_collide(self):
+        # msg_id is unique only within one chat: two chats reusing msg_id 1
+        # must keep distinct index keys, so the second chat's signature
+        # never overwrites the first chat's entry.
+        lsh = MinHashLSH()
+        m1 = _msg(1, LONG_TEXT_B)
+        m2 = _msg(1, LONG_TEXT_A)
+        m2.chat_id = 2
+        unique, removed = lsh.deduplicate_messages([m1, m2])
+        assert removed == 0
+        assert set(lsh.signatures) == {(1, 1), (2, 1)}
+
+
+class TestBandKeyStability:
+    def test_band_key_deterministic_across_calls(self):
+        from src.deduplication.minhash_lsh import _band_key
+
+        sig = tuple(range(32))
+        assert _band_key(sig) == _band_key(sig)
+        assert _band_key(sig) == _band_key(tuple(range(32)))
+
+    def test_band_key_distinguishes_bands(self):
+        from src.deduplication.minhash_lsh import _band_key
+
+        assert _band_key((1, 2, 3)) != _band_key((3, 2, 1))

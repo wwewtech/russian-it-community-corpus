@@ -104,6 +104,16 @@ class TestCLICommands(unittest.TestCase):
         self.assertIn("rag", output)
         self.assertIn("chat", output)
 
+    def test_bare_invocation_does_not_run_pipeline(self):
+        # A bare `python cli.py` must print help and exit non-zero —
+        # it must NEVER start the full multi-hour pipeline by default.
+        f = io.StringIO()
+        with patch("sys.argv", ["cli.py"]):
+            with self.assertRaises(SystemExit) as exc, redirect_stdout(f):
+                main()
+            self.assertEqual(exc.exception.code, 2)
+        self.assertIn("Russian IT Community", f.getvalue())
+
     def test_cli_validate(self):
         with tempfile.TemporaryDirectory() as tmp:
             data_dir = build_synthetic_dataset(Path(tmp))
@@ -264,6 +274,30 @@ class TestCLICommands(unittest.TestCase):
             self.assertIn("Running dataset drift monitoring", output)
             self.assertIn("Overall drift verdict: stable", output)
             self.assertTrue(out.exists())
+
+    def test_cli_drift_missing_snapshots_fails_closed(self):
+        # Absent snapshots must fail the command (exit 2), never silently
+        # report success with exit 0.
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "drift_report.json"
+            f = io.StringIO()
+            with patch(
+                "sys.argv",
+                [
+                    "cli.py",
+                    "drift",
+                    "--reference",
+                    str(Path(tmp) / "missing_ref.parquet"),
+                    "--current",
+                    str(Path(tmp) / "missing_cur.parquet"),
+                    "--output",
+                    str(out),
+                ],
+            ):
+                with self.assertRaises(SystemExit) as exc, redirect_stdout(f):
+                    main()
+                self.assertEqual(exc.exception.code, 2)
+            self.assertFalse(out.exists())
 
     def test_cli_orchestrate(self):
         f = io.StringIO()

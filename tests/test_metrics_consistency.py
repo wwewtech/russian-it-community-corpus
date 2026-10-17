@@ -1,7 +1,7 @@
 """tests/test_metrics_consistency.py — documented metrics must match the manifest.
 
-Every dataset figure quoted in README.md, reports/DATASET_AND_ANALYTICS.md and
-reports/HF_MODEL_CARD.md must equal the sha256-verified manifest values loaded
+Every dataset figure quoted in README.md, reports/DATASET_AND_ANALYTICS.md,
+reports/HF_MODEL_CARD.md and app.py must equal the sha256-verified manifest values loaded
 through scripts.metrics_source. Historical figures inside CHANGELOG.md are
 allowed (they document past releases) and are explicitly excluded.
 
@@ -27,6 +27,7 @@ from metrics_source import get_metrics  # noqa: E402
 README = REPO_ROOT / "README.md"
 DATASET_CARD = REPO_ROOT / "reports" / "DATASET_AND_ANALYTICS.md"
 HF_CARD = REPO_ROOT / "reports" / "HF_MODEL_CARD.md"
+APP = REPO_ROOT / "app.py"
 
 # Figures that must never appear in the user-facing docs (historical values
 # now superseded by the manifest). CHANGELOG.md is exempt — it records them
@@ -107,6 +108,10 @@ class TestMetricsConsistency(unittest.TestCase):
             "README.md": self.readme,
             "reports/DATASET_AND_ANALYTICS.md": self.dataset_card,
             "reports/HF_MODEL_CARD.md": self.hf_card,
+            # The Streamlit studio hardcodes dataset volumes in the sidebar
+            # and dataset list — it drifted before (DPO 60,899 vs manifest
+            # 57,501) while no test watched it.
+            "app.py": APP.read_text(encoding="utf-8"),
         }
         offenders = []
         for name, text in docs.items():
