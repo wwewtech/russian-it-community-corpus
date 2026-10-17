@@ -234,12 +234,13 @@ def verify_dataset_and_analytics(analytics_text: str, stats: dict, zoo_index: di
     )
 
 
-def verify_readme_metrics(readme_text: str, stats: dict, local_registry: dict, zoo_index: dict) -> None:
-    """Verify README.md numbers against pipeline execution stats, local registry, and Hub zoo index."""
+def verify_readme_metrics(
+    readme_text: str, stats: dict, local_registry: dict, zoo_index: dict, validation: dict
+) -> None:
+    """Verify README.md numbers against pipeline execution stats, local registry, Hub zoo index, and the JSONL line-validator report."""
     clean_cnt = stats["cleaned_messages_count"]
     sft_cnt = stats["sft_dialogues_count"]
     rag_cnt = stats["rag_chunks_count"]
-    dpo_cnt = stats["dpo_pairs_count"]
     nodes_cnt = stats.get("pii_stats", {}).get("community_names_anonymized", 11)
     local_adapters_cnt = local_registry["adapter_count"]
     hub_adapters_cnt = zoo_index["total_adapters"]
@@ -272,29 +273,27 @@ def verify_readme_metrics(readme_text: str, stats: dict, local_registry: dict, z
         f"README.md table rag_knowledge_base.parquet has {v_rag!r}, expected {rag_cnt}"
     )
 
-    # Verify sft_openai_messages.jsonl volume
-    v_openai = file_to_volume.get("dataset_output/jsonl/sft_openai_messages.jsonl", "")
-    assert parse_int_clean(v_openai) == sft_cnt, (
-        f"README.md table sft_openai_messages.jsonl has {v_openai!r}, expected {sft_cnt}"
-    )
+    # Verify JSONL exports against the line-validator report (valid_lines),
+    # not against parquet snapshot counts: README documents validated line counts.
+    jsonl_details = validation["jsonl_files"]["details"]
 
-    # Verify sft_sharegpt_format.jsonl volume
-    v_sharegpt = file_to_volume.get("dataset_output/jsonl/sft_sharegpt_format.jsonl", "")
-    assert parse_int_clean(v_sharegpt) == sft_cnt, (
-        f"README.md table sft_sharegpt_format.jsonl has {v_sharegpt!r}, expected {sft_cnt}"
-    )
+    def _validated_lines(name: str) -> int:
+        info = jsonl_details[name]
+        assert info.get("status") == "VALID", f"validation_results.json: {name} has status {info.get('status')!r}"
+        return int(info["valid_lines"])
 
-    # Verify rag_chunks_kb.jsonl volume
-    v_rag_jsonl = file_to_volume.get("dataset_output/jsonl/rag_chunks_kb.jsonl", "")
-    assert parse_int_clean(v_rag_jsonl) == rag_cnt, (
-        f"README.md table rag_chunks_kb.jsonl has {v_rag_jsonl!r}, expected {rag_cnt}"
-    )
-
-    # Verify dpo_preference_pairs.jsonl volume
-    v_dpo = file_to_volume.get("dataset_output/jsonl/dpo_preference_pairs.jsonl", "")
-    assert parse_int_clean(v_dpo) == dpo_cnt, (
-        f"README.md table dpo_preference_pairs.jsonl has {v_dpo!r}, expected {dpo_cnt}"
-    )
+    expected_jsonl = {
+        "dataset_output/jsonl/sft_openai_messages.jsonl": _validated_lines("sft_openai_messages.jsonl"),
+        "dataset_output/jsonl/sft_sharegpt_format.jsonl": _validated_lines("sft_sharegpt_format.jsonl"),
+        "dataset_output/jsonl/sft_alpaca_format.jsonl": _validated_lines("sft_alpaca_format.jsonl"),
+        "dataset_output/jsonl/rag_chunks_kb.jsonl": _validated_lines("rag_chunks_kb.jsonl"),
+        "dataset_output/jsonl/dpo_preference_pairs.jsonl": _validated_lines("dpo_preference_pairs.jsonl"),
+    }
+    for jsonl_path, expected_lines in expected_jsonl.items():
+        got = file_to_volume.get(jsonl_path, "")
+        assert parse_int_clean(got) == expected_lines, (
+            f"README.md table {jsonl_path} has {got!r}, expected {expected_lines} (valid_lines)"
+        )
 
     # 2. Overview table check (11 community nodes, 171,520 curated dialogues)
     overview_rows = [r for r in rows if any("community nodes anonymized" in c for c in r)]
@@ -477,6 +476,7 @@ class TestReportConsistency(unittest.TestCase):
     def setUpClass(cls):
         cls.zoo_index_path = REPO_ROOT / "reports" / "lora_zoo_index.json"
         cls.stats_path = REPO_ROOT / "reports" / "pipeline_execution_stats.json"
+        cls.validation_path = REPO_ROOT / "reports" / "validation_results.json"
         cls.registry_path = REPO_ROOT / "lora_adapters" / "registry.json"
         cls.benchmark_eval_path = REPO_ROOT / "reports" / "heuristic_benchmark_eval.json"
         cls.lora_dir = REPO_ROOT / "lora_adapters"
@@ -491,6 +491,8 @@ class TestReportConsistency(unittest.TestCase):
             cls.zoo_index = json.load(f)
         with cls.stats_path.open(encoding="utf-8") as f:
             cls.stats = json.load(f)
+        with cls.validation_path.open(encoding="utf-8") as f:
+            cls.validation = json.load(f)
         with cls.registry_path.open(encoding="utf-8") as f:
             cls.registry = json.load(f)
         with cls.benchmark_eval_path.open(encoding="utf-8") as f:
@@ -516,7 +518,7 @@ class TestReportConsistency(unittest.TestCase):
 
     def test_readme_metrics_consistency(self):
         """README.md dataset numbers and LoRA counts match execution stats, registry, and zoo index."""
-        verify_readme_metrics(self.readme_text, self.stats, self.registry, self.zoo_index)
+        verify_readme_metrics(self.readme_text, self.stats, self.registry, self.zoo_index, self.validation)
 
     def test_benchmark_metrics_and_withdrawal_consistency(self):
         """Check heuristic benchmark table matches heuristic_benchmark_eval.json, with withdrawal notices."""
@@ -602,21 +604,21 @@ class TestReportConsistency(unittest.TestCase):
         # Mutate cleaned messages count 2,816,434 -> 2,816,435
         tampered = self.readme_text.replace("2,816,434 rows", "2,816,435 rows")
         with self.assertRaises(AssertionError) as ctx:
-            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index)
+            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index, self.validation)
         self.assertIn("expected 2816434", str(ctx.exception))
 
     def test_negative_tampered_readme_hub_adapter_count_fails(self):
         """Demonstrates that altering Hub adapter count in README.md (58 -> 59) fails."""
         tampered = self.readme_text.replace("58 adapters on Hugging Face Hub", "59 adapters on Hugging Face Hub")
         with self.assertRaises(AssertionError) as ctx:
-            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index)
+            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index, self.validation)
         self.assertIn("expected 58", str(ctx.exception))
 
     def test_negative_tampered_readme_local_adapter_count_fails(self):
         """Demonstrates that altering local adapter count in README.md (56 -> 57) fails."""
         tampered = self.readme_text.replace("56 adapters cloned locally", "57 adapters cloned locally")
         with self.assertRaises(AssertionError) as ctx:
-            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index)
+            verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index, self.validation)
         self.assertIn("expected 56", str(ctx.exception))
 
     def test_negative_tampered_heuristic_score_fails(self):

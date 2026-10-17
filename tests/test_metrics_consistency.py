@@ -14,6 +14,7 @@ This test directly catches the class of bugs where docs drift from data:
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import unittest
@@ -28,11 +29,12 @@ README = REPO_ROOT / "README.md"
 DATASET_CARD = REPO_ROOT / "reports" / "DATASET_AND_ANALYTICS.md"
 HF_CARD = REPO_ROOT / "reports" / "HF_MODEL_CARD.md"
 APP = REPO_ROOT / "app.py"
+VALIDATION = REPO_ROOT / "reports" / "validation_results.json"
 
 # Figures that must never appear in the user-facing docs (historical values
 # now superseded by the manifest). CHANGELOG.md is exempt — it records them
 # as history.
-FORBIDDEN = ["2.91M", "2,418,695", "60,899", "173,216 dialogues"]
+FORBIDDEN = ["2.91M", "2,418,695", "60,899", "173,216 dialogues", "173,216 диалогов", "933,313"]
 
 
 class TestMetricsConsistency(unittest.TestCase):
@@ -74,6 +76,49 @@ class TestMetricsConsistency(unittest.TestCase):
             r"`dataset_output/jsonl/dpo_preference_pairs\.jsonl`[^|]*\|[^|]*\|\s*" + re.escape(expected)
         )
         self.assertRegex(self.readme, pattern, f"README DPO row must show {expected} pairs")
+
+    def test_readme_jsonl_table_matches_validation_report(self) -> None:
+        rows = [
+            (r"sft_openai_messages\.jsonl", self.m.jsonl.openai_messages, "records"),
+            (r"sft_sharegpt_format\.jsonl", self.m.jsonl.sharegpt_dialogues, "records"),
+            (r"sft_alpaca_format\.jsonl", self.m.jsonl.alpaca_pairs, "pairs"),
+            (r"rag_chunks_kb\.jsonl", self.m.jsonl.rag_chunks, "chunks"),
+            (r"dpo_preference_pairs\.jsonl", self.m.jsonl.dpo_pairs, "pairs"),
+        ]
+        for fname, count, unit in rows:
+            volume = f"{count:,} {unit}"
+            pattern = re.compile(
+                r"\|\s*`dataset_output/jsonl/" + fname + r"`\s*\|[^|]*\|\s*" + re.escape(volume) + r"\s*\|"
+            )
+            self.assertRegex(
+                self.readme,
+                pattern,
+                f"README JSONL row {fname} must show '{volume}' (valid_lines from validation_results.json)",
+            )
+
+    # --- JSONL counts (validation report) ---------------------------------- #
+
+    def test_jsonl_counts_match_validation_report(self) -> None:
+        details = json.loads(VALIDATION.read_text(encoding="utf-8"))["jsonl_files"]["details"]
+        pairs = [
+            (self.m.jsonl.openai_messages, "sft_openai_messages.jsonl"),
+            (self.m.jsonl.sharegpt_dialogues, "sft_sharegpt_format.jsonl"),
+            (self.m.jsonl.alpaca_pairs, "sft_alpaca_format.jsonl"),
+            (self.m.jsonl.rag_chunks, "rag_chunks_kb.jsonl"),
+            (self.m.jsonl.dpo_pairs, "dpo_preference_pairs.jsonl"),
+        ]
+        for got, name in pairs:
+            self.assertEqual(
+                got, details[name]["valid_lines"], f"{name}: metrics_source drifted from validation report"
+            )
+            self.assertEqual(details[name]["status"], "VALID", f"{name}: validator status is not VALID")
+
+    def test_jsonl_dpo_matches_pipeline_stats(self) -> None:
+        self.assertEqual(
+            self.m.jsonl.dpo_pairs,
+            self.m.dpo_pairs,
+            "DPO JSONL valid_lines must equal the pipeline stats dpo_pairs count",
+        )
 
     # --- Dataset card ----------------------------------------------------- #
 

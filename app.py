@@ -152,9 +152,9 @@ if nav == NAV_MAIN:
             - **`full_clean_messages.parquet`**: 2,816,434 сообщений (`189 MB`)
             - **`sft_dialogues.parquet`**: 171,520 многоходовых диалогов (`132 MB`)
             - **`rag_knowledge_base.parquet`**: 325,690 чанков базы знаний (`159 MB`)
-            - **`sft_openai_messages.jsonl`**: 173,216 диалогов ChatML
+            - **`sft_openai_messages.jsonl`**: 173,216 записей ChatML
             - **`sft_alpaca_format.jsonl`**: 660,900 пар инструкций
-            - **`sft_sharegpt_format.jsonl`**: 173,216 диалогов ShareGPT
+            - **`sft_sharegpt_format.jsonl`**: 173,216 записей ShareGPT
             - **`rag_chunks_kb.jsonl`**: 332,690 документов для Vector DB
             - **`dpo_preference_pairs.jsonl`**: 57,501 пар предпочтений
             """
