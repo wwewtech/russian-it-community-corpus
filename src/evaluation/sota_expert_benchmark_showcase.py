@@ -22,6 +22,7 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from src.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
 from src.ml_runtime import set_deterministic_seed
 from src.observability import record_classified_ml_error
 from src.rag.rag_pipeline import LocalRAGPipeline
@@ -364,6 +365,7 @@ def run_sota_showcase(
         "## 2. Качественные Side-by-Side сравнения ответов (Diffs)",
         "",
     ]
+    md_lines.insert(3, HEURISTIC_DISCLAIMER_MD)
 
     for idx, r in enumerate(results, 1):
         md_lines.extend(
@@ -395,7 +397,11 @@ def run_sota_showcase(
     json_path = Path("reports/sota_expert_matrix.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(
-            {"summary": {"base": base_avg, "rag": rag_avg, "lora": lora_avg, "hybrid": hyb_avg}, "results": results},
+            {
+                "summary": {"base": base_avg, "rag": rag_avg, "lora": lora_avg, "hybrid": hyb_avg},
+                "results": results,
+                "disclaimer": HEURISTIC_DISCLAIMER,
+            },
             f,
             ensure_ascii=False,
             indent=2,

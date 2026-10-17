@@ -43,6 +43,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("AcademicBenchmark")
 
 # ==========================================
+# RETRACTION GATE
+# ==========================================
+# Published artifacts stay flagged RETRACTED until a reviewed re-run on the
+# fixed harness. Flip BENCHMARK_STATUS to "VALID" and add `rerun_evidence`
+# (commit sha + raw-output review notes) in matrix_res only after that review;
+# tests/test_academic_benchmark_matrix_consistency.py enforces the gate.
+BENCHMARK_STATUS = "RETRACTED"
+RETRACTION_REASON = (
+    "harness defects in the original run: substring MCQ scoring, perplexity on blank "
+    "generations, silent Base->LoRA copy when the adapter failed to load"
+)
+
+# ==========================================
 # 1. OFFICIAL OPENAI HUMANEVAL TEST SUITE
 # ==========================================
 HUMANEVAL_TASKS: list[dict[str, Any]] = [
@@ -1458,6 +1471,14 @@ def run_official_academic_benchmarks(
         "| :--- | :--- | :---: | :---: | :---: |",
     ]
 
+    if BENCHMARK_STATUS == "RETRACTED":
+        report_lines[1:1] = [
+            "",
+            "> [!WARNING]",
+            f"> **RETRACTED — do not cite.** {RETRACTION_REASON}.",
+            "> A fresh, reviewed GPU re-run is required before any accuracy claims.",
+        ]
+
     for rec in task_exec_records:
         b_str = "✅ PASSED" if rec["base_ok"] else "❌ FAILED"
         l_str = "✅ PASSED" if rec["lora_ok"] else "❌ FAILED"
@@ -1498,6 +1519,8 @@ def run_official_academic_benchmarks(
         "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "model_name": model_name,
         "adapter_id": adapter_id,
+        "status": BENCHMARK_STATUS,
+        "retraction_reason": RETRACTION_REASON if BENCHMARK_STATUS == "RETRACTED" else None,
     }
     output_json = Path("reports/academic_scientific_benchmarks_matrix.json")
     with open(output_json, "w", encoding="utf-8") as f:

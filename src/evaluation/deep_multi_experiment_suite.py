@@ -19,6 +19,7 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from src.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
 from src.ml_runtime import set_deterministic_seed
 from src.observability import record_classified_ml_error
 from src.rag.rag_pipeline import LocalRAGPipeline
@@ -454,12 +455,14 @@ def run_benchmark_experiment_suite(
     output_md = Path("reports/DEEP_EMPIRICAL_BENCHMARK_16_SUITES.md")
 
     with open(output_json, "w", encoding="utf-8") as f:
+        results["disclaimer"] = HEURISTIC_DISCLAIMER
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     md_lines = [
         "# 🔬 Глубокий эмпирический бенчмарк: 16 независимых тестовых сюит (Base vs RAG vs LoRA vs Hybrid)",
         f"**Модель:** `{model_name}` | **Адаптер:** `{adapter_id}` | **GPU:** `{results['metadata']['gpu']}` ({results['metadata']['vram_gb']} GB VRAM)",
         f"**Дата тестирования:** `{results['metadata']['timestamp']}`",
+        HEURISTIC_DISCLAIMER_MD,
         "",
         "---",
         "",

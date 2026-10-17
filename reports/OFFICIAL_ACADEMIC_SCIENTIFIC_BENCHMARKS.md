@@ -1,4 +1,9 @@
 # 🎓 Отчет об академической оценке (HumanEval Sample, RuMMLU Sample, PPL)
+
+> [!WARNING]
+> **RETRACTED — do not cite.** harness defects in the original run: substring MCQ scoring, perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load.
+> A fresh, reviewed GPU re-run is required before any accuracy claims.
+
 **Оценочная модель:** `Qwen/Qwen2.5-1.5B-Instruct` | **LoRA Адаптер:** `qwen2.5_1.5b_instruct` | **GPU:** `NVIDIA GeForce RTX 3060`
 **Дата проведения:** `2026-09-17T17:16:34`
 

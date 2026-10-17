@@ -95,6 +95,55 @@ class TestAcademicMatrixConsistency(unittest.TestCase):
         for key in ("raw_outputs_sha256", "generated_at_utc"):
             self.assertIn(key, self.matrix, f"matrix missing provenance field {key!r}")
 
+    # --- Retraction gate ----------------------------------------------------- #
+
+    def test_matrix_status_gate(self) -> None:
+        """Published matrix must be explicitly RETRACTED, or VALID with evidence."""
+        status = self.matrix.get("status")
+        self.assertIn(
+            status,
+            ("RETRACTED", "VALID"),
+            "matrix must carry an explicit status ('RETRACTED' until a reviewed GPU re-run)",
+        )
+        if status == "RETRACTED":
+            self.assertTrue(
+                self.matrix.get("retraction_reason"),
+                "RETRACTED matrix must explain why (retraction_reason)",
+            )
+        else:
+            self.assertTrue(
+                self.matrix.get("rerun_evidence"),
+                "matrix claiming VALID must include rerun_evidence (reviewed GPU re-run)",
+            )
+
+    def test_report_banner_matches_status(self) -> None:
+        """The markdown report must carry the RETRACTED banner while values are retracted."""
+        if self.matrix.get("status") != "RETRACTED":
+            self.skipTest("matrix is not retracted; banner not required")
+        md = (REPO_ROOT / "reports" / "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md").read_text(encoding="utf-8")
+        head = md[:800]
+        self.assertIn("RETRACTED", head, "report must carry the RETRACTED banner near the top")
+        self.assertIn("do not cite", head, "report banner must say not to cite the numbers")
+
+    # --- Heuristic (rubric-based) reports ------------------------------------- #
+
+    def test_heuristic_report_carries_disclaimer(self) -> None:
+        """Heuristic scores must be labelled as rubric-based, never as capabilities."""
+        heuristic = json.loads((REPO_ROOT / "reports" / "heuristic_benchmark_eval.json").read_text(encoding="utf-8"))
+        meta = heuristic.get("metadata", {})
+        self.assertIn("rubric-based", str(meta.get("evaluation_type", "")).lower())
+        self.assertIn("_disclaimer", heuristic, "heuristic report must carry a top-level _disclaimer")
+        self.assertIn("RETRACTED", heuristic["_disclaimer"])
+        self.assertIn("not capability measurements", heuristic["_disclaimer"])
+
+    def test_readme_annotates_heuristic_link(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "rubric-based heuristics",
+            readme,
+            "README heuristic link must state that scores are rubric-based heuristics",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
