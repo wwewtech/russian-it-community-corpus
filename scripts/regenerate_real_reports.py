@@ -44,6 +44,18 @@ def main() -> int:
     parser.add_argument("--sample", type=int, default=10_000)
     parser.add_argument("--drift-sample", type=int, default=50_000)
     args = parser.parse_args()
+    marker = REPORTS / "synthetic_fixture.json"
+    if marker.exists():
+        # Latent trap: this script stamps every report with synthetic: False.
+        # Running it while CI synthetic fixtures are active would mislabel them
+        # as real data in the published reports.
+        print(
+            f"Refusing to regenerate 'real' reports: {marker} exists — synthetic fixtures "
+            "are active. Build the real corpus first (and remove the marker), or use "
+            "scripts/build_synthetic_parquet.py for CI smoke tests.",
+            file=sys.stderr,
+        )
+        return 2
     for name in ("full_clean_messages", "sft_dialogues", "rag_knowledge_base"):
         if not (PARQUET / f"{name}.parquet").exists():
             print(f"Missing real artifact: {PARQUET / name}.parquet")
