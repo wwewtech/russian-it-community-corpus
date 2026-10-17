@@ -5,6 +5,7 @@ Master entrypoint to execute the complete pipeline.
 import logging
 import sys
 
+from src.errors import PipelineError
 from src.pipeline import MasterDataPipeline
 
 if sys.platform == "win32":
@@ -22,7 +23,24 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 
-if __name__ == "__main__":
+
+def main() -> int:
+    """Run the full pipeline; return a process exit code."""
     print("Starting Russian IT Community Data Engineering & Curation Pipeline...")
     pipeline = MasterDataPipeline()
-    pipeline.run_all()
+    try:
+        summary = pipeline.run_all()
+    except PipelineError as exc:
+        print(f"❌ Pipeline failed at stage '{exc.stage}': {exc}", file=sys.stderr)
+        return 1
+    if not summary.get("validation_passed", False):
+        print(
+            "❌ Pipeline finished but dataset validation FAILED — see reports/validation_results.json",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

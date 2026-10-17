@@ -105,13 +105,24 @@ def main() -> None:
         sys.exit(2)
 
     if args.command == "run":
+        from src.errors import PipelineError
         from src.pipeline import MasterDataPipeline
 
         print("🚀 Starting full data curation pipeline...")
         pipeline = MasterDataPipeline()
         if hasattr(args, "skip_ner") and args.skip_ner:
             pipeline.anonymizer.ner_scrubber = None
-        pipeline.run_all()
+        try:
+            summary = pipeline.run_all()
+        except PipelineError as exc:
+            print(f"❌ Pipeline failed at stage '{exc.stage}': {exc}", file=sys.stderr)
+            sys.exit(1)
+        if not summary.get("validation_passed", False):
+            print(
+                "❌ Dataset validation FAILED after the pipeline run — see reports/validation_results.json",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     elif args.command == "analyze":
         from src.analytics.engine import DeepChatAnalyzer
@@ -181,6 +192,11 @@ def main() -> None:
         validator = DatasetValidator(OUTPUT_DIR)
         res = validator.validate_all()
         print(json.dumps(res, indent=2, ensure_ascii=False))
+        if not res.get("overall_passed", False):
+            # docs/cli/commands.md promises a non-zero exit on failed
+            # validation so CI/scripts can gate on it.
+            print("❌ Validation FAILED (overall_passed=false)", file=sys.stderr)
+            sys.exit(1)
 
     elif args.command == "benchmark":
         from src.validation.benchmark import BenchmarkRunner

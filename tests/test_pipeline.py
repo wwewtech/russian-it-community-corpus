@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
+from src.errors import IngestionError, PIIAnonymizationError
 from src.pipeline import MasterDataPipeline
 from src.settings import settings
 
@@ -195,6 +196,32 @@ class TestMasterDataPipelineRunAll(unittest.TestCase):
         self.assertEqual(summary["cleaned_messages_count"], 1)  # 1 message after mocked dedup
         self.assertEqual(summary["threads_count"], 1)
         self.assertTrue(summary["validation_passed"])
+
+
+class TestMasterDataPipelineFailureModes(unittest.TestCase):
+    def test_empty_ingestion_raises_typed_error(self):
+        # An empty ingestion (misconfigured RAW_EXPORT_DIRS) must fail closed
+        # with a typed error instead of "succeeding" with empty artifacts.
+        pipeline = MasterDataPipeline(raw_export_dirs=[Path("missing")])
+        with (
+            patch("src.pipeline.merge_multiple_exports", return_value=([], [])),
+            self.assertRaises(IngestionError) as ctx,
+        ):
+            pipeline.run_all()
+        self.assertEqual(ctx.exception.stage, "ingestion")
+        self.assertIn("0 messages", ctx.exception.message)
+
+    def test_stage_failure_is_wrapped_into_typed_error(self):
+        pipeline = MasterDataPipeline(raw_export_dirs=[Path("whatever")])
+        with (
+            patch("src.pipeline.merge_multiple_exports", return_value=([], ["m1"])),
+            patch.object(pipeline.anonymizer, "process_batch", side_effect=RuntimeError("ner crashed")),
+            self.assertRaises(PIIAnonymizationError) as ctx,
+        ):
+            pipeline.run_all()
+        self.assertEqual(ctx.exception.stage, "pii_anonymization")
+        self.assertIsInstance(ctx.exception.__cause__, RuntimeError)
+        self.assertIn("original_error", ctx.exception.context)
 
 
 if __name__ == "__main__":
