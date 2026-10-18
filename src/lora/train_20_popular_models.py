@@ -239,7 +239,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
             return True
 
     logger.info("=" * 70)
-    logger.info(f"🚀 Training LoRA Adapter: {adapter_id} ({model_name}) | Family: {cfg['family']}")
+    logger.info(f"Training LoRA Adapter: {adapter_id} ({model_name}) | Family: {cfg['family']}")
     logger.info("=" * 70)
 
     set_deterministic_seed(seed)
@@ -396,7 +396,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
         with open(output_dir / "adapter_meta.json", "w", encoding="utf-8") as f:
             json.dump(meta, f, ensure_ascii=False, indent=2)
 
-        logger.info(f"✅ Successfully saved {adapter_id} locally at {output_dir}!")
+        logger.info(f"Successfully saved {adapter_id} locally at {output_dir}!")
 
         # 7. Upload to Hugging Face
         logger.info(f"Uploading {adapter_id} to Hugging Face Model Hub: {MODEL_REPO_ID}...")
@@ -410,7 +410,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
             ),
             what=f"HF upload {adapter_id}",
         )
-        logger.info(f"🎉 Successfully uploaded {adapter_id} to Hugging Face Hub!")
+        logger.info(f"Successfully uploaded {adapter_id} to Hugging Face Hub!")
         record_lora_result(
             model=model_name,
             adapter=adapter_id,
@@ -434,7 +434,7 @@ def train_single_model(cfg: dict[str, Any], sft_dataset: Dataset, api: huggingfa
     except Exception as e:
         typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
         record_lora_result(model=model_name, adapter=adapter_id, status="failure")
-        logger.error(f"❌ Failed training/uploading {adapter_id}: {typed}")
+        logger.error(f"Failed training/uploading {adapter_id}: {typed}")
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -464,7 +464,7 @@ def main() -> None:
             successful += 1
 
     logger.info("=" * 70)
-    logger.info(f"🎉 COMPLETED BATCH TRAINING: {successful}/{len(POPULAR_20_MODELS)} models processed successfully!")
+    logger.info(f"COMPLETED BATCH TRAINING: {successful}/{len(POPULAR_20_MODELS)} models processed successfully!")
     logger.info("=" * 70)
 
 

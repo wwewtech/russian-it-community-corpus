@@ -72,7 +72,7 @@ def main():
         "- russian-nlp",
         "---",
         "",
-        "# 🦁 Russian IT Community LoRA Model Zoo",
+        "# Russian IT Community LoRA Model Zoo",
         "",
         f"**{total} pre-trained adapters** ({domain_count} domain adapters + {flagship_count} flagship 7B–8B QLoRA), "
         f"fine-tuned on the RICC corpus ({_metrics.total_messages_label} messages, "
@@ -82,7 +82,7 @@ def main():
         f"> Catalog regenerated from the Hub file tree on {generated_at}. "
         "Source of truth: the `siblings` listing of this repository.",
         "",
-        "## ⚡ Quick Start: 3-Line Inference",
+        "## Quick Start: 3-Line Inference",
         "",
         "```python",
         "import torch",
@@ -102,7 +102,7 @@ def main():
         "print(tokenizer.decode(outputs[0], skip_special_tokens=True))",
         "```",
         "",
-        f"## 📚 Full Catalog ({total} Adapters)",
+        f"## Full Catalog ({total} Adapters)",
         "",
         "| # | Adapter Subfolder | Base Model | Hub Link |",
         "| :---: | :--- | :--- | :--- |",
@@ -114,13 +114,13 @@ def main():
         )
     hf_lines += [
         "",
-        "## 🥇 Flagship QLoRA Models (7B–8B)",
+        "## Flagship QLoRA Models (7B–8B)",
         "",
         "Full-precision copies also live under [`models/`](https://huggingface.co/"
         f"{REPO}/tree/main/models): `models/heavyweight_qwen2.5_coder_7b`, "
         "`models/heavyweight_deepseek_r1_7b`, `models/heavyweight_llama3.1_8b`.",
         "",
-        "## 📓 Training Data & Evaluation Status",
+        "## Training Data & Evaluation Status",
         "",
         "- Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) "
         f"({_metrics.sft_dialogues_fmt} multi-turn dialogues).",
@@ -140,7 +140,7 @@ def main():
 
     # 2. Generate LORA_MODEL_ZOO.md (for local GitHub repository documentation)
     zoo_lines = [
-        "# 🦁 Russian IT Community LoRA Model Zoo & Local Adapter Catalog",
+        "# Russian IT Community LoRA Model Zoo & Local Adapter Catalog",
         "",
         f"Официальный каталог **{total} предварительно обученных LoRA-адаптеров** ({domain_count} доменных адаптеров + {flagship_count} флагманских QLoRA моделей 7B–8B), "
         "дообученных на корпусе **RICC (2.82M очищенных сообщений, 171.5k диалогов)** для русскоязычного IT-дискурса, бэкенда, DevOps, AI/ML и системного администрирования.",
@@ -154,7 +154,7 @@ def main():
         "",
         "---",
         "",
-        "## 💻 Локальный запуск через CLI и Python",
+        "## Локальный запуск через CLI и Python",
         "",
         "### 1. Запуск интерактивного терминала (Inference CLI):",
         "```bash",
@@ -189,7 +189,7 @@ def main():
         "",
         "---",
         "",
-        f"## 📊 Полный каталог адаптеров ({total} моделей)",
+        f"## Полный каталог адаптеров ({total} моделей)",
         "",
         "| # | Идентификатор адаптера | Базовая модель | Локальный каталог | Hugging Face Hub |",
         "| :---: | :--- | :--- | :--- | :--- |",
@@ -204,7 +204,7 @@ def main():
         "",
         "---",
         "",
-        "## ⚙️ Аппаратные требования и воспроизводимость",
+        "## Аппаратные требования и воспроизводимость",
         "",
         "- **Режим обучения адаптеров:** Опубликованные адаптеры получены в режиме легковесной доменной адаптации (pilot runs, 50–100 шагов на подмножествах диалогов) для подтверждения совместимости весов, PEFT-пайплайна и инференса на потребительских GPU (RTX 3060 12GB). Они не являются финальными многоэпоховыми чекпоинтами на всём объёме 171k диалогов.",
         "- **Потребление VRAM при обучении:** ~4.35 GB на NVIDIA GeForce RTX 3060 (12 GB) с gradient accumulation = 4, batch size = 1. *(Логи обучения не хранятся в репозитории — цифра приведена как ориентир для воспроизведения.)*",

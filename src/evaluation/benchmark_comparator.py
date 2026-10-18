@@ -129,7 +129,7 @@ class BenchmarkComparator:
         tcs = results["test_cases"]
         recall = results["aggregate_scores"]["rag_retrieval_keyword_recall_pct"]
 
-        md = f"""# 📊 Отчет о сравнительной архитектурной оценке (Base vs RAG vs LoRA vs Hybrid)
+        md = f"""# Отчет о сравнительной архитектурной оценке (Base vs RAG vs LoRA vs Hybrid)
 **Устройство:** `{hw["gpu"]}` (VRAM: `{hw["vram_total_mb"]:.0f}` MB) | **Дата:** `{results["eval_date"]}`
 
 ---

@@ -1051,7 +1051,7 @@ def run_official_academic_benchmarks(
     adapter_id: str = "qwen2.5_1.5b_instruct",
     seed: int = 42,
 ) -> dict[str, Any]:
-    logger.info(f"=== 🎓 Running Official Academic Scientific Benchmarks for {model_name} ===")
+    logger.info(f"=== Running Official Academic Scientific Benchmarks for {model_name} ===")
     set_deterministic_seed(seed)
 
     rouge = evaluate.load("rouge")
@@ -1431,7 +1431,7 @@ def run_official_academic_benchmarks(
     # -------------------------------------------------------------
     output_md = Path("reports/OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md")
     report_lines = [
-        "# 🎓 Отчет об академической оценке (HumanEval Sample, RuMMLU Sample, PPL)",
+        "# Отчет об академической оценке (HumanEval Sample, RuMMLU Sample, PPL)",
         f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **GPU:** `{torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}`",
         f"**Дата проведения:** `{time.strftime('%Y-%m-%dT%H:%M:%S')}`",
         "",
@@ -1480,9 +1480,9 @@ def run_official_academic_benchmarks(
         ]
 
     for rec in task_exec_records:
-        b_str = "✅ PASSED" if rec["base_ok"] else "❌ FAILED"
-        l_str = "✅ PASSED" if rec["lora_ok"] else "❌ FAILED"
-        h_str = "✅ PASSED" if rec["hybrid_ok"] else "❌ FAILED"
+        b_str = "PASSED" if rec["base_ok"] else "FAILED"
+        l_str = "PASSED" if rec["lora_ok"] else "FAILED"
+        h_str = "PASSED" if rec["hybrid_ok"] else "FAILED"
         report_lines.append(f"| `{rec['task_id']}` | `{rec['entry_point']}` | {b_str} | {l_str} | {h_str} |")
 
     report_lines.extend(
@@ -1492,7 +1492,7 @@ def run_official_academic_benchmarks(
             "",
             "## 4. Выводы",
             "",
-            f"1. **Перплексия на доменном тесте (PPL {base_ppl} ➔ {lora_ppl})**: Доменный LoRA адаптер снижает кросс-энтропийную потерю на русскоязычном инженерном тексте.",
+            f"1. **Перплексия на доменном тесте (PPL {base_ppl} {lora_ppl})**: Доменный LoRA адаптер снижает кросс-энтропийную потерю на русскоязычном инженерном тексте.",
             f"2. **Кодогенерация HumanEval (pass@1 = {pass_at_1['hybrid']}%)**: Проверка работоспособности сгенерированных Python-функций на тестовых ассертах.",
             f"3. **RuMMLU Точность ({rummlu_acc['hybrid']}%)**: Оценка точности выбора вариантов ответов на контрольных вопросах по архитектуре БД, сетей и ОС.",
         ]

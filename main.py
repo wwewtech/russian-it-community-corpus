@@ -31,11 +31,11 @@ def main() -> int:
     try:
         summary = pipeline.run_all()
     except PipelineError as exc:
-        print(f"❌ Pipeline failed at stage '{exc.stage}': {exc}", file=sys.stderr)
+        print(f"Pipeline failed at stage '{exc.stage}': {exc}", file=sys.stderr)
         return 1
     if not summary.get("validation_passed", False):
         print(
-            "❌ Pipeline finished but dataset validation FAILED — see reports/validation_results.json",
+            "Pipeline finished but dataset validation FAILED — see reports/validation_results.json",
             file=sys.stderr,
         )
         return 1

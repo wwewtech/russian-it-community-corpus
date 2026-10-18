@@ -345,7 +345,7 @@ def run_sota_showcase(
 
     # Generate Markdown Showcase Diff Report
     md_lines = [
-        "# 🔍 Качественное сравнение ответов моделей (Side-by-Side Diffs)",
+        "# Качественное сравнение ответов моделей (Side-by-Side Diffs)",
         f"**Модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **Генерация:** Архитектурный промпт (320 max tokens)",
         f"**Дата:** `{time.strftime('%Y-%m-%dT%H:%M:%S')}`",
         "",

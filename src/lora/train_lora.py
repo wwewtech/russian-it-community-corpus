@@ -44,12 +44,12 @@ def train_lora(
     Execute LoRA domain adaptation on RTX 3060 with PEFT.
     """
     seed_state = set_deterministic_seed(seed)
-    print(f"🎲 Deterministic seed: {seed_state}")
+    print(f"Deterministic seed: {seed_state}")
     print(
-        f"🚀 Initializing LoRA Fine-Tuning on GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
+        f"Initializing LoRA Fine-Tuning on GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}"
     )
-    print(f"📦 Base Model: {model_name}")
-    print(f"📚 Dataset: {dataset_path}")
+    print(f"Base Model: {model_name}")
+    print(f"Dataset: {dataset_path}")
 
     # 1. Load Tokenizer & Model (network calls wrapped with bounded retry)
     tokenizer: Any = cast(
@@ -101,7 +101,7 @@ def train_lora(
     # noticeably under-fitted adapters. We now train on the whole JSONL; pass
     # `--max-samples N` if you need a quick smoke run.
     raw_dataset = load_dataset("json", data_files=dataset_path, split="train")
-    print(f"📚 Loaded {len(raw_dataset):,} SFT examples from {dataset_path}")
+    print(f"Loaded {len(raw_dataset):,} SFT examples from {dataset_path}")
 
     def format_chatml(example: dict[str, Any]) -> dict[str, Any]:
         messages = example.get("messages", [])
@@ -171,7 +171,7 @@ def train_lora(
     )
 
     # 5. Execute Training
-    print("⚡ Starting LoRA training loop...")
+    print("Starting LoRA training loop...")
     adapter_id = Path(output_dir).name
     t0 = time.time()
     try:
@@ -199,7 +199,7 @@ def train_lora(
         steps=max_steps,
         vram_bytes=vram_bytes,
     )
-    print(f"🎉 LoRA adapter successfully saved to {out_path}!")
+    print(f"LoRA adapter successfully saved to {out_path}!")
     return out_path
 
 

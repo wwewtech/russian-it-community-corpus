@@ -119,7 +119,7 @@ def derive_pii_verdict(
     # confirm zero leaks. An OR short-circuit is exactly the
     # "privacy-as-checklist, not threat model" failure mode called out in
     # NADO.md — one stale certificate is enough to flip the UI banner to
-    # "✅ Zero-PII Verification Status: PASSED" while a second audit is
+    # "Zero-PII Verification Status: PASSED" while a second audit is
     # silently warning. See CHANGELOG 12.0.2.
     is_passed = cert_passed and val_passed
 

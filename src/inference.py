@@ -147,10 +147,10 @@ def interactive_chat_session(
     from src.rag.rag_pipeline import LocalRAGPipeline
 
     print("=" * 70)
-    print("🤖 Russian IT Community LLM & RAG Interactive Terminal")
-    print(f"📦 Base Model: {model_name}")
-    print(f"🦁 LoRA Adapter: {adapter_id or 'None (Base Model)'}")
-    print(f"🔍 RAG Pipeline: {'ON (325.7k knowledge chunks)' if use_rag else 'OFF'}")
+    print("Russian IT Community LLM & RAG Interactive Terminal")
+    print(f"Base Model: {model_name}")
+    print(f"LoRA Adapter: {adapter_id or 'None (Base Model)'}")
+    print(f"RAG Pipeline: {'ON (325.7k knowledge chunks)' if use_rag else 'OFF'}")
     print("=" * 70)
     print("Type your technical question (or 'exit' / 'quit' to end session):\n")
 
@@ -161,14 +161,14 @@ def interactive_chat_session(
     if use_rag:
         rag_path = root_dir / "dataset_output" / "parquet" / "rag_knowledge_base.parquet"
         if rag_path.exists():
-            print("🔍 Initializing Local RAG Knowledge Base...")
+            print("Initializing Local RAG Knowledge Base...")
             rag_kb = LocalRAGPipeline(rag_path)
-            print(f"✅ RAG Engine ready ({len(rag_kb.df_kb):,} chunks indexed).")
+            print(f"RAG Engine ready ({len(rag_kb.df_kb):,} chunks indexed).")
         else:
-            print("⚠️ RAG Parquet knowledge base not found. Running without RAG.")
+            print("RAG Parquet knowledge base not found. Running without RAG.")
 
     # 2. Load Model & Tokenizer
-    print("🧠 Loading model and tokenizer...")
+    print("Loading model and tokenizer...")
     tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
@@ -185,12 +185,12 @@ def interactive_chat_session(
     # silently swallowed — that masks weight corruption / base-model
     # mismatch. Raise AdapterLoadError (P3 taxonomy) so the caller
     # (Streamlit button, CLI) can show a real error instead of running
-    # the base model and printing a misleading "✅ Attached".
+    # the base model and printing a misleading "Attached".
     if adapter_id:
         adapter_path = validate_adapter_path(adapter_id, root_dir / "lora_adapters")
         try:
             model = PeftModel.from_pretrained(model, str(adapter_path))
-            print(f"✅ Attached LoRA Adapter from {adapter_path}")
+            print(f"Attached LoRA Adapter from {adapter_path}")
         except Exception as e:
             typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
             raise AdapterLoadError(
@@ -203,13 +203,13 @@ def interactive_chat_session(
 
     while True:
         try:
-            query = input("\n💻 User >> ").strip()
+            query = input("\nUser >> ").strip()
         except (KeyboardInterrupt, EOFError):
-            print("\n👋 Exiting chat session.")
+            print("\nExiting chat session.")
             break
 
         if is_exit_command(query):
-            print("👋 Exiting chat session.")
+            print("Exiting chat session.")
             break
 
         rag_context = ""
@@ -217,7 +217,7 @@ def interactive_chat_session(
             hits = rag_kb.search(query, top_k=2)
             if hits:
                 rag_context = format_rag_context(hits)
-                print(f"\n[🔍 RAG Retrieved {len(hits)} Context Chunks]")
+                print(f"\n[RAG Retrieved {len(hits)} Context Chunks]")
 
         messages = build_chat_messages(query, rag_context)
         prompt_text = build_prompt(messages, tokenizer.apply_chat_template)
@@ -226,7 +226,7 @@ def interactive_chat_session(
         if torch.cuda.is_available():
             inputs = {k: v.to("cuda") for k, v in inputs.items()}
 
-        print("\n🤖 Assistant >> ", end="", flush=True)
+        print("\nAssistant >> ", end="", flush=True)
         with torch.no_grad():
             model.generate(
                 **inputs,

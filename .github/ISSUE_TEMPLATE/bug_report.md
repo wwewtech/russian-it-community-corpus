@@ -1,5 +1,5 @@
 ---
-name: 🐛 Bug Report
+name: Bug Report
 about: Create a report to help us improve the data pipeline or tool
 title: "[BUG] "
 labels: ["bug"]

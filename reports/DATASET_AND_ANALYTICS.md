@@ -62,7 +62,7 @@ dataset_info:
       dtype: int64
 ---
 
-# 📦 Russian IT Community Corpus (RICC)
+# Russian IT Community Corpus (RICC)
 
 <div align="center">
 
@@ -81,7 +81,7 @@ The corpus is structured into ready-to-use splits for **Instruction Fine-Tuning 
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ```python
 from datasets import load_dataset
@@ -102,7 +102,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 ---
 
-## 🏗️ Data Curation Pipeline
+## Data Curation Pipeline
 
 <div align="center">
 
@@ -120,7 +120,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 ---
 
-## 📊 Key Corpus Metrics
+## Key Corpus Metrics
 
 | Metric | Verified Value | Description |
 | :--- | :--- | :--- |
@@ -135,7 +135,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 ---
 
-## 🧠 Domain & Topic Distribution
+## Domain & Topic Distribution
 
 | Domain Category | Message Count | Share (%) | Core Topics |
 | :--- | :---: | :---: | :--- |
@@ -150,7 +150,7 @@ print(f"Loaded Full corpus: {len(full_ds):,} records")
 
 ---
 
-## 📁 Dataset Splits & Configurations
+## Dataset Splits & Configurations
 
 ### 1. `full_corpus` (`data/full_clean_messages.parquet`)
 Full chronological sequence of clean messages with domain labels, sentiment, and structural metadata.
@@ -198,7 +198,7 @@ Chunked technical discussions formatted for dense embedding indexing (Qdrant, Ch
 
 ---
 
-## 📊 SFT Subset — Real Composition & Known Limitations
+## SFT Subset — Real Composition & Known Limitations
 
 Computed directly from `data/sft_dialogues.parquet` (171,520 dialogues):
 
@@ -235,9 +235,9 @@ A representative technical exchange that does pass the filter (`thread_id` 30449
 
 ---
 
-## 🔬 Empirical Evaluation — Honest Status
+## Empirical Evaluation — Honest Status
 
-> 🚫 **Academic metrics (HumanEval / RuMMLU / PPL / ROUGE) published earlier have been WITHDRAWN.**
+> **Academic metrics (HumanEval / RuMMLU / PPL / ROUGE) published earlier have been WITHDRAWN.**
 > A code audit of the benchmark harness (`src/evaluation/official_academic_benchmarks.py`) found three defects that produced invalid numbers: substring-based MCQ scoring (inflated RuMMLU to an implausible 100%), PPL computed on empty placeholder strings due to wrong column names (identical base/LoRA values), and silent copying of Base results into LoRA/Hybrid columns when the adapter failed to load. All three are fixed in code with unit tests; the numbers will be republished only after a fresh GPU re-run.
 
 What remains interpretable today — **rubric-based heuristic scores** on 50 engineering scenarios
@@ -256,7 +256,7 @@ Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo
 
 ---
 
-## 🛡️ Privacy, Anonymization & Ethical Use
+## Privacy, Anonymization & Ethical Use
 
 1. **Morphological Name Scrubbing**: Author display names are extracted and declined across all **6 Russian grammatical cases** (Им., Род., Дат., Вин., Твор., Предл.) to remove conversational references in text.
 2. **Community Node Anonymization**: All 11 channel titles and supergroup IDs are strictly anonymized as surrogate nodes (`community_node_01`..`11`).
@@ -266,7 +266,7 @@ Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo
 
 ---
 
-## 📖 Citation
+## Citation
 
 ```bibtex
 @misc{ricc2026,

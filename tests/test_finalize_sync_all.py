@@ -104,7 +104,7 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
             }
         ]
         md = build_lora_zoo_markdown(idx)
-        self.assertIn("# 🦁 Russian IT Community LoRA Model Zoo", md)
+        self.assertIn("# Russian IT Community LoRA Model Zoo", md)
         self.assertIn("**Официальный каталог 1", md)
         self.assertIn("| # | Идентификатор модели |", md)
         self.assertIn("alpha", md)
@@ -125,7 +125,7 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
 
     def test_quickstart_block_is_always_present(self):
         md = build_lora_zoo_markdown([])
-        self.assertIn("🚀 Быстрый старт", md)
+        self.assertIn("Быстрый старт", md)
         self.assertIn("PeftModel", md)
 
     def test_empty_index_still_renders_quickstart(self):
@@ -133,7 +133,7 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
         # now skips writing when the index is empty, but the renderer itself
         # must stay total — never raise on []).
         md = build_lora_zoo_markdown([])
-        self.assertIn("# 🦁 Russian IT Community LoRA Model Zoo", md)
+        self.assertIn("# Russian IT Community LoRA Model Zoo", md)
 
 
 class TestUploadDataset(unittest.TestCase):

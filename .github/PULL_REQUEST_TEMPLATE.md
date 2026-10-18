@@ -6,12 +6,12 @@ Provide a brief summary of the changes introduced by this pull request.
 
 ## Type of Change
 
-- [ ] 🐛 Bug fix (non-breaking change fixing an issue)
-- [ ] 🚀 New feature (non-breaking change adding functionality)
-- [ ] 🛡️ Security / PII fix (improving anonymization or privacy)
-- [ ] ⚡ Performance optimization (pipeline or DB speedup)
-- [ ] 📑 Documentation update (README, whitepapers, cards)
-- [ ] 🧪 Tests & validation
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Security / PII fix (improving anonymization or privacy)
+- [ ] Performance optimization (pipeline or DB speedup)
+- [ ] Documentation update (README, whitepapers, cards)
+- [ ] Tests & validation
 
 ---
 

@@ -51,6 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--split-weights`, benchmark reserve) with the held-out benchmarks and
   writes `reports/LORA_NIGHT_RUN_SUMMARY.md`.
 
+### Changed
+- **Decorative emoji removed** — console output, generated reports
+  (model card, zoo catalog, analytics), README, notebook, and GitHub
+  templates no longer carry decorative emoji. Legacy Windows consoles
+  (cp1251) rendered them as mojibake in run logs; marker semantics
+  (PASSED/FAILED, section titles) are unchanged and the consistency
+  tests now assert the plain headings.
+
 ### Fixed
 - **Only canonical reports are versioned** — the retracted-benchmark
   markdown report and the runtime run outputs (`LORA_NIGHT_RUN_SUMMARY.md`,
@@ -306,7 +314,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`src/rag/rag_pipeline.py` docstring**: stale `71k knowledge base` string updated to `325,690 chunks`, with a NOTE explaining the implementation is lexical (`str.contains` + keyword overlap), not semantic-embedding based. Embedding backend is TODO.
 - **`Modelfile`**: duplicate `PARAMETER stop ""` lines replaced with the actual Qwen stop tokens `<|im_end|>` and `<|endoftext|>`. Ollama previously would have used both empty stop tokens and never halted generation.
 - **`Dockerfile` missing ML stack**: `torch`, `transformers`, `accelerate`, `peft`, `trl`, `datasets`, `evaluate` were absent. The image built a Streamlit container that could not load any model. They are now installed in a separate `pip install --no-deps` layer so the build fails fast on resolution errors.
-- **`src/inference.py` silent adapter failure**: a missing or corrupted adapter no longer prints `⚠️ Could not load LoRA adapter` and continues with the base model. The function now raises `RuntimeError` with the exact failure path, and the Streamlit button / CLI surfaces a real error.
+- **`src/inference.py` silent adapter failure**: a missing or corrupted adapter no longer prints `Could not load LoRA adapter` and continues with the base model. The function now raises `RuntimeError` with the exact failure path, and the Streamlit button / CLI surfaces a real error.
 - **`src/inference.py` chat template fallback**: when `apply_chat_template` is unavailable, the previous fallback used a naked `f"{system_prompt}\n\nПользователь: {query}\nОтвет:"` — which Qwen / ChatGLM-family models treat as a single prompt with no role boundary. The fallback now uses the explicit `<|im_start|>system / user / assistant` delimiters.
 - **`src/lora/train_lora.py` silent truncation**: removed the hardcoded `if len(raw_dataset) > 1000: raw_dataset.select(range(1000))` — the script now trains on the full JSONL (use `--max-samples` if a smoke run is needed). Intermediate checkpoints are now written every `min(100, max_steps//5)` steps with `save_total_limit=3`, so a crash on step 99 / 100 no longer destroys the run.
 - **`src/pii/deep_anonymizer.py` Telegram forward header**: previously dropped the captured name and emitted a static `[PERSON_REDACTED]`, breaking cross-message identity. The replacement now feeds the captured name into the same `_get_or_create_pseudonym` used for authors, so the same forward header always maps to the same `Developer_XXXXX`.

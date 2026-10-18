@@ -117,7 +117,7 @@ class MasterDataPipeline:
         """Execute all pipeline stages in sequence."""
         start_time = time.time()
         pipeline_logger.stage_start("pipeline_start")
-        pipeline_logger.progress("🚀 STARTING MASTER DATA ENGINEERING & CURATION PIPELINE")
+        pipeline_logger.progress("STARTING MASTER DATA ENGINEERING & CURATION PIPELINE")
 
         # Stage 1: Ingestion
         with _stage_guard("ingestion"), time_stage("ingestion"):

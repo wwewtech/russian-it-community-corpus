@@ -644,7 +644,7 @@ def train_and_upload_single_model(
         # previously trained adapter. Phi-3.5's SiLUActivation crash did
         # exactly that before target detection was fixed.
         if force and out_dir.exists() and any(out_dir.iterdir()):
-            logger.info(f"♻️ --force: clearing existing adapter at {out_dir} for retraining")
+            logger.info(f"--force: clearing existing adapter at {out_dir} for retraining")
             shutil.rmtree(out_dir)
             out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -937,7 +937,7 @@ def update_run_report(results: list[dict[str, Any]], report_dir: Path = Path("re
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     md_lines = [
-        "# 🦁 LoRA Zoo Training Run Report",
+        "# LoRA Zoo Training Run Report",
         "",
         f"Generated {generated_at} · {len(merged)} adapters in the run log.",
         "",
@@ -1099,11 +1099,11 @@ def main() -> None:
                 f"⏱ avg {avg_sec / 60:.1f} min/model · ETA for {len(models) - idx} remaining: ~{eta_hours:.1f} h"
             )
 
-    logger.info(f"🎉 LoRA Zoo run finished: {len(models)} model(s) processed.")
+    logger.info(f"LoRA Zoo run finished: {len(models)} model(s) processed.")
 
     failed_ids = [str(r.get("id")) for r in results if r.get("status") == "FAILED"]
     if failed_ids:
-        logger.error(f"❌ {len(failed_ids)} model(s) failed: {', '.join(failed_ids)}")
+        logger.error(f"{len(failed_ids)} model(s) failed: {', '.join(failed_ids)}")
         raise SystemExit(1)
 
 
