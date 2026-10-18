@@ -37,7 +37,7 @@
 | 29 | `qwen1.5_0.5b_chat` | `Qwen/Qwen1.5-0.5B-Chat` | 16 | 32 | v_proj, k_proj, embed_tokens, o_proj, q_proj | 318.11 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen1.5_0.5b_chat) |
 | 30 | `qwen1.5_1.8b_chat` | `Qwen/Qwen1.5-1.8B-Chat` | 16 | 32 | v_proj, k_proj, embed_tokens, o_proj, q_proj | 626.92 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen1.5_1.8b_chat) |
 | 31 | `qwen2.5_0.5b_instruct` | `Qwen/Qwen2.5-0.5B-Instruct` | 16 | 32 | o_proj, q_proj, v_proj, k_proj | 8.27 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_0.5b_instruct) |
-| 32 | `qwen2.5_1.5b_instruct` | `Qwen/Qwen2.5-1.5B-Instruct` | 16 | 32 | o_proj, q_proj, v_proj, k_proj | 16.65 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_1.5b_instruct) |
+| 32 | `qwen2.5_1.5b_instruct` | `Qwen/Qwen2.5-1.5B-Instruct` | 16 | 32 | v_proj, embed_tokens, k_proj, q_proj, o_proj | 471.15 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_1.5b_instruct) |
 | 33 | `qwen2.5_3b_instruct` | `Qwen/Qwen2.5-3B-Instruct` | 16 | 32 | o_proj, q_proj, v_proj, k_proj | 28.16 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_3b_instruct) |
 | 34 | `qwen2.5_coder_0.5b_instruct` | `Qwen/Qwen2.5-Coder-0.5B-Instruct` | 16 | 32 | o_proj, q_proj, v_proj, k_proj | 8.27 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_0.5b_instruct) |
 | 35 | `qwen2.5_coder_1.5b_instruct` | `Qwen/Qwen2.5-Coder-1.5B-Instruct` | 16 | 32 | o_proj, q_proj, v_proj, k_proj | 16.65 MB | [link](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_1.5b_instruct) |
@@ -69,4 +69,3 @@
 2. Make sure `<new_slug>/adapter_config.json` exists (PEFT writes it on save).
 3. Run `python scripts/generate_lora_registry.py` to refresh `registry.json` and `SUMMARY.md`.
 4. Commit. CI will fail if `registry.json` is out of sync with the on-disk configs.
-

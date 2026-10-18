@@ -1,0 +1,39 @@
+{
+  "model_id": "phi_3.5_mini_instruct",
+  "base_model": "microsoft/Phi-3.5-mini-instruct",
+  "dataset": "dataset_output/jsonl/sft_openai_messages.jsonl",
+  "dataset_sha256": "20bccbc250e9709201d4bb052edadb85dc2824f11182035f50733174e2da4921",
+  "max_steps": 1000000,
+  "actual_steps": 3579,
+  "time_budget_hours": 5.4,
+  "max_seq_length": 512,
+  "max_samples": 200000,
+  "samples_used": 171354,
+  "dataset_total_dialogues": 173216,
+  "holdout_tail_dialogues": 1000,
+  "dialogues_seen_approx": 28632,
+  "corpus_coverage_pct": 16.53,
+  "eval_frac": 0.005,
+  "eval_samples": 256,
+  "seed": 42,
+  "lora": {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "o_proj",
+      "qkv_proj"
+    ]
+  },
+  "prompt_masking": true,
+  "train_loss": 2.4237,
+  "eval_loss": 1.5988,
+  "eval_perplexity": 4.95,
+  "tokens_seen_approx": 10261662,
+  "tokens_per_sec": 526.6,
+  "peak_vram_bytes": 9391732736,
+  "resumed_from": null,
+  "training_time_sec": 19485.1,
+  "generator": "src/lora/batch_train_zoo.py",
+  "generated_at_utc": "2026-10-18T01:24:48Z"
+}

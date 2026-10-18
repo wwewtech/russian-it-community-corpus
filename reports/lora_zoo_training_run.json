@@ -1,0 +1,43 @@
+{
+  "generated_at_utc": "2026-10-18T01:24:48Z",
+  "models": {
+    "phi_3.5_mini_instruct": {
+      "id": "phi_3.5_mini_instruct",
+      "model_name": "microsoft/Phi-3.5-mini-instruct",
+      "family": "Phi 3.5",
+      "params": "3.8B",
+      "description": "Microsoft Phi 3.5 mini with deep synthetic reasoning",
+      "status": "SUCCESS",
+      "train_loss": 2.4237,
+      "eval_loss": 1.5988,
+      "steps": 3579,
+      "planned_steps": 1000000,
+      "corpus_coverage_pct": 16.53,
+      "samples_used": 171354,
+      "tokens_seen_approx": 10261662,
+      "tokens_per_sec": 526.6,
+      "peak_vram_bytes": 9391732736,
+      "training_time_sec": 19485.1,
+      "adapter_dir": "lora_adapters\\phi_3.5_mini_instruct"
+    },
+    "qwen2.5_1.5b_instruct": {
+      "id": "qwen2.5_1.5b_instruct",
+      "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
+      "family": "Qwen 2.5",
+      "params": "1.5B",
+      "description": "Compact high-efficiency assistant for local edge deployment",
+      "status": "SUCCESS",
+      "train_loss": 1.9081,
+      "eval_loss": 1.9067,
+      "steps": 5818,
+      "planned_steps": 1000000,
+      "corpus_coverage_pct": 26.87,
+      "samples_used": 171354,
+      "tokens_seen_approx": 16244252,
+      "tokens_per_sec": 1220.2,
+      "peak_vram_bytes": 9553049600,
+      "training_time_sec": 13312.5,
+      "adapter_dir": "lora_adapters\\qwen2.5_1.5b_instruct"
+    }
+  }
+}

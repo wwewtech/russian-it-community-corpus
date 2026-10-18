@@ -31,10 +31,11 @@
   "rank_pattern": {},
   "revision": null,
   "target_modules": [
-    "o_proj",
-    "q_proj",
     "v_proj",
-    "k_proj"
+    "embed_tokens",
+    "k_proj",
+    "q_proj",
+    "o_proj"
   ],
   "target_parameters": null,
   "task_type": "CAUSAL_LM",
