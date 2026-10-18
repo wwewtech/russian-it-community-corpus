@@ -61,7 +61,8 @@ Thumbs.db
 reports/LORA_NIGHT_RUN_SUMMARY.md
 reports/LORA_ZOO_TRAINING_REPORT.md
 reports/OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md
-reports/benchmark_*.md
+reports/benchmark_*
+reports/lora_zoo_training_run.json
 
 # Local research helpers / launchers (contain local paths & HF token; not for VCS)
 _finish_research.bat
