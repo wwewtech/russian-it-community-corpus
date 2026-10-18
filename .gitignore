@@ -57,6 +57,12 @@ checkpoints/
 .DS_Store
 Thumbs.db
 
+# Runtime-generated run reports (rewritten by the training/benchmark scripts)
+reports/LORA_NIGHT_RUN_SUMMARY.md
+reports/LORA_ZOO_TRAINING_REPORT.md
+reports/OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md
+reports/benchmark_*.md
+
 # Local research helpers / launchers (contain local paths & HF token; not for VCS)
 _finish_research.bat
 _launch*.ps1
