@@ -58,6 +58,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (cp1251) rendered them as mojibake in run logs; marker semantics
   (PASSED/FAILED, section titles) are unchanged and the consistency
   tests now assert the plain headings.
+- **Flagged hygiene items resolved** — `scripts/upload_hf_cards.py`
+  removed: it was a second, unsanctioned Hub write path (no dry-run,
+  no single-entry-point guarantee) while ADR 0001 names
+  `scripts/sync_to_hub.py` the only sanctioned uploader; the model-card
+  upload moved into `src/exporter/finalize_sync_all.py`
+  (`upload_model_card`). Cross-module suites renamed
+  `test_coverage_boost{,2,3}.py` → `test_edge_paths.py`,
+  `test_branch_paths.py`, `test_scale_paths.py`. Per-adapter
+  `training_log.jsonl` is now a local-only runtime artifact (untracked,
+  ignored) and the regenerable `tokenizer.model` blob is ignored too.
 
 ### Fixed
 - **Only canonical reports are versioned** — the retracted-benchmark

@@ -1,4 +1,4 @@
-"""Coverage boost wave 3: engine scale branches, LDA failure, thread builder bursts, extractor branches, drift verdicts."""
+"""Scale, failure and burst branches: analyzer scaling, LDA failure, thread-builder bursts, conversation extractor, drift verdicts."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import unittest
 
 import pandas as pd
 
-from tests.test_coverage_boost import _msg
+from tests.test_edge_paths import _msg
 
 
 class TestEngineScaleBranches(unittest.TestCase):

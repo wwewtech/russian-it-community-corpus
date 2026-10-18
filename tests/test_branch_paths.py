@@ -1,4 +1,4 @@
-"""Coverage boost wave 2: engine branches, LDA, inference GPU/adapter paths, prefect tasks, drift verdicts."""
+"""Branch-coverage paths across analyzer engine, inference, loader, official benchmarks, report generator, SFT, validator, RAG, drift, metrics and prefect tasks."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from tests.test_coverage_boost import _msg
+from tests.test_edge_paths import _msg
 
 
 class TestEngineBranches(unittest.TestCase):
