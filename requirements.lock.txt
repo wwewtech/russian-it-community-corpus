@@ -7,7 +7,7 @@
 # Regenerate: python scripts/lock_requirements.py
 
 accelerate==1.15.0
-altair==5.5.0
+altair==6.3.0
 annotated-types==0.8.0
 anyio==4.15.1
 attrs==25.3.0
