@@ -106,7 +106,7 @@ def train_single_heavyweight(
         logger.info(f"⏩ Heavyweight adapter for {model_name} ({model_id}) already exists. Skipping...")
         return True
 
-    logger.info(f"=== 🏋️ Starting Heavyweight 4-bit QLoRA: {model_name} ({spec['params']}) ===")
+    logger.info(f"=== Starting Heavyweight 4-bit QLoRA: {model_name} ({spec['params']}) ===")
     set_deterministic_seed(seed)
     t0 = time.time()
 
@@ -247,7 +247,7 @@ def train_single_heavyweight(
 
         elapsed = time.time() - t0
         train_loss = float(trainer.state.log_history[-1]["train_loss"]) if trainer.state.log_history else None
-        logger.info(f"✅ Heavyweight {model_name} trained successfully in {elapsed:.1f}s!")
+        logger.info(f"Heavyweight {model_name} trained successfully in {elapsed:.1f}s!")
         record_lora_result(
             model=model_name,
             adapter=model_id,
@@ -271,7 +271,7 @@ def train_single_heavyweight(
     except Exception as e:
         typed = record_classified_ml_error(e, model_name=model_name, adapter_id=model_id)
         record_lora_result(model=model_name, adapter=model_id, status="failure")
-        logger.error(f"❌ Failed heavyweight training for {model_name}: {typed}")
+        logger.error(f"Failed heavyweight training for {model_name}: {typed}")
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -295,7 +295,7 @@ def main() -> None:
         logger.info(f"\n--- [{idx}/{len(HEAVYWEIGHT_5_MODELS)}] {spec['family']} ({spec['params']}) ---")
         train_single_heavyweight(spec, dataset, output_dir, steps=args.steps, seed=args.seed)
 
-    logger.info("🎉 All 5 Heavyweight SOTA models processed!")
+    logger.info("All 5 Heavyweight SOTA models processed!")
 
 
 if __name__ == "__main__":

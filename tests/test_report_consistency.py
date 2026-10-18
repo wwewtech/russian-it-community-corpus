@@ -95,9 +95,9 @@ def verify_hf_model_card(card_text: str, zoo_index: dict) -> None:
     flagship_count_expected = len(flagships)
     domain_count_expected = total_expected - flagship_count_expected
 
-    # 1. Header count: e.g. "## 📚 Full Catalog (58 Adapters)"
-    m_header = re.search(r"##\s*📚\s*Full\s+Catalog\s*\((\d+)\s+Adapters\)", card_text)
-    assert m_header is not None, "HF_MODEL_CARD.md missing '## 📚 Full Catalog (<N> Adapters)' header"
+    # 1. Header count: e.g. "## Full Catalog (58 Adapters)"
+    m_header = re.search(r"##\s*Full\s+Catalog\s*\((\d+)\s+Adapters\)", card_text)
+    assert m_header is not None, "HF_MODEL_CARD.md missing '## Full Catalog (<N> Adapters)' header"
     header_count = int(m_header.group(1))
     assert header_count == total_expected, (
         f"HF_MODEL_CARD.md header claims {header_count} adapters, expected {total_expected}"
@@ -149,9 +149,9 @@ def verify_lora_model_zoo(zoo_text: str, zoo_index: dict) -> None:
     flagship_count_expected = len(flagships)
     domain_count_expected = total_expected - flagship_count_expected
 
-    # 1. Header count: e.g. "## 📊 Полный каталог адаптеров (58 моделей)"
-    m_header = re.search(r"##\s*📊\s*Полный\s+каталог\s+адаптеров\s*\((\d+)\s+моделей\)", zoo_text)
-    assert m_header is not None, "LORA_MODEL_ZOO.md missing '## 📊 Полный каталог адаптеров (<N> моделей)' header"
+    # 1. Header count: e.g. "## Полный каталог адаптеров (58 моделей)"
+    m_header = re.search(r"##\s*Полный\s+каталог\s+адаптеров\s*\((\d+)\s+моделей\)", zoo_text)
+    assert m_header is not None, "LORA_MODEL_ZOO.md missing '## Полный каталог адаптеров (<N> моделей)' header"
     header_count = int(m_header.group(1))
     assert header_count == total_expected, (
         f"LORA_MODEL_ZOO.md header claims {header_count} models, expected {total_expected}"

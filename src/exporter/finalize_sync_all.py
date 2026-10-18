@@ -79,7 +79,7 @@ def build_lora_zoo_markdown(
     arguments or derived from the ``zoo_index`` list.
     """
     lines: list[str] = [
-        "# 🦁 Russian IT Community LoRA Model Zoo",
+        "# Russian IT Community LoRA Model Zoo",
         "",
         f"**Официальный каталог {len(zoo_index)} предварительно обученных LoRA-адаптеров**, "
         f"дообученных на корпусе **RICC ({corpus_size_label})** для русскоязычного IT-дискурса, "
@@ -89,7 +89,7 @@ def build_lora_zoo_markdown(
         "",
         "---",
         "",
-        "## 📊 Доступные LoRA-адаптеры",
+        "## Доступные LoRA-адаптеры",
         "",
         "| # | Идентификатор модели | Размер весов | Каталог адаптера | Hugging Face Hub |",
         "| :---: | :--- | :---: | :--- | :--- |",
@@ -105,7 +105,7 @@ def build_lora_zoo_markdown(
             "",
             "---",
             "",
-            "## 🚀 Быстрый старт: Запуск любого адаптера в 3 строки кода",
+            "## Быстрый старт: Запуск любого адаптера в 3 строки кода",
             "",
             "```python",
             "from peft import PeftModel",

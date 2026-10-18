@@ -1107,7 +1107,7 @@ def evaluate_enterprise_production_matrix(
         json.dump(output_data, f, ensure_ascii=False, indent=2)
 
     md_lines = [
-        "# 📊 Отчет об оценке качества на 50 доменных IT-сценариях",
+        "# Отчет об оценке качества на 50 доменных IT-сценариях",
         f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **Устройство:** `{output_data['metadata']['gpu']}`",
         f"**Дата прогона:** `{output_data['metadata']['timestamp']}` | **Количество сценариев:** `{len(detailed_records)}`",
         HEURISTIC_DISCLAIMER_MD,

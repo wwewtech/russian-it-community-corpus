@@ -25,9 +25,9 @@
 </div>
 
 > [!TIP]
-> **🤗 Official Hugging Face Hub Integration**:
-> - 📦 **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2,816,434 clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
-> - 🦁 **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 adapters on Hugging Face Hub (55 domain adapters + 3 flagship 7B–8B QLoRA; 56 adapters cloned locally in `lora_adapters/`).
+> **Official Hugging Face Hub Integration**:
+> - **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2,816,434 clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
+> - **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 adapters on Hugging Face Hub (55 domain adapters + 3 flagship 7B–8B QLoRA; 56 adapters cloned locally in `lora_adapters/`).
 >
 > ```python
 > from datasets import load_dataset
@@ -40,7 +40,7 @@
 
 **RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
 
-> **⚠️ Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Earlier pipeline runs diverged from the published snapshot by up to ~14%; the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
+> **Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Earlier pipeline runs diverged from the published snapshot by up to ~14%; the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval.
 
@@ -97,27 +97,27 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 
 ---
 
-## 🔗 Official Datasets & Direct Access Links
+## Official Datasets & Direct Access Links
 
 The corpus and trained adapters are available both remotely on **Hugging Face Hub** and locally in `dataset_output/`:
 
-### 🤗 Hugging Face Hub Repositories:
-- 📦 **Dataset Hub (Full Corpus, SFT, RAG)**:
-  👉 [**`https://huggingface.co/datasets/wwewtech/russian-it-community-corpus`**](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
-  - 📄 [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows (2,816,434 records, 189 MB)
-  - 💬 [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171,520 multi-turn dialogues (132 MB)
-  - 🔍 [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
-  - ⚙️ [Heuristic Benchmark Evaluation (JSON)](reports/heuristic_benchmark_eval.json) — 50-scenario matrix of **rubric-based heuristics** (concept-overlap + AST-parseability), not capability measurements
+### Hugging Face Hub Repositories:
+- **Dataset Hub (Full Corpus, SFT, RAG)**:
+  [**`https://huggingface.co/datasets/wwewtech/russian-it-community-corpus`**](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
+  - [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows (2,816,434 records, 189 MB)
+  - [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171,520 multi-turn dialogues (132 MB)
+  - [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
+  - [Heuristic Benchmark Evaluation (JSON)](reports/heuristic_benchmark_eval.json) — 50-scenario matrix of **rubric-based heuristics** (concept-overlap + AST-parseability), not capability measurements
 
-- 🦁 **Model Hub (58 LoRA Adapters on Hub / 56 Local Adapters)**:
-  👉 [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
-  - 🥇 [Flagship Qwen 2.5 Coder 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_qwen2.5_coder_7b)
-  - 🥈 [Flagship DeepSeek R1 Distill 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_deepseek_r1_7b)
-  - 🥉 [Flagship Meta LLaMA 3.1 8B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_llama3.1_8b)
+- **Model Hub (58 LoRA Adapters on Hub / 56 Local Adapters)**:
+  [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
+  - [Flagship Qwen 2.5 Coder 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_qwen2.5_coder_7b)
+  - [Flagship DeepSeek R1 Distill 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_deepseek_r1_7b)
+  - [Flagship Meta LLaMA 3.1 8B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_llama3.1_8b)
 
 ---
 
-## 📂 Local Datasets and Formats
+## Local Datasets and Formats
 
 All datasets are automatically generated and saved in `dataset_output/`. Exact artifact identity — sha256, byte size, row count and schema — is snapshotted in [`reports/dataset_manifest.json`](reports/dataset_manifest.json) (`python -m src.validation.artifact_manifest create|verify`); the SLO gate re-verifies it on every release check. The Hugging Face Hub hosts a curated snapshot that may differ from the local working copy, so both are listed:
 

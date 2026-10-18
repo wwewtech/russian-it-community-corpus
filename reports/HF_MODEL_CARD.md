@@ -14,13 +14,13 @@ tags:
 - russian-nlp
 ---
 
-# 🦁 Russian IT Community LoRA Model Zoo
+# Russian IT Community LoRA Model Zoo
 
 **58 pre-trained adapters** (55 domain adapters + 3 flagship 7B–8B QLoRA), fine-tuned on the RICC corpus (2.82M messages, 171.5k curated SFT dialogues) for Russian-language IT discourse: backend, DevOps, AI/ML, infrastructure.
 
 > Catalog regenerated from the Hub file tree on 2026-10-17. Source of truth: the `siblings` listing of this repository.
 
-## ⚡ Quick Start: 3-Line Inference
+## Quick Start: 3-Line Inference
 
 ```python
 import torch
@@ -42,7 +42,7 @@ outputs = model.generate(**inputs, max_new_tokens=256)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
 
-## 📚 Full Catalog (58 Adapters)
+## Full Catalog (58 Adapters)
 
 | # | Adapter Subfolder | Base Model | Hub Link |
 | :---: | :--- | :--- | :--- |
@@ -105,11 +105,11 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 | 57 | `vikhr_qwen_2.5_0.5b` | `Vikhrmodels/Vikhr-Qwen-2.5-0.5B-Instruct` | [`vikhr_qwen_2.5_0.5b/`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_qwen_2.5_0.5b) |
 | 58 | `vikhr_qwen_2.5_1.5b` | `Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct` | [`vikhr_qwen_2.5_1.5b/`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_qwen_2.5_1.5b) |
 
-## 🥇 Flagship QLoRA Models (7B–8B)
+## Flagship QLoRA Models (7B–8B)
 
 Full-precision copies also live under [`models/`](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models): `models/heavyweight_qwen2.5_coder_7b`, `models/heavyweight_deepseek_r1_7b`, `models/heavyweight_llama3.1_8b`.
 
-## 📓 Training Data & Evaluation Status
+## Training Data & Evaluation Status
 
 - Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) (171,520 multi-turn dialogues).
 - Training regime: published adapters are domain-adaptation pilot checkpoints (50–100 training steps on sampled domain batches) demonstrating PEFT compatibility and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints over the entire corpus.

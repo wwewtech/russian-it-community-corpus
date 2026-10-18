@@ -61,14 +61,14 @@ class ReportGenerator:
         noise = self.data.get("noise_and_quality", {})
 
         md_lines = []
-        md_lines.append("# 🔬 АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ")
+        md_lines.append("# АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ")
         md_lines.append("## Russian IT Community Multi-Domain Conversational Corpus (2017–2026)\n")
         md_lines.append(
             f"> **Дата генерации:** `{self.data.get('report_metadata', {}).get('generated_at', '')}` | **Версия аналитического модуля:** `1.0.0-OpenSource`\n"
         )
 
         # 1. Executive Summary & Quality Index
-        md_lines.append("## 🏆 1. ОЦЕНКА СТРУКТУРНОГО КАЧЕСТВА ДЛЯ ОБУЧЕНИЯ LLM")
+        md_lines.append("## 1. ОЦЕНКА СТРУКТУРНОГО КАЧЕСТВА ДЛЯ ОБУЧЕНИЯ LLM")
         md_lines.append(
             f"**Итоговый индекс качества:** `{val.get('total_score', 0)} / {val.get('max_score', 100)}` | **Категория:** **{val.get('quality_tier', '')}**"
         )
@@ -78,27 +78,27 @@ class ReportGenerator:
         md_lines.append("| :--- | :--- | :--- | :--- |")
         breakdown = val.get("score_breakdown", {})
         md_lines.append(
-            f"| **Объём данных (Volume)** | {breakdown.get('volume_score', 0)} | 25 | {'🟢 Высокий' if breakdown.get('volume_score', 0) >= 20 else '🟡 Базовый'} |"
+            f"| **Объём данных (Volume)** | {breakdown.get('volume_score', 0)} | 25 | {'Высокий' if breakdown.get('volume_score', 0) >= 20 else 'Базовый'} |"
         )
         md_lines.append(
-            f"| **Разнообразие авторов (Diversity)** | {breakdown.get('author_diversity_score', 0)} | 20 | {'🟢 Высокое' if breakdown.get('author_diversity_score', 0) >= 15 else '🟡 Базовое'} |"
+            f"| **Разнообразие авторов (Diversity)** | {breakdown.get('author_diversity_score', 0)} | 20 | {'Высокое' if breakdown.get('author_diversity_score', 0) >= 15 else 'Базовое'} |"
         )
         md_lines.append(
-            f"| **Техническая плотность (Domain Density)** | {breakdown.get('technical_density_score', 0)} | 20 | {'🟢 Высокая' if breakdown.get('technical_density_score', 0) >= 15 else '🟡 Базовая'} |"
+            f"| **Техническая плотность (Domain Density)** | {breakdown.get('technical_density_score', 0)} | 20 | {'Высокая' if breakdown.get('technical_density_score', 0) >= 15 else 'Базовая'} |"
         )
         md_lines.append(
-            f"| **Диалоговая связность (Q&A Ratio)** | {breakdown.get('dialogue_continuity_score', 0)} | 15 | 🟢 Норма |"
+            f"| **Диалоговая связность (Q&A Ratio)** | {breakdown.get('dialogue_continuity_score', 0)} | 15 | Норма |"
         )
         md_lines.append(
-            f"| **Лексическое разнообразие (Shannon Diversity)** | {breakdown.get('lexical_diversity_score', 0)} | 10 | 🟢 Норма |"
+            f"| **Лексическое разнообразие (Shannon Diversity)** | {breakdown.get('lexical_diversity_score', 0)} | 10 | Норма |"
         )
         md_lines.append(
-            f"| **Очистка PII (Heuristic / NER Scrubbing)** | {breakdown.get('pii_compliance_score', 0)} | 10 | 🟢 Обработано |"
+            f"| **Очистка PII (Heuristic / NER Scrubbing)** | {breakdown.get('pii_compliance_score', 0)} | 10 | Обработано |"
         )
         md_lines.append("\n---\n")
 
         # 2. General Statistics
-        md_lines.append("## 📊 2. ОБЩАЯ СТАТИСТИКА КОРПУСА")
+        md_lines.append("## 2. ОБЩАЯ СТАТИСТИКА КОРПУСА")
         md_lines.append(f"- **Всего сообщений:** `{v.get('total_messages', 0):,}`")
         md_lines.append(f"- **Уникальных участников:** `{v.get('unique_authors', 0):,}`")
         md_lines.append(
@@ -134,7 +134,7 @@ class ReportGenerator:
         md_lines.append("\n---\n")
 
         # 3. Domain Breakdown
-        md_lines.append("## 🧠 3. ТЕМАТИЧЕСКАЯ СТРУКТУРА И ДОМЕННОЕ РАСПРЕДЕЛЕНИЕ")
+        md_lines.append("## 3. ТЕМАТИЧЕСКАЯ СТРУКТУРА И ДОМЕННОЕ РАСПРЕДЕЛЕНИЕ")
         md_lines.append("| Домен / Направление | Сообщений | Доля | Визуальное распределение |")
         md_lines.append("| :--- | :--- | :--- | :--- |")
         domain_dist = s.get("domain_message_distribution", {})
@@ -173,7 +173,7 @@ class ReportGenerator:
         md_lines.append("\n---\n")
 
         # 5. Russian IT Slang & Key Entities
-        md_lines.append("## 💬 5. АУТЕНТИЧНЫЙ IT-СЛЕНГ И ТЕХНИЧЕСКИЕ ТЕРМИНЫ")
+        md_lines.append("## 5. АУТЕНТИЧНЫЙ IT-СЛЕНГ И ТЕХНИЧЕСКИЕ ТЕРМИНЫ")
         md_lines.append("Корпус содержит глубокий пласт реального русскоязычного инженерного сленга:\n")
         md_lines.append("| Термин | Встречаемость | Категория контекста |")
         md_lines.append("| :--- | :--- | :--- |")
@@ -182,7 +182,7 @@ class ReportGenerator:
         md_lines.append("\n---\n")
 
         # 6. Social Graph & Top Influencers
-        md_lines.append("## 🕸️ 6. СОЦИАЛЬНЫЙ ГРАФ И ЭКСПЕРТЫ СООБЩЕСТВА")
+        md_lines.append("## 6. СОЦИАЛЬНЫЙ ГРАФ И ЭКСПЕРТЫ СООБЩЕСТВА")
         md_lines.append(f"- **Узлов в сети:** `{net.get('total_nodes', 0):,}`")
         md_lines.append(f"- **Связей (Reply Directed Edges):** `{net.get('total_edges', 0):,}`")
         md_lines.append(f"- **Всего зафиксировано взаимодействий:** `{net.get('total_interactions', 0):,}`")
@@ -196,7 +196,7 @@ class ReportGenerator:
         md_lines.append("\n---\n")
 
         # 7. LDA Topic Modeling
-        md_lines.append("## 🧠 7. СЕМАНТИЧЕСКИЕ ТЕМАТИЧЕСКИЕ КЛАСТЕРЫ (LDA)")
+        md_lines.append("## 7. СЕМАНТИЧЕСКИЕ ТЕМАТИЧЕСКИЕ КЛАСТЕРЫ (LDA)")
         if lda:
             for top in lda:
                 md_lines.append(f"### {top.get('label')}")
@@ -206,7 +206,7 @@ class ReportGenerator:
         md_lines.append("\n---\n")
 
         # 8. Sentiment & Noise
-        md_lines.append("## 🔊 8. ТОНАЛЬНОСТЬ, ВОПРОСЫ И УРОВЕНЬ ШУМА")
+        md_lines.append("## 8. ТОНАЛЬНОСТЬ, ВОПРОСЫ И УРОВЕНЬ ШУМА")
         sent_stat = sent.get("sentiment", {})
         md_lines.append(f"- **Средний эмоциональный балл:** `{sent_stat.get('average', 0):.3f}`")
         md_lines.append(
@@ -245,9 +245,9 @@ class ReportGenerator:
         s = self.data.get("domain_slang_analytics", {})
 
         print("\n" + "=" * 80)
-        print("🔬 АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ (RICC)")
+        print("АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ (RICC)")
         print("=" * 80)
-        print("\n📊 ОБЩАЯ СТАТИСТИКА")
+        print("\nОБЩАЯ СТАТИСТИКА")
         print(f"   Сообщений: {v.get('total_messages', 0):,}")
         print(f"   Участников: {v.get('unique_authors', 0):,}")
         print(
@@ -269,10 +269,10 @@ class ReportGenerator:
             bar = "█" * int((cnt / max_h) * 25)
             print(f"     {h_str}: {bar:<25} {cnt:>6,}")
 
-        print("\n🧠 ТЕМАТИЧЕСКАЯ СТРУКТУРА (ТОП ДОМЕНОВ):")
+        print("\nТЕМАТИЧЕСКАЯ СТРУКТУРА (ТОП ДОМЕНОВ):")
         for dom, info in list(s.get("domain_message_distribution", {}).items())[:6]:
             print(f"   • {dom:<25}: {info.get('count', 0):>6,} ({info.get('percentage', 0):.1f}%)")
 
-        print("\n🏆 ИНДЕКС СТРУКТУРНОГО КАЧЕСТВА ДЛЯ LLM")
+        print("\nИНДЕКС СТРУКТУРНОГО КАЧЕСТВА ДЛЯ LLM")
         print(f"   Балл: {val.get('total_score', 0)} из 100 ({val.get('quality_tier', '')})")
         print("=" * 80 + "\n")

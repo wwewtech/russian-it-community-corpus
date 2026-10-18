@@ -108,18 +108,18 @@ def main() -> None:
         from src.errors import PipelineError
         from src.pipeline import MasterDataPipeline
 
-        print("🚀 Starting full data curation pipeline...")
+        print("Starting full data curation pipeline...")
         pipeline = MasterDataPipeline()
         if hasattr(args, "skip_ner") and args.skip_ner:
             pipeline.anonymizer.ner_scrubber = None
         try:
             summary = pipeline.run_all()
         except PipelineError as exc:
-            print(f"❌ Pipeline failed at stage '{exc.stage}': {exc}", file=sys.stderr)
+            print(f"Pipeline failed at stage '{exc.stage}': {exc}", file=sys.stderr)
             sys.exit(1)
         if not summary.get("validation_passed", False):
             print(
-                "❌ Dataset validation FAILED after the pipeline run — see reports/validation_results.json",
+                "Dataset validation FAILED after the pipeline run — see reports/validation_results.json",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -129,13 +129,13 @@ def main() -> None:
         from src.analytics.report_generator import ReportGenerator
         from src.ingestion.schema import CleanedMessage
 
-        print("🔬 Loading messages for analytical profiling...")
+        print("Loading messages for analytical profiling...")
         clean_parquet_path = PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
 
         if clean_parquet_path.exists():
             import pandas as pd
 
-            print(f"📂 Loading pre-cleaned dataset from {clean_parquet_path}...")
+            print(f"Loading pre-cleaned dataset from {clean_parquet_path}...")
             df = pd.read_parquet(clean_parquet_path)
             cleaned = []
             for row in df.itertuples(index=False):
@@ -158,7 +158,7 @@ def main() -> None:
                         thread_id=int(row.thread_id) if pd.notna(row.thread_id) else None,
                     )
                 )
-            print(f"✅ Loaded {len(cleaned):,} cleaned and tagged messages from Parquet.")
+            print(f"Loaded {len(cleaned):,} cleaned and tagged messages from Parquet.")
         else:
             from src.ingestion.loader import merge_multiple_exports
 
@@ -188,28 +188,28 @@ def main() -> None:
     elif args.command == "validate":
         from src.validation.validator import DatasetValidator
 
-        print("🔍 Validating datasets in output directory...")
+        print("Validating datasets in output directory...")
         validator = DatasetValidator(OUTPUT_DIR)
         res = validator.validate_all()
         print(json.dumps(res, indent=2, ensure_ascii=False))
         if not res.get("overall_passed", False):
             # docs/cli/commands.md promises a non-zero exit on failed
             # validation so CI/scripts can gate on it.
-            print("❌ Validation FAILED (overall_passed=false)", file=sys.stderr)
+            print("Validation FAILED (overall_passed=false)", file=sys.stderr)
             sys.exit(1)
 
     elif args.command == "benchmark":
         from src.validation.benchmark import BenchmarkRunner
 
-        print("🎯 Generating domain evaluation benchmark...")
+        print("Generating domain evaluation benchmark...")
         bench = BenchmarkRunner()
         out = bench.export_benchmark_file(REPORTS_DIR / "domain_benchmark_100.json")
-        print(f"✅ Benchmark saved to {out} (Total questions: {len(bench.questions)})")
+        print(f"Benchmark saved to {out} (Total questions: {len(bench.questions)})")
 
     elif args.command == "audit-prob":
         from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
 
-        print("🛡️ Running stratified probabilistic PII audit...")
+        print("Running stratified probabilistic PII audit...")
         auditor = ProbabilisticPIIAuditor(args.parquet)
         report = auditor.run_audit(
             sample_size=args.sample_size,
@@ -228,10 +228,10 @@ def main() -> None:
 
         from src.monitoring.drift import DatasetDriftMonitor
 
-        print("📊 Running dataset drift monitoring...")
+        print("Running dataset drift monitoring...")
         if not args.reference.exists() or not args.current.exists():
             print(
-                f"❌ Snapshots missing: reference={args.reference.exists()} current={args.current.exists()}",
+                f"Snapshots missing: reference={args.reference.exists()} current={args.current.exists()}",
                 file=sys.stderr,
             )
             print("Refusing to emit a vacuous drift report (fail-closed).", file=sys.stderr)
@@ -241,7 +241,7 @@ def main() -> None:
         except OSError:
             same_snapshot = args.reference == args.current
         if same_snapshot:
-            print("⚠️ reference == current: self-comparison verdict is informational, not a real drift check.")
+            print("reference == current: self-comparison verdict is informational, not a real drift check.")
         monitor = DatasetDriftMonitor(pd.read_parquet(args.reference), pd.read_parquet(args.current))
         report = monitor.run()
         out = Path(args.output)
@@ -254,7 +254,7 @@ def main() -> None:
     elif args.command == "orchestrate":
         from src.orchestration.prefect_flow import run_flow
 
-        print("🔄 Executing Prefect orchestration flow...")
+        print("Executing Prefect orchestration flow...")
         results = run_flow(run_pipeline=not args.skip_pipeline, audit_sample_size=args.sample_size)
         print(json.dumps(results, indent=2, ensure_ascii=False, default=str))
 
@@ -272,11 +272,11 @@ def main() -> None:
 
         kb_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
         if not kb_path.exists():
-            print("❌ RAG knowledge base not found at dataset_output/parquet/rag_knowledge_base.parquet")
+            print("RAG knowledge base not found at dataset_output/parquet/rag_knowledge_base.parquet")
             sys.exit(1)
         rag = LocalRAGPipeline(kb_path)
         hits = rag.search(args.query, top_k=args.top_k)
-        print(f"\n🔍 Top {len(hits)} RAG Results for: '{args.query}'\n" + "=" * 60)
+        print(f"\nTop {len(hits)} RAG Results for: '{args.query}'\n" + "=" * 60)
         for i, hit in enumerate(hits, 1):
             print(f"[{i}] Score: {hit['score']:.3f} | Domain: {hit.get('domain', 'general')}")
             print(f"    {hit['content']}\n" + "-" * 60)

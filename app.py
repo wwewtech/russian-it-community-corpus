@@ -35,7 +35,6 @@ from src.observability import maybe_start_metrics_server
 # Configure Streamlit page
 st.set_page_config(
     page_title="Russian IT Community Data Studio",
-    page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -79,14 +78,14 @@ def load_dpo_sample(max_rows: int = 200) -> list[dict]:
 
 
 # Navigation Constants
-NAV_MAIN = "📊 Главная и метрики"
-NAV_MESSAGES = "🔍 Просмотр сообщений"
-NAV_SFT_DPO = "💬 Диалоговая студия SFT и DPO"
-NAV_RAG = "🧠 База знаний RAG"
-NAV_PII = "🛡️ Проверка деидентификации"
-NAV_RADAR = "📡 Технологический радар"
-NAV_BENCHMARK = "🎯 Доменный бенчмарк"
-NAV_DOCS = "📄 Документация и отчёты"
+NAV_MAIN = "Главная и метрики"
+NAV_MESSAGES = "Просмотр сообщений"
+NAV_SFT_DPO = "Диалоговая студия SFT и DPO"
+NAV_RAG = "База знаний RAG"
+NAV_PII = "Проверка деидентификации"
+NAV_RADAR = "Технологический радар"
+NAV_BENCHMARK = "Доменный бенчмарк"
+NAV_DOCS = "Документация и отчёты"
 
 # Sidebar Header
 st.sidebar.title("RICC Studio")
@@ -111,13 +110,13 @@ nav = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.info(
     "**Метрики RICC:**\n"
-    "- 📩 **2 816 434** чистых сообщений\n"
-    "- 👤 **210 890** участников\n"
-    "- 🧠 **171 520** SFT диалогов\n"
-    "- 📚 **325 690** RAG чанков\n"
-    "- ⚡ **57 501** DPO пар\n"
-    "- 🦁 **56** LoRA адаптеров\n"
-    "- 🔒 **11 community nodes** анонимизировано"
+    "- **2 816 434** чистых сообщений\n"
+    "- **210 890** участников\n"
+    "- **171 520** SFT диалогов\n"
+    "- **325 690** RAG чанков\n"
+    "- **57 501** DPO пар\n"
+    "- **56** LoRA адаптеров\n"
+    "- **11 community nodes** анонимизировано"
 )
 
 # =============================================================================
@@ -142,7 +141,7 @@ if nav == NAV_MAIN:
 
     col_a, col_b = st.columns(2)
     with col_a:
-        st.subheader("📦 Экспортированные ML датасеты")
+        st.subheader("Экспортированные ML датасеты")
         # Counts below mirror reports/validation_results.json (valid_lines per
         # JSONL file, rows per parquet), NOT the README "reported volume"
         # table. Any change here must keep tests/test_metrics_consistency.py
@@ -161,7 +160,7 @@ if nav == NAV_MAIN:
         )
 
     with col_b:
-        st.subheader("🛡️ Аудит безопасности и комплаенса")
+        st.subheader("Аудит безопасности и комплаенса")
         val_data = load_json_file(REPORTS_DIR / "validation_results.json")
         # The red-team suite writes reports/pii_validation_report.json
         # (see Makefile `audit` target and src/validation/pii_redteam.py).
@@ -179,9 +178,9 @@ if nav == NAV_MAIN:
         adv_passed, adv_total, adv_rate = adversarial_summary(cert_data)
 
         if is_passed:
-            st.success("✅ **Zero-PII Verification Status: PASSED**")
+            st.success("**Zero-PII Verification Status: PASSED**")
         else:
-            st.error(f"⚠️ **Zero-PII Verification Status: AUDIT REQUIRED ({total_leaks} leaks detected)**")
+            st.error(f"**Zero-PII Verification Status: AUDIT REQUIRED ({total_leaks} leaks detected)**")
 
         st.write(f"- Проверено случайных сообщений: **{sampled_count:,}**")
         st.write(f"- Утечек телефонов: **{breakdown['phones']}**")
@@ -189,7 +188,7 @@ if nav == NAV_MAIN:
         st.write(f"- Утечек API-токенов/ключей: **{breakdown['api_keys']}**")
         st.write(f"- Утечек криптокошельков: **{breakdown['crypto_wallets']}**")
         if adv_total == 0:
-            st.warning("⚠️ Adversarial-отчёт отсутствует — стресс-тесты деидентификации не подтверждены.")
+            st.warning("Adversarial-отчёт отсутствует — стресс-тесты деидентификации не подтверждены.")
         else:
             st.write(f"- Стресс-тесты деидентификации (NER + падежи): **{adv_passed}/{adv_total} ({adv_rate:.1f}%)**")
 
@@ -197,7 +196,7 @@ if nav == NAV_MAIN:
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)
 # =============================================================================
 elif nav == NAV_MESSAGES:
-    st.title("🔍 Исследователь корпуса сообщений (2.81M Messages)")
+    st.title("Исследователь корпуса сообщений (2.81M Messages)")
 
     df = load_parquet_sample("full_clean_messages.parquet", max_rows=10000)
 
@@ -235,9 +234,9 @@ elif nav == NAV_MESSAGES:
 # 3. SFT & DPO ДИАЛОГОВАЯ СТУДИЯ
 # =============================================================================
 elif nav == NAV_SFT_DPO:
-    st.title("💬 SFT & DPO Диалоговая Студия")
+    st.title("SFT & DPO Диалоговая Студия")
 
-    tab1, tab2 = st.tabs(["🔥 Multi-Turn SFT Диалоги (171,520)", "⚖️ DPO Пары Предпочтений (57,501)"])
+    tab1, tab2 = st.tabs(["Multi-Turn SFT Диалоги (171,520)", "DPO Пары Предпочтений (57,501)"])
 
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)
@@ -256,13 +255,13 @@ elif nav == NAV_SFT_DPO:
                     "Выберите диалог для просмотра:",
                     range(len(filtered_sft)),
                     format_func=lambda i: (
-                        f"Диалог #{filtered_sft.iloc[i]['thread_id']} | Домен: {filtered_sft.iloc[i]['topic_domain']} | Качество: {filtered_sft.iloc[i]['quality_score']}★ | Ходов: {filtered_sft.iloc[i]['turn_count']}"
+                        f"Диалог #{filtered_sft.iloc[i]['thread_id']} | Домен: {filtered_sft.iloc[i]['topic_domain']} | Качество: {filtered_sft.iloc[i]['quality_score']}| Ходов: {filtered_sft.iloc[i]['turn_count']}"
                     ),
                 )
 
                 selected_dialogue = filtered_sft.iloc[selected_idx]
                 st.markdown(
-                    f"### 🧵 Ветка диалога #{selected_dialogue['thread_id']} (Теги: `{', '.join(selected_dialogue['topic_tags'])}`)"
+                    f"### Ветка диалога #{selected_dialogue['thread_id']} (Теги: `{', '.join(selected_dialogue['topic_tags'])}`)"
                 )
 
                 for turn in selected_dialogue["messages"]:
@@ -271,11 +270,11 @@ elif nav == NAV_SFT_DPO:
                     content = turn.get("content", "")
 
                     if role == "user":
-                        with st.chat_message("user", avatar="👤"):
+                        with st.chat_message("user", avatar=""):
                             st.markdown(f"**{author} (User):**")
                             st.write(content)
                     else:
-                        with st.chat_message("assistant", avatar="🤖"):
+                        with st.chat_message("assistant", avatar=""):
                             st.markdown(f"**{author} (Assistant / Expert):**")
                             st.write(content)
 
@@ -292,21 +291,21 @@ elif nav == NAV_SFT_DPO:
             )
 
             pair = dpo_samples[dpo_idx]
-            st.markdown(f"#### ❓ Промпт / Вопрос пользователя:\n> {pair['prompt']}")
+            st.markdown(f"#### Промпт / Вопрос пользователя:\n> {pair['prompt']}")
 
             col_chosen, col_rejected = st.columns(2)
             with col_chosen:
-                st.success(f"🟢 **CHOSEN (Выбранный ответ, Скор: {pair.get('chosen_quality', 'N/A')})**")
+                st.success(f"**CHOSEN (Выбранный ответ, Скор: {pair.get('chosen_quality', 'N/A')})**")
                 st.write(pair["chosen"])
             with col_rejected:
-                st.error(f"🔴 **REJECTED (Отклоненный ответ, Скор: {pair.get('rejected_quality', 'N/A')})**")
+                st.error(f"**REJECTED (Отклоненный ответ, Скор: {pair.get('rejected_quality', 'N/A')})**")
                 st.write(pair["rejected"])
 
 # =============================================================================
 # 4. БАЗА ЗНАНИЙ RAG И СЕМАНТИЧЕСКИЙ ПОИСК
 # =============================================================================
 elif nav == NAV_RAG:
-    st.title("🧠 Корпоративная база знаний RAG (325,690 Чанков)")
+    st.title("Корпоративная база знаний RAG (325,690 Чанков)")
     st.markdown("Структурированный архив практического опыта IT-сообщества с поддержкой семантического поиска.")
 
     rag_df = load_parquet_sample("rag_knowledge_base.parquet", max_rows=5000)
@@ -325,7 +324,7 @@ elif nav == NAV_RAG:
 
             for _idx, row in matches.head(5).iterrows():
                 with st.expander(
-                    f"📄 {row['title']} | Домен: {row['topic_domain']} | Дата: {row['date_range']}", expanded=True
+                    f"{row['title']} | Домен: {row['topic_domain']} | Дата: {row['date_range']}", expanded=True
                 ):
                     st.markdown(
                         f"**ID чанка:** `{row['chunk_id']}` | **Токенов:** `{row['token_count']}` | **Участников:** `{row['participants_count']}`"
@@ -336,7 +335,7 @@ elif nav == NAV_RAG:
 # 5. ZERO-PII ПЕСОЧНИЦА ДЕИДЕНТИФИКАЦИИ
 # =============================================================================
 elif nav == NAV_PII:
-    st.title("🛡️ Zero-PII Песочница деидентификации в реальном времени")
+    st.title("Zero-PII Песочница деидентификации в реальном времени")
     st.markdown(
         "Протестируйте двухконтурный движок деидентификации (RegEx + Natasha NER + Морфологические склонения имен)."
     )
@@ -352,7 +351,7 @@ elif nav == NAV_PII:
         "Введите текст, содержащий персональные данные, телефоны, ключи или имена:", default_test_text, height=150
     )
 
-    if st.button("🚀 Выполнить Zero-PII Очистку", type="primary"):
+    if st.button("Выполнить Zero-PII Очистку", type="primary"):
         from src.pii.deep_anonymizer import DeepPIIAnonymizer
 
         anonymizer = DeepPIIAnonymizer(enable_ner=True)
@@ -365,20 +364,20 @@ elif nav == NAV_PII:
 
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("### 📥 Исходный текст:")
+            st.markdown("### Исходный текст:")
             st.code(user_input, language="markdown")
         with col2:
-            st.markdown("### 🛡️ Очищенный Zero-PII текст:")
+            st.markdown("### Очищенный Zero-PII текст:")
             st.code(cleaned_res, language="markdown")
 
-        st.markdown("### 📊 Обнаруженные и замаскированные сущности:")
+        st.markdown("### Обнаруженные и замаскированные сущности:")
         st.json(dict(anonymizer.stats))
 
 # =============================================================================
 # 6. ТЕХНОЛОГИЧЕСКИЙ РАДАР И ТРЕНДЫ
 # =============================================================================
 elif nav == NAV_RADAR:
-    st.title("📡 Технологический радар и 8-летние тренды (2018–2026)")
+    st.title("Технологический радар и 8-летние тренды (2018–2026)")
 
     analytics = load_json_file(REPORTS_DIR / "analytics_summary.json")
     if not analytics:
@@ -396,13 +395,13 @@ elif nav == NAV_RADAR:
                 st.bar_chart(chart_data)
 
         with col2:
-            st.subheader("📅 Динамика сообщений по годам (2018–2026)")
+            st.subheader("Динамика сообщений по годам (2018–2026)")
             yearly = t_data.get("yearly_volume", {})
             if yearly:
                 y_data = pd.DataFrame(list(yearly.items()), columns=["Год", "Сообщений"]).set_index("Год")
                 st.line_chart(y_data)
 
-        st.subheader("💬 Топ сленговых технических терминов сообщества")
+        st.subheader("Топ сленговых технических терминов сообщества")
         slang_list = s_data.get("top_slang_terms", [])[:20]
         if slang_list:
             slang_df = pd.DataFrame(slang_list).set_index("term")
@@ -412,7 +411,7 @@ elif nav == NAV_RADAR:
 # 7. ДОМЕННЫЙ БЕНЧМАРК (100 ВОПРОСОВ)
 # =============================================================================
 elif nav == NAV_BENCHMARK:
-    st.title("🎯 Доменный бенчмарк оценки моделей (100 контрольных вопросов)")
+    st.title("Доменный бенчмарк оценки моделей (100 контрольных вопросов)")
     st.markdown(
         "Специализированный бенчмарк по Backend, AI/ML, DevOps, Fintech и Frontend для сравнительного тестирования LLM."
     )
@@ -433,7 +432,7 @@ elif nav == NAV_BENCHMARK:
 # 8. БЕЛЫЕ КНИГИ И DATASET CARD
 # =============================================================================
 elif nav == NAV_DOCS:
-    st.title("📄 Документация, Отчёты и Каталог Моделей")
+    st.title("Документация, Отчёты и Каталог Моделей")
 
     report_type = st.radio(
         "Выберите документ для просмотра:",
