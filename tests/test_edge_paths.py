@@ -1,4 +1,4 @@
-"""Coverage boost: CPU-testable paths in loader, engine, benchmarks, inference, validators, monitors."""
+"""Edge-case paths across loader, analyzer engine, benchmark comparator, inference, SLO gate, validator, SFT quality, report generator, RAG, official benchmarks, metrics and finalize helpers."""
 
 from __future__ import annotations
 

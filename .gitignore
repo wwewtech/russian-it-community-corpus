@@ -49,6 +49,9 @@ lora_adapters/**/checkpoint-*/
 lora_adapters/**/tokenizer.json
 lora_adapters/**/vocab.json
 lora_adapters/**/merges.txt
+# Adapter runtime logs and regenerable base-model tokenizer artifacts (local only)
+lora_adapters/**/training_log.jsonl
+lora_adapters/**/tokenizer.model
 outputs/
 checkpoints/
 

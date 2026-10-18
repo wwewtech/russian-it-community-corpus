@@ -4,8 +4,9 @@ Unit tests for :mod:`src.exporter.finalize_sync_all`.
 * :func:`compute_lora_zoo_index` and :func:`build_lora_zoo_markdown` are
   pure and are exercised end-to-end with a temporary ``lora_adapters/``
   tree.
-* :func:`upload_dataset` and :func:`upload_missing_adapters` are tested
-  with a mocked ``huggingface_hub.HfApi``.
+* :func:`upload_dataset`, :func:`upload_model_card` and
+  :func:`upload_missing_adapters` are tested with a mocked
+  ``huggingface_hub.HfApi``.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from src.exporter.finalize_sync_all import (
     compute_lora_zoo_index,
     upload_dataset,
     upload_missing_adapters,
+    upload_model_card,
 )
 
 
@@ -185,6 +187,41 @@ class TestUploadDataset(unittest.TestCase):
         # but the function must still log the repo id it intends to
         # use; assert the default value matches the module constant.
         self.assertEqual(DATASET_REPO_ID, "wwewtech/russian-it-community-corpus")
+
+
+class TestUploadModelCard(unittest.TestCase):
+    def test_skips_when_card_missing(self):
+        api = MagicMock()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            import os
+
+            cwd = Path.cwd()
+            try:
+                os.chdir(tmpdir)
+                uploaded = upload_model_card(api)
+            finally:
+                os.chdir(cwd)
+        self.assertFalse(uploaded)
+        api.upload_file.assert_not_called()
+
+    def test_uploads_card_as_model_readme(self):
+        api = MagicMock()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            import os
+
+            cwd = Path.cwd()
+            try:
+                os.chdir(tmpdir)
+                Path("reports").mkdir()
+                Path("reports/HF_MODEL_CARD.md").write_text("# card", encoding="utf-8")
+                uploaded = upload_model_card(api)
+                kwargs = api.upload_file.call_args.kwargs
+            finally:
+                os.chdir(cwd)
+        self.assertTrue(uploaded)
+        self.assertEqual(kwargs["path_in_repo"], "README.md")
+        self.assertEqual(kwargs["repo_id"], MODEL_REPO_ID)
+        self.assertEqual(kwargs["repo_type"], "model")
 
 
 class TestUploadMissingAdapters(unittest.TestCase):
