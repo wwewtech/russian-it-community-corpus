@@ -19,7 +19,7 @@ A clear and concise description of what you expected to happen.
 
 ### Environment
 - OS: [e.g. Windows 11, Ubuntu 22.04, macOS Sonoma]
-- Python Version: [e.g. 3.11, 3.12, 3.13]
+- Python Version: [e.g. 3.11, 3.12, 3.13, 3.14]
 - GPU / CUDA (if applicable): [e.g. RTX 3060, CUDA 12.4]
 
 ### Traceback / Logs

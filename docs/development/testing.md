@@ -8,7 +8,7 @@ make coverage   # + term-missing report, 85% gate
 ## Layout
 
 - `tests/test_*.py` — CPU-runnable unit tests (CI matrix: Python
-  3.11/3.12/3.13).
+  3.11/3.12/3.13/3.14).
 - GPU-gated suites (real LoRA training, enterprise eval) run on
   self-hosted runners / manually and are **omitted from the coverage
   gate** via `[tool.coverage.run] omit`.

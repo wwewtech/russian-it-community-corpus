@@ -39,7 +39,7 @@ updates:
       - dependencies
       - ci
 
-  # Docker base images (python:3.13-slim, prom/prometheus, grafana).
+  # Docker base images (python:3.14-slim, prom/prometheus, grafana).
   - package-ecosystem: docker
     directory: "/"
     schedule:

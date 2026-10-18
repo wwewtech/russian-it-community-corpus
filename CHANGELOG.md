@@ -68,6 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `test_branch_paths.py`, `test_scale_paths.py`. Per-adapter
   `training_log.jsonl` is now a local-only runtime artifact (untracked,
   ignored) and the regenerable `tokenizer.model` blob is ignored too.
+- **Python 3.14 support** — Docker base image bumped to
+  `python:3.14-slim`; the CI unit-test matrix (3.11–3.14), the PyPI
+  classifier list, and the docs now cover 3.14. Binary dependencies were
+  verified to ship cp314 wheels before adopting it.
 
 ### Fixed
 - **Only canonical reports are versioned** — the retracted-benchmark

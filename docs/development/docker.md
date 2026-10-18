@@ -2,7 +2,7 @@
 
 ## Images & Services
 
-`Dockerfile` (python:3.13-slim) + `docker-compose.yml`:
+`Dockerfile` (python:3.14-slim) + `docker-compose.yml`:
 
 | Service | Purpose | Ports |
 |---|---|---|
