@@ -104,7 +104,7 @@ transformers==5.19.0
 trl==1.15.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
-tzdata==2024.2
+tzdata==2026.5
 ujson==6.0.0
 urllib3==2.8.0
 watchdog==6.0.0
