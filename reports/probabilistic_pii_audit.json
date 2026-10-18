@@ -1,7 +1,7 @@
 {
   "report_title": "PROBABILISTIC PII AUDIT (stratified, confidence-bounded)",
   "generated_at_utc": "2026-08-29T04:28:03.590595+00:00",
-  "dataset_path": "D:\\russian-it-community-corpus\\dataset_output\\parquet\\full_clean_messages.parquet",
+  "dataset_path": "dataset_output/parquet/full_clean_messages.parquet",
   "corpus_size": 2816434,
   "sampled_messages": 100000,
   "sampling": {
