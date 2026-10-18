@@ -10,7 +10,7 @@ published. Runners: pinned `ubuntu-24.04`.
 |---|---|---|
 | Lint & Format | `ruff check` + `ruff format --check` | pinned `ruff==0.16.2` |
 | Typecheck (Strict) | `make typecheck-strict` | 43 modules, `mypy==2.3.1` |
-| Unit Tests | pytest + coverage, matrix 3.11/3.12/3.13 | `--cov-fail-under=85`, coverage.xml artifact |
+| Unit Tests | pytest + coverage, matrix 3.11/3.12/3.13/3.14 | `--cov-fail-under=85`, coverage.xml artifact |
 | Data Validation & Audits | lock check, adapter cards, synthetic fixtures, validator, real-corpus PII audit (100k sample) | synthetic run is stamped, never SHIP |
 | SLO Release Gate (Real Corpus) | regenerates reports from real artifacts, runs the gate | artifact `slo_verdict.json` |
 | Security Supply Chain | bandit HIGH gate (0 allowed) + detect-secrets baseline + **pip-audit hard gate** (0 CVEs) | reports as artifacts, 30d |

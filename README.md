@@ -166,7 +166,7 @@ JSONL counts below are line-validator `valid_lines` from [`reports/validation_re
 
 ### Requirements
 
-- Python 3.11, 3.12, or 3.13
+- Python 3.11, 3.12, 3.13, or 3.14
 - NVIDIA GPU with 8 GB or more VRAM for training, or CPU for data processing
 - Docker with Docker Compose for containerized runs
 

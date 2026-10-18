@@ -26,7 +26,7 @@ outputs land in `dataset_output/` (`parquet/`, `jsonl/`), reports in
 
 ## Prerequisites
 
-- Python 3.11–3.13, dependencies installed (`make install`).
+- Python 3.11–3.14, dependencies installed (`make install`).
 - Natasha NER downloads its models on first run into `.hf_cache/`
   (set `HF_HOME` or let the bootstrap point it at the repo-local cache).
 - Input data: place Telegram `result.json` exports under the configured
