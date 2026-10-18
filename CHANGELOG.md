@@ -33,8 +33,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--only/--output-dir/--no-upload/--no-catalogs/--force`; every retrained
   adapter gets a `training_meta.json` (`prompt_masking: true`) that marks
   the post-fix objective.
+- **LoRA zoo full profile & wall-clock budgets** — `--profile full` uses
+  per-size tier budgets (2% eval holdout, `training_log.jsonl`, resume from
+  `checkpoint-*`, v2 `training_meta.json` with `actual_steps`,
+  `corpus_coverage_pct`, `dataset_sha256`, tok/s and peak VRAM);
+  `--hours N` stops gracefully on a wall-clock budget (`--keep-checkpoints`
+  keeps resume points) and `--holdout-tail N` reserves the corpus tail for
+  honest benchmarks. The aggregate run report
+  (`reports/lora_zoo_training_run.json` + `LORA_ZOO_TRAINING_REPORT.md`) no
+  longer clobbers the canonical catalog (legacy `update_catalogs` replaced).
+- **Honest LoRA benchmarks** — `scripts/run_lora_benchmark.py` compares
+  base vs adapter on the held-out tail: full-sequence perplexity plus
+  greedy Russian-IT generation snapshots, optional `lm-eval` tasks when the
+  package is installed; writes `reports/benchmark_<adapter>.json` + `.md`.
+- **One-command night runs** — `scripts/night_run_full_corpus.py` chains
+  several time-boxed full-corpus zoo runs (`--total-hours`,
+  `--split-weights`, benchmark reserve) with the held-out benchmarks and
+  writes `reports/LORA_NIGHT_RUN_SUMMARY.md`.
 
 ### Fixed
+- **Phi-family training crashes** — two zoo bugs surfaced by the first
+  full-corpus night run: `detect_target_modules` now only considers
+  PEFT-supported modules (Linear/Conv1d/transformers `Conv1D`) and requires
+  single-letter targets to match the leaf name exactly (the bare `"v"`
+  substring matched Phi-3.5's `activation_fn`/`SiLUActivation` and crashed
+  PEFT), and `batch_train_zoo.py` disables the KV cache explicitly because
+  Phi-3.5's remote code calls the `Cache.get_usable_length` API removed in
+  transformers 4.57 — which crashed the run in its first eval forward, an
+  hour and a half in. The zoo also saves checkpoints before evaluating
+  (a crash in eval no longer loses everything since the last save), exits
+  non-zero when any model fails (the old `rc=0` hid failures from
+  orchestrators), and `--force` clears the previous adapter only after the
+  base model and LoRA wrapper were constructed — a failed run can no longer
+  delete a trained adapter before the new one is proven to build.
 - README JSONL table now shows verified `valid_lines` instead of stale
   reported volumes (was 171,520/933,313/325,690); `app.py` wording and the
   metrics-consistency forbidden list updated accordingly.

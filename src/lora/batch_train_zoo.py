@@ -1,12 +1,29 @@
 """
-Extended Multi-Model LoRA Zoo (44 Models) for Russian IT Community Corpus.
-Trains and uploads domain PEFT LoRA adapters across 44 open-source LLMs on NVIDIA GeForce RTX 3060.
+Extended Multi-Model LoRA Zoo (50+ Models) for Russian IT Community Corpus.
+Trains and uploads domain PEFT LoRA adapters across 50+ open-source LLMs on NVIDIA GeForce RTX 3060.
+
+Two budgets are available via ``--profile``:
+
+* ``pilot`` — the tiny smoke budget (400 dialogues / 15 steps) used to validate
+  the pipeline end to end.
+* ``full`` — production budgets per model size tier (up to 20k dialogues /
+  2000 steps), with a 2% holdout eval split, step-level training logs
+  (``training_log.jsonl``), automatic checkpoints and resume support for
+  multi-hour runs, and an aggregated run report in ``reports/``.
+
+``--hours N`` replaces the step budget with a wall-clock budget per model
+(graceful stop + save), ``--holdout-tail N`` reserves the last N dialogues of
+the corpus for honest post-training benchmarks (see
+``scripts/run_lora_benchmark.py``), and ``scripts/night_run_full_corpus.py``
+chains several time-boxed full-corpus runs plus benchmarks in one command.
 """
 
 import argparse
 import gc
+import hashlib
 import json
 import logging
+import math
 import os
 import shutil
 import time
@@ -26,6 +43,7 @@ from transformers import (
     AutoTokenizer,
     DataCollatorForSeq2Seq,
     Trainer,
+    TrainerCallback,
     TrainingArguments,
 )
 
@@ -428,11 +446,79 @@ ZOO_44_MODELS = [
     },
 ]
 
+# --- Training budgets ------------------------------------------------------ #
+PILOT_BUDGET: dict[str, int] = {"max_samples": 400, "steps": 15}
+FULL_PROFILE_EVAL_FRAC = 0.02
+FULL_TIER_BUDGETS: dict[str, dict[str, int]] = {
+    "tiny": {"max_samples": 20000, "steps": 2000},
+    "small": {"max_samples": 20000, "steps": 1200},
+    "mid": {"max_samples": 16000, "steps": 800},
+    "large": {"max_samples": 12000, "steps": 600},
+}
+_DATASET_SHA256_CACHE: dict[str, str] = {}
+
+
+def param_tier(params: str) -> str:
+    """Map a params label such as ``135M`` / ``1.5B`` / ``3.8B`` to a budget tier."""
+    text = params.strip().upper()
+    try:
+        value = float(text[:-1])
+    except ValueError:
+        return "small"
+    if text.endswith("M"):
+        value /= 1000.0
+    if value <= 0.5:
+        return "tiny"
+    if value <= 1.2:
+        return "small"
+    if value <= 2.3:
+        return "mid"
+    return "large"
+
+
+def dataset_sha256(path: str) -> str:
+    """sha256 of the training file (cached per process) for provenance manifests."""
+    cached = _DATASET_SHA256_CACHE.get(path)
+    if cached is not None:
+        return cached
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    _DATASET_SHA256_CACHE[path] = digest.hexdigest()
+    return digest.hexdigest()
+
+
+class _TimeLimitCallback(TrainerCallback):
+    """Stop training gracefully once a wall-clock budget is exhausted."""
+
+    def __init__(self, budget_sec: float) -> None:
+        self.budget_sec = budget_sec
+        self.started_at: float | None = None
+
+    def on_train_begin(self, args: Any, state: Any, control: Any, **kwargs: Any) -> None:
+        self.started_at = time.monotonic()
+
+    def on_step_end(self, args: Any, state: Any, control: Any, **kwargs: Any) -> None:
+        if self.started_at is not None and time.monotonic() - self.started_at >= self.budget_sec:
+            control.should_training_stop = True
+
 
 def detect_target_modules(model: torch.nn.Module) -> list[str]:
-    """Dynamically detect attention projection linear module names for LoRA."""
+    """Dynamically detect attention projection linear module names for LoRA.
+
+    Only module types PEFT can wrap are considered (Linear/Conv1d and
+    transformers' Conv1D), and single-letter targets must match the leaf
+    name exactly. Substring matching used to pick up non-linear modules
+    whose *path* merely contained the letter — Phi-3.5's ``activation_fn``
+    (a ``SiLUActivation``) matched the bare ``"v"`` target and crashed
+    PEFT with "Target module SiLUActivation() is not supported".
+    """
     module_names = set()
-    for name, _ in model.named_modules():
+    for name, module in model.named_modules():
+        if not isinstance(module, (torch.nn.Linear, torch.nn.Conv1d)) and type(module).__name__ != "Conv1D":
+            continue
+        leaf = name.rsplit(".", 1)[-1]
         for target in [
             "q_proj",
             "v_proj",
@@ -448,9 +534,9 @@ def detect_target_modules(model: torch.nn.Module) -> list[str]:
             "k",
             "out_proj",
         ]:
-            if target in name:
-                parts = name.split(".")
-                module_names.add(parts[-1])
+            if leaf == target or (len(target) > 1 and target in name):
+                module_names.add(leaf)
+                break
     if not module_names:
         module_names = {"q_proj", "v_proj"}
     return sorted(module_names)
@@ -461,20 +547,22 @@ def train_and_upload_single_model(
     dataset_path: str = "dataset_output/jsonl/sft_openai_messages.jsonl",
     base_output_dir: Path = Path("lora_adapters"),
     max_steps: int = 20,
+    max_samples: int = 400,
     max_seq_length: int = 512,
     seed: int = 42,
     upload: bool = True,
     force: bool = False,
+    eval_frac: float = 0.0,
+    keep_checkpoints: bool = False,
+    holdout_tail: int = 0,
+    time_budget_hours: float | None = None,
 ) -> dict[str, Any]:
     model_id = meta["id"]
     model_name = meta["model_name"]
     out_dir = base_output_dir / model_id
-    if force and out_dir.exists():
-        logger.info(f"♻️ --force: removing existing adapter at {out_dir} for retraining")
-        shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    if (out_dir / "adapter_model.safetensors").exists() and (out_dir / "adapter_config.json").exists():
+    if not force and (out_dir / "adapter_model.safetensors").exists() and (out_dir / "adapter_config.json").exists():
         logger.info(f"⏩ Adapter for {model_name} ({model_id}) already exists at {out_dir}. Skipping training...")
         return {
             "id": model_id,
@@ -487,6 +575,17 @@ def train_and_upload_single_model(
             "training_time_sec": 0,
             "adapter_dir": str(out_dir),
         }
+
+    # Interrupted long runs leave checkpoint-* folders without a final adapter:
+    # resume from the latest one instead of restarting from scratch.
+    resume_from: Path | None = None
+    existing_checkpoints = sorted(
+        (p for p in out_dir.glob("checkpoint-*") if p.is_dir()),
+        key=lambda p: int(p.name.rsplit("-", 1)[-1]) if p.name.rsplit("-", 1)[-1].isdigit() else -1,
+    )
+    if existing_checkpoints and not force:
+        resume_from = existing_checkpoints[-1]
+        logger.info(f"↻ Resuming {model_id} from {resume_from.name}")
 
     start_time = time.time()
     logger.info(f"=== Starting LoRA Training: {model_name} ({meta['family']} · {meta['params']}) ===")
@@ -518,6 +617,16 @@ def train_and_upload_single_model(
         if callable(grad_ckpt):
             grad_ckpt()
 
+        # Remote-code models (Phi-3.5's hub modeling_phi3.py) still call the
+        # Cache.get_usable_length API that transformers 4.57 removed whenever
+        # use_cache is on — including the eval forward, which crashed a
+        # 1.5-hour run just before its first checkpoint. Disable the KV cache
+        # for training/eval entirely (no cache is used by the Trainer anyway).
+        if getattr(model, "config", None) is not None:
+            model.config.use_cache = False
+        if getattr(model, "generation_config", None) is not None:
+            model.generation_config.use_cache = False
+
         target_mods = detect_target_modules(model)
         peft_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM,
@@ -529,9 +638,22 @@ def train_and_upload_single_model(
         )
         peft_model = get_peft_model(model, peft_config)
 
+        # --force cleanup is deferred until the base model loaded and the LoRA
+        # wrapper was constructed successfully: a run that fails earlier (bad
+        # download, unsupported target modules, ...) must NOT destroy the
+        # previously trained adapter. Phi-3.5's SiLUActivation crash did
+        # exactly that before target detection was fixed.
+        if force and out_dir.exists() and any(out_dir.iterdir()):
+            logger.info(f"♻️ --force: clearing existing adapter at {out_dir} for retraining")
+            shutil.rmtree(out_dir)
+            out_dir.mkdir(parents=True, exist_ok=True)
+
         raw_ds = load_dataset("json", data_files=dataset_path, split="train")
-        if len(raw_ds) > 400:
-            raw_ds = raw_ds.select(range(400))
+        dataset_total = len(raw_ds)
+        if holdout_tail > 0 and dataset_total > holdout_tail:
+            raw_ds = raw_ds.select(range(dataset_total - holdout_tail))
+        if len(raw_ds) > max_samples:
+            raw_ds = raw_ds.select(range(max_samples))
 
         def format_dialogue(example: dict[str, Any], _tokenizer: Any = tokenizer) -> dict[str, Any]:
             msgs = example.get("messages", [])
@@ -568,6 +690,28 @@ def train_and_upload_single_model(
 
         tokenized_ds = raw_ds.map(format_dialogue, remove_columns=raw_ds.column_names)
 
+        eval_ds: Any = None
+        if eval_frac > 0:
+            split = tokenized_ds.train_test_split(test_size=eval_frac, seed=seed)
+            tokenized_ds = split["train"]
+            eval_ds = split["test"]
+            if len(eval_ds) > 256:
+                eval_ds = eval_ds.select(range(256))
+
+        total_tokens = int(sum(len(ids) for ids in tokenized_ds["input_ids"]))
+        avg_len = total_tokens / max(1, len(tokenized_ds))
+
+        if max_steps >= 5000:
+            # Save more often than we evaluate: a crash in the eval forward
+            # used to lose every step since the last checkpoint (save runs
+            # after eval), and hours of training with it.
+            log_every, eval_every, save_every, enable_saves = 25, 1000, 500, True
+        else:
+            log_every = max(1, max_steps // 20)
+            eval_every = max(1, max_steps // 10)
+            save_every = max(1, max_steps // 4)
+            enable_saves = max_steps >= 100
+
         train_args = TrainingArguments(
             output_dir=str(out_dir),
             per_device_train_batch_size=2,
@@ -575,27 +719,56 @@ def train_and_upload_single_model(
             max_steps=max_steps,
             learning_rate=2e-4,
             fp16=torch.cuda.is_available(),
-            logging_steps=5,
-            save_strategy="no",
+            logging_steps=log_every,
+            save_strategy="steps" if enable_saves else "no",
+            save_steps=save_every,
+            save_total_limit=2,
+            eval_strategy="steps" if eval_ds is not None else "no",
+            eval_steps=eval_every,
             report_to="none",
+            seed=seed,
         )
+
+        callbacks: list[TrainerCallback] | None = None
+        if time_budget_hours is not None:
+            callbacks = [_TimeLimitCallback(time_budget_hours * 3600.0)]
 
         trainer = Trainer(
             model=peft_model,
             args=train_args,
             train_dataset=tokenized_ds,
+            eval_dataset=eval_ds,
             data_collator=DataCollatorForSeq2Seq(tokenizer, pad_to_multiple_of=8, return_tensors="pt"),
+            callbacks=callbacks,
         )
 
-        train_res = trainer.train()
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
+        train_res = trainer.train(resume_from_checkpoint=str(resume_from) if resume_from is not None else None)
         train_loss = float(train_res.training_loss)
+        actual_steps = int(trainer.state.global_step)
+        tokens_seen = int(actual_steps * 8 * avg_len)
+        coverage_pct = round(min(100.0, actual_steps * 8 / max(1, dataset_total) * 100.0), 2)
+        peak_vram = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None
+
+        eval_loss: float | None = None
+        for entry in reversed(trainer.state.log_history):
+            if "eval_loss" in entry:
+                eval_loss = float(entry["eval_loss"])
+                break
+        eval_perplexity = math.exp(eval_loss) if eval_loss is not None and eval_loss < 50 else None
+
+        with (out_dir / "training_log.jsonl").open("w", encoding="utf-8") as log_file:
+            for entry in trainer.state.log_history:
+                log_file.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
         peft_model.save_pretrained(out_dir)
         tokenizer.save_pretrained(out_dir)
 
-        for cp in out_dir.glob("checkpoint-*"):
-            if cp.is_dir():
-                shutil.rmtree(cp)
+        if not keep_checkpoints:
+            for cp in out_dir.glob("checkpoint-*"):
+                if cp.is_dir():
+                    shutil.rmtree(cp)
 
         readme_path = out_dir / "README.md"
         readme_path.write_text(
@@ -608,7 +781,12 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
         )
 
         elapsed = time.time() - start_time
-        logger.info(f"Finished {model_name} in {elapsed:.1f}s | Loss: {train_loss:.4f}")
+        tokens_per_sec = round(tokens_seen / elapsed, 1) if elapsed > 0 else 0.0
+        logger.info(
+            f"Finished {model_name} in {elapsed:.1f}s | Loss: {train_loss:.4f}"
+            + (f" | Eval: {eval_loss:.4f}" if eval_loss is not None else "")
+            + f" | ~{tokens_per_sec:.0f} tok/s"
+        )
 
         # Provenance manifest: its presence marks an adapter retrained with the
         # prompt-masking objective. Legacy adapters (no training_meta.json)
@@ -619,12 +797,29 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
                     "model_id": model_id,
                     "base_model": model_name,
                     "dataset": dataset_path,
+                    "dataset_sha256": dataset_sha256(dataset_path),
                     "max_steps": max_steps,
+                    "actual_steps": actual_steps,
+                    "time_budget_hours": time_budget_hours,
                     "max_seq_length": max_seq_length,
+                    "max_samples": max_samples,
+                    "samples_used": len(tokenized_ds),
+                    "dataset_total_dialogues": dataset_total,
+                    "holdout_tail_dialogues": holdout_tail,
+                    "dialogues_seen_approx": actual_steps * 8,
+                    "corpus_coverage_pct": coverage_pct,
+                    "eval_frac": eval_frac,
+                    "eval_samples": len(eval_ds) if eval_ds is not None else 0,
                     "seed": seed,
                     "lora": {"r": 16, "lora_alpha": 32, "lora_dropout": 0.05, "target_modules": target_mods},
                     "prompt_masking": True,
                     "train_loss": round(train_loss, 4),
+                    "eval_loss": round(eval_loss, 4) if eval_loss is not None else None,
+                    "eval_perplexity": round(eval_perplexity, 2) if eval_perplexity is not None else None,
+                    "tokens_seen_approx": tokens_seen,
+                    "tokens_per_sec": tokens_per_sec,
+                    "peak_vram_bytes": peak_vram,
+                    "resumed_from": resume_from.name if resume_from is not None else None,
                     "training_time_sec": round(elapsed, 1),
                     "generator": "src/lora/batch_train_zoo.py",
                     "generated_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -641,8 +836,8 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             status="success",
             duration_sec=elapsed,
             loss=train_loss,
-            steps=max_steps,
-            vram_bytes=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None,
+            steps=actual_steps,
+            vram_bytes=peak_vram,
         )
 
         # Auto-upload to Hugging Face Model Zoo (opt-out with --no-upload)
@@ -681,6 +876,14 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             "description": meta["desc"],
             "status": "SUCCESS",
             "train_loss": round(train_loss, 4),
+            "eval_loss": round(eval_loss, 4) if eval_loss is not None else None,
+            "steps": actual_steps,
+            "planned_steps": max_steps,
+            "corpus_coverage_pct": coverage_pct,
+            "samples_used": len(tokenized_ds),
+            "tokens_seen_approx": tokens_seen,
+            "tokens_per_sec": tokens_per_sec,
+            "peak_vram_bytes": peak_vram,
             "training_time_sec": round(elapsed, 1),
             "adapter_dir": str(out_dir),
         }
@@ -703,48 +906,86 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
         }
 
 
-def update_catalogs(results: list[dict[str, Any]]) -> None:
-    output_json = Path("reports/lora_zoo_index.json")
-    output_md = Path("reports/LORA_MODEL_ZOO.md")
+def _fmt_metric(result: dict[str, Any], key: str, pattern: str) -> str:
+    value = result.get(key)
+    return pattern.format(value) if isinstance(value, (int, float)) else "—"
 
-    successful = [r for r in results if r["status"] in ("SUCCESS", "SKIPPED")]
 
-    with open(output_json, "w", encoding="utf-8") as f:
-        json.dump(successful, f, ensure_ascii=False, indent=2)
+def update_run_report(results: list[dict[str, Any]], report_dir: Path = Path("reports")) -> None:
+    """Crash-safe aggregate report for the current zoo run.
+
+    Deliberately writes its own files and never touches the canonical catalog
+    (``reports/lora_zoo_index.json`` / ``reports/LORA_MODEL_ZOO.md``), which is
+    regenerated from the Hub file tree by ``scripts/regenerate_model_catalog.py``.
+    """
+    report_dir.mkdir(parents=True, exist_ok=True)
+    json_path = report_dir / "lora_zoo_training_run.json"
+    md_path = report_dir / "LORA_ZOO_TRAINING_REPORT.md"
+
+    merged: dict[str, Any] = {}
+    if json_path.exists():
+        try:
+            loaded = json.loads(json_path.read_text(encoding="utf-8"))
+            merged = dict(loaded.get("models", {}))
+        except json.JSONDecodeError:
+            logger.warning(f"Could not parse {json_path}; starting a fresh run report")
+    for r in results:
+        merged[r["id"]] = r
+
+    generated_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    payload = {"generated_at_utc": generated_at, "models": merged}
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     md_lines = [
-        "# 🦁 Russian IT Community LoRA Model Zoo",
+        "# 🦁 LoRA Zoo Training Run Report",
         "",
-        f"**Официальный каталог {len(successful)} предварительно обученных LoRA-адаптеров**, дообученных на корпусе **RICC (2.91M сообщений, 171.5k диалогов)** для русскоязычного IT-дискурса, бэкенда, DevOps, AI/ML и инфраструктуры.",
+        f"Generated {generated_at} · {len(merged)} adapters in the run log.",
         "",
-        "Все адаптеры можно загружать локально из репозитория или через Hugging Face Hub: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora).",
-        "",
-        "> **Provenance:** an adapter carries `training_meta.json` (with "
-        "`prompt_masking: true`) only if it was trained with the prompt-masked "
-        "objective. Adapters without it were trained before the 2026-10-17 "
-        "masking fix (loss included user-prompt tokens) — retrain with "
-        "`python -m src.lora.batch_train_zoo --force --only <id>`.",
-        "",
-        "---",
-        "",
-        "## 📊 Доступные LoRA-адаптеры",
-        "",
-        "| Идентификатор | Базовая модель | Семейство | Параметры | Каталог адаптера |",
-        "| :--- | :--- | :--- | :---: | :--- |",
+        "| Adapter | Base model | Status | Train loss | Eval loss | Steps | Samples | Time | tok/s |",
+        "| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |",
     ]
-
-    for r in sorted(successful, key=lambda x: x["id"]):
+    for model_id in sorted(merged):
+        r = merged[model_id]
         md_lines.append(
-            f"| `{r['id']}` | **`{r['model_name']}`** | {r['family']} | {r['params']} | [`lora_adapters/{r['id']}/`](lora_adapters/{r['id']}/) |"
+            f"| `{model_id}` | `{r.get('model_name', '?')}` | {r.get('status', '?')} "
+            f"| {_fmt_metric(r, 'train_loss', '{:.4f}')} | {_fmt_metric(r, 'eval_loss', '{:.4f}')} "
+            f"| {r.get('steps', '—')} | {r.get('samples_used', '—')} "
+            f"| {_fmt_metric(r, 'training_time_sec', '{:.0f}s')} "
+            f"| {_fmt_metric(r, 'tokens_per_sec', '{:.0f}')} |"
         )
-
-    output_md.write_text("\n".join(md_lines), encoding="utf-8")
-    logger.info(f"Updated catalog with {len(successful)} models!")
+    md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    logger.info(f"Run report updated: {len(merged)} adapters -> {json_path}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--steps", type=int, default=15)
+    parser.add_argument(
+        "--profile",
+        choices=["pilot", "full"],
+        default="pilot",
+        help="Training budget: pilot (400 dialogues / 15 steps) or full (per-size tier budgets)",
+    )
+    parser.add_argument(
+        "--steps", type=int, default=None, help="Optimizer steps per model (overrides the profile budget)"
+    )
+    parser.add_argument(
+        "--samples", type=int, default=None, help="Max SFT dialogues per model (overrides the profile budget)"
+    )
+    parser.add_argument(
+        "--eval-frac", type=float, default=None, help="Holdout fraction for eval (full profile default: 0.02)"
+    )
+    parser.add_argument(
+        "--hours",
+        type=float,
+        default=None,
+        help="Wall-clock training budget per model in hours: stop gracefully and save when reached",
+    )
+    parser.add_argument(
+        "--holdout-tail",
+        type=int,
+        default=0,
+        help="Reserve the last N dialogues as a benchmark holdout (excluded from training)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     parser.add_argument(
         "--only",
@@ -760,14 +1001,33 @@ def main() -> None:
     )
     parser.add_argument("--no-upload", action="store_true", help="Skip Hugging Face upload")
     parser.add_argument(
+        "--report-dir",
+        type=Path,
+        default=Path("reports"),
+        help="Directory for the aggregate run report (default: reports)",
+    )
+    parser.add_argument(
+        "--no-report",
         "--no-catalogs",
         action="store_true",
-        help="Do not rewrite reports/lora_zoo_index.json and reports/LORA_MODEL_ZOO.md",
+        dest="no_report",
+        help="Do not update the aggregate run report (alias: --no-catalogs)",
     )
     parser.add_argument(
         "--force",
         action="store_true",
         help="Retrain adapters that already exist (prompt-masking fix rollout)",
+    )
+    parser.add_argument(
+        "--keep-checkpoints",
+        action="store_true",
+        help="Keep per-model checkpoint folders after a successful run",
+    )
+    parser.add_argument(
+        "--profile-file",
+        type=Path,
+        default=None,
+        help='Per-model budget overrides: {"default": {"steps": N, "samples": N}, "<adapter_id>": {...}}',
     )
     args = parser.parse_args()
 
@@ -782,22 +1042,69 @@ def main() -> None:
         if not models:
             parser.error("--only matched no models")
 
-    results = []
+    profile_file_data: dict[str, Any] = {}
+    if args.profile_file is not None:
+        profile_file_data = cast(dict[str, Any], json.loads(args.profile_file.read_text(encoding="utf-8")))
+    default_overrides: dict[str, Any] = dict(profile_file_data.get("default", {}))
+
+    def budget_for(meta: dict[str, Any]) -> tuple[int, int, float]:
+        if args.profile == "pilot":
+            steps, samples, eval_frac = PILOT_BUDGET["steps"], PILOT_BUDGET["max_samples"], 0.0
+        else:
+            tier = param_tier(meta["params"])
+            steps, samples = FULL_TIER_BUDGETS[tier]["steps"], FULL_TIER_BUDGETS[tier]["max_samples"]
+            eval_frac = FULL_PROFILE_EVAL_FRAC
+        overrides: dict[str, Any] = {**default_overrides, **dict(profile_file_data.get(meta["id"], {}))}
+        steps = int(overrides.get("steps", steps))
+        samples = int(overrides.get("samples", samples))
+        eval_frac = float(overrides.get("eval_frac", eval_frac))
+        if args.steps is not None:
+            steps = args.steps
+        elif args.hours is not None:
+            steps = 10_000_000
+        if args.samples is not None:
+            samples = args.samples
+        if args.eval_frac is not None:
+            eval_frac = args.eval_frac
+        return steps, samples, eval_frac
+
+    results: list[dict[str, Any]] = []
+    run_start = time.time()
     for idx, meta in enumerate(models, 1):
-        logger.info(f"[{idx}/{len(models)}] Processing {meta['model_name']} ({meta['params']})...")
+        steps, samples, eval_frac = budget_for(meta)
+        logger.info(
+            f"[{idx}/{len(models)}] {meta['model_name']} ({meta['params']}): "
+            f"steps={steps}, samples={samples}, eval_frac={eval_frac}"
+        )
         res = train_and_upload_single_model(
             meta,
             base_output_dir=args.output_dir,
-            max_steps=args.steps,
+            max_steps=steps,
+            max_samples=samples,
             seed=args.seed,
             upload=not args.no_upload,
             force=args.force,
+            eval_frac=eval_frac,
+            keep_checkpoints=args.keep_checkpoints,
+            holdout_tail=args.holdout_tail,
+            time_budget_hours=args.hours,
         )
         results.append(res)
-        if not args.no_catalogs:
-            update_catalogs(results)
+        if not args.no_report:
+            update_run_report(results, report_dir=args.report_dir)
+        if idx < len(models):
+            avg_sec = (time.time() - run_start) / idx
+            eta_hours = avg_sec * (len(models) - idx) / 3600
+            logger.info(
+                f"⏱ avg {avg_sec / 60:.1f} min/model · ETA for {len(models) - idx} remaining: ~{eta_hours:.1f} h"
+            )
 
     logger.info(f"🎉 LoRA Zoo run finished: {len(models)} model(s) processed.")
+
+    failed_ids = [str(r.get("id")) for r in results if r.get("status") == "FAILED"]
+    if failed_ids:
+        logger.error(f"❌ {len(failed_ids)} model(s) failed: {', '.join(failed_ids)}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
