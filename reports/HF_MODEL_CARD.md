@@ -27,15 +27,17 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_id = "Qwen/Qwen2.5-1.5B-Instruct"          # any base model from the catalog
+model_id = "Qwen/Qwen2.5-1.5B-Instruct"  # any base model from the catalog
 adapter_id = "wwewtech/russian-it-community-lora"
-subfolder = "qwen2.5_1.5b_instruct"              # choose from the catalog below
+subfolder = "qwen2.5_1.5b_instruct"  # choose from the catalog below
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")
 model = PeftModel.from_pretrained(base_model, adapter_id, subfolder=subfolder)
 
-inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL?\n<|assistant|>\n", return_tensors="pt").to(model.device)
+inputs = tokenizer("<|user|>\nКак настроить репликацию PostgreSQL?\n<|assistant|>\n", return_tensors="pt").to(
+    model.device
+)
 outputs = model.generate(**inputs, max_new_tokens=256)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
@@ -110,5 +112,5 @@ Full-precision copies also live under [`models/`](https://huggingface.co/wwewtec
 ## Training Data & Evaluation Status
 
 - Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) (171,520 multi-turn dialogues).
-- Training regime: published adapters are domain-adaptation pilot checkpoints (50–100 training steps on sampled domain batches) demonstrating PEFT compatibility and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints over the entire corpus.
+- Training regime: most published adapters are domain-adaptation pilot checkpoints (50–100 training steps on sampled domain batches) demonstrating PEFT compatibility and consumer-GPU deployment (RTX 3060 12GB). Five adapters (`qwen2.5_3b_instruct`, `qwen2.5_coder_3b_instruct`, `deepseek_r1_distill_qwen_1.5b`, `llama_3.2_3b_instruct`, `gemma_2_2b_it`) were retrained on the full corpus (5.8 h each); their `training_meta.json` records the actual step count and the honest fraction of one epoch covered (19–45 %). None of the adapters is a multi-epoch checkpoint over the entire corpus.
 - Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not capability measurements.

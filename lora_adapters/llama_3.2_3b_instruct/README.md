@@ -61,9 +61,7 @@ model = PeftModel.from_pretrained(base_model, "lora_adapters/llama_3.2_3b_instru
 ## Training Details
 
 - **Training data:** RICC SFT dialogues (171,520 curated multi-turn dialogues).
-- **Training regime:** pilot domain-adaptation checkpoint — 50-100 training
-  steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),
-  **not** multi-epoch training over the whole corpus.
+- **Training regime:** full-corpus domain adaptation — 4,956 optimizer steps over the full RICC SFT corpus with prompt masking; 22.89% of one epoch (honest coverage from `training_meta.json`, local adapter directory).
 - **Framework:** PEFT 0.20.0 (see `adapter_config.json` in this directory).
 
 ## Evaluation
