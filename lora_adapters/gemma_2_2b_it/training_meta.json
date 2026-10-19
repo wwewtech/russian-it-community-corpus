@@ -1,0 +1,41 @@
+{
+  "model_id": "gemma_2_2b_it",
+  "base_model": "unsloth/gemma-2-2b-it",
+  "dataset": "dataset_output/jsonl/sft_openai_messages.jsonl",
+  "dataset_sha256": "20bccbc250e9709201d4bb052edadb85dc2824f11182035f50733174e2da4921",
+  "max_steps": 1000000,
+  "actual_steps": 4492,
+  "time_budget_hours": 5.8,
+  "max_seq_length": 512,
+  "max_samples": 200000,
+  "samples_used": 171354,
+  "dataset_total_dialogues": 173216,
+  "holdout_tail_dialogues": 1000,
+  "dialogues_seen_approx": 35936,
+  "corpus_coverage_pct": 20.75,
+  "eval_frac": 0.005,
+  "eval_samples": 256,
+  "seed": 42,
+  "lora": {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "k_proj",
+      "o_proj",
+      "q_proj",
+      "v_proj"
+    ]
+  },
+  "prompt_masking": true,
+  "train_loss": 1.9622,
+  "eval_loss": 1.9293,
+  "eval_perplexity": 6.88,
+  "tokens_seen_approx": 11269267,
+  "tokens_per_sec": 518.7,
+  "peak_vram_bytes": 15840078848,
+  "resumed_from": null,
+  "training_time_sec": 21727.9,
+  "generator": "src/lora/batch_train_zoo.py",
+  "generated_at_utc": "2026-10-19T11:27:40Z"
+}

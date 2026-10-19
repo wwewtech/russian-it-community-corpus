@@ -18,8 +18,8 @@ Community Corpus (RICC) LoRA Zoo.
 
 - **Developed by:** wwewtech (Russian IT Community Corpus project)
 - **Model type:** LORA adapter (rank r=16, alpha=32, dropout=0.05), task type `CAUSAL_LM`
-- **Target modules:** o_proj, q_proj, v_proj, k_proj
-- **Adapter weights:** 35.03 MB, sha256 `1427cb53c153f8f87584fa0b84a8bace67a050b439fb8164835b87148601c2a7`
+- **Target modules:** o_proj, v_proj, q_proj, k_proj
+- **Adapter weights:** 35.03 MB, sha256 `bb0f3aa1503998b57f16144ead915b18660be3d6eac708a518390509edacb211`
 - **Language(s) (NLP):** Russian (ru), English technical terms
 - **License:** MIT (repository license, see `LICENSE`); the base model retains its own license
 - **Finetuned from model:** `unsloth/Llama-3.2-3B-Instruct`
