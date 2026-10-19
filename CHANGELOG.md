@@ -72,6 +72,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `python:3.14-slim`; the CI unit-test matrix (3.11–3.14), the PyPI
   classifier list, and the docs now cover 3.14. Binary dependencies were
   verified to ship cp314 wheels before adopting it.
+- **Full-corpus LoRA retrain (5 adapters)** — `qwen2.5_3b_instruct`,
+  `qwen2.5_coder_3b_instruct`, `deepseek_r1_distill_qwen_1.5b`,
+  `llama_3.2_3b_instruct` and `gemma_2_2b_it` were retrained for 5.8 h each
+  (~29 GPU-hours on one RTX 3060) over the full 173,216-dialogue corpus
+  with prompt masking; the regenerated `training_meta.json` records honest
+  per-adapter coverage (`actual_steps` 4,132–9,662,
+  `corpus_coverage_pct` 19.08–44.62 %). Held-out perplexity (1,000-dialogue
+  tail) fell from `39.28 → 10.55` (Qwen2.5-3B), `35.14 → 16.58`
+  (Coder-3B), `163.50 → 35.26` (DeepSeek-R1-1.5B), `50.50 → 22.82`
+  (Llama-3.2-3B) and `39.22 → 20.97` (Gemma-2-2B). The refreshed adapters
+  and their cards were uploaded to `wwewtech/russian-it-community-lora`;
+  `registry.json`, `LORA_MODEL_ZOO.md` and `HF_MODEL_CARD.md` carry the
+  new hashes.
 
 ### Fixed
 - **Only canonical reports are versioned** — the retracted-benchmark

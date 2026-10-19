@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-18T01:29:51+00:00",
+  "generated_at": "2026-10-19T12:06:30+00:00",
   "hf_dataset_url": "https://huggingface.co/datasets/wwewtech/russian-it-community-corpus",
   "hf_hub_base": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main",
   "adapter_count": 56,
@@ -83,13 +83,13 @@
       "lora_dropout": 0.05,
       "target_modules": [
         "o_proj",
-        "q_proj",
         "v_proj",
+        "q_proj",
         "k_proj"
       ],
       "bias": "none",
       "safetensors_bytes": 17462432,
-      "safetensors_sha256": "9b238617018b51a07b0c312c68df900eff592b64bf5435830d7ffe1483c906cb",
+      "safetensors_sha256": "c2f95802248583cc2d3d56f98a7e55e526422a3e3bcb57f6e5c9ff1d50b20165",
       "has_tokenizer": true,
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/deepseek_r1_distill_qwen_1.5b",
@@ -161,13 +161,13 @@
       "lora_dropout": 0.05,
       "target_modules": [
         "o_proj",
-        "q_proj",
         "v_proj",
+        "q_proj",
         "k_proj"
       ],
       "bias": "none",
       "safetensors_bytes": 25586896,
-      "safetensors_sha256": "05ea538b60b930be978a8484ceac5012e167e51c57c707a39749891d7dbe7ce4",
+      "safetensors_sha256": "fbfa15c0007d1bcffa35758d56666d86f25ed0a49fa030e214c60ea190e7b3e2",
       "has_tokenizer": true,
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gemma_2_2b_it",
@@ -357,13 +357,13 @@
       "lora_dropout": 0.05,
       "target_modules": [
         "o_proj",
-        "q_proj",
         "v_proj",
+        "q_proj",
         "k_proj"
       ],
       "bias": "none",
       "safetensors_bytes": 36730224,
-      "safetensors_sha256": "1427cb53c153f8f87584fa0b84a8bace67a050b439fb8164835b87148601c2a7",
+      "safetensors_sha256": "bb0f3aa1503998b57f16144ead915b18660be3d6eac708a518390509edacb211",
       "has_tokenizer": true,
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/llama_3.2_3b_instruct",
@@ -804,13 +804,13 @@
       "lora_dropout": 0.05,
       "target_modules": [
         "o_proj",
-        "q_proj",
         "v_proj",
+        "q_proj",
         "k_proj"
       ],
       "bias": "none",
       "safetensors_bytes": 29529752,
-      "safetensors_sha256": "ff8c8287016539da663708e922c203e7e3d53949ad8e38d8f22995800f8886b5",
+      "safetensors_sha256": "0e64b2194228e04454b359fd47a59b2dd6686e13d913c966f3d16a14907ed496",
       "has_tokenizer": true,
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_3b_instruct",
@@ -876,13 +876,13 @@
       "lora_dropout": 0.05,
       "target_modules": [
         "o_proj",
-        "q_proj",
         "v_proj",
+        "q_proj",
         "k_proj"
       ],
       "bias": "none",
       "safetensors_bytes": 29529752,
-      "safetensors_sha256": "249d1eb04c7cdcbb6eaec5ac0ec6a77ab2cbab420b20125d70605ae3cb840d7d",
+      "safetensors_sha256": "d0595bf001acc6f2bd6f7f01a744a094052fd5d27750c4b1d14c48c6ffdc0b3f",
       "has_tokenizer": true,
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_3b_instruct",
