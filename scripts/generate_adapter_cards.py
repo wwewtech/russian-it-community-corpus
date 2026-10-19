@@ -9,8 +9,10 @@ verifiable sources:
 
 * ``lora_adapters/registry.json`` — adapter manifest (slug, base model,
   r/alpha/dropout, target modules, bytes, sha256);
-* ``reports/HF_MODEL_CARD.md`` — published training regime statement
-  (pilot domain-adaptation checkpoints, 50-100 steps);
+* ``lora_adapters/<slug>/training_meta.json`` — honest per-adapter steps and
+  corpus coverage when the adapter was retrained with the prompt-masked
+  objective; otherwise the published pilot regime from
+  ``reports/HF_MODEL_CARD.md``;
 * ``reports/DATASET_AND_ANALYTICS.md`` — training corpus metrics;
 * ``README.md`` benchmark retraction notice — evaluation status.
 
@@ -101,9 +103,7 @@ model = PeftModel.from_pretrained(base_model, "{adapter_path}")
 ## Training Details
 
 - **Training data:** RICC SFT dialogues ({sft_dialogues_fmt} curated multi-turn dialogues).
-- **Training regime:** pilot domain-adaptation checkpoint — 50-100 training
-  steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),
-  **not** multi-epoch training over the whole corpus.
+{training_regime}
 - **Framework:** PEFT {peft_version} (see `adapter_config.json` in this directory).
 
 ## Evaluation
@@ -131,6 +131,26 @@ def _size_mb(num_bytes: int | None) -> str:
     return f"{num_bytes / (1024 * 1024):.2f}"
 
 
+def _training_regime(slug: str) -> str:
+    meta_path = REPO_ROOT / "lora_adapters" / slug / "training_meta.json"
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        steps = meta.get("actual_steps")
+        coverage = meta.get("corpus_coverage_pct")
+        if steps and coverage is not None:
+            return (
+                "- **Training regime:** full-corpus domain adaptation — "
+                f"{steps:,} optimizer steps over the full RICC SFT corpus with "
+                f"prompt masking; {coverage}% of one epoch (honest coverage from "
+                "`training_meta.json`, local adapter directory)."
+            )
+    return (
+        "- **Training regime:** pilot domain-adaptation checkpoint — 50-100 training\n"
+        "  steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),\n"
+        "  **not** multi-epoch training over the whole corpus."
+    )
+
+
 def build_card(entry: dict) -> str:
     return CARD_TEMPLATE.format(
         slug=entry["slug"],
@@ -147,6 +167,7 @@ def build_card(entry: dict) -> str:
         adapter_path=entry.get("adapter_path") or entry.get("local_path") or "",
         peft_version=entry.get("peft_version") or "unknown",
         sft_dialogues_fmt=_METRICS.sft_dialogues_fmt,
+        training_regime=_training_regime(entry["slug"]),
     )
 
 

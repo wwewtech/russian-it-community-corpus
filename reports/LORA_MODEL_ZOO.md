@@ -36,7 +36,9 @@ model = PeftModel.from_pretrained(base_model, "lora_adapters/qwen2.5_1.5b_instru
 # 3. Генерация ответа
 prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"
 messages = [{"role": "user", "content": prompt}]
-inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")
+inputs = tokenizer(
+    tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt"
+).to("cuda")
 outputs = model.generate(**inputs, max_new_tokens=256, temperature=0.3)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
@@ -110,7 +112,7 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 ## Аппаратные требования и воспроизводимость
 
-- **Режим обучения адаптеров:** Опубликованные адаптеры получены в режиме легковесной доменной адаптации (pilot runs, 50–100 шагов на подмножествах диалогов) для подтверждения совместимости весов, PEFT-пайплайна и инференса на потребительских GPU (RTX 3060 12GB). Они не являются финальными многоэпоховыми чекпоинтами на всём объёме 171k диалогов.
+- **Режим обучения адаптеров:** Большинство опубликованных адаптеров получены в режиме легковесной доменной адаптации (pilot runs, 50–100 шагов на подмножествах диалогов) для подтверждения совместимости весов, PEFT-пайплайна и инференса на потребительских GPU (RTX 3060 12GB). Пять адаптеров (`qwen2.5_3b_instruct`, `qwen2.5_coder_3b_instruct`, `deepseek_r1_distill_qwen_1.5b`, `llama_3.2_3b_instruct`, `gemma_2_2b_it`) переобучены на полном корпусе (по 5.8 ч); фактическое число шагов и честная доля одной эпохи (19–45 %) указаны в их `training_meta.json`. Ни один адаптер не является многоэпоховым чекпоинтом на всём объёме корпуса.
 - **Потребление VRAM при обучении:** ~4.35 GB на NVIDIA GeForce RTX 3060 (12 GB) с gradient accumulation = 4, batch size = 1. *(Логи обучения не хранятся в репозитории — цифра приведена как ориентир для воспроизведения.)*
 - **Флагманские 7B–8B модели:** используют 4-битное квантование BitsAndBytes (NF4) для инференса в пределах 6 GB VRAM.
 - **Статус метрик:** ранее опубликованные академические метрики (HumanEval / RuMMLU / PPL) **отозваны до переоценки** — аудит тестового контура выявил дефекты парсинга ответов и маппинга колонок (см. историю коммитов). Оценки enterprise-сценариев являются эвристиками на основе рубрик, а не измерениями способностей.

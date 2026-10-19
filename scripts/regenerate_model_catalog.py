@@ -89,15 +89,17 @@ def main():
         "from peft import PeftModel",
         "from transformers import AutoModelForCausalLM, AutoTokenizer",
         "",
-        'model_id = "Qwen/Qwen2.5-1.5B-Instruct"          # any base model from the catalog',
+        'model_id = "Qwen/Qwen2.5-1.5B-Instruct"  # any base model from the catalog',
         'adapter_id = "wwewtech/russian-it-community-lora"',
-        'subfolder = "qwen2.5_1.5b_instruct"              # choose from the catalog below',
+        'subfolder = "qwen2.5_1.5b_instruct"  # choose from the catalog below',
         "",
         "tokenizer = AutoTokenizer.from_pretrained(model_id)",
         'base_model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, device_map="auto")',
         "model = PeftModel.from_pretrained(base_model, adapter_id, subfolder=subfolder)",
         "",
-        'inputs = tokenizer("<|user|>\\nКак настроить репликацию PostgreSQL?\\n<|assistant|>\\n", return_tensors="pt").to(model.device)',
+        'inputs = tokenizer("<|user|>\\nКак настроить репликацию PostgreSQL?\\n<|assistant|>\\n", return_tensors="pt").to(',
+        "    model.device",
+        ")",
         "outputs = model.generate(**inputs, max_new_tokens=256)",
         "print(tokenizer.decode(outputs[0], skip_special_tokens=True))",
         "```",
@@ -124,10 +126,14 @@ def main():
         "",
         "- Training corpus: [RICC SFT Dialogues](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) "
         f"({_metrics.sft_dialogues_fmt} multi-turn dialogues).",
-        "- Training regime: published adapters are domain-adaptation pilot checkpoints "
+        "- Training regime: most published adapters are domain-adaptation pilot checkpoints "
         "(50–100 training steps on sampled domain batches) demonstrating PEFT compatibility "
-        "and consumer-GPU deployment (RTX 3060 12GB). They are not multi-epoch checkpoints "
-        "over the entire corpus.",
+        "and consumer-GPU deployment (RTX 3060 12GB). Five adapters "
+        "(`qwen2.5_3b_instruct`, `qwen2.5_coder_3b_instruct`, "
+        "`deepseek_r1_distill_qwen_1.5b`, `llama_3.2_3b_instruct`, `gemma_2_2b_it`) were "
+        "retrained on the full corpus (5.8 h each); their `training_meta.json` records the "
+        "actual step count and the honest fraction of one epoch covered (19–45 %). None of "
+        "the adapters is a multi-epoch checkpoint over the entire corpus.",
         "- Academic benchmark numbers (HumanEval / RuMMLU / PPL) published earlier are **withdrawn pending "
         "re-evaluation**: the harness had answer-parsing and column-mapping defects that produced implausible "
         "values (see repo commit history). Enterprise scenario scores are rubric-based heuristics, not "
@@ -136,7 +142,8 @@ def main():
     ]
 
     card = Path("reports/HF_MODEL_CARD.md")
-    card.write_text("\n".join(hf_lines), encoding="utf-8")
+    with card.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(hf_lines))
 
     # 2. Generate LORA_MODEL_ZOO.md (for local GitHub repository documentation)
     zoo_lines = [
@@ -182,7 +189,9 @@ def main():
         "# 3. Генерация ответа",
         'prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"',
         'messages = [{"role": "user", "content": prompt}]',
-        'inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")',
+        "inputs = tokenizer(",
+        '    tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt"',
+        ').to("cuda")',
         "outputs = model.generate(**inputs, max_new_tokens=256, temperature=0.3)",
         "print(tokenizer.decode(outputs[0], skip_special_tokens=True))",
         "```",
@@ -206,7 +215,7 @@ def main():
         "",
         "## Аппаратные требования и воспроизводимость",
         "",
-        "- **Режим обучения адаптеров:** Опубликованные адаптеры получены в режиме легковесной доменной адаптации (pilot runs, 50–100 шагов на подмножествах диалогов) для подтверждения совместимости весов, PEFT-пайплайна и инференса на потребительских GPU (RTX 3060 12GB). Они не являются финальными многоэпоховыми чекпоинтами на всём объёме 171k диалогов.",
+        "- **Режим обучения адаптеров:** Большинство опубликованных адаптеров получены в режиме легковесной доменной адаптации (pilot runs, 50–100 шагов на подмножествах диалогов) для подтверждения совместимости весов, PEFT-пайплайна и инференса на потребительских GPU (RTX 3060 12GB). Пять адаптеров (`qwen2.5_3b_instruct`, `qwen2.5_coder_3b_instruct`, `deepseek_r1_distill_qwen_1.5b`, `llama_3.2_3b_instruct`, `gemma_2_2b_it`) переобучены на полном корпусе (по 5.8 ч); фактическое число шагов и честная доля одной эпохи (19–45 %) указаны в их `training_meta.json`. Ни один адаптер не является многоэпоховым чекпоинтом на всём объёме корпуса.",
         "- **Потребление VRAM при обучении:** ~4.35 GB на NVIDIA GeForce RTX 3060 (12 GB) с gradient accumulation = 4, batch size = 1. *(Логи обучения не хранятся в репозитории — цифра приведена как ориентир для воспроизведения.)*",
         "- **Флагманские 7B–8B модели:** используют 4-битное квантование BitsAndBytes (NF4) для инференса в пределах 6 GB VRAM.",
         "- **Статус метрик:** ранее опубликованные академические метрики (HumanEval / RuMMLU / PPL) **отозваны до переоценки** — аудит тестового контура выявил дефекты парсинга ответов и маппинга колонок (см. историю коммитов). Оценки enterprise-сценариев являются эвристиками на основе рубрик, а не измерениями способностей.",
@@ -214,7 +223,8 @@ def main():
     ]
 
     out_md = Path("reports/LORA_MODEL_ZOO.md")
-    out_md.write_text("\n".join(zoo_lines), encoding="utf-8")
+    with out_md.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(zoo_lines))
 
     index = {
         "repo_id": REPO,
