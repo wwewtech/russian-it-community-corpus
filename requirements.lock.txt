@@ -54,7 +54,7 @@ packaging==25.0
 pandas==3.0.6
 peft==0.21.2
 pillow==11.3.0
-pluggy==1.6.0
+pluggy==1.7.0
 prometheus_client==0.26.0
 protobuf==7.36.2
 psutil==7.2.2
@@ -100,8 +100,8 @@ toml==0.10.2
 torch==2.14.1
 tornado==6.5.10
 tqdm==4.70.1
-transformers==5.19.0
-trl==1.15.0
+transformers==5.20.1
+trl==1.16.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 tzdata==2026.5
