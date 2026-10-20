@@ -108,5 +108,5 @@ tzdata==2026.5
 ujson==6.0.0
 urllib3==2.8.0
 watchdog==6.0.0
-xxhash==3.8.1
+xxhash==4.0.1
 yargy==0.16.0
