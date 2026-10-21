@@ -137,7 +137,7 @@ class TestMasterDataPipelineRunAll(unittest.TestCase):
         # deterministic. We assert on the call order to confirm the
         # seven-stage contract documented in the module docstring.
         with (
-            patch.object(pipeline.anonymizer, "process_batch", return_value=["m1"]) as pii,
+            patch.object(pipeline.anonymizer, "process_stream", return_value=iter(["m1"])) as pii,
             patch.object(pipeline.exact_dedup, "deduplicate", return_value=(["m1"], 0)) as exact,
             patch.object(pipeline.minhash_lsh, "deduplicate_messages", return_value=(["m1"], 0)) as lsh,
             patch.object(pipeline.tagger, "tag_batch", return_value=["m1"]) as tagger,
@@ -215,7 +215,7 @@ class TestMasterDataPipelineFailureModes(unittest.TestCase):
         pipeline = MasterDataPipeline(raw_export_dirs=[Path("whatever")])
         with (
             patch("ricc.pipeline.merge_multiple_exports", return_value=([], ["m1"])),
-            patch.object(pipeline.anonymizer, "process_batch", side_effect=RuntimeError("ner crashed")),
+            patch.object(pipeline.anonymizer, "process_stream", side_effect=RuntimeError("ner crashed")),
             self.assertRaises(PIIAnonymizationError) as ctx,
         ):
             pipeline.run_all()

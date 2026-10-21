@@ -3,6 +3,7 @@ Unified PII Anonymizer combining Deterministic RegEx and NLP/NER scrubbers with 
 """
 
 import logging
+from collections.abc import Iterable, Iterator
 
 from ricc.ingestion.schema import CleanedMessage, NormalizedMessage
 from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
@@ -30,6 +31,19 @@ class UnifiedPIIAnonymizer(DeepPIIAnonymizer):
     def process_batch(self, messages: list[NormalizedMessage]) -> list[CleanedMessage]:
         """Process a list of NormalizedMessages in batch with author name harvesting."""
         return self.process_all(messages)
+
+    def process_stream(
+        self,
+        messages: Iterable[NormalizedMessage],
+        all_messages: Iterable[NormalizedMessage] | None = None,
+    ) -> Iterator[CleanedMessage]:
+        """Scrub a stream of messages without materialising it.
+
+        The corpus is 2.8M messages; holding the input and the output
+        lists at the same time costs several gigabytes. This variant
+        yields the cleaned messages one by one.
+        """
+        return super().process_stream(messages, all_messages)
 
     def get_stats_summary(self) -> dict[str, int]:
         """Get summary of anonymization stats."""

@@ -69,6 +69,36 @@ The MinHash signatures moved into one contiguous `uint32` block: **8.9 GB →
 0.9 GB** for the corpus, and the permutation arithmetic is vectorised over
 the shingles, so the index is also faster.
 
+### The pipeline stages stream too
+
+The export was only the last stage. The stages before it held the input
+list AND the output list at the same time:
+
+- the PII stage built a list of every `NormalizedMessage`, then a list of
+  every `CleanedMessage`;
+- the deduplication stage built a second list of the survivors on top;
+- the MinHash index added its own signatures.
+
+At 2.8M messages that is several gigabytes of live objects that exist
+only because a list needs to be a list. Each stage now has a streaming
+variant that takes an ITERABLE and yields its result:
+
+- `UnifiedPIIAnonymizer.process_stream` — the author pass still reads
+  the whole corpus (the inflected name forms have to be known before any
+  text is scrubbed, and only a few thousand author identities are kept),
+  then the scrubbing yields one message at a time;
+- `ExactDeduplicator.deduplicate_stream` — the fingerprints are stored as
+  raw 8-byte digests instead of 32-character hex strings;
+- `MinHashLSH.deduplicate_stream` — the index is the signature block.
+
+`MasterDataPipeline.run_all()` uses the streaming variants and releases
+the raw messages as soon as the PII stage is done, so the deduplication
+stage never sees them.
+
+The list-based methods (`process_batch`, `deduplicate`,
+`deduplicate_messages`) still exist and behave identically — the
+streaming variants are the same code with a different boundary.
+
 ### DVC is real
 
 - `dvc init` has been run; `.dvc/config` names a remote and `dvc.lock` is
@@ -87,7 +117,8 @@ the shingles, so the index is also faster.
 ## Consequences
 
 - Exporting the corpus no longer needs a machine with tens of gigabytes of
-  free RAM for the export step alone.
+  free RAM for the export step alone, and the same is now true of the PII
+  and deduplication stages.
 - The published files on the Hub still have three row groups; they will
   be re-exported with the streaming writer, which changes their bytes and
   therefore their manifest hashes. The dataset version is unchanged (the
@@ -98,6 +129,11 @@ the shingles, so the index is also faster.
 - The DVC remote defaults to a local directory outside the working copy.
   A shared setup points it at object storage; the rest of the
   configuration does not change.
+- The PII stage still needs two passes over the corpus: the inflected
+  forms of a name are only known once the name has been seen, so the
+  author pass runs before the scrubbing pass. That is inherent to the
+  algorithm, not to the streaming — and it costs a few thousand author
+  identities, not a second copy of the corpus.
 
 ## Alternatives rejected
 
