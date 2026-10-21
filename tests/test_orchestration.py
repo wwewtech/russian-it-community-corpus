@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.orchestration.prefect_flow import HAS_PREFECT, curate_corpus_flow
+from ricc.orchestration.prefect_flow import HAS_PREFECT, curate_corpus_flow
 from tests.test_cli_commands import build_synthetic_dataset
 
 

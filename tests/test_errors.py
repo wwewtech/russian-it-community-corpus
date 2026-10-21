@@ -1,12 +1,12 @@
 """
-Unit tests for :mod:`src.errors`.
+Unit tests for :mod:`ricc.errors`.
 """
 
 from __future__ import annotations
 
 import unittest
 
-from src.errors import (
+from ricc.errors import (
     AdapterLoadError,
     CheckpointError,
     ConfigurationError,

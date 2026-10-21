@@ -6,8 +6,8 @@ import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from src.analytics.engine import DeepChatAnalyzer
-from src.ingestion.schema import CleanedMessage
+from ricc.analytics.engine import DeepChatAnalyzer
+from ricc.ingestion.schema import CleanedMessage
 
 
 def _make_msg(
@@ -277,7 +277,7 @@ class TestComputeSocialNetworkAnalytics(unittest.TestCase):
         msgs = [_make_msg(1, "msg1"), _make_msg(2, "reply", author="user2", author_id="u2", unixtime_offset=60)]
         analyzer = DeepChatAnalyzer(msgs)
 
-        with patch("src.analytics.engine.SocialNetworkAnalyzer") as mock_sna:
+        with patch("ricc.analytics.engine.SocialNetworkAnalyzer") as mock_sna:
             mock_instance = MagicMock()
             mock_instance.analyze.return_value = {"nodes": 2, "edges": 1}
             mock_sna.return_value = mock_instance
@@ -313,7 +313,7 @@ class TestComputeTopicClustersLDA(unittest.TestCase):
         msgs = [_make_msg(i, "test message " * 10) for i in range(60)]
         analyzer = DeepChatAnalyzer(msgs)
 
-        with patch("src.analytics.engine.HAS_SKLEARN", False):
+        with patch("ricc.analytics.engine.HAS_SKLEARN", False):
             result = analyzer.compute_topic_clusters_lda(n_topics=5)
             self.assertEqual(result, [])
 
@@ -327,7 +327,7 @@ class TestComputeTopicClustersLDA(unittest.TestCase):
         msgs = [_make_msg(i, "short") for i in range(60)]
         analyzer = DeepChatAnalyzer(msgs)
 
-        with patch("src.analytics.engine.HAS_SKLEARN", True):
+        with patch("ricc.analytics.engine.HAS_SKLEARN", True):
             result = analyzer.compute_topic_clusters_lda(n_topics=8)
             self.assertEqual(result, [])
 
@@ -445,7 +445,7 @@ class TestRunFullAnalysis(unittest.TestCase):
         ]
         analyzer = DeepChatAnalyzer(msgs, sample_limit_for_nlp=10)
 
-        with patch("src.analytics.engine.SocialNetworkAnalyzer") as mock_sna:
+        with patch("ricc.analytics.engine.SocialNetworkAnalyzer") as mock_sna:
             mock_instance = MagicMock()
             mock_instance.analyze.return_value = {"nodes": 2, "edges": 1}
             mock_sna.return_value = mock_instance
@@ -498,7 +498,7 @@ class TestTokenizeClean(unittest.TestCase):
         msgs = [_make_msg(1, "test")]
         analyzer = DeepChatAnalyzer(msgs)
 
-        with patch("src.analytics.engine.HAS_MORPH", True), patch("src.analytics.engine.MORPH") as mock_morph:
+        with patch("ricc.analytics.engine.HAS_MORPH", True), patch("ricc.analytics.engine.MORPH") as mock_morph:
             mock_parse = MagicMock()
             mock_parse.normal_form = "деплой"
             mock_morph.parse.return_value = [mock_parse]

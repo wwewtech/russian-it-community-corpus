@@ -1,6 +1,6 @@
 # Analytics & Reports
 
-`src/analytics/` computes the statistical and semantic profile of the
+`ricc/analytics/` computes the statistical and semantic profile of the
 corpus and renders it into reports consumed by the CLI, the Streamlit
 Studio and the docs pipeline.
 
@@ -11,15 +11,15 @@ Studio and the docs pipeline.
 - **Message metrics** — length distributions (chars/words/token estimates
   with percentiles), activity by hour/year, inter-arrival times.
 - **Author metrics** — messages per author, participation concentration.
-- **Social network analytics** — via `src/analytics/network.py`
+- **Social network analytics** — via `ricc/analytics/network.py`
   (reply-graph degree/centrality).
 - **Topic clustering** — TF-IDF + clustering over tagged messages,
   surfaced as topic groups.
 - **Longitudinal trends** — per-domain volume evolution.
 
 Metric definitions shared with docs/reports live in
-`src/analytics/metrics.py`; `ReportGenerator`
-(`src/analytics/report_generator.py`) renders the JSON report consumed by
+`ricc/analytics/metrics.py`; `ReportGenerator`
+(`ricc/analytics/report_generator.py`) renders the JSON report consumed by
 `cli.py analyze` and the Studio's tech-radar page.
 
 ## Outputs

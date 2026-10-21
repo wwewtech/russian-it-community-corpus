@@ -67,6 +67,6 @@ pip install -r requirements.txt
 
 ## Zero-PII & Privacy Strict Rules
 
-If you are modifying anonymization logic (`src/pii/`):
+If you are modifying anonymization logic (`ricc/pii/`):
 - Never commit real personal names, phone numbers, API keys, or private links.
 - Run `make audit` to verify against the adversarial red-team suite.

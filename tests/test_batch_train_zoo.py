@@ -19,7 +19,7 @@ import torch
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.lora.batch_train_zoo import (  # noqa: E402
+from ricc.lora.batch_train_zoo import (  # noqa: E402
     FULL_PROFILE_EVAL_FRAC,
     FULL_TIER_BUDGETS,
     PILOT_BUDGET,
@@ -80,7 +80,7 @@ class TestBudgets(unittest.TestCase):
         The old tier budgets (600-2000 steps) covered 2.77-9.24 % of the
         corpus and could never satisfy the binding training policy.
         """
-        from src.lora.policy_gate import required_steps_for_epoch, trainable_dialogues
+        from ricc.lora.policy_gate import required_steps_for_epoch, trainable_dialogues
 
         trainable = trainable_dialogues(173216, holdout_tail=1000, eval_frac=0.005)
         steps = required_steps_for_epoch(trainable)

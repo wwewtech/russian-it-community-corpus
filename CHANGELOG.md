@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CI step that hardcoded `validation_passed: true`, `threads_count: -1`
   and `_source.synthetic: false`.
 - **Fail-closed typed pipeline errors** — `run_all()` wraps every stage
-  failure into the `PipelineError` hierarchy from `src/errors.py`; empty
+  failure into the `PipelineError` hierarchy from `ricc/errors.py`; empty
   ingestion raises `IngestionError`; `main.py` and `cli.py run` exit `1`
   on typed errors or failed validation; `cli.py validate` exits `1` when
   `overall_passed=false` (docs/cli/commands.md already promised this).
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed: it was a second, unsanctioned Hub write path (no dry-run,
   no single-entry-point guarantee) while ADR 0001 names
   `scripts/sync_to_hub.py` the only sanctioned uploader; the model-card
-  upload moved into `src/exporter/finalize_sync_all.py`
+  upload moved into `ricc/exporter/finalize_sync_all.py`
   (`upload_model_card`). Cross-module suites renamed
   `test_coverage_boost{,2,3}.py` → `test_edge_paths.py`,
   `test_branch_paths.py`, `test_scale_paths.py`. Per-adapter
@@ -121,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [12.2.0] - 2026-10-14
 
 ### Added
-- **GPU/ML error taxonomy (P3)**: `src/errors.py` extended with `MLError`
+- **GPU/ML error taxonomy (P3)**: `ricc/errors.py` extended with `MLError`
   (`TrainingError`, `InferenceError`, `EvaluationError`, `TokenizerError`,
   `CheckpointError`, `AdapterLoadError`, `QuantizationError`) and `GPUError`
   (`GPUNotAvailableError`, `GPUDriverError`, `GPUOutOfMemoryError`).
@@ -146,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   success (duration/loss/steps/vram) and classified failures. Alert
   `RiccLoraTrainFailing` fires on failure-rate increase.
 - **Drift gauges wired in**: `record_drift_metrics()` in
-  `src/monitoring/drift.py` pushes PSI / JS-divergence / vocab-Jaccard
+  `ricc/monitoring/drift.py` pushes PSI / JS-divergence / vocab-Jaccard
   gauges and verdict counters; called by `generate_report()`,
   `scripts/run_drift_monitoring.py` and `scripts/regenerate_real_reports.py`
   — the Grafana "Drift metrics" panel now receives data.
@@ -164,10 +164,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **mypy strict rollout complete**: `[[tool.mypy.overrides]]
-  ignore_errors` removed entirely — every `src/` module passes
+  ignore_errors` removed entirely — every `ricc/` module passes
   `mypy --strict`. `make typecheck-strict` and the pre-commit
   `mypy-strict` hook now verify 43 modules (was 31). Phase 1: all
-  `src/lora/*` + `official_academic_benchmarks` + `benchmark_comparator`
+  `ricc/lora/*` + `official_academic_benchmarks` + `benchmark_comparator`
   (43 errors fixed via the `cast(Any, ...)` pattern). Phase 2: the three
   heavy eval suites — `deep_multi_experiment_suite` (89),
   `enterprise_production_eval_suite` (34), `sota_expert_benchmark_showcase`
@@ -179,15 +179,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   listed module was staged).
 
 ### Added
-- **Hybrid RAG retrieval**: `src/rag/rag_pipeline.py` upgraded from lexical-only to
+- **Hybrid RAG retrieval**: `ricc/rag/rag_pipeline.py` upgraded from lexical-only to
   lexical pre-filter (5k cap) + per-query TF-IDF (1-2-gram, 20k features) cosine
   re-rank with `mode="hybrid"|"lexical"|"tfidf"`. Memory-flat on 325k chunks,
   graceful fallback when sklearn is missing. API backward compatible.
-- **SLO release gate**: `src/monitoring/slo_gate.py` + `make slo` aggregates
+- **SLO release gate**: `ricc/monitoring/slo_gate.py` + `make slo` aggregates
   `validation_results.json` + `probabilistic_pii_audit.json` + `drift_report.json`
   into single SHIP/HOLD verdict (fail-closed on PII). Emits `reports/slo_verdict.json`.
-- **Packaging hygiene**: added missing `src/evaluation/__init__.py`,
-  `src/lora/__init__.py`, `src/rag/__init__.py` (regular packages, strict-typed).
+- **Packaging hygiene**: added missing `ricc/evaluation/__init__.py`,
+  `ricc/lora/__init__.py`, `ricc/rag/__init__.py` (regular packages, strict-typed).
 - **K8s manifests**: `deploy/k8s/data-studio-{deployment,service}.yaml`
   (non-root 10001, probes on `/_stcore/health`, resource requests/limits).
 - **Coverage config**: `[tool.coverage.run] omit` for GPU-only training/enterprise
@@ -262,19 +262,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [12.0.4] - 2026-09-08
 
 ### Fixed (ML training & evaluation rigor)
-- **Prompt loss masking (`labels = -100`)**: Fixed severe SFT bug across `src/lora/train_lora.py`,
-  `src/lora/train_20_popular_models.py`, and `src/lora/train_heavyweight_5_sota.py`. Previously,
+- **Prompt loss masking (`labels = -100`)**: Fixed severe SFT bug across `ricc/lora/train_lora.py`,
+  `ricc/lora/train_20_popular_models.py`, and `ricc/lora/train_heavyweight_5_sota.py`. Previously,
   `tokenized["labels"] = tokenized["input_ids"].copy()` caused the loss to be computed over both the
   user prompt and the assistant response. Now, user prompt tokens are properly masked with `-100`
   (PyTorch CrossEntropyLoss `ignore_index`), ensuring models only learn to generate assistant answers.
 - **LLM contamination filtering in SFT & DPO**: Added `AI_CONTAMINATION_PATTERNS` and `is_llm_contaminated()`
-  to `src/graph/conversation_extractor.py`. Automatically rejects messages with AI self-identifications
+  to `ricc/graph/conversation_extractor.py`. Automatically rejects messages with AI self-identifications
   (e.g., "как языковая модель", "as an AI", "нас (модели Google) тренируют", "Claude 4.5 Sonnet", "ChatGPT")
   from polluting curated SFT dialogues and chosen DPO responses.
 - **AST syntax validation in evaluation**: Replaced superficial `code_score = 100 if "```" in text` in
-  `src/evaluation/sota_expert_benchmark_showcase.py` with true Python AST syntax verification via `ast.parse()`.
+  `ricc/evaluation/sota_expert_benchmark_showcase.py` with true Python AST syntax verification via `ast.parse()`.
 - **RAG pipeline docstring accuracy**: Replaced misleading claims of "dense semantic embedding retrieval + BM25"
-  in `src/rag/rag_pipeline.py` with an accurate technical description: fast vectorized lexical keyword-overlap
+  in `ricc/rag/rag_pipeline.py` with an accurate technical description: fast vectorized lexical keyword-overlap
   retrieval.
 - **LoRA Zoo training transparency**: Clarified across `README.md`, `reports/LORA_MODEL_ZOO.md`,
   `reports/HF_MODEL_CARD.md`, and `reports/DATASET_AND_ANALYTICS.md` that the 58 published adapters
@@ -293,7 +293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`reports/drift_report.json`**: Added `_audit_note` field documenting that this report was generated
   against a synthetic 2-row dataset, not the production corpus. The drift monitor itself is correctly
   implemented and tested (9/9 tests pass in `test_drift_monitoring.py`).
-- **Version synchronization**: Synchronized `src/__init__.py`, `pyproject.toml`, and `CITATION.cff` to `12.0.4`.
+- **Version synchronization**: Synchronized `ricc/__init__.py`, `pyproject.toml`, and `CITATION.cff` to `12.0.4`.
   Added automated sentinel test `test_version_consistency` in `tests/test_report_consistency.py`.
 
 ### Changed
@@ -315,8 +315,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`.github/workflows/ci.yml`**: new `Build synthetic parquet fixtures` step that emits the fixture into `dataset_output/` if the production parquet is missing. The `if: hashFiles(...)` guards on the three data-dependent steps now resolve to **true** on every matrix cell, so PII RedTeam, Validate Datasets, and SFT Quality Regression run on every push instead of always being skipped.
 
 ### Changed
-- **`src/inference.py`**: split into pure helpers (`is_exit_command`, `validate_adapter_path`, `build_chat_messages`, `build_prompt`, `format_rag_context`) and the I/O loop (`interactive_chat_session`). Heavy third-party imports (transformers, peft) are deferred inside the loop so the helpers can be imported and tested on CPU-only machines without a GPU. The argparse wrapper `main()` is now also unit-tested.
-- **`src/exporter/finalize_sync_all.py`**: split into pure helpers (`compute_lora_zoo_index`, `build_lora_zoo_markdown`) and the I/O wrappers (`upload_dataset`, `upload_missing_adapters`). The retry loop in `upload_missing_adapters` now chains exceptions properly with `raise ... from e` and surfaces a real `RuntimeError` after `max_attempts` exhausted instead of silently logging and returning.
+- **`ricc/inference.py`**: split into pure helpers (`is_exit_command`, `validate_adapter_path`, `build_chat_messages`, `build_prompt`, `format_rag_context`) and the I/O loop (`interactive_chat_session`). Heavy third-party imports (transformers, peft) are deferred inside the loop so the helpers can be imported and tested on CPU-only machines without a GPU. The argparse wrapper `main()` is now also unit-tested.
+- **`ricc/exporter/finalize_sync_all.py`**: split into pure helpers (`compute_lora_zoo_index`, `build_lora_zoo_markdown`) and the I/O wrappers (`upload_dataset`, `upload_missing_adapters`). The retry loop in `upload_missing_adapters` now chains exceptions properly with `raise ... from e` and surfaces a real `RuntimeError` after `max_attempts` exhausted instead of silently logging and returning.
 - **`app.py`**: removed the duplicated inlined PII verdict logic in the Security & Compliance panel; it now imports `derive_pii_verdict`, `leak_breakdown`, and `adversarial_summary` from `app_helpers`. Streamlit-cached wrappers preserve the existing call sites, so the UI is unchanged.
 - **`lora_adapters/registry.json`**: regenerated by `scripts/generate_lora_registry.py` (1-line timestamp diff). The on-disk-vs-registry mismatch noted in 12.0.2's "Pending" section was a false alarm: 63 directories exist on disk but 7 are scaffold-only without an `adapter_config.json`; the generator correctly skips them. Registry and deployable LoRAs are now in sync at 56.
 - **`README.md`**, **`reports/DATASET_AND_ANALYTICS.md`**: auto-formatted by `ruff format 0.16.2` (2 files reformatted, the rest already conformant).
@@ -324,11 +324,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Test metrics
 - **Suite size**: 271 → **275 tests** (1 pre-existing skip).
 - **Coverage**: 76.22% → **76.45%**, with the 60% floor still met on Python 3.11 / 3.12 / 3.13.
-- **`src/pipeline.py`**: 22% → **100%** covered (the central orchestrator).
+- **`ricc/pipeline.py`**: 22% → **100%** covered (the central orchestrator).
 - **`app_helpers.py`**: **100%** covered (every UI panel's logic).
-- **`src/exporter/finalize_sync_all.py`**: 0% → **77%** covered (HF Hub sync entry point).
-- **`src/inference.py`**: 0% → **44%** covered (pure helpers 100%; the I/O loop is excluded because it requires a GPU + a model checkpoint, neither of which is sensible in CI).
-- **`src/validation/pii_redteam.py`**: 63% → **100%** covered (bonus — fixed by the new `tests/test_pii_redteam.py` adjustments in 12.0.2's test fixes commit).
+- **`ricc/exporter/finalize_sync_all.py`**: 0% → **77%** covered (HF Hub sync entry point).
+- **`ricc/inference.py`**: 0% → **44%** covered (pure helpers 100%; the I/O loop is excluded because it requires a GPU + a model checkpoint, neither of which is sensible in CI).
+- **`ricc/validation/pii_redteam.py`**: 63% → **100%** covered (bonus — fixed by the new `tests/test_pii_redteam.py` adjustments in 12.0.2's test fixes commit).
 
 ---
 
@@ -338,17 +338,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CITATION.cff**: version `6.0.0` → `12.0.1`, `date-released` synced with the current version.
 - **`app.py` count drift**: sidebar / main view / SFT-DPO tabs / Parquet table now consistently show `DPO: 60,899`, `Alpaca: 933,313`, `LoRA adapters: 56` (matching `registry.json` and `validation_results.json`). Previously the same project claimed 60,412 / 933,331 / 58 in different artifacts.
 - **`app.py` PII verdict logic**: replaced `or` short-circuit that allowed the Streamlit UI to display «Zero-PII Status: PASSED» even when one of the audit certificates reported non-zero leaks. PASSED now requires BOTH the audit certificate and the dataset validator to report zero leaks simultaneously.
-- **`src/rag/rag_pipeline.py` docstring**: stale `71k knowledge base` string updated to `325,690 chunks`, with a NOTE explaining the implementation is lexical (`str.contains` + keyword overlap), not semantic-embedding based. Embedding backend is TODO.
+- **`ricc/rag/rag_pipeline.py` docstring**: stale `71k knowledge base` string updated to `325,690 chunks`, with a NOTE explaining the implementation is lexical (`str.contains` + keyword overlap), not semantic-embedding based. Embedding backend is TODO.
 - **`Modelfile`**: duplicate `PARAMETER stop ""` lines replaced with the actual Qwen stop tokens `<|im_end|>` and `<|endoftext|>`. Ollama previously would have used both empty stop tokens and never halted generation.
 - **`Dockerfile` missing ML stack**: `torch`, `transformers`, `accelerate`, `peft`, `trl`, `datasets`, `evaluate` were absent. The image built a Streamlit container that could not load any model. They are now installed in a separate `pip install --no-deps` layer so the build fails fast on resolution errors.
-- **`src/inference.py` silent adapter failure**: a missing or corrupted adapter no longer prints `Could not load LoRA adapter` and continues with the base model. The function now raises `RuntimeError` with the exact failure path, and the Streamlit button / CLI surfaces a real error.
-- **`src/inference.py` chat template fallback**: when `apply_chat_template` is unavailable, the previous fallback used a naked `f"{system_prompt}\n\nПользователь: {query}\nОтвет:"` — which Qwen / ChatGLM-family models treat as a single prompt with no role boundary. The fallback now uses the explicit `<|im_start|>system / user / assistant` delimiters.
-- **`src/lora/train_lora.py` silent truncation**: removed the hardcoded `if len(raw_dataset) > 1000: raw_dataset.select(range(1000))` — the script now trains on the full JSONL (use `--max-samples` if a smoke run is needed). Intermediate checkpoints are now written every `min(100, max_steps//5)` steps with `save_total_limit=3`, so a crash on step 99 / 100 no longer destroys the run.
-- **`src/pii/deep_anonymizer.py` Telegram forward header**: previously dropped the captured name and emitted a static `[PERSON_REDACTED]`, breaking cross-message identity. The replacement now feeds the captured name into the same `_get_or_create_pseudonym` used for authors, so the same forward header always maps to the same `Developer_XXXXX`.
-- **`src/pii/regex_scrubber.py` community whitelist**: the previous regex matched only 9 hand-picked channel names. It now anchors on the original 9 plus a heuristic catch-all `[Title] + chat / channel / digest / podcast / feed` pattern so new communities are not silently leaking.
-- **`src/graph/conversation_extractor.py` quality heuristic**: removed the unconditional +2.0 bonus for the presence of any code indicator. A bare `def ` / `import ` substring no longer inflates the SFT dialogue `quality_score`; technical-keyword density is now the sole signal.
-- **`src/evaluation/official_academic_benchmarks.py` `_safe_exec`**: wrapped `exec()` in a restricted builtin allowlist (`abs`, `sum`, `dict`, ...) so model-generated HumanEval code can no longer call `os.system`, `subprocess.run`, `socket`, `shutil`, or open files for write. This is a defense-in-depth measure alongside the existing 2-second timeout.
-- **`src/pipeline.py` logging.basicConfig**: removed `logging.basicConfig(...)` from module-import time so importing the library does not clobber the caller's logger. The CLI / Streamlit entry points now configure logging explicitly (see `main.py`).
+- **`ricc/inference.py` silent adapter failure**: a missing or corrupted adapter no longer prints `Could not load LoRA adapter` and continues with the base model. The function now raises `RuntimeError` with the exact failure path, and the Streamlit button / CLI surfaces a real error.
+- **`ricc/inference.py` chat template fallback**: when `apply_chat_template` is unavailable, the previous fallback used a naked `f"{system_prompt}\n\nПользователь: {query}\nОтвет:"` — which Qwen / ChatGLM-family models treat as a single prompt with no role boundary. The fallback now uses the explicit `<|im_start|>system / user / assistant` delimiters.
+- **`ricc/lora/train_lora.py` silent truncation**: removed the hardcoded `if len(raw_dataset) > 1000: raw_dataset.select(range(1000))` — the script now trains on the full JSONL (use `--max-samples` if a smoke run is needed). Intermediate checkpoints are now written every `min(100, max_steps//5)` steps with `save_total_limit=3`, so a crash on step 99 / 100 no longer destroys the run.
+- **`ricc/pii/deep_anonymizer.py` Telegram forward header**: previously dropped the captured name and emitted a static `[PERSON_REDACTED]`, breaking cross-message identity. The replacement now feeds the captured name into the same `_get_or_create_pseudonym` used for authors, so the same forward header always maps to the same `Developer_XXXXX`.
+- **`ricc/pii/regex_scrubber.py` community whitelist**: the previous regex matched only 9 hand-picked channel names. It now anchors on the original 9 plus a heuristic catch-all `[Title] + chat / channel / digest / podcast / feed` pattern so new communities are not silently leaking.
+- **`ricc/graph/conversation_extractor.py` quality heuristic**: removed the unconditional +2.0 bonus for the presence of any code indicator. A bare `def ` / `import ` substring no longer inflates the SFT dialogue `quality_score`; technical-keyword density is now the sole signal.
+- **`ricc/evaluation/official_academic_benchmarks.py` `_safe_exec`**: wrapped `exec()` in a restricted builtin allowlist (`abs`, `sum`, `dict`, ...) so model-generated HumanEval code can no longer call `os.system`, `subprocess.run`, `socket`, `shutil`, or open files for write. This is a defense-in-depth measure alongside the existing 2-second timeout.
+- **`ricc/pipeline.py` logging.basicConfig**: removed `logging.basicConfig(...)` from module-import time so importing the library does not clobber the caller's logger. The CLI / Streamlit entry points now configure logging explicitly (see `main.py`).
 
 ### Documentation
 - **`README.md`**: numbers unified across the doc (60,899 / 933,313 / 56 adapters); the entire WITHDRAWN benchmark table replaced with a short note explaining the harness was audited and the numbers will be republished only after a fresh GPU re-run. The 100-question benchmark suite remains available as a corpus, not as a leaderboard.
@@ -376,11 +376,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [12.0.0] - 2026-08-28
 
 ### Added
-- **Probabilistic PII Audit (`src/validation/probabilistic_audit.py`)**: upgrades the point-check red-team audit to a statistically bounded one — stratified proportional sampling across community nodes, per-category leak-rate estimation with Wilson intervals and one-sided 99% upper bounds, power analysis (`required_sample_size`), and a verdict with an explicit statistical guarantee. Script `scripts/run_probabilistic_pii_audit.py` + `make audit-prob`.
+- **Probabilistic PII Audit (`ricc/validation/probabilistic_audit.py`)**: upgrades the point-check red-team audit to a statistically bounded one — stratified proportional sampling across community nodes, per-category leak-rate estimation with Wilson intervals and one-sided 99% upper bounds, power analysis (`required_sample_size`), and a verdict with an explicit statistical guarantee. Script `scripts/run_probabilistic_pii_audit.py` + `make audit-prob`.
 - **Enlarged Benchmark Subsets for Statistical Power**: HumanEval subset 8 → **40 tasks**, RuMMLU CS subset 8 → **50 questions** (new categories: Distributed Systems, Security, Programming Languages, Systems Architecture). At N=8 the 95% Wilson CI spanned ~±20 p.p.; at N=40/50 it is ~±10/±11 p.p.
-- **Wilson Confidence Intervals in Benchmark Reports (`src/evaluation/statistical_power.py`)**: dependency-free z-score/Wilson/upper-bound math; every published accuracy figure now carries a 95% CI (Markdown table rows + `*_ci95` keys in the JSON matrix).
-- **Dataset Drift Monitoring (`src/monitoring/drift.py`)**: PSI over message-length distribution, Jensen–Shannon divergence over domain shares, top-k vocabulary Jaccard overlap — with stable/moderate/significant verdicts. Script `scripts/run_drift_monitoring.py` + `make drift`.
-- **Prefect Orchestration (`src/orchestration/prefect_flow.py`)**: curation → validation → probabilistic audit → drift monitoring as Prefect tasks with retries; graceful sequential fallback when Prefect is not installed. `make orchestrate`.
+- **Wilson Confidence Intervals in Benchmark Reports (`ricc/evaluation/statistical_power.py`)**: dependency-free z-score/Wilson/upper-bound math; every published accuracy figure now carries a 95% CI (Markdown table rows + `*_ci95` keys in the JSON matrix).
+- **Dataset Drift Monitoring (`ricc/monitoring/drift.py`)**: PSI over message-length distribution, Jensen–Shannon divergence over domain shares, top-k vocabulary Jaccard overlap — with stable/moderate/significant verdicts. Script `scripts/run_drift_monitoring.py` + `make drift`.
+- **Prefect Orchestration (`ricc/orchestration/prefect_flow.py`)**: curation → validation → probabilistic audit → drift monitoring as Prefect tasks with retries; graceful sequential fallback when Prefect is not installed. `make orchestrate`.
 - **DVC Pipeline (`dvc.yaml`, `params.yaml`)**: versioned corpus artifacts and reproducible stages (curate → validate → probabilistic_audit → drift_monitoring) with DVC metrics tracking; `platform` optional dependency group (`prefect`, `dvc`).
 
 ### Changed
@@ -396,7 +396,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Toolchain Pinning**: `ruff` pinned to `==0.16.2` across pyproject dev extras, pre-commit, and CI — local lint now reproduces CI exactly; added missing dev deps (`pytest-cov`, `mypy`).
-- **Coverage Gate Raised**: `--cov-fail-under` 50 → 60; `src/pii/` coverage lifted from 63–77% to 92–98% per module (total 59% → 62%).
+- **Coverage Gate Raised**: `--cov-fail-under` 50 → 60; `ricc/pii/` coverage lifted from 63–77% to 92–98% per module (total 59% → 62%).
 - **Makefile**: new `install`, `lint`, and `format` targets.
 
 ---
@@ -416,11 +416,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Multi-Export Ingestion (1.27M+ Messages)**: Ingestion and chronological merge of 3 complete community chat dumps.
-- **Deep Case-Aware Morphological Anonymizer (`src/pii/deep_anonymizer.py`)**: Dynamic participant name extraction with full Russian grammatical declension across all 6 cases (Им., Род., Дат., Вин., Твор., Предл.) + Natasha NER with Smart Tech Whitelist.
-- **Local LoRA & PEFT Training Pipeline (`src/lora/train_lora.py`)**: QLoRA 4-bit domain adaptation optimized for consumer NVIDIA GeForce RTX 3060 (12GB VRAM).
-- **Local Vector RAG Engine (`src/rag/rag_pipeline.py`)**: Sub-second semantic search across 111,659 curated IT knowledge chunks.
+- **Deep Case-Aware Morphological Anonymizer (`ricc/pii/deep_anonymizer.py`)**: Dynamic participant name extraction with full Russian grammatical declension across all 6 cases (Им., Род., Дат., Вин., Твор., Предл.) + Natasha NER with Smart Tech Whitelist.
+- **Local LoRA & PEFT Training Pipeline (`ricc/lora/train_lora.py`)**: QLoRA 4-bit domain adaptation optimized for consumer NVIDIA GeForce RTX 3060 (12GB VRAM).
+- **Local Vector RAG Engine (`ricc/rag/rag_pipeline.py`)**: Sub-second semantic search across 111,659 curated IT knowledge chunks.
 - **Interactive Streamlit Data Studio (`app.py`)**: Web UI with Dataset Explorer, SFT/DPO Dialogue Studio, RAG Assistant, Live Zero-PII Sandbox, and Tech Radar.
-- **Automated Red-Team PII Penetration Suite (`src/validation/pii_redteam.py`)**: Generates official `zero_pii_audit_certificate.json`.
+- **Automated Red-Team PII Penetration Suite (`ricc/validation/pii_redteam.py`)**: Generates official `zero_pii_audit_certificate.json`.
 - **100-Question Domain Benchmark (`reports/domain_benchmark_100.json`)**: Quantitative evaluation suite for Backend, AI/ML, DevOps, Fintech, and Frontend.
 - **Production Artifacts**: Dockerfile, docker-compose.yml, Makefile, and GitHub Actions CI workflow.
 

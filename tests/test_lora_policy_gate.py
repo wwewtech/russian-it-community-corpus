@@ -1,4 +1,4 @@
-"""Tests for the training policy gate (src/lora/policy_gate.py).
+"""Tests for the training policy gate (ricc/lora/policy_gate.py).
 
 The gate is the enforcement point for the binding training policy in
 AGENTS.md: a run that covers less than one full epoch of the corpus, or
@@ -18,7 +18,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.lora.policy_gate import (
+from ricc.lora.policy_gate import (
     CANONICAL_HOLDOUT_TAIL,
     EFFECTIVE_BATCH_SIZE,
     PolicyViolation,

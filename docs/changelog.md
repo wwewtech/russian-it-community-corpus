@@ -22,10 +22,10 @@ All notable changes to RICC are documented here.
 ## [12.0.4] - 2026-10-04
 
 ### Added
-- **Unified Configuration**: `src/settings.py` using `pydantic-settings.BaseSettings` — single source of truth merging `config.py` + `params.yaml` with env var overrides (`RICC__`)
-- **Observability Module**: `src/observability/__init__.py` with structured logging (structlog) + Prometheus metrics for pipeline stages, PII audit, drift, validation, LoRA, SLO, HTTP, errors
-- **Error Taxonomy**: `src/errors.py` with complete typed exception hierarchy (`RICCError`, `PipelineError*`, `ValidationError*`, `DataQualityError*`, `ConfigurationError*`, `ExternalServiceError*`, `ResourceError*`) + functional `Result[T, E]` type with `Ok`/`Err`
-- **Public API Package**: `src/ricc/__init__.py` with `__version__`, `Settings`, `MasterDataPipeline`, all exceptions, observability, and `Result` type
+- **Unified Configuration**: `ricc/settings.py` using `pydantic-settings.BaseSettings` — single source of truth merging `config.py` + `params.yaml` with env var overrides (`RICC__`)
+- **Observability Module**: `ricc/observability/__init__.py` with structured logging (structlog) + Prometheus metrics for pipeline stages, PII audit, drift, validation, LoRA, SLO, HTTP, errors
+- **Error Taxonomy**: `ricc/errors.py` with complete typed exception hierarchy (`RICCError`, `PipelineError*`, `ValidationError*`, `DataQualityError*`, `ConfigurationError*`, `ExternalServiceError*`, `ResourceError*`) + functional `Result[T, E]` type with `Ok`/`Err`
+- **Public API Package**: `ricc/ricc/__init__.py` with `__version__`, `Settings`, `MasterDataPipeline`, all exceptions, observability, and `Result` type
 - **CI/CD Pipeline**: `.github/workflows/ci.yml` with lint (ruff), typecheck (mypy strict), test (pytest cov≥85%), Docker build/push, SLO gate, HF Hub release
 - **Pre-commit Hooks**: `.pre-commit-config.yaml` mirroring CI (ruff, mypy strict, YAML/JSON/TOML checks)
 - **DVC Pipeline**: `dvc.yaml` with 12 reproducible stages matching `MasterDataPipeline`
@@ -58,7 +58,7 @@ All notable changes to RICC are documented here.
 
 ### Changed
 - Refactored `MasterDataPipeline` to 7 explicit stages
-- Centralized runtime env setup in `src/bootstrap.py`
+- Centralized runtime env setup in `ricc/bootstrap.py`
 - MinHash LSH optimized with precomputed permutations
 
 ## [12.0.0] - 2026-08-15

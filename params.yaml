@@ -1,5 +1,5 @@
 # DVC pipeline parameters (consumed via dvc params / dvc.yaml deps).
-# Keep the audit & drift thresholds in sync with src/config.py defaults.
+# Keep the audit & drift thresholds in sync with ricc/config.py defaults.
 
 pii_audit:
   # 100000: with zero observed leaks the one-sided 99% Wilson upper bound is

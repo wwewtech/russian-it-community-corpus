@@ -28,7 +28,7 @@ errors in code nobody was ready to refactor. The cost was real, though:
 
 ## Decision
 
-1. **Strict is the terminal state.** Every module under `src/` passes
+1. **Strict is the terminal state.** Every module under `ricc/` passes
    `mypy --strict`; the `ignore_errors` override block is removed
    entirely (12.2.0).
 2. **The rollout is per-module, gated, and monotonic.** Modules enter

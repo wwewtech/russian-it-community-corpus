@@ -1,9 +1,9 @@
-"""Tests for MinHash LSH deduplication (src/deduplication/minhash_lsh.py)."""
+"""Tests for MinHash LSH deduplication (ricc/deduplication/minhash_lsh.py)."""
 
 from __future__ import annotations
 
-from src.deduplication.minhash_lsh import MinHashLSH
-from src.ingestion.schema import CleanedMessage
+from ricc.deduplication.minhash_lsh import MinHashLSH
+from ricc.ingestion.schema import CleanedMessage
 
 LONG_TEXT_A = "Как настроить streaming replication в PostgreSQL с wal_level replica и слотами"
 LONG_TEXT_B = "Совершенно другой разговор про python asyncio gil и блокировки потоков"
@@ -133,13 +133,13 @@ class TestDeduplicateMessages:
 
 class TestBandKeyStability:
     def test_band_key_deterministic_across_calls(self):
-        from src.deduplication.minhash_lsh import _band_key
+        from ricc.deduplication.minhash_lsh import _band_key
 
         sig = tuple(range(32))
         assert _band_key(sig) == _band_key(sig)
         assert _band_key(sig) == _band_key(tuple(range(32)))
 
     def test_band_key_distinguishes_bands(self):
-        from src.deduplication.minhash_lsh import _band_key
+        from ricc.deduplication.minhash_lsh import _band_key
 
         assert _band_key((1, 2, 3)) != _band_key((3, 2, 1))

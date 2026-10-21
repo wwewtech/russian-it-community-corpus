@@ -7,11 +7,11 @@ and the UnifiedPIIAnonymizer facade.
 import unittest
 from datetime import datetime
 
-from src.ingestion.schema import NormalizedMessage
-from src.pii.anonymizer import UnifiedPIIAnonymizer
-from src.pii.deep_anonymizer import DeepPIIAnonymizer
-from src.pii.ner_scrubber import NERPIIScrubber
-from src.pii.regex_scrubber import RegexPIIScrubber
+from ricc.ingestion.schema import NormalizedMessage
+from ricc.pii.anonymizer import UnifiedPIIAnonymizer
+from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
+from ricc.pii.ner_scrubber import NERPIIScrubber
+from ricc.pii.regex_scrubber import RegexPIIScrubber
 
 
 def _make_msg(msg_id: int, author_id: str, author: str, text: str) -> NormalizedMessage:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.evaluation.statistical_power import (
+from ricc.evaluation.statistical_power import (
     ci_half_width_pct,
     leak_rate_upper_bound,
     required_sample_size,

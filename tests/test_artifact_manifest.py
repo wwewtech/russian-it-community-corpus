@@ -15,7 +15,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.validation import artifact_manifest as am
+from ricc.validation import artifact_manifest as am
 
 
 def _write(path: Path, value: int = 1) -> None:
@@ -266,7 +266,7 @@ def test_manifest_size_bound(root: Path, monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def test_cli(root: Path) -> None:
-    command = [sys.executable, "-B", "-m", "src.validation.artifact_manifest"]
+    command = [sys.executable, "-B", "-m", "ricc.validation.artifact_manifest"]
     options = ["--root", str(root), "--manifest", "manifest.json"]
     for action in ("create", "verify"):
         result = subprocess.run(command + [action] + options, capture_output=True, text=True, check=False)

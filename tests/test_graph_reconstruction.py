@@ -5,9 +5,9 @@ Unit tests for Thread DAG reconstruction and Conversation Extraction.
 import unittest
 from datetime import datetime
 
-from src.graph.conversation_extractor import ConversationExtractor
-from src.graph.thread_builder import ThreadDAGBuilder
-from src.ingestion.schema import CleanedMessage
+from ricc.graph.conversation_extractor import ConversationExtractor
+from ricc.graph.thread_builder import ThreadDAGBuilder
+from ricc.ingestion.schema import CleanedMessage
 
 
 class TestGraphReconstruction(unittest.TestCase):
@@ -194,7 +194,7 @@ class TestGraphReconstruction(unittest.TestCase):
         self.assertEqual(self.extractor.extract_rag_chunks({9: tiny}), [])
 
     def test_llm_contamination_detection(self):
-        from src.graph.conversation_extractor import is_llm_contaminated
+        from ricc.graph.conversation_extractor import is_llm_contaminated
 
         ai_samples = [
             "Как искусственный интеллект, я не обладаю личным опытом в настройке Kubernetes.",

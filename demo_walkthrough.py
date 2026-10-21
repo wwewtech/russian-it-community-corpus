@@ -12,8 +12,8 @@ import pandas as pd
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 
-from src.pii.deep_anonymizer import DeepPIIAnonymizer
-from src.validation.benchmark import BenchmarkRunner
+from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
+from ricc.validation.benchmark import BenchmarkRunner
 
 BASE_DIR = Path(__file__).resolve().parent
 PARQUET_DIR = BASE_DIR / "dataset_output" / "parquet"

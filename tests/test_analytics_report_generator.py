@@ -10,7 +10,7 @@ import json
 import unittest
 from pathlib import Path
 
-from src.analytics.report_generator import ReportGenerator, generate_ascii_bar
+from ricc.analytics.report_generator import ReportGenerator, generate_ascii_bar
 
 MINIMAL_SUMMARY = {
     "report_metadata": {"generated_at": "2026-08-24T04:15:26.716205"},

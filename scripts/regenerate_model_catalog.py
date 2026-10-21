@@ -157,7 +157,7 @@ def main():
         "> **Provenance:** a local adapter carries `training_meta.json` "
         "(`prompt_masking: true`) only if it was trained with the prompt-masked "
         "objective. Adapters without it predate the 2026-10-17 masking fix — "
-        "retrain with `python -m src.lora.batch_train_zoo --force --only <id>`.",
+        "retrain with `python -m ricc.lora.batch_train_zoo --force --only <id>`.",
         "",
         "---",
         "",
@@ -166,10 +166,10 @@ def main():
         "### 1. Запуск интерактивного терминала (Inference CLI):",
         "```bash",
         "# Запуск Qwen 2.5 1.5B с доменным LoRA-адаптером и локальным RAG",
-        "python src/inference.py --model Qwen/Qwen2.5-1.5B-Instruct --adapter qwen2.5_1.5b_instruct",
+        "python ricc/inference.py --model Qwen/Qwen2.5-1.5B-Instruct --adapter qwen2.5_1.5b_instruct",
         "",
         "# Запуск флагманской 7B модели в 4-битном режиме (VRAM <= 6 GB)",
-        "python src/inference.py --model unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit --adapter heavyweight_qwen2.5_coder_7b",
+        "python ricc/inference.py --model unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit --adapter heavyweight_qwen2.5_coder_7b",
         "```",
         "",
         "### 2. Запуск в Python коде:",

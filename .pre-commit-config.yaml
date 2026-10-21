@@ -28,56 +28,57 @@ repos:
   - repo: local
     hooks:
       - id: mypy-strict
-        name: MyPy Typecheck (strict, 44 modules)
+        name: MyPy Typecheck (strict, 45 modules)
         entry: python -m mypy
         language: system
         pass_filenames: false
         args:
           - --strict
-          - src/config.py
-          - src/errors.py
-          - src/bootstrap.py
-          - src/ingestion/schema.py
-          - src/ingestion/loader.py
-          - src/analytics/metrics.py
-          - src/analytics/network.py
-          - src/analytics/report_generator.py
-          - src/analytics/engine.py
-          - src/taxonomy/classifier.py
-          - src/taxonomy/tagger.py
-          - src/deduplication/exact_dedup.py
-          - src/deduplication/minhash_lsh.py
-          - src/monitoring/drift.py
-          - src/monitoring/sft_quality.py
-          - src/monitoring/slo_gate.py
-          - src/rag/rag_pipeline.py
-          - src/rag/__init__.py
-          - src/evaluation/__init__.py
-          - src/evaluation/statistical_power.py
-          - src/evaluation/benchmark_comparator.py
-          - src/evaluation/official_academic_benchmarks.py
-          - src/evaluation/deep_multi_experiment_suite.py
-          - src/evaluation/enterprise_production_eval_suite.py
-          - src/evaluation/sota_expert_benchmark_showcase.py
-          - src/lora/__init__.py
-          - src/lora/train_lora.py
-          - src/lora/batch_train_zoo.py
-          - src/lora/generate_demo.py
-          - src/lora/train_20_popular_models.py
-          - src/lora/train_heavyweight_5_sota.py
-          - src/graph/__init__.py
-          - src/validation/artifact_manifest.py
-          - src/validation/hub_reconciliation.py
-          - src/validation/validator.py
-          - src/pii/regex_scrubber.py
-          - src/pii/ner_scrubber.py
-          - src/pii/deep_anonymizer.py
-          - src/inference.py
-          - src/pipeline.py
-          - src/exporter/finalize_sync_all.py
-          - src/observability/__init__.py
-          - src/ml_runtime.py
-          - src/ricc/__init__.py
+          - ricc/config.py
+          - ricc/errors.py
+          - ricc/bootstrap.py
+          - ricc/ingestion/schema.py
+          - ricc/ingestion/loader.py
+          - ricc/analytics/metrics.py
+          - ricc/analytics/network.py
+          - ricc/analytics/report_generator.py
+          - ricc/analytics/engine.py
+          - ricc/taxonomy/classifier.py
+          - ricc/taxonomy/tagger.py
+          - ricc/deduplication/exact_dedup.py
+          - ricc/deduplication/minhash_lsh.py
+          - ricc/monitoring/drift.py
+          - ricc/monitoring/sft_quality.py
+          - ricc/monitoring/slo_gate.py
+          - ricc/rag/rag_pipeline.py
+          - ricc/rag/__init__.py
+          - ricc/evaluation/__init__.py
+          - ricc/evaluation/statistical_power.py
+          - ricc/evaluation/benchmark_comparator.py
+          - ricc/evaluation/official_academic_benchmarks.py
+          - ricc/evaluation/deep_multi_experiment_suite.py
+          - ricc/evaluation/enterprise_production_eval_suite.py
+          - ricc/evaluation/sota_expert_benchmark_showcase.py
+          - ricc/lora/__init__.py
+          - ricc/lora/train_lora.py
+          - ricc/lora/batch_train_zoo.py
+          - ricc/lora/generate_demo.py
+          - ricc/lora/train_20_popular_models.py
+          - ricc/lora/train_heavyweight_5_sota.py
+          - ricc/graph/__init__.py
+          - ricc/orchestration/prefect_flow.py
+          - ricc/validation/artifact_manifest.py
+          - ricc/validation/hub_reconciliation.py
+          - ricc/validation/validator.py
+          - ricc/pii/regex_scrubber.py
+          - ricc/pii/ner_scrubber.py
+          - ricc/pii/deep_anonymizer.py
+          - ricc/inference.py
+          - ricc/pipeline.py
+          - ricc/exporter/finalize_sync_all.py
+          - ricc/observability/__init__.py
+          - ricc/ml_runtime.py
+          - ricc/__init__.py
 
   # Check for merge conflicts
   - repo: https://github.com/pre-commit/pre-commit-hooks

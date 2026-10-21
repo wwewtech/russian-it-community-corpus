@@ -20,8 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd  # noqa: E402
 
-from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
-from src.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
+from ricc.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
+from ricc.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
 
 
 def main() -> None:

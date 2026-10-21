@@ -1,0 +1,41 @@
+# Normalize line endings in the repository.
+#
+# The pre-commit hook `mixed-line-ending --fix=lf` rewrites every file to
+# LF, but on Windows `core.autocrlf=true` converts them back to CRLF on
+# checkout. The two fought each other: every commit failed with
+# "Stashed changes conflicted with hook auto-fixes" and had to be
+# retried. These attributes make the normalisation authoritative and
+# platform-independent:
+#
+#   * text files are stored with LF in the repository and checked out
+#     with the platform's native ending;
+#   * binary files are never touched.
+#
+# `* text=auto eol=lf` is the safe default: it only affects files git
+# already detects as text, and it makes the working tree LF everywhere so
+# the pre-commit hook and the formatter agree with what is committed.
+
+* text=auto eol=lf
+
+# Binary artefacts — never line-ending converted.
+*.safetensors binary
+*.parquet binary
+*.jsonl -diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.mp4 binary
+
+# Generated reports and model cards: keep them diffable.
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+Makefile text eol=lf

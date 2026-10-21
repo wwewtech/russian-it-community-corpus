@@ -1,10 +1,10 @@
-"""Tests for statistical metrics in src/analytics/metrics.py."""
+"""Tests for statistical metrics in ricc/analytics/metrics.py."""
 
 from __future__ import annotations
 
 from collections import Counter
 
-from src.analytics.metrics import (
+from ricc.analytics.metrics import (
     analyze_sentiment,
     compute_percentiles,
     compute_shannon_entropy,

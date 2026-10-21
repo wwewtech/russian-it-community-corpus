@@ -86,14 +86,14 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 
 | Pipeline Stage | Implementation | Purpose |
 |---|---|---|
-| Ingestion | `src/ingestion/` | Normalizes and chronologically merges multi-chat raw exports (11 sources) |
-| Anonymization | `src/pii/` | Redacts names across 6 cases, phone numbers, crypto wallets, API tokens, database URLs |
-| Deduplication | `src/deduplication/` | Filters near-duplicate and exact spam messages via MinHash LSH |
-| Taxonomy | `src/taxonomy/` | Categorizes content into 8 technical domains and extracts keyword tags |
-| Thread DAG | `src/graph/` | Reconstructs conversational trees and extracts multi-turn dialogues |
-| Multi-Export | `src/exporter/` | Serializes outputs into Apache Parquet with zstd compression and JSONL formats |
-| Analytics | `src/analytics/` | Computes Shannon entropy, temporal patterns, social graphs, and vocabulary stats |
-| Local LoRA and RAG | `src/lora/`, `src/rag/` | Provides PEFT training for RTX 3060 and semantic retrieval for 325k chunks |
+| Ingestion | `ricc/ingestion/` | Normalizes and chronologically merges multi-chat raw exports (11 sources) |
+| Anonymization | `ricc/pii/` | Redacts names across 6 cases, phone numbers, crypto wallets, API tokens, database URLs |
+| Deduplication | `ricc/deduplication/` | Filters near-duplicate and exact spam messages via MinHash LSH |
+| Taxonomy | `ricc/taxonomy/` | Categorizes content into 8 technical domains and extracts keyword tags |
+| Thread DAG | `ricc/graph/` | Reconstructs conversational trees and extracts multi-turn dialogues |
+| Multi-Export | `ricc/exporter/` | Serializes outputs into Apache Parquet with zstd compression and JSONL formats |
+| Analytics | `ricc/analytics/` | Computes Shannon entropy, temporal patterns, social graphs, and vocabulary stats |
+| Local LoRA and RAG | `ricc/lora/`, `ricc/rag/` | Provides PEFT training for RTX 3060 and semantic retrieval for 325k chunks |
 
 ---
 
@@ -147,7 +147,7 @@ JSONL counts below are line-validator `valid_lines` from [`reports/validation_re
 > **Benchmark results RETRACTED — do not cite.**
 >
 > The comparison table previously shown here was removed after a code audit of
-> [`src/evaluation/official_academic_benchmarks.py`](src/evaluation/official_academic_benchmarks.py)
+> [`ricc/evaluation/official_academic_benchmarks.py`](ricc/evaluation/official_academic_benchmarks.py)
 > revealed three critical defects:
 >
 > 1. **Substring MCQ scoring** — "A" matched "Answer: A", inflating accuracy
@@ -239,13 +239,13 @@ make ui
 ### 4. Fine-Tune LoRA
 
 ```bash
-python src/lora/train_lora.py --model Qwen/Qwen2.5-0.5B-Instruct --steps 100
+python ricc/lora/train_lora.py --model Qwen/Qwen2.5-0.5B-Instruct --steps 100
 ```
 
 ### 5. Run LoRA Inference
 
 ```bash
-python src/lora/generate_demo.py --prompt "Как настроить прием платежей для SaaS из РФ?"
+python ricc/lora/generate_demo.py --prompt "Как настроить прием платежей для SaaS из РФ?"
 ```
 
 ### Command Reference
@@ -267,7 +267,7 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 
 ```text
 ├── assets/                     # Theme-aware vector graphics
-├── src/
+├── ricc/
 │   ├── ingestion/              # Multi-chat JSON export parser
 │   ├── pii/                    # Case-aware PII anonymizer and neural NER
 │   ├── graph/                  # Thread DAG builder and dialogue extractor
@@ -305,7 +305,7 @@ python src/lora/generate_demo.py --prompt "Как настроить прием 
 2. **Deterministic Pattern Scrubbing**: Removes phone numbers in international formats, email addresses, cryptocurrency wallet addresses, API keys, tokens, and database connection strings.
 3. **Source Community Anonymization**: Replaces all source channel titles with surrogate identifiers (`community_node_01`..`11`) and re-indexes technical IDs.
 4. **Terminology Protection**: Whitelists common technical terms, programming languages, libraries, and hosting providers to prevent false positives.
-5. **Probabilistic PII Audit**: Stratified sampling (50,000 messages, 99% confidence) with Wilson score intervals. **Verdict: PASSED** — the 99% upper bound on message-level leak rate is ≤ 0.01% (configurable tolerance). See [`reports/probabilistic_pii_audit.json`](reports/probabilistic_pii_audit.json) and [`src/validation/probabilistic_audit.py`](src/validation/probabilistic_audit.py).
+5. **Probabilistic PII Audit**: Stratified sampling (50,000 messages, 99% confidence) with Wilson score intervals. **Verdict: PASSED** — the 99% upper bound on message-level leak rate is ≤ 0.01% (configurable tolerance). See [`reports/probabilistic_pii_audit.json`](reports/probabilistic_pii_audit.json) and [`ricc/validation/probabilistic_audit.py`](ricc/validation/probabilistic_audit.py).
 6. **Automated Red-Team Suite**: 25,000-message sample + adversarial vectors (declensions, obfuscated phones, DB URLs, API keys, crypto wallets, Telegram forwards). Pass threshold: ≤1 vector failure AND zero production leaks. Report: [`reports/pii_validation_report.json`](reports/pii_validation_report.json).
 
 > **Note**: "Zero-PII" is an aspirational target. The technical guarantee is a *statistical upper bound* on leak rate, not an absolute full-corpus scan.

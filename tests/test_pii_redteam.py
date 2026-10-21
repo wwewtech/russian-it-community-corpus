@@ -1,5 +1,5 @@
 """
-Tests for the Red-Team PII audit suite (src/validation/pii_redteam.py).
+Tests for the Red-Team PII audit suite (ricc/validation/pii_redteam.py).
 
 Covers:
 - the adversarial vector suite against the anonymizer,
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.validation.pii_redteam import ADVERSARIAL_TEST_VECTORS, RedTeamPIIAuditor
+from ricc.validation.pii_redteam import ADVERSARIAL_TEST_VECTORS, RedTeamPIIAuditor
 
 
 class TestRedTeamPIIAuditor(unittest.TestCase):

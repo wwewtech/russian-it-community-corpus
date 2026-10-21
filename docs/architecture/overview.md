@@ -28,12 +28,12 @@ graph TD
 ## Key Design Principles
 
 ### 1. Type Safety
-- All data models use **Pydantic v2** (`src/ingestion/schema.py`)
+- All data models use **Pydantic v2** (`ricc/ingestion/schema.py`)
 - `mypy --strict` on 31+ modules
 - `Result[T, E]` for functional error handling
 
 ### 2. Single Source of Truth
-- Configuration: `src/settings.py` (`pydantic-settings`)
+- Configuration: `ricc/settings.py` (`pydantic-settings`)
 - Pipeline params: `params.yaml` (DVC)
 - No hardcoded values in business logic
 
@@ -104,7 +104,7 @@ SLO Gate → SHIP / HOLD
 ## Module Structure
 
 ```
-src/
+ricc/
 ├── bootstrap.py          # Runtime env setup (UTF-8, HF, tokenizers)
 ├── config.py             # Legacy config (deprecated, use settings.py)
 ├── settings.py           # Unified pydantic-settings config

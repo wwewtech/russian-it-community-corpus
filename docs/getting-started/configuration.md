@@ -1,6 +1,6 @@
 # Configuration
 
-All configuration is centralized in `src/settings.py` using `pydantic-settings.BaseSettings`.
+All configuration is centralized in `ricc/settings.py` using `pydantic-settings.BaseSettings`.
 
 ## Sources (Priority Order)
 

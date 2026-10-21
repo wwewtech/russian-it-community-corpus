@@ -61,7 +61,7 @@ impossible to distinguish "retry with a smaller batch" (OOM) from
 | `QuantizationError` | `quantization` | `quant_type` |
 
 `AdapterLoadError` must fail fast: silently falling back to the base model
-produces misleading "attached" metrics (see `src/inference.py`).
+produces misleading "attached" metrics (see `ricc/inference.py`).
 
 ### GPUError — device failures
 
@@ -103,7 +103,7 @@ except Exception as exc:
 
 ## Recording Errors into Prometheus
 
-`src/observability.record_classified_ml_error()` combines classification
+`ricc/observability.record_classified_ml_error()` combines classification
 and recording in one call (used by all train/eval entry points):
 
 ```python
@@ -121,6 +121,6 @@ and the `RiccMLComponentErrorSpike` alert consume this series.
 
 ## Full Public API
 
-Import everything from the package root — `src/ricc/__init__.py`
+Import everything from the package root — `ricc/ricc/__init__.py`
 re-exports the whole hierarchy plus the Result type (`Ok`/`Err`) used for
 functional error handling in pipeline stages.

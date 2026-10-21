@@ -1,5 +1,5 @@
 """
-Unit tests for :mod:`src.exporter.finalize_sync_all`.
+Unit tests for :mod:`ricc.exporter.finalize_sync_all`.
 
 * :func:`compute_lora_zoo_index` and :func:`build_lora_zoo_markdown` are
   pure and are exercised end-to-end with a temporary ``lora_adapters/``
@@ -17,7 +17,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from src.exporter.finalize_sync_all import (
+from ricc.exporter.finalize_sync_all import (
     DATASET_REPO_ID,
     MODEL_REPO_ID,
     build_lora_zoo_markdown,
@@ -33,7 +33,7 @@ def _make_adapter(root: Path, name: str, weight_bytes: int = 1024) -> Path:
 
     The adapter is policy-compliant (a full epoch over the corpus), so the
     release pipeline is allowed to publish it. See
-    :func:`src.lora.policy_gate.evaluate_compliance`.
+    :func:`ricc.lora.policy_gate.evaluate_compliance`.
     """
     d = root / name
     d.mkdir(parents=True, exist_ok=True)

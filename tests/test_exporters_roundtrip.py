@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.exporter.jsonl_exporter import JSONLExporter
-from src.exporter.parquet_exporter import ParquetExporter
-from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
+from ricc.exporter.jsonl_exporter import JSONLExporter
+from ricc.exporter.parquet_exporter import ParquetExporter
+from ricc.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
 
 
 def _msg(msg_id: int = 1, text: str = "Как настроить репликацию?") -> CleanedMessage:

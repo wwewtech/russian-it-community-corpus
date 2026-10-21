@@ -33,7 +33,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 import pyarrow.parquet as pq  # noqa: E402
 
-from src.validation.validator import DatasetValidator  # noqa: E402
+from ricc.validation.validator import DatasetValidator  # noqa: E402
 
 _GENERATOR = "scripts/refresh_ci_stats.py"
 

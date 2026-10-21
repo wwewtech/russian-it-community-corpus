@@ -1,7 +1,7 @@
 """
 Comprehensive unit tests for the Taxonomy layer:
-  - src/taxonomy/classifier.py  -> DomainClassifier
-  - src/taxonomy/tagger.py      -> TechnicalTagger
+  - ricc/taxonomy/classifier.py  -> DomainClassifier
+  - ricc/taxonomy/tagger.py      -> TechnicalTagger
 
 Covers classify_text, compute_sentiment, extract_tags, tag_message and tag_batch
 including empty/None inputs, Russian/English mixing, confidence scoring,
@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import pytest
 
-from src.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
-from src.ingestion.schema import CleanedMessage
-from src.taxonomy.classifier import DomainClassifier
-from src.taxonomy.tagger import TechnicalTagger
+from ricc.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
+from ricc.ingestion.schema import CleanedMessage
+from ricc.taxonomy.classifier import DomainClassifier
+from ricc.taxonomy.tagger import TechnicalTagger
 
 GENERAL_DOMAIN = "general_tech_chat"
 
@@ -413,7 +413,7 @@ class TestTagBatch:
         assert [m.domain for m in result] == ["devops_infra", "backend_databases", "ai_ml_nlp"]
 
     def test_batch_invokes_progress_bar(self, monkeypatch):
-        import src.taxonomy.tagger as tagger_mod
+        import ricc.taxonomy.tagger as tagger_mod
 
         calls = []
 

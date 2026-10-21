@@ -30,7 +30,7 @@ from app_helpers import (
 from app_helpers import (
     load_parquet_sample as _load_parquet_sample,
 )
-from src.observability import maybe_start_metrics_server
+from ricc.observability import maybe_start_metrics_server
 
 # Configure Streamlit page
 st.set_page_config(
@@ -163,7 +163,7 @@ if nav == NAV_MAIN:
         st.subheader("Аудит безопасности и комплаенса")
         val_data = load_json_file(REPORTS_DIR / "validation_results.json")
         # The red-team suite writes reports/pii_validation_report.json
-        # (see Makefile `audit` target and src/validation/pii_redteam.py).
+        # (see Makefile `audit` target and ricc/validation/pii_redteam.py).
         # `zero_pii_audit_certificate.json` is kept as a legacy fallback only.
         cert_data = load_json_file(REPORTS_DIR / "pii_validation_report.json")
         if not cert_data:
@@ -352,7 +352,7 @@ elif nav == NAV_PII:
     )
 
     if st.button("Выполнить Zero-PII Очистку", type="primary"):
-        from src.pii.deep_anonymizer import DeepPIIAnonymizer
+        from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
 
         anonymizer = DeepPIIAnonymizer(enable_ner=True)
         anonymizer.name_forms_to_mask.update(

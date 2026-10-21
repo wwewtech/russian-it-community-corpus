@@ -22,7 +22,7 @@ from cli import main
 def build_synthetic_dataset(root: Path) -> Path:
     """Create a minimal but structurally valid dataset_output tree.
 
-    Mirrors the schemas produced by src/exporter so that DatasetValidator
+    Mirrors the schemas produced by ricc/exporter so that DatasetValidator
     exercises every branch (parquet integrity, JSONL validity, PII audit,
     SFT turn conformance) without touching real production artifacts.
     """
@@ -194,7 +194,7 @@ class TestCLICommands(unittest.TestCase):
         f, err = io.StringIO(), io.StringIO()
         with (
             patch("sys.argv", ["cli.py", "run"]),
-            patch("src.pipeline.MasterDataPipeline") as pipeline_cls,
+            patch("ricc.pipeline.MasterDataPipeline") as pipeline_cls,
             redirect_stdout(f),
             redirect_stderr(err),
         ):
@@ -208,12 +208,12 @@ class TestCLICommands(unittest.TestCase):
         self.assertIn("validation FAILED", err.getvalue())
 
     def test_cli_run_exits_1_on_typed_pipeline_error(self):
-        from src.errors import IngestionError
+        from ricc.errors import IngestionError
 
         f, err = io.StringIO(), io.StringIO()
         with (
             patch("sys.argv", ["cli.py", "run"]),
-            patch("src.pipeline.MasterDataPipeline") as pipeline_cls,
+            patch("ricc.pipeline.MasterDataPipeline") as pipeline_cls,
             redirect_stdout(f),
             redirect_stderr(err),
         ):
@@ -227,7 +227,7 @@ class TestCLICommands(unittest.TestCase):
         f = io.StringIO()
         with (
             patch("sys.argv", ["cli.py", "run"]),
-            patch("src.pipeline.MasterDataPipeline") as pipeline_cls,
+            patch("ricc.pipeline.MasterDataPipeline") as pipeline_cls,
             redirect_stdout(f),
         ):
             pipeline_cls.return_value.run_all.return_value = {"validation_passed": True}
@@ -254,7 +254,7 @@ class TestCLICommands(unittest.TestCase):
         with (
             patch("sys.argv", ["cli.py", "rag", "docker nginx reverse proxy", "--top-k", "1"]),
             patch("pathlib.Path.exists", return_value=True),
-            patch("src.rag.rag_pipeline.LocalRAGPipeline") as mock_rag_cls,
+            patch("ricc.rag.rag_pipeline.LocalRAGPipeline") as mock_rag_cls,
         ):
             mock_rag = mock_rag_cls.return_value
             mock_rag.search.return_value = [
@@ -352,7 +352,7 @@ class TestCLICommands(unittest.TestCase):
         f = io.StringIO()
         with (
             patch("sys.argv", ["cli.py", "orchestrate", "--skip-pipeline", "--sample-size", "10"]),
-            patch("src.orchestration.prefect_flow.run_flow") as mock_flow,
+            patch("ricc.orchestration.prefect_flow.run_flow") as mock_flow,
             redirect_stdout(f),
         ):
             mock_flow.return_value = {"validate-dataset": {"status": "completed"}}

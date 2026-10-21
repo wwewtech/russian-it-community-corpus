@@ -1,6 +1,6 @@
 # Type Checking — mypy --strict Everywhere
 
-As of 12.2.0 the strict rollout is **complete**: every module under `src/`
+As of 12.2.0 the strict rollout is **complete**: every module under `ricc/`
 passes `mypy --strict`, and the `[[tool.mypy.overrides]] ignore_errors`
 block in `pyproject.toml` is gone.
 
@@ -13,14 +13,14 @@ block in `pyproject.toml` is gone.
 | CI job | `Typecheck (Strict)` → `make typecheck-strict` | 43 |
 
 The Makefile list and the pre-commit hook list must stay in sync — both
-mirror the full `src/` module set.
+mirror the full `ricc/` module set.
 
 ## The `cast(Any, ...)` Pattern
 
 Heavy ML libraries (transformers, peft) ship incomplete or untyped stubs;
 calling e.g. `AutoTokenizer.from_pretrained()` under `--strict` fails with
 `no-untyped-call`. The single sanctioned pattern (established in
-`src/inference.py`, used everywhere since):
+`ricc/inference.py`, used everywhere since):
 
 ```python
 from typing import Any, cast
@@ -35,7 +35,7 @@ Rules:
   concrete type you expect (`Any`, `str`, `dict[str, Any]`).
 - Never write `# type: ignore` — a bare ignore hides errors in the whole
   expression. (Pre-existing `type: ignore[misc]` in
-  `src/orchestration/prefect_flow.py` predates the policy.)
+  `ricc/orchestration/prefect_flow.py` predates the policy.)
 - Prefer annotating data tables at the declaration site
   (`HUMANEVAL_TASKS: list[dict[str, Any]] = [...]`) — this fixes the type
   of every downstream consumer at once, instead of casting each access.
@@ -69,7 +69,7 @@ This is the pattern used in `deep_multi_experiment_suite.py` and
 3. Run `make typecheck-strict` — must pass with the new module included.
 4. If the module needs a lazy third-party import, import it under
    `if TYPE_CHECKING:` for annotations and keep the runtime import
-   local (see `src/observability/__init__.py`).
+   local (see `ricc/observability/__init__.py`).
 
 ## History
 

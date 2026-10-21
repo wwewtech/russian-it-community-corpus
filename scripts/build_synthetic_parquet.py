@@ -44,7 +44,7 @@ import pandas as pd
 
 # --- Schemas --------------------------------------------------------------- #
 
-# Required columns for src/validation/pii_redteam.py (audit_production_parquet
+# Required columns for ricc/validation/pii_redteam.py (audit_production_parquet
 # reads `text_clean`, `chat_name`, `chat_id`).
 _FULL_MESSAGES_COLUMNS = [
     "msg_id",
@@ -64,7 +64,7 @@ _FULL_MESSAGES_COLUMNS = [
     "thread_id",
 ]
 
-# Required column for src/monitoring/sft_quality.py is `messages` (a JSON
+# Required column for ricc/monitoring/sft_quality.py is `messages` (a JSON
 # string of [{role, content}, ...]) plus a handful of trace columns so
 # the regression report has something to summarise.
 _SFT_DIALOGUES_COLUMNS = [

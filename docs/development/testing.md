@@ -15,7 +15,7 @@ make coverage   # + term-missing report, 85% gate
 
 ## Coverage Gate
 
-`--cov-fail-under=85` over `src/`; the omit list in `pyproject.toml`
+`--cov-fail-under=85` over `ricc/`; the omit list in `pyproject.toml`
 covers only the GPU-only training/eval scripts. Current state: ~736
 tests passing.
 

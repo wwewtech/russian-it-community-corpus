@@ -1,5 +1,5 @@
 """
-Unit tests for :mod:`src.inference`.
+Unit tests for :mod:`ricc.inference`.
 
 Only the pure helpers are exercised here. The interactive chat session
 itself is a thin I/O loop over ``transformers`` / ``peft`` and is
@@ -14,7 +14,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.inference import (
+from ricc.inference import (
     EXIT_COMMANDS,
     build_chat_messages,
     build_prompt,
@@ -86,7 +86,7 @@ class TestBuildPrompt(unittest.TestCase):
             apply_template,
         )
         # Must keep the <|im_start|>/<|im_end|> boundaries the
-        # comment block in src/inference.py advertises, otherwise
+        # comment block in ricc/inference.py advertises, otherwise
         # Qwen / ChatGLM-family models merge the system block into
         # the user prompt.
         self.assertIn("<|im_start|>system", out)
@@ -157,12 +157,12 @@ class TestValidateAdapterPath(unittest.TestCase):
 
 
 class TestMainCLI(unittest.TestCase):
-    """Cover the argparse wrapper in :func:`src.inference.main`."""
+    """Cover the argparse wrapper in :func:`ricc.inference.main`."""
 
     def _run_main(self, argv, fake_chat):
         with (
             patch.object(sys, "argv", ["inference", *argv]),
-            patch("src.inference.interactive_chat_session", fake_chat),
+            patch("ricc.inference.interactive_chat_session", fake_chat),
         ):
             main()
         return fake_chat

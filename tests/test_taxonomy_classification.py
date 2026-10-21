@@ -4,8 +4,8 @@ Unit tests for Domain Classification, Keyword Tagging, and Taxonomy.
 
 import unittest
 
-from src.taxonomy.classifier import DomainClassifier
-from src.taxonomy.tagger import TechnicalTagger
+from ricc.taxonomy.classifier import DomainClassifier
+from ricc.taxonomy.tagger import TechnicalTagger
 
 
 class TestTaxonomyClassification(unittest.TestCase):

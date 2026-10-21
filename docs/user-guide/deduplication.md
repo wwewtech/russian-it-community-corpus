@@ -1,6 +1,6 @@
 # Deduplication
 
-`src/deduplication/` removes duplicate and near-duplicate messages before
+`ricc/deduplication/` removes duplicate and near-duplicate messages before
 taxonomy tagging and export. Two stages, both strict-typed.
 
 ## Stage 1 — Exact Duplicates

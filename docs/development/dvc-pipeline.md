@@ -21,7 +21,7 @@ benchmarks:     # humaneval_tasks, rummlu_questions, confidence
 domain_taxonomy: # 9 domains × keyword lists
 ```
 
-Code reads these values at import time in `src/monitoring/drift.py` —
+Code reads these values at import time in `ricc/monitoring/drift.py` —
 changing a threshold takes effect on the next run, no code edits.
 
 ## Datasets on the Hub
@@ -29,7 +29,7 @@ changing a threshold takes effect on the next run, no code edits.
 The published dataset lives at
 `huggingface.co/datasets/wwewtech/russian-it-community-corpus`; the
 pinned revision snapshot is `reports/pinned_hub_manifest.json`, and
-`src/validation/hub_reconciliation.py` reconciles local artifacts against
+`ricc/validation/hub_reconciliation.py` reconciles local artifacts against
 it (status feeds the SLO gate).
 
 ## When to Use DVC vs the Plain Pipeline

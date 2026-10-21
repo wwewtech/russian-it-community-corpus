@@ -1,5 +1,5 @@
 """
-Unit tests for :mod:`src.pipeline`.
+Unit tests for :mod:`ricc.pipeline`.
 
 ``MasterDataPipeline.run_all`` is an end-to-end orchestrator: testing
 the happy path requires either real data (slow, non-deterministic) or
@@ -19,9 +19,9 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from src.errors import IngestionError, PIIAnonymizationError
-from src.pipeline import MasterDataPipeline
-from src.settings import settings
+from ricc.errors import IngestionError, PIIAnonymizationError
+from ricc.pipeline import MasterDataPipeline
+from ricc.settings import settings
 
 
 def _build_synthetic_chat_export(root: Path) -> Path:
@@ -104,11 +104,11 @@ class TestMasterDataPipelineRunAll(unittest.TestCase):
         # Patch the path constants so the exporter classes write inside
         # our temp tree, not the repo's real dataset_output/.
         self.patches = [
-            patch("src.pipeline.PARQUET_OUTPUT_DIR", self.data_dir / "parquet"),
-            patch("src.pipeline.JSONL_OUTPUT_DIR", self.data_dir / "jsonl"),
-            patch("src.pipeline.SAMPLES_OUTPUT_DIR", self.data_dir / "samples"),
-            patch("src.pipeline.OUTPUT_DIR", self.data_dir),
-            patch("src.pipeline.REPORTS_DIR", self.tmpdir / "reports"),
+            patch("ricc.pipeline.PARQUET_OUTPUT_DIR", self.data_dir / "parquet"),
+            patch("ricc.pipeline.JSONL_OUTPUT_DIR", self.data_dir / "jsonl"),
+            patch("ricc.pipeline.SAMPLES_OUTPUT_DIR", self.data_dir / "samples"),
+            patch("ricc.pipeline.OUTPUT_DIR", self.data_dir),
+            patch("ricc.pipeline.REPORTS_DIR", self.tmpdir / "reports"),
             # run_all() writes validation_results.json,
             # pipeline_execution_stats.json and the sample previews through
             # the settings singleton (settings.REPORTS_DIR /
@@ -154,10 +154,10 @@ class TestMasterDataPipelineRunAll(unittest.TestCase):
             patch.object(pipeline.rag_exporter, "export_rag_jsonl") as exp_rag_jsonl,
             patch.object(pipeline.dpo_exporter, "export_dpo_pairs") as exp_dpo,
             # Stage 7 collaborators are also heavy; mock them.
-            patch("src.pipeline.DeepChatAnalyzer") as analyzer_cls,
-            patch("src.pipeline.ReportGenerator") as reporter_cls,
-            patch("src.pipeline.BenchmarkRunner") as bench_cls,
-            patch("src.pipeline.DatasetValidator") as validator_cls,
+            patch("ricc.pipeline.DeepChatAnalyzer") as analyzer_cls,
+            patch("ricc.pipeline.ReportGenerator") as reporter_cls,
+            patch("ricc.pipeline.BenchmarkRunner") as bench_cls,
+            patch("ricc.pipeline.DatasetValidator") as validator_cls,
         ):
             analyzer = MagicMock()
             analyzer.run_full_analysis.return_value = {"metric": 42}
@@ -204,7 +204,7 @@ class TestMasterDataPipelineFailureModes(unittest.TestCase):
         # with a typed error instead of "succeeding" with empty artifacts.
         pipeline = MasterDataPipeline(raw_export_dirs=[Path("missing")])
         with (
-            patch("src.pipeline.merge_multiple_exports", return_value=([], [])),
+            patch("ricc.pipeline.merge_multiple_exports", return_value=([], [])),
             self.assertRaises(IngestionError) as ctx,
         ):
             pipeline.run_all()
@@ -214,7 +214,7 @@ class TestMasterDataPipelineFailureModes(unittest.TestCase):
     def test_stage_failure_is_wrapped_into_typed_error(self):
         pipeline = MasterDataPipeline(raw_export_dirs=[Path("whatever")])
         with (
-            patch("src.pipeline.merge_multiple_exports", return_value=([], ["m1"])),
+            patch("ricc.pipeline.merge_multiple_exports", return_value=([], ["m1"])),
             patch.object(pipeline.anonymizer, "process_batch", side_effect=RuntimeError("ner crashed")),
             self.assertRaises(PIIAnonymizationError) as ctx,
         ):

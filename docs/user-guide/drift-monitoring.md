@@ -1,6 +1,6 @@
 # Drift Monitoring — PSI, Jensen-Shannon, Vocabulary Jaccard
 
-`src/monitoring/drift.py` (`DatasetDriftMonitor`) compares a reference
+`ricc/monitoring/drift.py` (`DatasetDriftMonitor`) compares a reference
 dataset snapshot against the current one and quantifies drift with three
 standard metrics. Thresholds live in `params.yaml` (single source of
 truth).

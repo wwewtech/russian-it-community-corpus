@@ -17,7 +17,7 @@ help:
 	@echo "  make coverage   - Run tests with detailed coverage report"
 	@echo "  make lint       - Run ruff linter (same pinned version as CI)"
 	@echo "  make format     - Auto-format code with ruff format"
-	@echo "  make typecheck  - Run mypy over src/ (slow-mode rollout)"
+	@echo "  make typecheck  - Run mypy over ricc/ (slow-mode rollout)"
 	@echo "  make typecheck-strict - Run mypy --strict on fully-typed modules"
 	@echo "  make security   - Bandit HIGH gate + secret scan (same as CI security job)"
 	@echo "  make reports    - Regenerate markdown reports from JSON sources"
@@ -40,7 +40,7 @@ benchmark:
 	python cli.py benchmark
 
 audit:
-	python -c "from pathlib import Path; from src.validation.pii_redteam import RedTeamPIIAuditor; auditor = RedTeamPIIAuditor(Path('dataset_output/parquet/full_clean_messages.parquet')); auditor.generate_audit_certificate(Path('reports/pii_validation_report.json'))"
+	python -c "from pathlib import Path; from ricc.validation.pii_redteam import RedTeamPIIAuditor; auditor = RedTeamPIIAuditor(Path('dataset_output/parquet/full_clean_messages.parquet')); auditor.generate_audit_certificate(Path('reports/pii_validation_report.json'))"
 
 audit-prob:
 	python scripts/run_probabilistic_pii_audit.py
@@ -49,10 +49,10 @@ drift:
 	python scripts/run_drift_monitoring.py
 
 slo:
-	python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+	python -m ricc.monitoring.slo_gate --json-out reports/slo_verdict.json
 
 orchestrate:
-	python -c "from src.orchestration.prefect_flow import run_flow; import json; print(json.dumps(run_flow(run_pipeline=False), indent=2, ensure_ascii=False, default=str))"
+	python -c "from ricc.orchestration.prefect_flow import run_flow; import json; print(json.dumps(run_flow(run_pipeline=False), indent=2, ensure_ascii=False, default=str))"
 
 dvc-repro:
 	dvc repro
@@ -61,7 +61,7 @@ test:
 	python -m pytest -q
 
 coverage:
-	python -m pytest -q --cov=src --cov-report=term-missing --cov-fail-under=85
+	python -m pytest -q --cov=ricc --cov-report=term-missing --cov-fail-under=85
 
 # Ruff version is pinned in pyproject.toml dev extras == the pre-commit rev,
 # so `make lint` reproduces CI exactly.
@@ -72,21 +72,22 @@ format:
 	ruff format .
 
 typecheck:
-	python -m mypy src/ --ignore-missing-imports
+	python -m mypy ricc/ --ignore-missing-imports
 
-# Strict rollout COMPLETE: every listed src/ module passes `mypy --strict`.
-# This list is explicit (not `mypy src --strict`) on purpose:
-# src/orchestration/prefect_flow.py is excluded — its optional-Prefect
-# no-op stubs are untyped by design (14 strict errors; verified 2026-10-16).
+# Strict rollout COMPLETE: every listed ricc/ module passes `mypy --strict`.
+# This list is explicit (not `mypy ricc --strict`) on purpose:
+# ricc/orchestration/prefect_flow.py is INCLUDED: its optional-Prefect no-op
+# stubs are fully typed (a _Decorator Protocol keeps the decorators typed,
+# so mypy no longer reports "untyped decorator").
 # When adding a module, add it here AND to the pre-commit mypy-strict hook
 # (.pre-commit-config.yaml); pyproject.toml has no ignore_errors overrides.
 typecheck-strict:
-	python -m mypy src/config.py src/errors.py src/bootstrap.py src/ingestion/schema.py src/ingestion/loader.py src/analytics/metrics.py src/analytics/network.py src/analytics/report_generator.py src/analytics/engine.py src/taxonomy/classifier.py src/taxonomy/tagger.py src/deduplication/exact_dedup.py src/deduplication/minhash_lsh.py src/monitoring/drift.py src/monitoring/sft_quality.py src/monitoring/slo_gate.py src/rag/rag_pipeline.py src/rag/__init__.py src/evaluation/__init__.py src/evaluation/statistical_power.py src/evaluation/benchmark_comparator.py src/evaluation/official_academic_benchmarks.py src/evaluation/deep_multi_experiment_suite.py src/evaluation/enterprise_production_eval_suite.py src/evaluation/sota_expert_benchmark_showcase.py src/lora/__init__.py src/lora/train_lora.py src/lora/batch_train_zoo.py src/lora/generate_demo.py src/lora/train_20_popular_models.py src/lora/train_heavyweight_5_sota.py src/graph/__init__.py src/validation/artifact_manifest.py src/validation/hub_reconciliation.py src/validation/validator.py src/pii/regex_scrubber.py src/pii/ner_scrubber.py src/pii/deep_anonymizer.py src/inference.py src/pipeline.py src/exporter/finalize_sync_all.py src/observability/__init__.py src/ml_runtime.py src/ricc/__init__.py --strict
+	python -m mypy ricc/config.py ricc/errors.py ricc/bootstrap.py ricc/ingestion/schema.py ricc/ingestion/loader.py ricc/analytics/metrics.py ricc/analytics/network.py ricc/analytics/report_generator.py ricc/analytics/engine.py ricc/taxonomy/classifier.py ricc/taxonomy/tagger.py ricc/deduplication/exact_dedup.py ricc/deduplication/minhash_lsh.py ricc/monitoring/drift.py ricc/monitoring/sft_quality.py ricc/monitoring/slo_gate.py ricc/rag/rag_pipeline.py ricc/rag/__init__.py ricc/evaluation/__init__.py ricc/evaluation/statistical_power.py ricc/evaluation/benchmark_comparator.py ricc/evaluation/official_academic_benchmarks.py ricc/evaluation/deep_multi_experiment_suite.py ricc/evaluation/enterprise_production_eval_suite.py ricc/evaluation/sota_expert_benchmark_showcase.py ricc/lora/__init__.py ricc/lora/train_lora.py ricc/lora/batch_train_zoo.py ricc/lora/generate_demo.py ricc/lora/train_20_popular_models.py ricc/lora/train_heavyweight_5_sota.py ricc/graph/__init__.py ricc/orchestration/prefect_flow.py ricc/validation/artifact_manifest.py ricc/validation/hub_reconciliation.py ricc/validation/validator.py ricc/pii/regex_scrubber.py ricc/pii/ner_scrubber.py ricc/pii/deep_anonymizer.py ricc/inference.py ricc/pipeline.py ricc/exporter/finalize_sync_all.py ricc/observability/__init__.py ricc/ml_runtime.py ricc/__init__.py --strict
 
 # Supply-chain security: bandit HIGH gate + secret scan + pip-audit (same as CI `security` job).
 # pip-audit is a HARD gate: any known CVE in the requirements.txt tree fails the build.
 security:
-	python -m bandit -r src/ -q --severity-level high
+	python -m bandit -r ricc/ -q --severity-level high
 	python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
 	python -m pip_audit -r requirements.txt --desc off --progress-spinner off
 

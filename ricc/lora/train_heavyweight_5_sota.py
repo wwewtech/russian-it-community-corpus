@@ -1,0 +1,302 @@
+"""
+Heavyweight 5 SOTA Foundation Models QLoRA Trainer.
+Maximally pushes 12GB RTX 3060 to its hardware limits using 4-bit NF4 QLoRA:
+1. Qwen 2.5 Coder 7B Instruct (7.6B)
+2. DeepSeek R1 Distill Qwen 7B (7.6B)
+3. Meta LLaMA 3.1 8B Instruct (8.0B)
+4. Qwen 2.5 7B Instruct (7.6B)
+5. Mistral 7B Instruct v0.3 (7.3B)
+"""
+
+import argparse
+import gc
+import logging
+import os
+import time
+from pathlib import Path
+from typing import Any, cast
+
+from ricc.bootstrap import setup_runtime_env
+
+setup_runtime_env(pytorch_alloc_conf=True)
+
+import pandas as pd
+import torch
+from datasets import Dataset
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    DataCollatorForSeq2Seq,
+    Trainer,
+    TrainingArguments,
+)
+
+from ricc.ml_runtime import set_deterministic_seed, with_retries
+from ricc.observability import record_classified_ml_error, record_lora_result
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("Heavyweight5")
+
+HF_TOKEN = os.getenv("HF_TOKEN", "")
+MODEL_REPO_ID = "wwewtech/russian-it-community-lora"
+
+HEAVYWEIGHT_5_MODELS = [
+    {
+        "id": "heavyweight_qwen2.5_coder_7b",
+        "model_name": "unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit",
+        "family": "Qwen 2.5 Coder 7B",
+        "params": "7.6B",
+        "desc": "SOTA open-source code generation and software architecture foundation model (4-bit)",
+    },
+    {
+        "id": "heavyweight_deepseek_r1_7b",
+        "model_name": "unsloth/DeepSeek-R1-Distill-Qwen-7B-bnb-4bit",
+        "family": "DeepSeek R1 7B",
+        "params": "7.6B",
+        "desc": "Chain-of-thought distilled reasoning model for complex engineering systems (4-bit)",
+    },
+    {
+        "id": "heavyweight_llama3.1_8b",
+        "model_name": "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        "family": "Meta LLaMA 3.1 8B",
+        "params": "8.0B",
+        "desc": "Meta LLaMA 3.1 8B flagship open foundation model (4-bit)",
+    },
+    {
+        "id": "heavyweight_qwen2.5_7b",
+        "model_name": "unsloth/Qwen2.5-7B-Instruct-bnb-4bit",
+        "family": "Qwen 2.5 7B",
+        "params": "7.6B",
+        "desc": "High-capacity Russian language and technical reasoning flagship model (4-bit)",
+    },
+    {
+        "id": "heavyweight_mistral_7b_v03",
+        "model_name": "unsloth/mistral-7b-instruct-v0.3-bnb-4bit",
+        "family": "Mistral 7B v0.3",
+        "params": "7.3B",
+        "desc": "Mistral AI 7B v0.3 instruction tuned foundation model with 32k context (4-bit)",
+    },
+]
+
+
+def load_sft_dataset(parquet_path: Path, max_samples: int = 600) -> Dataset:
+    """Load high-quality SFT dialogues from Parquet."""
+    df = pd.read_parquet(parquet_path)
+    if len(df) > max_samples:
+        df = df.sample(n=max_samples, random_state=42).reset_index(drop=True)
+    return Dataset.from_pandas(df)
+
+
+def train_single_heavyweight(
+    spec: dict[str, Any],
+    dataset: Dataset,
+    output_dir: Path,
+    steps: int = 50,
+    lr: float = 2e-4,
+    seed: int = 42,
+) -> bool:
+    """Train a single 7B-8B model with 4-bit NF4 QLoRA."""
+    model_name = spec["model_name"]
+    model_id = spec["id"]
+    save_path = output_dir / model_id
+
+    if save_path.exists() and (save_path / "adapter_model.safetensors").exists():
+        logger.info(f"⏩ Heavyweight adapter for {model_name} ({model_id}) already exists. Skipping...")
+        return True
+
+    logger.info(f"=== Starting Heavyweight 4-bit QLoRA: {model_name} ({spec['params']}) ===")
+    set_deterministic_seed(seed)
+    t0 = time.time()
+
+    # 1. Quantization Configuration
+    bnb_config: Any = cast(Any, BitsAndBytesConfig)(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+    )
+
+    try:
+        tokenizer: Any = cast(
+            Any,
+            with_retries(
+                lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True),
+                what=f"tokenizer load {model_name}",
+            ),
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
+
+        model: Any = with_retries(
+            lambda: AutoModelForCausalLM.from_pretrained(
+                model_name,
+                quantization_config=bnb_config,
+                device_map="auto",
+                trust_remote_code=True,
+            ),
+            what=f"model load {model_name}",
+        )
+
+        model = cast(Any, prepare_model_for_kbit_training)(model)
+        grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
+        if callable(grad_ckpt):
+            grad_ckpt()
+
+        # LoRA Config targeting all linear projection layers
+        target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+        lora_config = LoraConfig(
+            r=16,
+            lora_alpha=32,
+            target_modules=target_modules,
+            lora_dropout=0.05,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        peft_model = get_peft_model(model, lora_config)
+        peft_model.print_trainable_parameters()
+
+        # Tokenize Dataset with prompt loss masking (-100)
+        def tokenize_example(example: dict[str, Any]) -> dict[str, Any]:
+            conv = example.get("conversations") or example.get("messages")
+            if conv and isinstance(conv, list):
+                role_map = {
+                    "human": "user",
+                    "gpt": "assistant",
+                    "system": "system",
+                    "user": "user",
+                    "assistant": "assistant",
+                }
+                clean_msgs = [
+                    {
+                        "role": role_map.get(m.get("from") or m.get("role"), "user"),
+                        "content": str(m.get("value") or m.get("content")),
+                    }
+                    for m in conv
+                    if (m.get("value") or m.get("content"))
+                ]
+            else:
+                q = example.get("query") or example.get("instruction") or "Расскажи про IT архитектуру"
+                r = example.get("response") or example.get("output") or example.get("content") or ""
+                clean_msgs = [{"role": "user", "content": str(q)}, {"role": "assistant", "content": str(r)}]
+
+            if not clean_msgs:
+                return {"input_ids": [], "labels": []}
+
+            # Use chat template if available
+            if hasattr(tokenizer, "apply_chat_template") and getattr(tokenizer, "chat_template", None):
+                try:
+                    full_text = tokenizer.apply_chat_template(clean_msgs, tokenize=False, add_generation_prompt=False)
+                    tokenized = tokenizer(full_text, truncation=True, max_length=512, padding=False)
+                    labels = list(tokenized["input_ids"])
+
+                    if len(clean_msgs) >= 2 and clean_msgs[-1].get("role") in ("assistant", "gpt"):
+                        prompt_text = tokenizer.apply_chat_template(
+                            clean_msgs[:-1], tokenize=False, add_generation_prompt=True
+                        )
+                        p_tokens = tokenizer(prompt_text, truncation=True, max_length=512, padding=False)
+                        p_len = min(len(p_tokens["input_ids"]), len(labels))
+                        labels[:p_len] = [-100] * p_len
+
+                    tokenized["labels"] = labels
+                    return cast("dict[str, Any]", tokenized)
+                except Exception as e:
+                    logger.debug(f"Chat template formatting failed: {e}")
+
+            # Fallback
+            prompt_text = f"User: {clean_msgs[0]['content']}\nAssistant:"
+            full_text = f"{prompt_text} {clean_msgs[-1]['content']}"
+            tokenized = tokenizer(full_text, truncation=True, max_length=512, padding=False)
+            labels = list(tokenized["input_ids"])
+            p_tokens = tokenizer(prompt_text, truncation=True, max_length=512, padding=False)
+            p_len = min(len(p_tokens["input_ids"]), len(labels))
+            labels[:p_len] = [-100] * p_len
+            tokenized["labels"] = labels
+            return cast("dict[str, Any]", tokenized)
+
+        tokenized_ds = dataset.map(tokenize_example, remove_columns=dataset.column_names)
+
+        # Training Args
+        training_args = TrainingArguments(
+            output_dir=str(save_path / "checkpoints"),
+            per_device_train_batch_size=1,
+            gradient_accumulation_steps=4,
+            max_steps=steps,
+            learning_rate=lr,
+            fp16=True,
+            logging_steps=5,
+            save_strategy="no",
+            optim="paged_adamw_8bit",
+            report_to="none",
+        )
+
+        trainer = Trainer(
+            model=peft_model,
+            args=training_args,
+            train_dataset=tokenized_ds,
+            data_collator=DataCollatorForSeq2Seq(tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True),
+        )
+
+        trainer.train()
+
+        # Save Adapter
+        save_path.mkdir(parents=True, exist_ok=True)
+        peft_model.save_pretrained(str(save_path))
+        tokenizer.save_pretrained(str(save_path))
+
+        elapsed = time.time() - t0
+        train_loss = float(trainer.state.log_history[-1]["train_loss"]) if trainer.state.log_history else None
+        logger.info(f"Heavyweight {model_name} trained successfully in {elapsed:.1f}s!")
+        record_lora_result(
+            model=model_name,
+            adapter=model_id,
+            status="success",
+            duration_sec=elapsed,
+            loss=train_loss,
+            steps=steps,
+            vram_bytes=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None,
+        )
+
+        # Free GPU Memory
+        del peft_model
+        del model
+        del trainer
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        return True
+
+    except Exception as e:
+        typed = record_classified_ml_error(e, model_name=model_name, adapter_id=model_id)
+        record_lora_result(model=model_name, adapter=model_id, status="failure")
+        logger.error(f"Failed heavyweight training for {model_name}: {typed}")
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        return False
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--steps", type=int, default=40)
+    parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
+    args = parser.parse_args()
+
+    sft_path = Path("dataset_output/parquet/sft_dialogues.parquet")
+    output_dir = Path("lora_adapters")
+
+    logger.info("=== Loading SFT Dialogue Dataset ===")
+    dataset = load_sft_dataset(sft_path, max_samples=500)
+    logger.info(f"Loaded {len(dataset)} samples for Heavyweight SFT training.")
+
+    for idx, spec in enumerate(HEAVYWEIGHT_5_MODELS, 1):
+        logger.info(f"\n--- [{idx}/{len(HEAVYWEIGHT_5_MODELS)}] {spec['family']} ({spec['params']}) ---")
+        train_single_heavyweight(spec, dataset, output_dir, steps=args.steps, seed=args.seed)
+
+    logger.info("All 5 Heavyweight SOTA models processed!")
+
+
+if __name__ == "__main__":
+    main()

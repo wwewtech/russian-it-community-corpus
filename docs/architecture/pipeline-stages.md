@@ -1,6 +1,6 @@
 # Pipeline Stages
 
-`MasterDataPipeline` (`src/pipeline.py`) runs seven stages in sequence.
+`MasterDataPipeline` (`ricc/pipeline.py`) runs seven stages in sequence.
 Each stage is wrapped in `time_stage()`, so its duration lands in the
 `ricc_pipeline_stage_duration_seconds` histogram and its outcome in
 `ricc_pipeline_stage_total{stage, status}`.
@@ -54,7 +54,7 @@ artifact manifest must be re-created after any successful run
 
 ## Runtime Environment
 
-`src/bootstrap.setup_runtime_env()` centralizes UTF-8 stdio (Windows
+`ricc/bootstrap.setup_runtime_env()` centralizes UTF-8 stdio (Windows
 cp1251 protection), `HF_HOME` → repo-local `.hf_cache`, tokenizers env
 and structlog configuration. Entry points call it before importing heavy
 third-party libraries — keep that ordering in new scripts.

@@ -1,6 +1,6 @@
 # SLO Gate — SHIP/HOLD Release Verdict
 
-`src/monitoring/slo_gate.py` aggregates all quality signals into one
+`ricc/monitoring/slo_gate.py` aggregates all quality signals into one
 release verdict. Exit code 0 = **SHIP**, 1 = **HOLD**; missing proof is
 fail-closed for privacy signals.
 

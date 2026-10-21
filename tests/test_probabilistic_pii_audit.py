@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.validation.probabilistic_audit import (
+from ricc.validation.probabilistic_audit import (
     ProbabilisticPIIAuditor,
     find_leaks_in_text,
 )
