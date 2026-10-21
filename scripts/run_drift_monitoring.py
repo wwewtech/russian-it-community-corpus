@@ -1,18 +1,24 @@
 """Run dataset drift monitoring between corpus snapshots.
 
-By default the reference and current snapshots both point at the current
-production parquet (self-comparison => stable baseline). For real drift
-detection, keep a frozen reference snapshot, e.g.:
+The reference must be a FROZEN snapshot of an earlier release, not the
+current file: comparing the corpus against itself can only ever report
+"stable", which is what the default used to do.
+
+Keep a frozen reference next to the current one, e.g.:
 
     python scripts/run_drift_monitoring.py \
-        --reference dataset_output/parquet/full_clean_messages_2026Q2.parquet \
+        --reference dataset_output/parquet/full_clean_messages_reference.parquet \
         --current dataset_output/parquet/full_clean_messages.parquet
+
+or point the ``RICC_DRIFT_REFERENCE`` environment variable at it and
+let the defaults do the rest.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -23,14 +29,24 @@ import pandas as pd  # noqa: E402
 from ricc.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
 from ricc.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
 
+# The default reference is a frozen snapshot. Comparing the corpus with
+# itself reports "stable" by construction and tells the operator
+# nothing.
+DEFAULT_REFERENCE = Path(
+    os.environ.get(
+        "RICC_DRIFT_REFERENCE",
+        str(PARQUET_OUTPUT_DIR / "full_clean_messages_reference.parquet"),
+    )
+)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Dataset drift monitoring (PSI / JS / vocabulary)")
     parser.add_argument(
         "--reference",
         type=Path,
-        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
-        help="Reference snapshot parquet",
+        default=DEFAULT_REFERENCE,
+        help="Reference snapshot parquet (a FROZEN earlier release, not the current file)",
     )
     parser.add_argument(
         "--current",
@@ -48,8 +64,17 @@ def main() -> None:
 
     if not args.reference.exists() or not args.current.exists():
         print(f"Snapshots missing: reference={args.reference.exists()} current={args.current.exists()}")
-        print("Run the pipeline first (make run) or point --reference/--current at existing parquet files.")
+        print("Run the pipeline first (make run), or point --reference/--current at existing parquet files.")
+        print("The reference must be a FROZEN earlier release — comparing the corpus with itself")
+        print("always reports 'stable' and detects no drift.")
         sys.exit(0)
+
+    if args.reference.resolve() == args.current.resolve():
+        print(
+            "WARNING: the reference and the current snapshot are the SAME file. "
+            "The drift verdict will be 'stable' by construction and detects nothing. "
+            "Point --reference (or RICC_DRIFT_REFERENCE) at a frozen earlier release."
+        )
 
     monitor = DatasetDriftMonitor(pd.read_parquet(args.reference), pd.read_parquet(args.current))
     report = monitor.run()
