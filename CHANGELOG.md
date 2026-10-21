@@ -9,7 +9,113 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **The published wheel could not be imported at all.** `packages.find(where=["src"])`
+  put the subpackages at the wheel's top level while every module imported
+  `from src.config import ...` — a package that was not in the wheel. Installing
+  it gave `ModuleNotFoundError: No module named 'src'`, and the console script
+  `it-pipeline` failed the same way. The package now lives at the repository
+  root as `ricc/`, ships `py.typed` and `params.yaml` as package data, and
+  imports `Settings`/`MasterDataPipeline` lazily (PEP 562) so
+  `import ricc.ml_runtime` does not drag in pandas, pydantic and torch.
+- **The PII audit could certify a corpus it never read.** A parquet without
+  the audited `text_clean` column produced an empty string for every row, so
+  zero leaks were "found" and the report claimed PASSED with a 99 %
+  confidence statement. It now refuses to certify an unreadable corpus.
+- **The PII audit crashed on a message with two leaks.** It counted leak
+  INSTANCES but passed them to the Wilson bound, which expects the number of
+  successful Bernoulli trials (messages); a message with two e-mails made the
+  count exceed the sample size and raised `ValueError`. The two quantities
+  are now counted separately.
+- **The "stratified" PII sample was systematic, not random.** Every stratum
+  was drawn with the same `random_state`, so the same relative positions
+  were selected in each one. Each stratum now gets its own RNG draw.
+- **Six PII categories were cleaned but never audited** (secret assignments,
+  private invite links, credentialed DB URLs, Telegram forward headers, raw
+  user mentions, community names), so the audit could pass while they
+  leaked. The audit now covers 12 categories.
+- **The default audit sample size produced a false LEAKS_DETECTED.** With
+  50 000 samples the one-sided 99 % upper bound is 1.08e-04, above the
+  1e-04 tolerance; the default is now 100 000 (5.41e-05) everywhere.
+- **Training policy was not enforced.** Nothing verified `actual_steps` /
+  `corpus_coverage_pct` before publishing, so seven adapters covering
+  16–45 % of the corpus were uploaded to the Hub. The new
+  `ricc/lora/policy_gate.py` is the single source of truth; partial and
+  time-boxed runs are labelled `PARTIAL` and never published, and the
+  registry carries the training provenance.
+- **Corpus coverage was measured against the wrong denominator** (the corpus
+  size including the held-out tail), so a run covering exactly one epoch
+  reported 98.93 % and the policy's own step count was unsatisfiable.
+- **Domain classification was not deterministic.** The tie-break followed
+  the dict iteration order, so `PYTHONHASHSEED` decided whether "docker
+  postgres" was `backend_databases` or `devops_infra` — the same input
+  produced two different parquet hashes.
+- **42.77 % of reply links resolved into another chat.** The social graph
+  indexed messages by `msg_id`, which is unique only within a chat; the
+  index is now keyed by `(chat_id, msg_id)`.
+- **The SFT quality gate validated the fixture, not the corpus.** The real
+  parquet stores `messages` as `list<struct>`, which arrives as a numpy
+  array; the monitor understood only lists and JSON strings, so it parsed
+  zero turns in all 171 520 production dialogues while the synthetic
+  fixture passed. The floors were recalibrated against the measured corpus.
+- **Three evaluation suites fabricated their comparison.** When the adapter
+  could not be loaded they wrote the BASE results into the LoRA column, and
+  the hybrid column fell back to the "Base + RAG" result. All three now
+  fail fast, and the hybrid variant is LoRA + RAG or explicitly the LoRA
+  model alone.
+- **The benchmark report claimed improvements the data does not support.**
+  The variants run on the same tasks, so the comparison is paired and
+  McNemar's exact test applies: on the published raw outputs NO comparison
+  is significant (p ≥ 0.125). The report now carries a significance table
+  and says the variants are indistinguishable.
+- **The hybrid PPL and ROUGE cells were copies of the LoRA cells** although
+  they were never measured; they are now reported as "not measured".
+- **The MCQ parser read Russian words as answers** ("Я не знаю в чём
+  дело" scored as "B"). A Cyrillic homoglyph now needs an explicit answer
+  marker.
+- **The HumanEval sandbox was escapable** — the builtins allowlist is not a
+  security boundary (`__subclasses__()` reaches `os`). Container isolation
+  is now the default, hardened with `--read-only`, `--tmpfs`, a non-root
+  user, `--cap-drop ALL` and no network, and it refuses to run rather than
+  falling back to the unsafe mode.
+- **The DVC pipeline had never run.** Its stages were inline
+  `python -c "..."` blocks, which do not survive a Windows shell, and
+  `dvc init` had never been executed. Every stage is now a real script,
+  the raw exports are a declared dependency, and `dvc repro ingest`
+  ingests the 2 911 754 raw messages and writes a lock file.
+- **`params.yaml` did not drive the audit parameters.** `settings.pii_audit`
+  and `settings.benchmarks` were dead configuration — the values were
+  duplicated as literals in the code, the CLI and the Prefect flow, so
+  editing params.yaml changed nothing at runtime. It is now the single
+  source.
+- **The dataset contract was unversioned.** `DatasetValidator` claimed to
+  check schema conformance but only counted columns, so a renamed or
+  retyped column passed silently. The contract is now declared, versioned
+  and fingerprinted, written into the Parquet metadata and enforced.
+- **The MinHash permutations ignored `num_perm`.** The coefficients were
+  module-level constants of a fixed length (128), so an index built with
+  `num_perm=32` produced a 128-dimensional signature while its bands were
+  computed for 32.
+
 ### Added
+- **Training policy gate** — `ricc/lora/policy_gate.py` decides whether an
+  adapter may be published: one full epoch over the corpus, not a time-boxed
+  run. Wired into the trainer, the release pipeline and the registry.
+- **End-to-end pipeline test** — `tests/test_integration_pipeline.py` runs
+  the whole pipeline on a real synthetic export and asserts that the PII is
+  gone, that the deduplication works, and that two runs produce an identical
+  parquet sha256 (and that eight different `PYTHONHASHSEED` values do too).
+- **Streaming Parquet export** — the export goes through a `ParquetWriter`
+  in batches: 29 row groups instead of 3, and the peak memory is bounded by
+  the row group instead of growing with the corpus. The schema is pinned,
+  the write is atomic, and the version travels in the file metadata.
+- **Dataset contract manifest** — `ricc/schema_version.py` declares the
+  columns, order and types of every artefact, with a fingerprint; the
+  validator enforces it and CI keeps the manifest in sync.
+- **McNemar's exact test** — `ricc/evaluation/statistical_power.py` gains a
+  paired significance test, used by the benchmark report.
+- **CI gates** — a Windows runner, a coverage-regression gate (diff-cover),
+  a DVC consistency job and a dataset-contract check.
 - **Derived CI stats** — `scripts/refresh_ci_stats.py` computes
   `reports/pipeline_execution_stats.json` from the active artifacts
   (real `DatasetValidator` run, distinct non-null `thread_id` count,
