@@ -38,6 +38,7 @@ from ricc.evaluation.statistical_power import (
     required_sample_size,
     wilson_interval,
 )
+from ricc.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -232,11 +233,26 @@ class ProbabilisticPIIAuditor:
 
     def run_audit(
         self,
-        sample_size: int = 100_000,
-        confidence: float = 0.99,
-        max_leak_tolerance: float = 1e-4,
+        sample_size: int | None = None,
+        confidence: float | None = None,
+        max_leak_tolerance: float | None = None,
     ) -> dict[str, Any]:
-        """Run the stratified probabilistic audit and return the report dict."""
+        """Run the stratified probabilistic audit and return the report dict.
+
+        The defaults come from ``settings.pii_audit``, which is loaded
+        from ``params.yaml`` — the single source of the audit
+        parameters. They used to be duplicated literals here, in the CLI
+        and in the Prefect flow, so editing ``params.yaml`` changed
+        nothing at runtime.
+        """
+        audit_settings = settings.pii_audit
+        if sample_size is None:
+            sample_size = audit_settings.sample_size
+        if confidence is None:
+            confidence = audit_settings.confidence
+        if max_leak_tolerance is None:
+            max_leak_tolerance = audit_settings.max_leak_tolerance
+
         if not self.parquet_path.exists():
             return {
                 "status": "SKIPPED_DATASET_MISSING",

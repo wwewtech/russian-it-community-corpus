@@ -285,8 +285,56 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
+        self._load_params_sections()
         self._load_domain_taxonomy()
         self._auto_discover_exports()
+
+    def _load_params_sections(self) -> None:
+        """Load the nested parameter sections from params.yaml.
+
+        ``pii_audit`` and ``benchmarks`` used to be dead configuration:
+        the values were declared here AND duplicated as literals in
+        ``probabilistic_audit.py`` and in the CLI, and nothing ever read
+        them — so editing ``params.yaml`` had no effect at all, while
+        the DVC pipeline declared ``pii_audit.sample_size`` as a
+        parameter of a stage (making the stage re-run for a value that
+        changed nothing).
+
+        params.yaml is now the single source: the sections below are
+        populated from it, and the code reads them through
+        ``settings.pii_audit`` / ``settings.benchmarks``.
+        """
+        params_path = self._params_path()
+        if not params_path.exists():
+            return
+        try:
+            import yaml
+
+            with params_path.open("r", encoding="utf-8") as f:
+                params = yaml.safe_load(f) or {}
+        except Exception:
+            # deliberate: an unreadable params.yaml must not stop the
+            # platform from booting — the class defaults apply.
+            return
+
+        for section, model in (
+            ("pii_audit", PIIAuditSettings),
+            ("drift", DriftSettings),
+            ("benchmarks", BenchmarkSettings),
+        ):
+            values = params.get(section)
+            if not isinstance(values, dict):
+                continue
+            known = set(model.model_fields)
+            filtered = {k: v for k, v in values.items() if k in known}
+            if not filtered:
+                continue
+            try:
+                setattr(self, section, model(**filtered))
+            except Exception:
+                # deliberate: a malformed section falls back to the
+                # class defaults rather than breaking the boot.
+                continue
 
     def _params_path(self) -> Path:
         """Locate ``params.yaml``.

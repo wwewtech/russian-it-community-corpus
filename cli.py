@@ -51,14 +51,25 @@ def main() -> None:
     parser_audit.add_argument(
         "--sample-size",
         type=int,
-        default=100000,
+        default=None,
         help=(
-            "Sample size to audit. 100000 keeps the 99% upper bound (5.41e-05) below "
-            "the 1e-04 tolerance even with zero observed leaks."
+            "Sample size to audit. The default comes from params.yaml "
+            "(pii_audit.sample_size = 100000), which keeps the 99% upper bound "
+            "(5.41e-05) below the 1e-04 tolerance even with zero observed leaks."
         ),
     )
-    parser_audit.add_argument("--confidence", type=float, default=0.99, help="Confidence level for bounds")
-    parser_audit.add_argument("--tolerance", type=float, default=1e-4, help="Max acceptable leak rate tolerance")
+    parser_audit.add_argument(
+        "--confidence",
+        type=float,
+        default=None,
+        help="Confidence level for bounds (default: params.yaml pii_audit.confidence)",
+    )
+    parser_audit.add_argument(
+        "--tolerance",
+        type=float,
+        default=None,
+        help="Max acceptable leak rate tolerance (default: params.yaml pii_audit.max_leak_tolerance)",
+    )
     parser_audit.add_argument(
         "--output",
         type=Path,
@@ -90,7 +101,12 @@ def main() -> None:
     # Command: orchestrate
     parser_orch = subparsers.add_parser("orchestrate", help="Run Prefect curation orchestration flow")
     parser_orch.add_argument("--skip-pipeline", action="store_true", help="Skip curation stage and run downstream")
-    parser_orch.add_argument("--sample-size", type=int, default=100000, help="Audit sample size")
+    parser_orch.add_argument(
+        "--sample-size",
+        type=int,
+        default=None,
+        help="Audit sample size (default: params.yaml pii_audit.sample_size)",
+    )
 
     # Command: chat
     parser_chat = subparsers.add_parser("chat", help="Start interactive LLM + RAG terminal chat session")
