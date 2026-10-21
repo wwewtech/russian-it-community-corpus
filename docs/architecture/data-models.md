@@ -1,6 +1,6 @@
 # Data Models
 
-Core typed models live in `src/ingestion/schema.py` (pydantic) and are
+Core typed models live in `ricc/ingestion/schema.py` (pydantic) and are
 re-exported through the pipeline. Everything downstream is strict-typed.
 
 ## NormalizedMessage

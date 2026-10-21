@@ -1,6 +1,6 @@
 # Taxonomy & Tagging
 
-`src/taxonomy/` assigns every message an IT domain and technical tags.
+`ricc/taxonomy/` assigns every message an IT domain and technical tags.
 
 ## Domains
 
@@ -12,12 +12,12 @@ source of truth, consumed by `TechnicalTagger` via Aho-Corasick):
 `general_tech_chat`.
 
 Matching is case-insensitive with Russian keyword support; the classifier
-(`src/taxonomy/classifier.py`) combines keyword density with heuristics
+(`ricc/taxonomy/classifier.py`) combines keyword density with heuristics
 and falls back to `general_tech_chat` when confidence is low.
 
 ## Tags
 
-`TechnicalTagger` (`src/tagger.py`) extracts technology tags (docker,
+`TechnicalTagger` (`ricc/tagger.py`) extracts technology tags (docker,
 kubernetes, postgres, lora, react, ...) from the same keyword tables.
 Tags are stored as a list column in the parquet exports and drive the
 RAG knowledge-base domain filter.

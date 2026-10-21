@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.monitoring.drift import DatasetDriftMonitor, _js_divergence, _psi
+from ricc.monitoring.drift import DatasetDriftMonitor, _js_divergence, _psi
 
 
 def _make_df(n: int, seed: int, domain: str = "backend_databases", length_scale: float = 1.0) -> pd.DataFrame:

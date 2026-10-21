@@ -4,9 +4,9 @@ Unit tests for Exact and MinHash LSH fuzzy deduplication.
 
 import unittest
 
-from src.deduplication.exact_dedup import ExactDeduplicator
-from src.deduplication.minhash_lsh import MinHashLSH
-from src.ingestion.schema import CleanedMessage
+from ricc.deduplication.exact_dedup import ExactDeduplicator
+from ricc.deduplication.minhash_lsh import MinHashLSH
+from ricc.ingestion.schema import CleanedMessage
 
 
 class TestDeduplication(unittest.TestCase):

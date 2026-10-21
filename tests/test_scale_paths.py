@@ -11,7 +11,7 @@ from tests.test_edge_paths import _msg
 
 class TestEngineScaleBranches(unittest.TestCase):
     def test_moderate_tier_large_corpus(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         pool = [f"w{i:04d}" for i in range(2500)]
         msgs = []
@@ -44,7 +44,7 @@ class TestEngineScaleBranches(unittest.TestCase):
         self.assertEqual(q["quality_tier"], "Moderate Quality (Category B)")
 
     def test_low_tech_no_questions(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         msgs = [_msg(i, f"просто поболтать о погоде номер {i} сегодня", domain="general_tech_chat") for i in range(8)]
         q = DeepChatAnalyzer(msgs).compute_dataset_quality_score()
@@ -53,7 +53,7 @@ class TestEngineScaleBranches(unittest.TestCase):
         self.assertEqual(q["quality_tier"], "Baseline (Category C)")
 
     def test_lda_failure_returns_empty(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         msgs = []
         k = 0
@@ -64,7 +64,7 @@ class TestEngineScaleBranches(unittest.TestCase):
         self.assertEqual(DeepChatAnalyzer(msgs).compute_topic_clusters_lda(n_topics=8), [])
 
     def test_lda_early_return_few_docs(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         pool = [f"doc{i:02d}" for i in range(20)]
         msgs = []
@@ -77,14 +77,14 @@ class TestEngineScaleBranches(unittest.TestCase):
         self.assertEqual(DeepChatAnalyzer(msgs).compute_topic_clusters_lda(n_topics=8), [])
 
     def test_tokenize_long_text_skips_morph(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         a = DeepChatAnalyzer([_msg(1, "тест")])
         tokens = a._tokenize_clean(" ".join(f"слово{i}" for i in range(60)))
         self.assertGreater(len(tokens), 50)
 
     def test_entropy_mid_branch(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         pool = [f"e{i:04d}" for i in range(300)]
         msgs = [
@@ -102,7 +102,7 @@ class TestEngineScaleBranches(unittest.TestCase):
 
 class TestThreadBuilderBranches(unittest.TestCase):
     def test_duplicate_keys_hit_visited_continue(self) -> None:
-        from src.graph.thread_builder import ThreadDAGBuilder
+        from ricc.graph.thread_builder import ThreadDAGBuilder
 
         p = _msg(1, "корневой вопрос про kafka настройку кластера")
         d1 = _msg(2, "ответ первый подробности конфигурации", reply_to_id=1)
@@ -111,7 +111,7 @@ class TestThreadBuilderBranches(unittest.TestCase):
         self.assertGreaterEqual(len(threads), 1)
 
     def test_burst_flush_at_visited_tree_node(self) -> None:
-        from src.graph.thread_builder import ThreadDAGBuilder
+        from ricc.graph.thread_builder import ThreadDAGBuilder
 
         t = 1704000000
         o1 = _msg(1, "первое сообщение в чате про деплой", unixtime=t)
@@ -123,7 +123,7 @@ class TestThreadBuilderBranches(unittest.TestCase):
         self.assertIn(2, sizes)
 
     def test_burst_flush_at_time_gap(self) -> None:
-        from src.graph.thread_builder import ThreadDAGBuilder
+        from ricc.graph.thread_builder import ThreadDAGBuilder
 
         t = 1704000000
         o1 = _msg(1, "первое сообщение в чате про деплой", unixtime=t)
@@ -135,18 +135,18 @@ class TestThreadBuilderBranches(unittest.TestCase):
 
 class TestExtractorBranches(unittest.TestCase):
     def test_empty_text_not_contaminated(self) -> None:
-        from src.graph.conversation_extractor import is_llm_contaminated
+        from ricc.graph.conversation_extractor import is_llm_contaminated
 
         self.assertFalse(is_llm_contaminated(""))
         self.assertTrue(is_llm_contaminated("как языковая модель я не могу помочь"))
 
     def test_single_message_thread_skipped(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         self.assertEqual(ConversationExtractor().extract_sft_dialogues({1: [_msg(1, "одиночка")]}), [])
 
     def test_single_author_thread_skipped(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         msgs = [
             _msg(1, "первое длинное сообщение про kafka", author_anon="solo", author_id_anon="s1"),
@@ -155,7 +155,7 @@ class TestExtractorBranches(unittest.TestCase):
         self.assertEqual(ConversationExtractor().extract_sft_dialogues({1: msgs}), [])
 
     def test_short_texts_merge_below_two(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         msgs = [
             _msg(1, "длинный вопрос про настройку kafka кластера"),
@@ -164,7 +164,7 @@ class TestExtractorBranches(unittest.TestCase):
         self.assertEqual(ConversationExtractor().extract_sft_dialogues({1: msgs}), [])
 
     def test_same_author_merge_and_trailing_pop(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         msgs = [
             _msg(1, "вопрос про настройку kafka кластера подробно", author_anon="user_01", author_id_anon="hash_1"),
@@ -177,7 +177,7 @@ class TestExtractorBranches(unittest.TestCase):
         self.assertEqual(dialogues[0].messages[-1].role, "assistant")
 
     def test_three_authors_flip_and_mega_thread_cap(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         msgs = [
             _msg(1, "вопрос про настройку kafka подробно"),
@@ -203,7 +203,7 @@ class TestExtractorBranches(unittest.TestCase):
         self.assertLessEqual(capped[0].turn_count, 32)
 
     def test_dpo_skips(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         ext = ConversationExtractor()
         self.assertEqual(
@@ -220,20 +220,20 @@ class TestExtractorBranches(unittest.TestCase):
         self.assertEqual(ext.extract_dpo_pairs({1: same_author}), [])
 
     def test_rag_empty_thread_skipped(self) -> None:
-        from src.graph.conversation_extractor import ConversationExtractor
+        from ricc.graph.conversation_extractor import ConversationExtractor
 
         self.assertEqual(ConversationExtractor().extract_rag_chunks({1: []}), [])
 
 
 class TestDriftVerdicts(unittest.TestCase):
     def test_zero_buckets_psi(self) -> None:
-        from src.monitoring.drift import DatasetDriftMonitor
+        from ricc.monitoring.drift import DatasetDriftMonitor
 
         ref = pd.DataFrame({"text_clean": ["aaa"] * 10, "domain": ["backend"] * 10})
         self.assertEqual(DatasetDriftMonitor(ref, ref, length_buckets=0).compute_length_psi(), 0.0)
 
     def test_js_moderate(self) -> None:
-        from src.monitoring.drift import DatasetDriftMonitor
+        from ricc.monitoring.drift import DatasetDriftMonitor
 
         ref = pd.DataFrame(
             {
@@ -251,7 +251,7 @@ class TestDriftVerdicts(unittest.TestCase):
         self.assertEqual(rep["metrics"]["domain_distribution"]["verdict"], "moderate_drift")
 
     def test_vocab_moderate(self) -> None:
-        from src.monitoring.drift import DatasetDriftMonitor
+        from ricc.monitoring.drift import DatasetDriftMonitor
 
         ref = pd.DataFrame({"text_clean": ["kafka broker topic config service port"] * 60, "domain": ["backend"] * 60})
         cur = pd.DataFrame(
@@ -264,7 +264,7 @@ class TestDriftVerdicts(unittest.TestCase):
         self.assertEqual(rep["metrics"]["vocabulary"]["verdict"], "moderate_drift")
 
     def test_psi_moderate(self) -> None:
-        from src.monitoring.drift import DatasetDriftMonitor
+        from ricc.monitoring.drift import DatasetDriftMonitor
 
         ref = pd.DataFrame({"text_clean": ["x" * 20] * 30 + ["x" * 29] * 30, "domain": ["backend"] * 60})
         cur = pd.DataFrame({"text_clean": ["x" * 20] * 40 + ["x" * 29] * 20, "domain": ["backend"] * 60})

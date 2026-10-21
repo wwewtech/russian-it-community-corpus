@@ -1,12 +1,12 @@
-"""Tests for the keyword tagger and sentiment scorer (src/taxonomy/tagger.py)."""
+"""Tests for the keyword tagger and sentiment scorer (ricc/taxonomy/tagger.py)."""
 
 from __future__ import annotations
 
 import pytest
 
-from src.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
-from src.ingestion.schema import CleanedMessage
-from src.taxonomy.tagger import TechnicalTagger
+from ricc.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
+from ricc.ingestion.schema import CleanedMessage
+from ricc.taxonomy.tagger import TechnicalTagger
 
 GENERAL_DOMAIN = "general_tech_chat"
 

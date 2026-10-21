@@ -14,11 +14,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pandas as pd  # noqa: E402
 import pyarrow.parquet as pq  # noqa: E402
 
-from src.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
-from src.monitoring.slo_gate import evaluate  # noqa: E402
-from src.validation.artifact_manifest import create_manifest  # noqa: E402
-from src.validation.hub_reconciliation import generate_reconciliation_report  # noqa: E402
-from src.validation.validator import DatasetValidator  # noqa: E402
+from ricc.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
+from ricc.monitoring.slo_gate import evaluate  # noqa: E402
+from ricc.validation.artifact_manifest import create_manifest  # noqa: E402
+from ricc.validation.hub_reconciliation import generate_reconciliation_report  # noqa: E402
+from ricc.validation.validator import DatasetValidator  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORTS = ROOT / "reports"

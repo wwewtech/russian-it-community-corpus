@@ -27,7 +27,7 @@ def _child_script() -> str:
     return (
         "import json,sys\n"
         "sys.path.insert(0, " + json.dumps(str(REPO_ROOT)) + ")\n"
-        "from src.taxonomy.classifier import DomainClassifier\n"
+        "from ricc.taxonomy.classifier import DomainClassifier\n"
         "c = DomainClassifier()\n"
         "texts = json.loads(sys.argv[1])\n"
         "out = []\n"
@@ -55,7 +55,7 @@ def _classify_under_seed(seed: str) -> list:
 
 class TestTaxonomyDeterminism:
     def test_tie_text_produces_equal_scores(self):
-        from src.taxonomy.classifier import DomainClassifier
+        from ricc.taxonomy.classifier import DomainClassifier
 
         domain, _conf, scores = DomainClassifier().classify_text(TIE_TEXT)
         assert scores["devops_infra"] == scores["backend_databases"]
@@ -75,7 +75,7 @@ class TestTaxonomyDeterminism:
         assert domains.pop() == "backend_databases"
 
     def test_same_process_call_stable_regardless_of_keyword_input_order(self):
-        from src.taxonomy.classifier import DomainClassifier
+        from ricc.taxonomy.classifier import DomainClassifier
 
         classifier = DomainClassifier()
         baseline = classifier.classify_text(TIE_TEXT)
@@ -91,7 +91,7 @@ class TestTaxonomyDeterminism:
         assert other == baseline
 
     def test_repeated_calls_are_stable(self):
-        from src.taxonomy.classifier import DomainClassifier
+        from ricc.taxonomy.classifier import DomainClassifier
 
         classifier = DomainClassifier()
         first = classifier.classify_text(TIE_TEXT)

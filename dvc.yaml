@@ -8,8 +8,8 @@ stages:
   ingest:
     cmd: |
       python -c "
-      from src.ingestion.loader import merge_multiple_exports
-      from src.config import RAW_EXPORT_DIRS
+      from ricc.ingestion.loader import merge_multiple_exports
+      from ricc.config import RAW_EXPORT_DIRS
       import pickle, gzip
       chats, msgs = merge_multiple_exports(RAW_EXPORT_DIRS)
       with gzip.open('dataset_output/intermediate/raw_messages.pkl.gz', 'wb') as f:
@@ -17,10 +17,10 @@ stages:
       print(f'Ingested {len(msgs)} messages from {len(chats)} chats')
       "
     deps:
-      - src/ingestion/loader.py
-      - src/ingestion/schema.py
-      - src/config.py
-      - src/bootstrap.py
+      - ricc/ingestion/loader.py
+      - ricc/ingestion/schema.py
+      - ricc/config.py
+      - ricc/bootstrap.py
     params:
       - pii_audit.sample_size
     outs:
@@ -32,8 +32,8 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.pii.deep_anonymizer import DeepPIIAnonymizer
-      from src.ingestion.schema import CleanedMessage
+      from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
+      from ricc.ingestion.schema import CleanedMessage
 
       with gzip.open('dataset_output/intermediate/raw_messages.pkl.gz', 'rb') as f:
           chats, raw_messages = pickle.load(f)
@@ -49,12 +49,12 @@ stages:
       print(f'PII stats: {anonymizer.stats}')
       "
     deps:
-      - src/pii/deep_anonymizer.py
-      - src/pii/regex_scrubber.py
-      - src/pii/ner_scrubber.py
-      - src/pii/anonymizer.py
-      - src/ingestion/schema.py
-      - src/config.py
+      - ricc/pii/deep_anonymizer.py
+      - ricc/pii/regex_scrubber.py
+      - ricc/pii/ner_scrubber.py
+      - ricc/pii/anonymizer.py
+      - ricc/ingestion/schema.py
+      - ricc/config.py
     outs:
       - dataset_output/intermediate/cleaned_messages.pkl.gz:
           cache: true
@@ -64,7 +64,7 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.deduplication.exact_dedup import ExactDeduplicator
+      from ricc.deduplication.exact_dedup import ExactDeduplicator
 
       with gzip.open('dataset_output/intermediate/cleaned_messages.pkl.gz', 'rb') as f:
           cleaned = pickle.load(f)
@@ -77,8 +77,8 @@ stages:
       print(f'Exact dedup: removed {exact_dupes} duplicates, {len(unique)} remaining')
       "
     deps:
-      - src/deduplication/exact_dedup.py
-      - src/ingestion/schema.py
+      - ricc/deduplication/exact_dedup.py
+      - ricc/ingestion/schema.py
     outs:
       - dataset_output/intermediate/dedup_exact.pkl.gz:
           cache: true
@@ -88,8 +88,8 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.deduplication.minhash_lsh import MinHashLSH
-      from src.config import MINHASH_NUM_PERM, MINHASH_THRESHOLD, MINHASH_SHINGLE_SIZE
+      from ricc.deduplication.minhash_lsh import MinHashLSH
+      from ricc.config import MINHASH_NUM_PERM, MINHASH_THRESHOLD, MINHASH_SHINGLE_SIZE
 
       with gzip.open('dataset_output/intermediate/dedup_exact.pkl.gz', 'rb') as f:
           messages = pickle.load(f)
@@ -102,8 +102,8 @@ stages:
       print(f'MinHash LSH dedup: removed {lsh_dupes} near-duplicates, {len(unique)} remaining')
       "
     deps:
-      - src/deduplication/minhash_lsh.py
-      - src/config.py
+      - ricc/deduplication/minhash_lsh.py
+      - ricc/config.py
     params:
       - pii_audit.sample_size
     outs:
@@ -115,7 +115,7 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.taxonomy.tagger import TechnicalTagger
+      from ricc.taxonomy.tagger import TechnicalTagger
 
       with gzip.open('dataset_output/intermediate/dedup_minhash.pkl.gz', 'rb') as f:
           messages = pickle.load(f)
@@ -132,9 +132,9 @@ stages:
       print(f'Domain distribution: {domains}')
       "
     deps:
-      - src/taxonomy/tagger.py
-      - src/taxonomy/classifier.py
-      - src/config.py
+      - ricc/taxonomy/tagger.py
+      - ricc/taxonomy/classifier.py
+      - ricc/config.py
     outs:
       - dataset_output/intermediate/tagged_messages.pkl.gz:
           cache: true
@@ -144,8 +144,8 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.graph.thread_builder import ThreadDAGBuilder
-      from src.config import MAX_REPLY_TIME_GAP_HOURS
+      from ricc.graph.thread_builder import ThreadDAGBuilder
+      from ricc.config import MAX_REPLY_TIME_GAP_HOURS
 
       with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'rb') as f:
           messages = pickle.load(f)
@@ -158,10 +158,10 @@ stages:
       print(f'Built {len(threads)} threads from {len(messages_with_threads)} messages')
       "
     deps:
-      - src/graph/thread_builder.py
-      - src/graph/conversation_extractor.py
-      - src/ingestion/schema.py
-      - src/config.py
+      - ricc/graph/thread_builder.py
+      - ricc/graph/conversation_extractor.py
+      - ricc/ingestion/schema.py
+      - ricc/config.py
     params:
       - pii_audit.sample_size
     outs:
@@ -173,8 +173,8 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.graph.conversation_extractor import ConversationExtractor
-      from src.config import MIN_QUESTION_WORDS, MIN_ANSWER_WORDS, MAX_SFT_TURNS
+      from ricc.graph.conversation_extractor import ConversationExtractor
+      from ricc.config import MIN_QUESTION_WORDS, MIN_ANSWER_WORDS, MAX_SFT_TURNS
 
       with gzip.open('dataset_output/intermediate/threaded_messages.pkl.gz', 'rb') as f:
           messages, threads = pickle.load(f)
@@ -192,9 +192,9 @@ stages:
       print(f'Extracted: {len(sft)} SFT, {len(rag)} RAG, {len(dpo)} DPO')
       "
     deps:
-      - src/graph/conversation_extractor.py
-      - src/ingestion/schema.py
-      - src/config.py
+      - ricc/graph/conversation_extractor.py
+      - ricc/ingestion/schema.py
+      - ricc/config.py
     outs:
       - dataset_output/intermediate/extracted.pkl.gz:
           cache: true
@@ -204,11 +204,11 @@ stages:
     cmd: |
       python -c "
       import gzip, pickle
-      from src.exporter.parquet_exporter import ParquetExporter
-      from src.exporter.jsonl_exporter import JSONLExporter
-      from src.exporter.rag_exporter import RAGExporter
-      from src.exporter.dpo_exporter import DPOExporter
-      from src.config import PARQUET_OUTPUT_DIR, JSONL_OUTPUT_DIR, SAMPLES_OUTPUT_DIR
+      from ricc.exporter.parquet_exporter import ParquetExporter
+      from ricc.exporter.jsonl_exporter import JSONLExporter
+      from ricc.exporter.rag_exporter import RAGExporter
+      from ricc.exporter.dpo_exporter import DPOExporter
+      from ricc.config import PARQUET_OUTPUT_DIR, JSONL_OUTPUT_DIR, SAMPLES_OUTPUT_DIR
 
       with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'rb') as f:
           messages = pickle.load(f)
@@ -246,12 +246,12 @@ stages:
       print('Export complete')
       "
     deps:
-      - src/exporter/parquet_exporter.py
-      - src/exporter/jsonl_exporter.py
-      - src/exporter/rag_exporter.py
-      - src/exporter/dpo_exporter.py
-      - src/ingestion/schema.py
-      - src/config.py
+      - ricc/exporter/parquet_exporter.py
+      - ricc/exporter/jsonl_exporter.py
+      - ricc/exporter/rag_exporter.py
+      - ricc/exporter/dpo_exporter.py
+      - ricc/ingestion/schema.py
+      - ricc/config.py
     outs:
       - dataset_output/parquet/full_clean_messages.parquet:
           cache: true
@@ -274,10 +274,10 @@ stages:
   analytics:
     cmd: |
       python -c "
-      from src.analytics.engine import DeepChatAnalyzer
-      from src.analytics.report_generator import ReportGenerator
-      from src.validation.benchmark import BenchmarkRunner
-      from src.config import REPORTS_DIR
+      from ricc.analytics.engine import DeepChatAnalyzer
+      from ricc.analytics.report_generator import ReportGenerator
+      from ricc.validation.benchmark import BenchmarkRunner
+      from ricc.config import REPORTS_DIR
       import gzip, pickle
 
       with gzip.open('dataset_output/intermediate/tagged_messages.pkl.gz', 'rb') as f:
@@ -297,12 +297,12 @@ stages:
       print('Analytics & benchmark complete')
       "
     deps:
-      - src/analytics/engine.py
-      - src/analytics/report_generator.py
-      - src/analytics/metrics.py
-      - src/analytics/network.py
-      - src/validation/benchmark.py
-      - src/config.py
+      - ricc/analytics/engine.py
+      - ricc/analytics/report_generator.py
+      - ricc/analytics/metrics.py
+      - ricc/analytics/network.py
+      - ricc/validation/benchmark.py
+      - ricc/config.py
     outs:
       - reports/analytics_summary.json:
           cache: true
@@ -315,9 +315,9 @@ stages:
   validate:
     cmd: |
       python -c "
-      from src.validation.validator import DatasetValidator
-      from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
-      from src.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, REPORTS_DIR
+      from ricc.validation.validator import DatasetValidator
+      from ricc.validation.probabilistic_audit import ProbabilisticPIIAuditor
+      from ricc.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, REPORTS_DIR
       import json
 
       # Dataset validation
@@ -336,12 +336,12 @@ stages:
       print(f'PII Audit: {audit_report[\"verdict\"]}')
       "
     deps:
-      - src/validation/validator.py
-      - src/validation/probabilistic_audit.py
-      - src/validation/artifact_manifest.py
-      - src/validation/hub_reconciliation.py
-      - src/pii/regex_scrubber.py
-      - src/config.py
+      - ricc/validation/validator.py
+      - ricc/validation/probabilistic_audit.py
+      - ricc/validation/artifact_manifest.py
+      - ricc/validation/hub_reconciliation.py
+      - ricc/pii/regex_scrubber.py
+      - ricc/config.py
     outs:
       - reports/validation_results.json:
           cache: true
@@ -352,8 +352,8 @@ stages:
   drift:
     cmd: |
       python -c "
-      from src.monitoring.drift import DatasetDriftMonitor
-      from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR
+      from ricc.monitoring.drift import DatasetDriftMonitor
+      from ricc.config import PARQUET_OUTPUT_DIR, REPORTS_DIR
       import pandas as pd
 
       ref_path = PARQUET_OUTPUT_DIR / 'full_clean_messages.parquet'
@@ -370,8 +370,8 @@ stages:
           print('Skipping drift: reference or current snapshot missing')
       "
     deps:
-      - src/monitoring/drift.py
-      - src/config.py
+      - ricc/monitoring/drift.py
+      - ricc/config.py
     params:
       - drift.psi_stable
       - drift.psi_moderate
@@ -385,12 +385,12 @@ stages:
 
   # Stage 12: SLO Gate - Final release decision
   slo:
-    cmd: python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+    cmd: python -m ricc.monitoring.slo_gate --json-out reports/slo_verdict.json
     deps:
-      - src/monitoring/slo_gate.py
-      - src/validation/artifact_manifest.py
-      - src/validation/hub_reconciliation.py
-      - src/config.py
+      - ricc/monitoring/slo_gate.py
+      - ricc/validation/artifact_manifest.py
+      - ricc/validation/hub_reconciliation.py
+      - ricc/config.py
     outs:
       - reports/slo_verdict.json:
           cache: true

@@ -1,6 +1,6 @@
 # LoRA Training
 
-`src/lora/` fine-tunes domain adapters on the RICC corpus, sized for a
+`ricc/lora/` fine-tunes domain adapters on the RICC corpus, sized for a
 single RTX 3060 (12GB) and scaled up to a multi-model zoo.
 
 ## Entry Points

@@ -5,8 +5,8 @@ Master entrypoint to execute the complete pipeline.
 import logging
 import sys
 
-from src.errors import PipelineError
-from src.pipeline import MasterDataPipeline
+from ricc.errors import PipelineError
+from ricc.pipeline import MasterDataPipeline
 
 if sys.platform == "win32":
     try:

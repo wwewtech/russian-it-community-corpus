@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.rag.rag_pipeline import LocalRAGPipeline
+from ricc.rag.rag_pipeline import LocalRAGPipeline
 
 
 def _make_synthetic_parquet(path: Path) -> None:
@@ -473,7 +473,7 @@ class TestRAGPipelineEdgeCases(unittest.TestCase):
 
     def test_keyword_extraction_limit(self):
         """Only first 10 keywords are used for matching."""
-        from src.rag.rag_pipeline import _extract_keywords
+        from ricc.rag.rag_pipeline import _extract_keywords
 
         keywords = _extract_keywords(" ".join([f"word{i}" for i in range(20)]))
         self.assertEqual(len(keywords), 10)
@@ -482,7 +482,7 @@ class TestRAGPipelineEdgeCases(unittest.TestCase):
         """Lexical scoring counts keyword occurrences."""
         import pandas as pd
 
-        from src.rag.rag_pipeline import _lexical_scores
+        from ricc.rag.rag_pipeline import _lexical_scores
 
         contents = pd.Series(
             [

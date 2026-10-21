@@ -8,7 +8,7 @@ make run          # = python main.py
 python cli.py run # same stages, with --skip-ner option
 ```
 
-The pipeline (`src/pipeline.py`, `MasterDataPipeline`) executes 7 stages
+The pipeline (`ricc/pipeline.py`, `MasterDataPipeline`) executes 7 stages
 in order, each timed and recorded into Prometheus
 (`ricc_pipeline_stage_total`, `ricc_pipeline_stage_duration_seconds`):
 
@@ -20,7 +20,7 @@ in order, each timed and recorded into Prometheus
 6. **Export** — Parquet / JSONL (ShareGPT, Alpaca, ChatML, RAG, DPO).
 7. **Analytics & validation** — statistical report + dataset validation.
 
-Raw exports are configured in `src/settings.py` (`RAW_EXPORT_DIRS`);
+Raw exports are configured in `ricc/settings.py` (`RAW_EXPORT_DIRS`);
 outputs land in `dataset_output/` (`parquet/`, `jsonl/`), reports in
 `reports/`.
 

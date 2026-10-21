@@ -4,13 +4,13 @@ from unittest.mock import patch
 
 import pytest
 
-from src.config import MAX_SFT_TURNS
-from src.graph.conversation_extractor import (
+from ricc.config import MAX_SFT_TURNS
+from ricc.graph.conversation_extractor import (
     AI_CONTAMINATION_PATTERNS,
     ConversationExtractor,
     is_llm_contaminated,
 )
-from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue
+from ricc.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue
 
 HIGH_QUALITY_REPLY = (
     "Для PostgreSQL настройте синхронную репликацию через primary_conninfo и standby_conninfo. "

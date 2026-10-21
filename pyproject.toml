@@ -87,23 +87,17 @@ it-pipeline = "cli:main"
 # script outside the Streamlit runtime and render nothing.
 
 [tool.setuptools]
-# The package lives in `src/` as a src-layout: the importable package is
-# `ricc`, and `src/` itself is NOT a package (it has no __init__.py that
-# should be shipped, and shipping it would make `import src.xxx` work only
-# by accident of the wheel layout).
-#
-# The previous configuration used `packages.find(where=["src"])`, which
-# put the SUBPACKAGES (analytics/, pii/, exporter/, ...) at the wheel
-# top level while every module inside them imported `from src.config
-# import ...`. The resulting wheel could not be imported at all:
+# The package lives at the repository root as `ricc/`. A src-LAYOUT was
+# tried and abandoned: `packages.find(where=["src"])` put the subpackages
+# at the wheel top level while every module imported `from src.config
+# import ...`, so the published wheel could not be imported at all —
 # `import ricc` -> ModuleNotFoundError: No module named 'src'.
-#
-# Now the whole `src` directory is shipped as the `ricc` package and the
-# internal imports use the `ricc.` prefix.
 py-modules = ["cli", "main"]
-packages = ["ricc", "ricc.analytics", "ricc.deduplication", "ricc.evaluation", "ricc.exporter",
-            "ricc.graph", "ricc.ingestion", "ricc.lora", "ricc.monitoring", "ricc.observability",
-            "ricc.orchestration", "ricc.pii", "ricc.rag", "ricc.taxonomy", "ricc.validation"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ricc*"]
+exclude = ["tests*", "scripts*", "docs*", "reports*", "notebooks*", "site*", "lora_adapters*", "dataset_output*"]
 
 # PEP 561 marker: the package is fully typed (`mypy --strict` clean), so
 # consumers must be able to use the type information.
@@ -146,14 +140,14 @@ ignore = [
 # defaults) BEFORE importing torch/transformers/peft — those imports are
 # intentionally below the setup call and carry no per-line noqa anymore
 # (the 65 stale `# noqa: E402` markers were removed; policy is here).
-"src/evaluation/*.py" = ["E402"]
-"src/lora/*.py" = ["E402"]
-"src/inference.py" = ["E402"]
-"src/exporter/finalize_sync_all.py" = ["E402"]
-"src/observability/__init__.py" = ["E402"]
+"ricc/evaluation/*.py" = ["E402"]
+"ricc/lora/*.py" = ["E402"]
+"ricc/inference.py" = ["E402"]
+"ricc/exporter/finalize_sync_all.py" = ["E402"]
+"ricc/observability/__init__.py" = ["E402"]
 
 # NOTE: per-file E402 ignores were removed — runtime env setup is centralized
-# in src/bootstrap.py (setup_runtime_env()); imports below the call carry an
+# in ricc/bootstrap.py (setup_runtime_env()); imports below the call carry an
 # explicit `# noqa: E402` where needed.
 
 [tool.ruff.format]
@@ -165,9 +159,9 @@ line-ending = "lf"
 python_version = "3.12"
 ignore_missing_imports = true
 # Strict rollout COMPLETE (2026-10-14): no [[tool.mypy.overrides]]
-# ignore_errors blocks remain. Every src/ module passes `mypy --strict`;
+# ignore_errors blocks remain. Every ricc/ module passes `mypy --strict`;
 # untyped third-party calls (HF/PEFT/transformers) are fenced behind
-# `cast(Any, ...)` — the single sanctioned pattern, see src/inference.py.
+# `cast(Any, ...)` — the single sanctioned pattern, see ricc/inference.py.
 # The full module list is verified by `make typecheck-strict` and the
 # pre-commit mypy-strict hook.
 #
@@ -185,7 +179,7 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["."]
-addopts = "-p no:asyncio --cov=src --cov-report=term-missing --cov-fail-under=85"
+addopts = "-p no:asyncio --cov=ricc --cov-report=term-missing --cov-fail-under=85"
 markers = [
     "integration: tests that require locally generated dataset artifacts (deselected by default when combined with -m 'not integration')",
 ]
@@ -196,10 +190,10 @@ markers = [
 # and are excluded from the 60% gate — see tests/test_hybrid_rag_slo.py
 # and CI test-and-validate job for what IS gated.
 omit = [
-    "src/lora/train_*.py",
-    "src/lora/batch_train_zoo.py",
-    "src/lora/generate_demo.py",
-    "src/evaluation/enterprise_production_eval_suite.py",
-    "src/evaluation/deep_multi_experiment_suite.py",
-    "src/evaluation/sota_expert_benchmark_showcase.py",
+    "ricc/lora/train_*.py",
+    "ricc/lora/batch_train_zoo.py",
+    "ricc/lora/generate_demo.py",
+    "ricc/evaluation/enterprise_production_eval_suite.py",
+    "ricc/evaluation/deep_multi_experiment_suite.py",
+    "ricc/evaluation/sota_expert_benchmark_showcase.py",
 ]

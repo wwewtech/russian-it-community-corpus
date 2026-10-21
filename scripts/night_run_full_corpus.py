@@ -70,7 +70,7 @@ def train_command(model: str, hours: float, args: argparse.Namespace) -> list[st
     cmd = [
         sys.executable,
         "-m",
-        "src.lora.batch_train_zoo",
+        "ricc.lora.batch_train_zoo",
         "--only",
         model,
         "--profile",

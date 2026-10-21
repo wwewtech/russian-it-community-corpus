@@ -15,8 +15,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
-from src.validation.probabilistic_audit import ProbabilisticPIIAuditor  # noqa: E402
+from ricc.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
+from ricc.validation.probabilistic_audit import ProbabilisticPIIAuditor  # noqa: E402
 
 
 def main() -> None:

@@ -1,11 +1,11 @@
-"""Tests for the social-network analyzer (src/analytics/network.py)."""
+"""Tests for the social-network analyzer (ricc/analytics/network.py)."""
 
 from __future__ import annotations
 
 from datetime import datetime
 
-from src.analytics.network import SocialNetworkAnalyzer
-from src.ingestion.schema import CleanedMessage
+from ricc.analytics.network import SocialNetworkAnalyzer
+from ricc.ingestion.schema import CleanedMessage
 
 
 def _msg(msg_id: int, author: str, reply_to_id: int | None = None, unixtime: int = 1704067200) -> CleanedMessage:

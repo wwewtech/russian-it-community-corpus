@@ -1,6 +1,6 @@
 # Graph Extraction — Conversation Threads
 
-`src/graph/` reconstructs the reply structure of Telegram group chats
+`ricc/graph/` reconstructs the reply structure of Telegram group chats
 into a thread DAG, which is what makes SFT dialogue extraction and RAG
 chunking possible.
 
@@ -31,7 +31,7 @@ Both feed the export stage
 
 ## Quality Gate
 
-`src/monitoring/sft_quality.py` scores extracted dialogues on five
+`ricc/monitoring/sft_quality.py` scores extracted dialogues on five
 sub-metrics — empty-response ratio, median assistant turn length,
 role balance, Russian-language ratio, duplicate-turn ratio — and fails
 the build when a floor is crossed. Run it standalone:

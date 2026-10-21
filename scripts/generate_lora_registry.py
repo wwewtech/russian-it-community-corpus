@@ -47,7 +47,7 @@ HF_DATASET_BASE = "https://huggingface.co/datasets/wwewtech/russian-it-community
 # The policy gate lives in the package; make it importable when this script
 # is executed directly from the scripts/ directory.
 sys.path.insert(0, str(REPO_ROOT))
-from src.lora.policy_gate import evaluate_compliance  # noqa: E402
+from ricc.lora.policy_gate import evaluate_compliance  # noqa: E402
 
 # Skip non-adapter directories that happen to live under lora_adapters/.
 SKIP_DIR_NAMES = {"registry.json", "SUMMARY.md", "__pycache__", ".git"}
@@ -82,7 +82,7 @@ class AdapterEntry:
     # Training provenance (from training_meta.json). An adapter without a
     # training_meta.json is a legacy/pilot checkpoint: it has no recorded
     # coverage and is NOT publishable as a final adapter under the binding
-    # training policy. See src/lora/policy_gate.py.
+    # training policy. See ricc/lora/policy_gate.py.
     has_training_meta: bool = False
     actual_steps: int | None = None
     required_steps: int | None = None
@@ -237,7 +237,7 @@ def write_summary(entries: list[AdapterEntry], out: Path = SUMMARY_MD) -> None:
     lines.append(
         "> Adapters marked `partial` or `no-provenance` are NOT final adapters under the "
         "binding training policy (AGENTS.md) and are not published to the Hub by the "
-        "release pipeline. See `src/lora/policy_gate.py`."
+        "release pipeline. See `ricc/lora/policy_gate.py`."
     )
     lines.append("")
     lines.append("| # | Slug | Base model | r | α | Modules | Size | Coverage | Policy | HF Hub |")

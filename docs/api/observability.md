@@ -2,7 +2,7 @@
 
 RICC exposes Prometheus metrics via `prometheus_client`, structured JSON
 logging via `structlog`, and a set of `record_*` helpers that keep metric
-names in one place. Everything is defined in `src/observability/__init__.py`.
+names in one place. Everything is defined in `ricc/observability/__init__.py`.
 
 ## Metrics Endpoint
 

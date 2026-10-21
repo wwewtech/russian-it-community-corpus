@@ -21,8 +21,8 @@ BASELINE_PATH = REPO_ROOT / ".secrets.baseline"
 # Lines that must carry `# pragma: allowlist secret` — each was triaged as a
 # benign identifier (pinned public revision, DSN example, test fixtures).
 REQUIRED_PRAGMAS: dict[str, list[str]] = {
-    "src/validation/hub_reconciliation.py": ['PINNED_HUB_REVISION = "81a3495de997b0690f67d175c4ebd9cfdef35b76"'],
-    "src/pii/deep_anonymizer.py": ["postgresql://user:pass@host:5432/db"],
+    "ricc/validation/hub_reconciliation.py": ['PINNED_HUB_REVISION = "81a3495de997b0690f67d175c4ebd9cfdef35b76"'],
+    "ricc/pii/deep_anonymizer.py": ["postgresql://user:pass@host:5432/db"],
     "tests/test_probabilistic_pii_audit.py": [
         "eyJhbGciOiJIUzI1NiJ9",
         "-----BEGIN RSA PRIVATE KEY-----",

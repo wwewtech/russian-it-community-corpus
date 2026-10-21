@@ -1,6 +1,6 @@
 # Validation & Audits
 
-`src/validation/` is the quality police: schema checks, zero-PII proof,
+`ricc/validation/` is the quality police: schema checks, zero-PII proof,
 artifact integrity and Hub reconciliation. All checks feed the
 [SLO gate](slo-gate.md).
 

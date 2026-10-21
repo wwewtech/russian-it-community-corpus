@@ -4,7 +4,7 @@ Unit tests for Deep Case-Aware Morphological PII Anonymization.
 
 import unittest
 
-from src.pii.deep_anonymizer import DeepPIIAnonymizer
+from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
 
 
 class TestDeepAnonymization(unittest.TestCase):

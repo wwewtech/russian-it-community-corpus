@@ -1,4 +1,4 @@
-"""Unit tests for src.ml_runtime — determinism + retry helpers."""
+"""Unit tests for ricc.ml_runtime — determinism + retry helpers."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import random
 import unittest
 from unittest.mock import patch
 
-from src.ml_runtime import (
+from ricc.ml_runtime import (
     _is_retryable,
     seed_choices,
     set_deterministic_seed,
@@ -96,7 +96,7 @@ class TestWithRetries(unittest.TestCase):
                 raise RuntimeError("timeout")
             return "ok"
 
-        with patch("src.ml_runtime.time.sleep", side_effect=fake_sleep):
+        with patch("ricc.ml_runtime.time.sleep", side_effect=fake_sleep):
             with_retries(flaky, attempts=4, base_delay=1.0)
 
         self.assertEqual(delays, [1.0, 2.0, 4.0])  # exponential doubling
@@ -165,7 +165,7 @@ class TestSetDeterministicSeed(unittest.TestCase):
         """
         code = (
             "import sys; sys.modules['transformers'] = None\n"
-            "from src.ml_runtime import set_deterministic_seed\n"
+            "from ricc.ml_runtime import set_deterministic_seed\n"
             "state = set_deterministic_seed(11)\n"
             "assert state['via'] == 'random+numpy+torch fallback', state\n"
             "assert state['seed'] == 11\n"
@@ -186,7 +186,7 @@ class TestSetDeterministicSeed(unittest.TestCase):
             "sys.modules['transformers'] = None\n"
             "sys.modules['numpy'] = None\n"
             "sys.modules['torch'] = None\n"
-            "from src.ml_runtime import set_deterministic_seed\n"
+            "from ricc.ml_runtime import set_deterministic_seed\n"
             "state = set_deterministic_seed(3)\n"
             "assert state['via'] == 'random+numpy+torch fallback', state\n"
             "print('ok')"

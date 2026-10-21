@@ -1,6 +1,6 @@
 # Export Formats
 
-`src/exporter/` turns cleaned messages, SFT dialogues, RAG chunks and DPO
+`ricc/exporter/` turns cleaned messages, SFT dialogues, RAG chunks and DPO
 pairs into training-ready files. All exporters are strict-typed and
 covered by round-trip tests (`tests/test_exporters_roundtrip.py`).
 
@@ -29,7 +29,7 @@ dialogue, masking happens in [LoRA Training](lora-training.md).
 
 ## Provenance & Sync
 
-`src/exporter/finalize_sync_all.py` is the release-side finisher:
+`ricc/exporter/finalize_sync_all.py` is the release-side finisher:
 reconciles local artifacts with the pinned Hugging Face Hub revision,
 uploads missing adapters, and regenerates `reports/LORA_MODEL_ZOO.md`.
 It runs in the release workflow only.

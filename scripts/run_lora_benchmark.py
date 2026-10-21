@@ -40,7 +40,7 @@ from typing import Any, cast
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.bootstrap import setup_runtime_env  # noqa: E402
+from ricc.bootstrap import setup_runtime_env  # noqa: E402
 
 setup_runtime_env()
 

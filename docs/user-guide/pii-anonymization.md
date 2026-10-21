@@ -5,14 +5,14 @@ wallets, API keys or real names survive into the published dataset.
 
 ## Two-Layer Scrubbing
 
-`UnifiedPIIAnonymizer` (`src/pii/anonymizer.py`) chains:
+`UnifiedPIIAnonymizer` (`ricc/pii/anonymizer.py`) chains:
 
-1. **Regex layer** (`src/pii/regex_scrubber.py`) — deterministic masks for
+1. **Regex layer** (`ricc/pii/regex_scrubber.py`) — deterministic masks for
    phone numbers (RU/international formats), emails, crypto wallets
    (TRC20/ERC20/BTC), OpenAI-style API keys.
-2. **NER layer** (`src/pii/ner_scrubber.py`) — Natasha/Slovnet person-name
+2. **NER layer** (`ricc/pii/ner_scrubber.py`) — Natasha/Slovnet person-name
    detection with morphological declension handling
-   (`src/pii/deep_anonymizer.py` extends it with name-form dictionaries).
+   (`ricc/pii/deep_anonymizer.py` extends it with name-form dictionaries).
 
 Layer 2 runs after layer 1, so the NER model never sees literal
 contact strings, only prose.
@@ -51,6 +51,6 @@ scrubber against new PII formats before adding them to the regex layer.
 
 ## Adding a New Pattern
 
-1. Add the regex to `src/pii/regex_scrubber.py` (with a unit test).
-2. Add a red-team case to `src/validation/pii_redteam.py`.
+1. Add the regex to `ricc/pii/regex_scrubber.py` (with a unit test).
+2. Add a red-team case to `ricc/validation/pii_redteam.py`.
 3. Re-run `make audit` and `make audit-prob`.

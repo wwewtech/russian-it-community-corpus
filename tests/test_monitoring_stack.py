@@ -1,7 +1,7 @@
 """Guards for the P4 monitoring stack (deploy/k8s + deploy/monitoring).
 
 These tests fail the build if the monitoring manifests drift from the
-metrics contract in src/observability/__init__.py:
+metrics contract in ricc/observability/__init__.py:
 
 * every metric referenced by the Grafana dashboard and PrometheusRules
   must exist in the observability module;
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from src.observability import (
+from ricc.observability import (
     record_classified_ml_error,
     record_lora_result,
 )
@@ -64,8 +64,8 @@ def test_dashboard_structure(dashboard: dict) -> None:
 
 def test_dashboard_promql_uses_real_metric_names(dashboard: dict) -> None:
     """Every ricc_* metric in the dashboard PromQL must exist in observability."""
-    import src.observability  # noqa: F401  (registers the ricc_* metrics)
-    from src.observability import (
+    import ricc.observability  # noqa: F401  (registers the ricc_* metrics)
+    from ricc.observability import (
         DATASET_MESSAGES_TOTAL,
         DATASET_SIZE_BYTES,
         DRIFT_JS_VALUE,
@@ -147,7 +147,7 @@ def test_dashboard_promql_uses_real_metric_names(dashboard: dict) -> None:
         return bool(match and match.group(1) in emitted)
 
     unknown = {m for m in referenced if not _known(m)}
-    assert not unknown, f"dashboard references metrics not in src.observability: {sorted(unknown)}"
+    assert not unknown, f"dashboard references metrics not in ricc.observability: {sorted(unknown)}"
 
 
 # ---------------------------------------------------------------------------
@@ -246,8 +246,8 @@ def test_rules_use_real_metric_names(rules_docs: list[dict]) -> None:
 
 
 def test_record_classified_ml_error_maps_oom_to_gpu_component() -> None:
-    import src.observability as obs
-    from src.errors import GPUOutOfMemoryError
+    import ricc.observability as obs
+    from ricc.errors import GPUOutOfMemoryError
 
     typed = obs.record_classified_ml_error(RuntimeError("CUDA out of memory. Tried to allocate 2GB"), model_name="Qwen")
     assert isinstance(typed, GPUOutOfMemoryError)
@@ -255,14 +255,14 @@ def test_record_classified_ml_error_maps_oom_to_gpu_component() -> None:
 
 
 def test_record_classified_ml_error_fallback_is_training() -> None:
-    from src.errors import TrainingError
+    from ricc.errors import TrainingError
 
     typed = record_classified_ml_error(ValueError("dataloader shape mismatch"), adapter_id="qwen05")
     assert isinstance(typed, TrainingError)
 
 
 def test_record_lora_result_success_sets_gauges() -> None:
-    from src.observability import LORA_TRAIN_LOSS, LORA_VRAM_USAGE
+    from ricc.observability import LORA_TRAIN_LOSS, LORA_VRAM_USAGE
 
     record_lora_result(
         model="test-model",
@@ -278,7 +278,7 @@ def test_record_lora_result_success_sets_gauges() -> None:
 
 
 def test_record_lora_result_failure_does_not_clobber_gauges() -> None:
-    from src.observability import LORA_TRAIN_LOSS
+    from ricc.observability import LORA_TRAIN_LOSS
 
     LORA_TRAIN_LOSS.labels(model="test-model", adapter="test-adapter").set(0.11)
     record_lora_result(model="test-model", adapter="test-adapter", status="failure")
@@ -286,8 +286,8 @@ def test_record_lora_result_failure_does_not_clobber_gauges() -> None:
 
 
 def test_record_drift_metrics_sets_gauges_and_verdicts() -> None:
-    from src.monitoring.drift import record_drift_metrics
-    from src.observability import DRIFT_JS_VALUE, DRIFT_PSI_VALUE, DRIFT_VOCAB_JACCARD
+    from ricc.monitoring.drift import record_drift_metrics
+    from ricc.observability import DRIFT_JS_VALUE, DRIFT_PSI_VALUE, DRIFT_VOCAB_JACCARD
 
     report = {
         "overall_verdict": "stable",
@@ -304,7 +304,7 @@ def test_record_drift_metrics_sets_gauges_and_verdicts() -> None:
 
 
 def test_record_drift_metrics_safe_on_partial_report() -> None:
-    from src.monitoring.drift import record_drift_metrics
+    from ricc.monitoring.drift import record_drift_metrics
 
     # Missing keys / wrong shapes must not raise.
     record_drift_metrics({})

@@ -26,7 +26,7 @@ modes:
 
 ## Decision
 
-`src/monitoring/slo_gate.py` aggregates all quality signals into one
+`ricc/monitoring/slo_gate.py` aggregates all quality signals into one
 SHIP/HOLD verdict with explicit, asymmetric policy:
 
 1. **Privacy signals fail closed.** A missing `probabilistic_pii_audit`
@@ -61,6 +61,6 @@ SHIP/HOLD verdict with explicit, asymmetric policy:
 
 ## References
 
-- Gate implementation: `src/monitoring/slo_gate.py`
+- Gate implementation: `ricc/monitoring/slo_gate.py`
 - User guide: `docs/user-guide/slo-gate.md`
 - Manifest hardening: `tests/test_artifact_manifest.py`

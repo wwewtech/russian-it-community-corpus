@@ -6,7 +6,7 @@ prefect, pymorphy3, sklearn, pyarrow) are imported lazily inside each
 subcommand branch so that ``it-pipeline --help`` and lightweight subcommands
 start instantly without dragging the full ML stack through import time.
 Runtime environment setup (UTF-8 stdio, HF_HOME, tokenizers) is centralized
-in ``src.bootstrap.setup_runtime_env`` instead of being duplicated here or in
+in ``ricc.bootstrap.setup_runtime_env`` instead of being duplicated here or in
 ``main.py``.
 """
 
@@ -15,8 +15,8 @@ import json
 import sys
 from pathlib import Path
 
-from src.bootstrap import setup_runtime_env
-from src.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, RAW_EXPORT_DIRS, REPORTS_DIR
+from ricc.bootstrap import setup_runtime_env
+from ricc.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, RAW_EXPORT_DIRS, REPORTS_DIR
 
 
 def main() -> None:
@@ -113,8 +113,8 @@ def main() -> None:
         sys.exit(2)
 
     if args.command == "run":
-        from src.errors import PipelineError
-        from src.pipeline import MasterDataPipeline
+        from ricc.errors import PipelineError
+        from ricc.pipeline import MasterDataPipeline
 
         print("Starting full data curation pipeline...")
         pipeline = MasterDataPipeline()
@@ -133,9 +133,9 @@ def main() -> None:
             sys.exit(1)
 
     elif args.command == "analyze":
-        from src.analytics.engine import DeepChatAnalyzer
-        from src.analytics.report_generator import ReportGenerator
-        from src.ingestion.schema import CleanedMessage
+        from ricc.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.report_generator import ReportGenerator
+        from ricc.ingestion.schema import CleanedMessage
 
         print("Loading messages for analytical profiling...")
         clean_parquet_path = PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
@@ -168,7 +168,7 @@ def main() -> None:
                 )
             print(f"Loaded {len(cleaned):,} cleaned and tagged messages from Parquet.")
         else:
-            from src.ingestion.loader import merge_multiple_exports
+            from ricc.ingestion.loader import merge_multiple_exports
 
             chats_info, msgs = merge_multiple_exports(RAW_EXPORT_DIRS)
             cleaned = [
@@ -194,7 +194,7 @@ def main() -> None:
         gen.export_json(REPORTS_DIR / "analytics_summary.json")
 
     elif args.command == "validate":
-        from src.validation.validator import DatasetValidator
+        from ricc.validation.validator import DatasetValidator
 
         print("Validating datasets in output directory...")
         validator = DatasetValidator(OUTPUT_DIR)
@@ -207,7 +207,7 @@ def main() -> None:
             sys.exit(1)
 
     elif args.command == "benchmark":
-        from src.validation.benchmark import BenchmarkRunner
+        from ricc.validation.benchmark import BenchmarkRunner
 
         print("Generating domain evaluation benchmark...")
         bench = BenchmarkRunner()
@@ -215,7 +215,7 @@ def main() -> None:
         print(f"Benchmark saved to {out} (Total questions: {len(bench.questions)})")
 
     elif args.command == "audit-prob":
-        from src.validation.probabilistic_audit import ProbabilisticPIIAuditor
+        from ricc.validation.probabilistic_audit import ProbabilisticPIIAuditor
 
         print("Running stratified probabilistic PII audit...")
         auditor = ProbabilisticPIIAuditor(args.parquet)
@@ -234,7 +234,7 @@ def main() -> None:
     elif args.command == "drift":
         import pandas as pd
 
-        from src.monitoring.drift import DatasetDriftMonitor
+        from ricc.monitoring.drift import DatasetDriftMonitor
 
         print("Running dataset drift monitoring...")
         if not args.reference.exists() or not args.current.exists():
@@ -260,14 +260,14 @@ def main() -> None:
         print(f"Report saved to {out}")
 
     elif args.command == "orchestrate":
-        from src.orchestration.prefect_flow import run_flow
+        from ricc.orchestration.prefect_flow import run_flow
 
         print("Executing Prefect orchestration flow...")
         results = run_flow(run_pipeline=not args.skip_pipeline, audit_sample_size=args.sample_size)
         print(json.dumps(results, indent=2, ensure_ascii=False, default=str))
 
     elif args.command == "chat":
-        from src.inference import interactive_chat_session
+        from ricc.inference import interactive_chat_session
 
         interactive_chat_session(
             model_name=args.model,
@@ -276,7 +276,7 @@ def main() -> None:
         )
 
     elif args.command == "rag":
-        from src.rag.rag_pipeline import LocalRAGPipeline
+        from ricc.rag.rag_pipeline import LocalRAGPipeline
 
         kb_path = Path("dataset_output/parquet/rag_knowledge_base.parquet")
         if not kb_path.exists():

@@ -7,7 +7,7 @@
 
 ## Context
 
-RICC already emitted Prometheus metrics (`src/observability`) and
+RICC already emitted Prometheus metrics (`ricc/observability`) and
 structured logs, but the metrics went nowhere: no scrape config, no
 dashboards, no alerts. The failure modes this allowed:
 
@@ -23,7 +23,7 @@ dashboards, no alerts. The failure modes this allowed:
 ## Decision
 
 1. **A typed error taxonomy is the alert vocabulary** (ADR-coupled with
-   the P3 work): `MLError`/`GPUError` hierarchy in `src/errors.py`;
+   the P3 work): `MLError`/`GPUError` hierarchy in `ricc/errors.py`;
    `classify_ml_exception()` maps raw torch/HF exceptions;
    `record_classified_ml_error()` records them into
    `ricc_errors_total{component, error_type}` with an allowlist

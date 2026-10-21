@@ -11,7 +11,7 @@ import unittest
 
 import pandas as pd
 
-from src.monitoring.sft_quality import SFTDialogueQualityMonitor
+from ricc.monitoring.sft_quality import SFTDialogueQualityMonitor
 
 
 def _make_dialogue(user: str, assistant: str) -> list[dict[str, str]]:

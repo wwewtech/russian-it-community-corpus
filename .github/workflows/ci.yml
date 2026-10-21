@@ -126,7 +126,7 @@ jobs:
 
       - name: Run Unit Tests with Coverage
         run: |
-          python -m pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=85
+          python -m pytest -q --cov=ricc --cov-report=term-missing --cov-report=xml --cov-fail-under=85
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
@@ -174,7 +174,7 @@ jobs:
           import json, os, sys
           from pathlib import Path
           sys.path.insert(0, '.')
-          from src.lora.policy_gate import evaluate_compliance
+          from ricc.lora.policy_gate import evaluate_compliance
           root = Path('lora_adapters')
           rows = []
           for d in sorted(p for p in root.iterdir() if p.is_dir()):
@@ -192,7 +192,7 @@ jobs:
         run: |
           if [ ! -f dataset_output/parquet/full_clean_messages.parquet ]; then
             python scripts/build_synthetic_parquet.py --out dataset_output --rows 100
-            python -m src.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json || true
+            python -m ricc.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json || true
           else
             echo "Real parquet present, skipping synthetic fixture generation."
           fi
@@ -201,7 +201,7 @@ jobs:
         if: ${{ hashFiles('dataset_output/parquet/full_clean_messages.parquet') != '' }}
         run: |
           python -c "
-          from src.validation.artifact_manifest import create_manifest
+          from ricc.validation.artifact_manifest import create_manifest
           from pathlib import Path
           create_manifest(Path('.'), Path('reports/dataset_manifest.json'))
           "
@@ -215,7 +215,7 @@ jobs:
       - name: Run Automated PII Sanity & Leak Detection Check
         if: ${{ hashFiles('dataset_output/parquet/full_clean_messages.parquet') != '' }}
         run: |
-          python -c "from pathlib import Path; from src.validation.pii_redteam import RedTeamPIIAuditor; auditor = RedTeamPIIAuditor(Path('dataset_output/parquet/full_clean_messages.parquet')); auditor.generate_audit_certificate(Path('reports/pii_validation_report.json'))"
+          python -c "from pathlib import Path; from ricc.validation.pii_redteam import RedTeamPIIAuditor; auditor = RedTeamPIIAuditor(Path('dataset_output/parquet/full_clean_messages.parquet')); auditor.generate_audit_certificate(Path('reports/pii_validation_report.json'))"
 
       - name: Validate Generated Datasets
         if: ${{ hashFiles('dataset_output/parquet/full_clean_messages.parquet') != '' }}
@@ -224,12 +224,12 @@ jobs:
       - name: SFT Dialogue Quality Regression
         if: ${{ hashFiles('dataset_output/parquet/sft_dialogues.parquet') != '' }}
         run: |
-          python -m src.monitoring.sft_quality \
+          python -m ricc.monitoring.sft_quality \
             --input dataset_output/parquet/sft_dialogues.parquet \
             --report reports/sft_quality_report.json
 
       - name: Verify Dataset Reconciliation Against Pinned Hub Revision
-        run: python -m src.validation.hub_reconciliation
+        run: python -m ricc.validation.hub_reconciliation
 
       - name: Upload pipeline artifacts for SLO gate
         uses: actions/upload-artifact@v7
@@ -384,13 +384,13 @@ jobs:
         run: python scripts/run_drift_monitoring.py
 
       - name: Create dataset manifest for real corpus
-        run: python -m src.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json
+        run: python -m ricc.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json
 
       - name: Reconcile against pinned Hub revision
-        run: python -m src.validation.hub_reconciliation
+        run: python -m ricc.validation.hub_reconciliation
 
       - name: Run strict SLO gate on real corpus
-        run: python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+        run: python -m ricc.monitoring.slo_gate --json-out reports/slo_verdict.json
 
       - name: Publish real-corpus SLO verdict
         run: |
@@ -430,7 +430,7 @@ jobs:
         # API), 13 LOW (B110/B112 try/except style). Gate is HIGH-only; the
         # full report is uploaded for review.
         run: |
-          python -m bandit -r src/ -f json -o bandit_report.json -q || true
+          python -m bandit -r ricc/ -f json -o bandit_report.json -q || true
           python - <<'PY'
           import json, sys
           data = json.load(open("bandit_report.json", encoding="utf-8"))
@@ -561,7 +561,7 @@ jobs:
         # finalize_sync_all: uploads dataset artefacts (no-op without local
         # parquet, warns), uploads adapters missing on the Hub (no-op when the
         # zoo is already published) and regenerates reports/LORA_MODEL_ZOO.md.
-        run: python -m src.exporter.finalize_sync_all
+        run: python -m ricc.exporter.finalize_sync_all
 
       - name: Sync LoRA registry to Hugging Face Hub
         env:

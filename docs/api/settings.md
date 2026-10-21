@@ -1,6 +1,6 @@
 # Settings API
 
-`src/settings.py` — single source of configuration, built on
+`ricc/settings.py` — single source of configuration, built on
 `pydantic-settings`.
 
 ```python
@@ -28,7 +28,7 @@ taxonomy keyword tables.
 
 ## Environment Variables
 
-`src/bootstrap.setup_runtime_env()` (called by every entry point)
+`ricc/bootstrap.setup_runtime_env()` (called by every entry point)
 applies process-level env defaults **without overriding** user-set values:
 
 - `HF_HOME` → repo-local `.hf_cache`
@@ -44,5 +44,5 @@ applies process-level env defaults **without overriding** user-set values:
   (`RICC_METRICS_PORT`), which is app-level, not data-level.
 - Threshold tuning happens in `params.yaml`, never in code (drift
   thresholds, audit parameters).
-- `src/pipeline.py` re-exports the path constants for backward
+- `ricc/pipeline.py` re-exports the path constants for backward
   compatibility with tests.

@@ -1,6 +1,6 @@
 # RAG Pipeline
 
-`src/rag/rag_pipeline.py` (`LocalRAGPipeline`) is a dependency-light
+`ricc/rag/rag_pipeline.py` (`LocalRAGPipeline`) is a dependency-light
 hybrid retrieval engine over the 325k-chunk knowledge base: CPU-only,
 built on scikit-learn (already a core dependency).
 
@@ -34,7 +34,7 @@ prompt = kb.format_rag_prompt("вопрос", hits)  # context-augmented LLM pro
 
 ## Consumers
 
-- `src/inference.py` — terminal chat (`cli.py chat`), injects top-k
+- `ricc/inference.py` — terminal chat (`cli.py chat`), injects top-k
   context into the system prompt.
 - `official_academic_benchmarks.py` — RAG-augmented benchmark variants
   (HumanEval / RuMMLU with retrieved context).

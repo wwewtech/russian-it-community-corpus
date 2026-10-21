@@ -7,11 +7,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.exporter.dpo_exporter import DPOExporter
-from src.exporter.jsonl_exporter import JSONLExporter
-from src.exporter.parquet_exporter import ParquetExporter
-from src.exporter.rag_exporter import RAGExporter
-from src.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
+from ricc.exporter.dpo_exporter import DPOExporter
+from ricc.exporter.jsonl_exporter import JSONLExporter
+from ricc.exporter.parquet_exporter import ParquetExporter
+from ricc.exporter.rag_exporter import RAGExporter
+from ricc.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue, SFTTurn
 
 
 class TestExportFormats(unittest.TestCase):

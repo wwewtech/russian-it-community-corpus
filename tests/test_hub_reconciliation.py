@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.validation.hub_reconciliation import (
+from ricc.validation.hub_reconciliation import (
     PINNED_HUB_REPO_ID,
     PINNED_HUB_REVISION,
     generate_reconciliation_report,

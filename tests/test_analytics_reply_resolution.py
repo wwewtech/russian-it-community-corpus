@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from src.analytics.network import SocialNetworkAnalyzer
-from src.ingestion.schema import CleanedMessage
+from ricc.analytics.network import SocialNetworkAnalyzer
+from ricc.ingestion.schema import CleanedMessage
 
 
 def _msg(
@@ -112,7 +112,7 @@ class TestReplyResolutionIsIntraChat:
         assert report["total_interactions"] == 0
 
     def test_engine_message_index_uses_composite_key(self):
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         msgs = [
             _msg(1, 100, "Alice", unixtime=1000),

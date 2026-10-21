@@ -11,13 +11,13 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from src.ingestion.loader import (
+from ricc.ingestion.loader import (
     extract_raw_text,
     load_export_file,
     merge_multiple_exports,
     parse_timestamp,
 )
-from src.ingestion.schema import CleanedMessage
+from ricc.ingestion.schema import CleanedMessage
 
 
 def _msg(i: int, text: str = "как настроить kafka продюсер", **kw) -> CleanedMessage:
@@ -200,7 +200,7 @@ class TestLoaderEdgeCases(unittest.TestCase):
 
 class TestBenchmarkComparator(unittest.TestCase):
     def test_sample_structure(self) -> None:
-        from src.evaluation.benchmark_comparator import BENCHMARK_SAMPLE
+        from ricc.evaluation.benchmark_comparator import BENCHMARK_SAMPLE
 
         self.assertGreaterEqual(len(BENCHMARK_SAMPLE), 5)
         for tc in BENCHMARK_SAMPLE:
@@ -208,7 +208,7 @@ class TestBenchmarkComparator(unittest.TestCase):
                 self.assertIn(key, tc)
 
     def test_run_with_empty_kb(self) -> None:
-        from src.evaluation.benchmark_comparator import BenchmarkComparator
+        from ricc.evaluation.benchmark_comparator import BenchmarkComparator
 
         comp = BenchmarkComparator(kb_path=Path("nonexistent.parquet"))
         results = comp.run_simulated_and_live_benchmark()
@@ -218,7 +218,7 @@ class TestBenchmarkComparator(unittest.TestCase):
         self.assertEqual(results["aggregate_scores"]["rag_retrieval_keyword_recall_pct"], 0.0)
 
     def test_run_with_stubbed_hits_and_report(self) -> None:
-        from src.evaluation.benchmark_comparator import BenchmarkComparator
+        from ricc.evaluation.benchmark_comparator import BenchmarkComparator
 
         comp = BenchmarkComparator(kb_path=Path("nonexistent.parquet"))
         hits = [
@@ -243,7 +243,7 @@ class TestBenchmarkComparator(unittest.TestCase):
 class TestDeepChatAnalyzer(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         cls.analyzer = DeepChatAnalyzer(
             [
@@ -297,7 +297,7 @@ class TestDeepChatAnalyzer(unittest.TestCase):
             self.assertIn(key, report)
 
     def test_sample_limit_branch(self) -> None:
-        from src.analytics.engine import DeepChatAnalyzer
+        from ricc.analytics.engine import DeepChatAnalyzer
 
         msgs = [_msg(i, f"сообщение номер {i} kafka") for i in range(10)]
         a = DeepChatAnalyzer(msgs, sample_limit_for_nlp=3)
@@ -306,7 +306,7 @@ class TestDeepChatAnalyzer(unittest.TestCase):
 
 class TestInferenceExtra(unittest.TestCase):
     def test_validate_missing_dir_and_weights(self) -> None:
-        from src.inference import validate_adapter_path
+        from ricc.inference import validate_adapter_path
 
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(RuntimeError):
@@ -316,7 +316,7 @@ class TestInferenceExtra(unittest.TestCase):
                 validate_adapter_path("empty_adapter", Path(d))
 
     def test_interactive_chat_mocked(self) -> None:
-        import src.inference as inference
+        import ricc.inference as inference
 
         tokenizer = MagicMock()
         tokenizer.pad_token = None
@@ -335,7 +335,7 @@ class TestInferenceExtra(unittest.TestCase):
         self.assertTrue(model.generate.called)
 
     def test_interactive_chat_with_rag_and_bad_adapter(self) -> None:
-        import src.inference as inference
+        import ricc.inference as inference
 
         rag = MagicMock()
         rag.search.return_value = [{"domain": "backend", "content": "kafka exactly once"}]
@@ -347,7 +347,7 @@ class TestInferenceExtra(unittest.TestCase):
             patch("transformers.AutoTokenizer.from_pretrained", return_value=tokenizer),
             patch("transformers.AutoModelForCausalLM.from_pretrained", return_value=MagicMock()),
             patch("transformers.TextStreamer", return_value=MagicMock()),
-            patch("src.rag.rag_pipeline.LocalRAGPipeline", return_value=rag),
+            patch("ricc.rag.rag_pipeline.LocalRAGPipeline", return_value=rag),
             patch.object(Path, "exists", return_value=True),
             patch("builtins.input", side_effect=["kafka exactly once semantics", "exit"]),
         ):
@@ -355,7 +355,7 @@ class TestInferenceExtra(unittest.TestCase):
         self.assertTrue(rag.search.called)
 
     def test_interactive_bad_adapter_raises(self) -> None:
-        import src.inference as inference
+        import ricc.inference as inference
 
         tokenizer = MagicMock()
         tokenizer.pad_token = "p"
@@ -370,7 +370,7 @@ class TestInferenceExtra(unittest.TestCase):
 
 class TestSloGateExtra(unittest.TestCase):
     def test_load_json_edge_cases(self) -> None:
-        from src.monitoring.slo_gate import _load_json
+        from ricc.monitoring.slo_gate import _load_json
 
         with tempfile.TemporaryDirectory() as d:
             self.assertIsNone(_load_json(Path(d, "nonexistent.json")))
@@ -382,7 +382,7 @@ class TestSloGateExtra(unittest.TestCase):
             self.assertIsNone(_load_json(lst))
 
     def test_evaluate_with_sft_and_empty_volume(self) -> None:
-        from src.monitoring.slo_gate import evaluate
+        from ricc.monitoring.slo_gate import evaluate
 
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
@@ -397,7 +397,7 @@ class TestSloGateExtra(unittest.TestCase):
             self.assertTrue(any(c.name == "sft-quality" and not c.passed for c in verdict.checks))
 
     def test_main_writes_json_out(self) -> None:
-        from src.monitoring.slo_gate import main
+        from ricc.monitoring.slo_gate import main
 
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
@@ -415,7 +415,7 @@ class TestSloGateExtra(unittest.TestCase):
             self.assertEqual(json.loads(out.read_text(encoding="utf-8"))["verdict"], "SHIP")
 
     def test_main_hold_exit_code(self) -> None:
-        from src.monitoring.slo_gate import main
+        from ricc.monitoring.slo_gate import main
 
         with tempfile.TemporaryDirectory() as d, patch.object(sys, "argv", ["slo_gate", "--reports", d]):
             self.assertEqual(main(), 1)
@@ -423,7 +423,7 @@ class TestSloGateExtra(unittest.TestCase):
 
 class TestValidatorExtra(unittest.TestCase):
     def _validator(self, root: Path):
-        from src.validation.validator import DatasetValidator
+        from ricc.validation.validator import DatasetValidator
 
         return DatasetValidator(root)
 
@@ -509,7 +509,7 @@ class TestValidatorExtra(unittest.TestCase):
 
 class TestSftQualityExtra(unittest.TestCase):
     def test_iter_turns_shapes(self) -> None:
-        from src.monitoring.sft_quality import _iter_turns
+        from ricc.monitoring.sft_quality import _iter_turns
 
         self.assertEqual(_iter_turns([{"role": "user"}, "x"]), [{"role": "user"}])
         self.assertEqual(_iter_turns(json.dumps([{"role": "a", "content": "b"}])), [{"role": "a", "content": "b"}])
@@ -517,7 +517,7 @@ class TestSftQualityExtra(unittest.TestCase):
         self.assertEqual(_iter_turns(123), [])
 
     def test_bad_column_raises_and_empty_run(self) -> None:
-        from src.monitoring.sft_quality import SFTDialogueQualityMonitor
+        from ricc.monitoring.sft_quality import SFTDialogueQualityMonitor
 
         with self.assertRaises(ValueError):
             SFTDialogueQualityMonitor(pd.DataFrame({"nope": []}))
@@ -526,7 +526,7 @@ class TestSftQualityExtra(unittest.TestCase):
         self.assertEqual(rep["overall_verdict"], "no_data")
 
     def test_to_json_and_loaders(self) -> None:
-        from src.monitoring.sft_quality import _load_dialogues
+        from ricc.monitoring.sft_quality import _load_dialogues
 
         with tempfile.TemporaryDirectory() as d:
             df = pd.DataFrame(
@@ -552,13 +552,13 @@ class TestSftQualityExtra(unittest.TestCase):
 
 class TestReportGeneratorExtra(unittest.TestCase):
     def test_ascii_bar(self) -> None:
-        from src.analytics.report_generator import generate_ascii_bar
+        from ricc.analytics.report_generator import generate_ascii_bar
 
         self.assertEqual(generate_ascii_bar(1.0, 0.0), "")
         self.assertEqual(generate_ascii_bar(5.0, 10.0, width=10), "█" * 5 + "░" * 5)
 
     def test_export_json_markdown_terminal(self) -> None:
-        from src.analytics.report_generator import ReportGenerator
+        from ricc.analytics.report_generator import ReportGenerator
 
         gen = ReportGenerator({})
         with tempfile.TemporaryDirectory() as d:
@@ -587,7 +587,7 @@ class TestRagExtra(unittest.TestCase):
         return out
 
     def test_prefilter_cap_and_modes(self) -> None:
-        from src.rag.rag_pipeline import LocalRAGPipeline
+        from ricc.rag.rag_pipeline import LocalRAGPipeline
 
         with tempfile.TemporaryDirectory() as d:
             rag = LocalRAGPipeline(self._kb(Path(d)), prefilter_cap=3)
@@ -597,7 +597,7 @@ class TestRagExtra(unittest.TestCase):
                 self.assertIsInstance(rag.search("kafka producer", top_k=2, mode=mode), list)
 
     def test_domain_fallback_and_stats(self) -> None:
-        from src.rag.rag_pipeline import LocalRAGPipeline
+        from ricc.rag.rag_pipeline import LocalRAGPipeline
 
         with tempfile.TemporaryDirectory() as d:
             rag = LocalRAGPipeline(self._kb(Path(d)))
@@ -608,7 +608,7 @@ class TestRagExtra(unittest.TestCase):
             self.assertIn("backend", stats["domains"])
 
     def test_row_with_scalar_tags_and_no_tfidf(self) -> None:
-        from src.rag.rag_pipeline import LocalRAGPipeline
+        from ricc.rag.rag_pipeline import LocalRAGPipeline
 
         with tempfile.TemporaryDirectory() as d:
             df = pd.DataFrame(
@@ -635,18 +635,22 @@ class TestOfficialBenchmarksExtra(unittest.TestCase):
         # `_safe_exec` was removed (dead code — production path is
         # `_run_in_isolated_process`); its allowlist still backs the
         # sandboxed runner, so keep exercising `execute_humaneval_code`.
-        from src.evaluation.official_academic_benchmarks import execute_humaneval_code
+        from ricc.evaluation.official_academic_benchmarks import execute_humaneval_code
 
         task = {"entry_point": "add", "prompt": "def add(a, b):\n    return a + b", "test": "assert add(1, 2) == 3"}
-        self.assertTrue(execute_humaneval_code("```python\ndef add(a, b):\n    return a + b\n```", task))
-        self.assertFalse(execute_humaneval_code("def add(a, b):\n    return 0", task))
+        # Explicit process mode: the default is the container mode, which
+        # needs a Docker daemon that this test must not depend on.
+        self.assertTrue(
+            execute_humaneval_code("```python\ndef add(a, b):\n    return a + b\n```", task, isolation_mode="process")
+        )
+        self.assertFalse(execute_humaneval_code("def add(a, b):\n    return 0", task, isolation_mode="process"))
         task2 = {"entry_point": "mul", "prompt": "def mul(a, b):\n    return a * b", "test": "assert mul(2, 3) == 6"}
-        self.assertTrue(execute_humaneval_code("def mul(a, b):\n    return a * b", task2))
+        self.assertTrue(execute_humaneval_code("def mul(a, b):\n    return a * b", task2, isolation_mode="process"))
 
 
 class TestMetricsAndFinalizeExtra(unittest.TestCase):
     def test_metrics_fallbacks(self) -> None:
-        import src.analytics.metrics as metrics
+        import ricc.analytics.metrics as metrics
 
         self.assertEqual(metrics.count_tokens(""), 0)
         with patch.object(metrics, "TIKTOKEN_ENC", None):
@@ -655,7 +659,7 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
         self.assertEqual(metrics.analyze_sentiment([])["neutral"], 0)
 
     def test_finalize_main_writes_reports(self) -> None:
-        import src.exporter.finalize_sync_all as fin
+        import ricc.exporter.finalize_sync_all as fin
 
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
@@ -664,6 +668,39 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
             with (
                 patch.object(fin, "upload_dataset", side_effect=RuntimeError("no net")),
                 patch.object(fin, "upload_missing_adapters", side_effect=RuntimeError("no net")),
+                patch("pathlib.Path.cwd", return_value=root),
+            ):
+                import os
+
+                old = os.getcwd()
+                os.chdir(root)
+                try:
+                    # The release path is FAIL-CLOSED: an upload failure
+                    # must abort the release instead of being swallowed
+                    # with a warning (which previously let a release
+                    # publish a broken artefact without failing).
+                    with self.assertRaises(RuntimeError):
+                        fin.main()
+                finally:
+                    os.chdir(old)
+
+    def test_finalize_main_continues_when_uploads_succeed(self) -> None:
+        """The local catalogue is regenerated even when the Hub sync is fine."""
+        import ricc.exporter.finalize_sync_all as fin
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "lora_adapters" / "demo").mkdir(parents=True)
+            (root / "lora_adapters" / "demo" / "adapter_model.safetensors").write_bytes(b"\0" * 64)
+            with (
+                patch.object(fin, "upload_dataset"),
+                patch.object(fin, "upload_model_card"),
+                patch.object(fin, "upload_missing_adapters"),
+                patch.object(
+                    fin,
+                    "compute_lora_zoo_index",
+                    return_value=[{"id": "demo", "slug": "demo", "size_mb": 0.0}],
+                ),
                 patch("pathlib.Path.cwd", return_value=root),
             ):
                 import os

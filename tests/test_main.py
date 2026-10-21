@@ -41,7 +41,7 @@ class TestMainEntrypoint(unittest.TestCase):
         self.assertIn("validation FAILED", err)
 
     def test_returns_1_on_typed_pipeline_error(self):
-        from src.errors import IngestionError
+        from ricc.errors import IngestionError
 
         code, _, err = self._run(error=IngestionError("0 messages ingested"))
         self.assertEqual(code, 1)

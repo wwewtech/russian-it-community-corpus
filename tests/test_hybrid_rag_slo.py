@@ -12,10 +12,10 @@ import pandas as pd
 # Packaging smoke: namespace-to-regular package migration (evaluation/lora/rag
 # gained __init__.py). Importing here keeps coverage honest for the package
 # inits without requiring GPU weights.
-import src.evaluation  # noqa: F401
-import src.lora  # noqa: F401
-from src.monitoring.slo_gate import evaluate
-from src.rag.rag_pipeline import LocalRAGPipeline
+import ricc.evaluation  # noqa: F401
+import ricc.lora  # noqa: F401
+from ricc.monitoring.slo_gate import evaluate
+from ricc.rag.rag_pipeline import LocalRAGPipeline
 
 
 def _make_kb(tmp: Path) -> Path:
@@ -55,11 +55,11 @@ def _make_kb(tmp: Path) -> Path:
 def _make_artifacts_and_manifest(root: Path) -> None:
     """Build the canonical parquet trio plus a matching manifest under ``root``.
 
-    Mirrors the layout expected by :func:`src.monitoring.slo_gate.evaluate`:
+    Mirrors the layout expected by :func:`ricc.monitoring.slo_gate.evaluate`:
     ``root/reports/dataset_manifest.json`` is verified against artifacts rooted
     at ``root`` (the reports directory's parent).
     """
-    from src.validation.artifact_manifest import create_manifest
+    from ricc.validation.artifact_manifest import create_manifest
 
     parquet_dir = root / "dataset_output" / "parquet"
     parquet_dir.mkdir(parents=True, exist_ok=True)

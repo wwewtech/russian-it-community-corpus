@@ -1,12 +1,12 @@
-"""Unit tests for :mod:`src.graph.thread_builder`."""
+"""Unit tests for :mod:`ricc.graph.thread_builder`."""
 
 from __future__ import annotations
 
 import unittest
 from datetime import datetime
 
-from src.graph.thread_builder import ThreadDAGBuilder
-from src.ingestion.schema import CleanedMessage
+from ricc.graph.thread_builder import ThreadDAGBuilder
+from ricc.ingestion.schema import CleanedMessage
 
 
 def _make_msg(
