@@ -42,7 +42,7 @@
 
 > **Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Earlier pipeline runs diverged from the published snapshot by up to ~14%; the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
 
-The platform produces datasets for instruction fine-tuning, direct preference optimization, and vector knowledge retrieval.
+The platform produces datasets for instruction fine-tuning, direct preference optimization, and a retrieval-augmented knowledge base.
 
 | Metric | Property | Factual Value |
 |---|---|---|
@@ -93,7 +93,7 @@ The platform produces datasets for instruction fine-tuning, direct preference op
 | Thread DAG | `ricc/graph/` | Reconstructs conversational trees and extracts multi-turn dialogues |
 | Multi-Export | `ricc/exporter/` | Serializes outputs into Apache Parquet with zstd compression and JSONL formats |
 | Analytics | `ricc/analytics/` | Computes Shannon entropy, temporal patterns, social graphs, and vocabulary stats |
-| Local LoRA and RAG | `ricc/lora/`, `ricc/rag/` | Provides PEFT training for RTX 3060 and semantic retrieval for 325k chunks |
+| Local LoRA and RAG | `ricc/lora/`, `ricc/rag/` | Provides PEFT training for RTX 3060 and hybrid lexical + TF-IDF retrieval over 325k chunks (no embedding model, no vector database) |
 
 ---
 
@@ -301,7 +301,7 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 │   ├── taxonomy/               # Domain classifiers and keyword taggers
 │   ├── exporter/               # Apache Parquet and JSONL serializers
 │   ├── analytics/              # DeepChatAnalyzer statistical engine
-│   ├── rag/                    # Vector search and prompt augmentation pipeline
+│   ├── rag/                    # Hybrid lexical + TF-IDF retrieval and prompt augmentation
 │   ├── lora/                   # PEFT training and inference scripts
 │   ├── evaluation/             # Benchmark comparator
 │   └── validation/             # PII auditor and domain benchmarks
