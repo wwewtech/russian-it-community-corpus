@@ -78,5 +78,7 @@
     "note": "generated_at_utc = max raw_outputs timestamp; raw_outputs_sha256 pins the raw log"
   },
   "status": "RETRACTED",
-  "retraction_reason": "harness defects in the original run: substring MCQ scoring, perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load"
+  "retraction_reason": "harness defects in the original run: substring MCQ scoring, perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load. All of them are FIXED as of 2026-10-21 (the suites fail fast without the adapter, the MCQ parser needs an explicit answer marker, the perplexity is computed on real text, and the hybrid PPL/ROUGE cells are reported as not measured). The published NUMBERS are still invalid, because they were produced by the broken harness: a GPU re-run is required before any accuracy claim. The variants also run on the same tasks, so the comparison is paired: McNemar's exact test over the raw outputs gives p >= 0.125 for EVERY variant pair, i.e. the point estimates differ but the data does not support calling one variant better.",
+  "retraction_fixed_at": "2026-10-21",
+  "revalidation_required": true
 }
