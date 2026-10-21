@@ -94,6 +94,9 @@ _tmp_tail.py
 _tmp_ver.py
 _tail_bench.py
 _probe*_results.json
+# Scratch files from exploratory runs
+_t*.py
+
 # AI & scratch files
 prompt.md
 prompt.txt
