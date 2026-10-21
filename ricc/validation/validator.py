@@ -14,6 +14,19 @@ from ricc.schema_version import read_metadata, verify_against_file
 
 logger = logging.getLogger(__name__)
 
+# The keys every record of a JSONL export must carry. A line that parses
+# as JSON but lacks them is corrupt for the consumers: they index into
+# these fields.
+#
+# The shapes are declared in `ricc/schema_version.py` (JSONL_SCHEMAS).
+_JSONL_REQUIRED_KEYS: dict[str, frozenset[str]] = {
+    "sft_sharegpt_format.jsonl": frozenset({"conversations"}),
+    "sft_openai_messages.jsonl": frozenset({"messages"}),
+    "sft_alpaca_format.jsonl": frozenset({"instruction", "output"}),
+    "rag_chunks_kb.jsonl": frozenset({"content"}),
+    "dpo_preference_pairs.jsonl": frozenset({"prompt", "chosen", "rejected"}),
+}
+
 
 class DatasetValidator:
     """
@@ -128,23 +141,37 @@ class DatasetValidator:
             try:
                 valid_lines = 0
                 corrupt_lines = 0
+                shape_errors = 0
+                # The record shape of this export, from the declared
+                # contract. A line that parses as JSON but is not a
+                # record of the declared shape is corrupt too: the
+                # consumers index into these fields.
+                required_keys = _JSONL_REQUIRED_KEYS.get(fname, frozenset())
                 with open(fpath, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if not line:
                             continue
                         try:
-                            json.loads(line)
-                            valid_lines += 1
+                            record = json.loads(line)
                         except json.JSONDecodeError:
                             corrupt_lines += 1
+                            continue
+                        if required_keys and not isinstance(record, dict):
+                            shape_errors += 1
+                            continue
+                        if required_keys and not required_keys.issubset(record.keys()):
+                            shape_errors += 1
+                            continue
+                        valid_lines += 1
 
                 size_mb = round(fpath.stat().st_size / (1024 * 1024), 2)
-                is_valid = corrupt_lines == 0 and valid_lines > 0
+                is_valid = corrupt_lines == 0 and shape_errors == 0 and valid_lines > 0
                 details[fname] = {
                     "exists": True,
                     "valid_lines": valid_lines,
                     "corrupt_lines": corrupt_lines,
+                    "shape_errors": shape_errors,
                     "size_mb": size_mb,
                     "status": "VALID" if is_valid else "INVALID",
                 }

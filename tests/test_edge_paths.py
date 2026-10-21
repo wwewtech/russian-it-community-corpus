@@ -487,6 +487,41 @@ class TestValidatorExtra(unittest.TestCase):
             self.assertFalse(res["passed"])
             self.assertEqual(res["details"]["sft_alpaca_format.jsonl"]["status"], "INVALID")
 
+    def test_jsonl_shape_is_checked_not_just_the_json_syntax(self) -> None:
+        """A line that parses as JSON but is not a record is corrupt too.
+
+        The consumers index into the declared fields, so a file of
+        well-formed JSON objects with the wrong shape is just as broken
+        as one with a syntax error.
+        """
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            v = self._validator(root)
+            jl = root / "jsonl"
+            jl.mkdir()
+            (jl / "sft_openai_messages.jsonl").write_text('{"ok": true}\n', encoding="utf-8")
+            for name, record in (
+                ("sft_sharegpt_format.jsonl", {"conversations": []}),
+                ("sft_alpaca_format.jsonl", {"instruction": "i", "output": "o"}),
+                ("rag_chunks_kb.jsonl", {"content": "c"}),
+                ("dpo_preference_pairs.jsonl", {"prompt": "p", "chosen": "c", "rejected": "r"}),
+            ):
+                (jl / name).write_text(json.dumps(record) + "\n", encoding="utf-8")
+            res = v.validate_jsonl_files()
+            # The one malformed shape is detected ...
+            self.assertFalse(res["passed"])
+            details = res["details"]["sft_openai_messages.jsonl"]
+            self.assertEqual(details["status"], "INVALID")
+            self.assertEqual(details["shape_errors"], 1)
+            # ... and the well-formed ones are accepted.
+            for name in (
+                "sft_sharegpt_format.jsonl",
+                "sft_alpaca_format.jsonl",
+                "rag_chunks_kb.jsonl",
+                "dpo_preference_pairs.jsonl",
+            ):
+                self.assertEqual(res["details"][name]["status"], "VALID", name)
+
     def test_pii_audit_missing_and_leaky(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
