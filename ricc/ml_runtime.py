@@ -120,14 +120,31 @@ def set_deterministic_seed(seed: int = 42) -> dict[str, Any]:
     """Seed every RNG that influences training/eval, and return the applied state.
 
     Calls ``transformers.set_seed`` when available (it covers python,
-    numpy and torch in one shot and enables deterministic cudnn where the
-    version supports it), and falls back to explicit stdlib/numpy/torch
+    numpy and torch in one shot), and falls back to explicit stdlib/numpy/torch
     seeding otherwise. Always safe on CPU-only boxes.
+
+    ``transformers.set_seed`` does NOT enable deterministic cuDNN kernels
+    (its ``deterministic`` argument defaults to False), so the cuDNN
+    determinism is requested explicitly here. Without it, two runs of the
+    same script on the same GPU can differ in the last decimals of the
+    loss — which is enough to make a published number irreproducible.
 
     Returns a small dict for embedding into run metadata / reports so the
     seed is recorded next to the published numbers.
     """
     applied: dict[str, Any] = {"seed": seed}
+
+    # cuDNN determinism must be set BEFORE the first convolution, and it
+    # has to be requested explicitly: transformers.set_seed does not do it.
+    try:
+        import torch
+
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        applied["cudnn_deterministic"] = True
+    except (ImportError, AttributeError):
+        pass
+
     try:
         from transformers import set_seed as hf_set_seed
 

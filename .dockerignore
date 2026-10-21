@@ -6,6 +6,10 @@ __pycache__/
 .ruff_cache/
 .coverage*
 *.egg-info/
+# Local build output: a stale copy of the sources in the image would
+# shadow the real package.
+build/
+dist/
 .git/
 .venv/
 venv/
