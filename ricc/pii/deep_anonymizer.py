@@ -7,6 +7,7 @@ regex redaction, and Natasha NER with comprehensive whitelisting.
 import logging
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Iterator
 
 try:
     import pymorphy3 as pymorphy
@@ -362,15 +363,38 @@ class DeepPIIAnonymizer:
         """
         Process all messages in full: pre-registers all author names, inflects them, and scrubs text.
         """
-        # Step 1: Pre-register all authors
-        author_pairs = [(m.author_id_raw, m.author_raw) for m in messages]
-        self.register_authors(author_pairs)
-
-        # Step 2: Scrub all messages
         logger.info(f"Executing deep multi-pass PII scrubbing across {len(messages):,} messages...")
-        cleaned = []
-        for _i, m in enumerate(messages):
-            cleaned.append(self.anonymize_message(m))
+        return list(self.process_stream(iter(messages), messages))
 
-        logger.info(f"Deep PII Scrubbing completed: {self.stats}")
-        return cleaned
+    def process_stream(
+        self,
+        messages: Iterable[NormalizedMessage],
+        all_messages: Iterable[NormalizedMessage] | None = None,
+    ) -> Iterator[CleanedMessage]:
+        """Scrub a stream of messages without materialising it.
+
+        The corpus is 2.8M messages, so holding the input list and the
+        output list at the same time costs several gigabytes. This method
+        takes an ITERABLE and yields the cleaned messages one by one.
+
+        The name harvesting needs to see every author BEFORE any text is
+        scrubbed — the inflected forms of a name are only known once the
+        name has been seen. So the author pass runs first, and only the
+        AUTHOR identities are kept (a few thousand), never the messages.
+
+        ``all_messages`` is for the case where the caller can supply the
+        corpus twice (a list, or a re-iterable source): the author pass
+        reads it and the scrubbing pass streams ``messages``. When it is
+        omitted, the author pass reads ``messages`` itself — which
+        consumes a one-shot generator, so in that case the caller must
+        pass a re-iterable source (a list) for ``messages``.
+        """
+        # Step 1: pre-register every author, so the inflected forms of a
+        # name are known before any text is scrubbed.
+        author_source = all_messages if all_messages is not None else messages
+        author_pairs = ((m.author_id_raw, m.author_raw) for m in author_source)
+        self.register_authors(list(author_pairs))
+
+        # Step 2: scrub, yielding as we go.
+        for message in messages:
+            yield self.anonymize_message(message)

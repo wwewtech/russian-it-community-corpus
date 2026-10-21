@@ -12,7 +12,7 @@ unavoidable, but the per-item overhead is what dominates.
 
 import logging
 import re
-from collections.abc import Hashable
+from collections.abc import Hashable, Iterable, Iterator
 from typing import cast
 
 import numpy as np
@@ -236,20 +236,46 @@ class MinHashLSH:
         Deduplicate a list of messages in place with a progress bar.
         Returns list of unique messages and number of removed duplicates.
         """
+        counter = [0]
         unique_msgs: list[CleanedMessage] = []
-        dupes_count = 0
+        for message in self._unique_stream(messages, counter, show_progress=True):
+            unique_msgs.append(message)
+        return unique_msgs, counter[0]
 
-        for m in tqdm(messages, desc="MinHash LSH Dedup", unit="msg"):
+    def deduplicate_stream(
+        self,
+        messages: Iterable[CleanedMessage],
+        *,
+        show_progress: bool = False,
+    ) -> Iterator[CleanedMessage]:
+        """Yield the unique messages, dropping near-duplicates.
+
+        The corpus is 2.8M messages, so the input and the output must
+        not be held at the same time. The index itself is bounded by the
+        signature block (512 B per indexed message).
+        """
+        counter = [0]
+        yield from self._unique_stream(messages, counter, show_progress=show_progress)
+
+    def _unique_stream(
+        self,
+        messages: Iterable[CleanedMessage],
+        counter: list[int],
+        *,
+        show_progress: bool = False,
+    ) -> Iterator[CleanedMessage]:
+        """The shared implementation; ``counter[0]`` receives the duplicate count."""
+        source = tqdm(messages, desc="MinHash LSH Dedup", unit="msg") if show_progress else messages
+        for m in source:
             # Skip very short messages from fuzzy dedup to avoid over-filtering
             if len(m.text_clean.strip()) < 30:
-                unique_msgs.append(m)
+                yield m
                 continue
 
-            is_dup, dup_of, sim = self.insert((m.chat_id, m.msg_id), m.text_clean)
+            is_dup, _dup_of, _sim = self.insert((m.chat_id, m.msg_id), m.text_clean)
             if is_dup:
-                dupes_count += 1
-            else:
-                unique_msgs.append(m)
+                counter[0] += 1
+                continue
+            yield m
 
-        logger.info(f"MinHash LSH deduplication: removed {dupes_count} near-duplicate messages.")
-        return unique_msgs, dupes_count
+        logger.info(f"MinHash LSH deduplication: removed {counter[0]} near-duplicate messages.")

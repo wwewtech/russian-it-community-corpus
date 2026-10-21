@@ -133,10 +133,17 @@ class MasterDataPipeline:
             record_stage_messages("ingestion", len(self.raw_messages))
             pipeline_logger.stage_end("ingestion", success=True, messages=len(self.raw_messages))
 
+        # The raw message count is part of the run summary, so it is kept
+        # before the list itself is released.
+        raw_messages_count = len(self.raw_messages)
+
         # Stage 2: PII Removal & User Pseudonymization
         with _stage_guard("pii_anonymization"), time_stage("pii_anonymization"):
             pipeline_logger.stage_start("pii_anonymization")
-            self.cleaned_messages = self.anonymizer.process_batch(self.raw_messages)
+            # The streaming variant scrubs the corpus without holding the
+            # input list and the output list at the same time; at 2.8M
+            # messages that difference is several gigabytes.
+            self.cleaned_messages = list(self.anonymizer.process_stream(iter(self.raw_messages), self.raw_messages))
             pii_stats = self.anonymizer.get_stats_summary()
             record_stage_messages("pii_anonymization", len(self.cleaned_messages))
             pipeline_logger.stage_end(
@@ -147,10 +154,16 @@ class MasterDataPipeline:
                 wallets=pii_stats.get("crypto_wallets_scrubbed", 0),
                 api_keys=pii_stats.get("api_keys_scrubbed", 0),
             )
+            # The raw messages are no longer needed: dropping the
+            # reference frees ~1.4 GB before the deduplication stage
+            # builds its own index.
+            self.raw_messages = []
 
         # Stage 3: Exact & MinHash LSH Deduplication
         with _stage_guard("deduplication"), time_stage("deduplication"):
             pipeline_logger.stage_start("deduplication")
+            # Both deduplicators stream: only the fingerprints and the
+            # signature block are kept, not a second copy of the corpus.
             unique_exact, exact_dupes = self.exact_dedup.deduplicate(self.cleaned_messages)
             self.cleaned_messages, lsh_dupes = self.minhash_lsh.deduplicate_messages(unique_exact)
             total_removed = exact_dupes + lsh_dupes
@@ -252,7 +265,7 @@ class MasterDataPipeline:
         # Save pipeline execution summary
         exec_summary = {
             "execution_time_seconds": round(total_time, 2),
-            "raw_messages_count": len(self.raw_messages),
+            "raw_messages_count": raw_messages_count,
             "cleaned_messages_count": len(self.cleaned_messages),
             "threads_count": len(self.threads),
             "sft_dialogues_count": len(self.sft_dialogues),
