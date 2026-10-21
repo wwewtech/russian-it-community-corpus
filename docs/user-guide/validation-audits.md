@@ -8,13 +8,21 @@ artifact integrity and Hub reconciliation. All checks feed the
 
 `DatasetValidator` (`validator.py`, `make validate`):
 
-- **Parquet checks** — required columns, dtypes, non-null invariants for
-  the three canonical artifacts.
+- **Parquet checks** — the **published contract** is enforced: the column
+  names, their order and their types must match the declaration in
+  `ricc/schema_version.py`, and the file must carry the current contract
+  version and fingerprint. A mismatch fails the validation with the status
+  `INVALID` and a list of the problems.
 - **JSONL checks** — parseability, message schema
   (`JSONLValidationError` details the offending line).
 - **SFT checks** — role balance, non-empty assistant turns.
 - Aggregate result: `reports/validation_results.json` with
   `overall_passed`.
+
+The contract itself is declared in `ricc/schema_version.py`, fingerprinted,
+and recorded in `reports/dataset_schema.json`
+(`python scripts/generate_schema_manifest.py`). See
+[ADR 0006](../adr/0006-dataset-contract-versioning.md).
 
 ## Red-Team PII Audit
 
@@ -28,8 +36,27 @@ anonymization stage.
 `scripts/run_probabilistic_pii_audit.py` (also `cli.py audit-prob`):
 stratified sampling + Wilson CI (99%) + power analysis. This is the
 release-blocking zero-PII proof — a leak rate above tolerance fails the
-SLO gate. The 100k-sample CI configuration lives in
-`.github/workflows/ci.yml` (`Data Validation & Audits` job).
+SLO gate. The parameters live in `params.yaml` (`pii_audit:`) and are
+read through `settings.pii_audit`; the CLI flags override them.
+
+**It fails closed.** A corpus without the audited `text_clean` column is
+reported as `FAILED_MISSING_COLUMNS`, never as PASSED: an audit that
+cannot read the corpus must not certify it. The audit covers **12 leak
+categories** — the seven the scrubber always checked, plus the secret
+assignments, private invite links, credentialed DB URLs, Telegram forward
+headers and raw user mentions it cleans but used to ignore.
+
+**The sample size has a statistical reason.** With zero observed leaks the
+one-sided 99% upper bound is ~3.29/sample_size, so the sample must be
+large enough for that to stay under the tolerance: 50 000 gives 1.08e-04
+(false `LEAKS_DETECTED` on a clean corpus), 100 000 gives 5.41e-05. The
+same maths works the other way: a small corpus cannot be certified at all
+(50 messages give an upper bound of 0.098).
+
+**The sampling is a genuine probability sample.** Each stratum is drawn
+with its own RNG; using one `random_state` for all of them made the
+selection systematic — the same relative positions in every stratum — and
+the confidence interval invalid.
 
 ## Artifact Manifest
 

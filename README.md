@@ -142,20 +142,34 @@ JSONL counts below are line-validator `valid_lines` from [`reports/validation_re
 ## Comparative Architectural Evaluation (Base vs RAG vs LoRA vs Hybrid)
 
 > [!WARNING]
-> **Benchmark section withdrawn from README.**
+> **Benchmark section withdrawn from README. Benchmark results RETRACTED — do not cite.**
 >
-> **Benchmark results RETRACTED — do not cite.**
->
-> The comparison table previously shown here was removed after a code audit of
+> The comparison was withdrawn after a code audit of
 > [`ricc/evaluation/official_academic_benchmarks.py`](ricc/evaluation/official_academic_benchmarks.py)
-> revealed three critical defects:
+> found three critical defects:
 >
 > 1. **Substring MCQ scoring** — "A" matched "Answer: A", inflating accuracy
 > 2. **PPL on empty placeholders** — perplexity computed on blank generations
-> 3. **Silent Base→LoRA copy** — when adapter failed to load, Base results were copied into LoRA/Hybrid columns without warning
+> 3. **Silent Base→LoRA copy** — when the adapter failed to load, the base
+>    results were copied into the LoRA/Hybrid columns without warning
 >
-> All published numbers are **invalid**. A fresh GPU re-run is required before any accuracy claims can be made.
-> The dataset and adapters are shipped **without benchmark scores**.
+> **All three are now fixed** (the suites fail fast without the adapter, the
+> MCQ parser needs an explicit answer marker, the perplexity is computed on
+> real text), and a fourth defect was found in the process: the hybrid column
+> fell back to the "Base + RAG" result, and the hybrid PPL/ROUGE cells were
+> copies of the LoRA cells although they were never measured.
+>
+> **But the published numbers are still invalid** — they were produced by the
+> broken code, and re-running them needs a GPU. A fresh re-run is required
+> before any accuracy claim can be made, so the dataset and the adapters ship
+> **without benchmark scores**.
+>
+> What the raw outputs *do* show, once the comparison is done correctly: the
+> variants run on the same tasks, so the comparison is paired and McNemar's
+> exact test applies — and **no comparison reaches significance**
+> (p ≥ 0.125 on both benchmarks). The point estimates differ; the data does
+> not support calling one of them better. The report now says exactly that
+> instead of claiming an improvement.
 >
 > The 100-question **non-executing** domain benchmark suite remains available in
 > [`reports/domain_benchmark_100.json`](reports/domain_benchmark_100.json) as a corpus only.

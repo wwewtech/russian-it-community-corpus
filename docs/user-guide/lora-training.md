@@ -14,8 +14,14 @@ single RTX 3060 (12GB) and scaled up to a multi-model zoo.
 | `generate_demo.py` | inference demo against a trained adapter |
 
 ```bash
-python -m src.lora.train_lora --model Qwen/Qwen2.5-0.5B-Instruct --steps 30
+python -m ricc.lora.train_lora --model Qwen/Qwen2.5-0.5B-Instruct --steps 30
 ```
+
+> **The training policy is binding.** `AGENTS.md` requires a real run to
+> cover the **whole corpus for at least one complete epoch**. The
+> `policy_gate` decides what may be published; see
+> [ADR 0005](../adr/0005-training-policy-gate.md). A partial or
+> time-boxed run is labelled `PARTIAL` and is never uploaded.
 
 ## Training Details
 
@@ -30,6 +36,43 @@ python -m src.lora.train_lora --model Qwen/Qwen2.5-0.5B-Instruct --steps 30
 - **LoRA config**: r=16/α=32 for single runs, r=8/α=16 for the 20-model
   batch; target modules auto-detected (`detect_target_modules` handles
   GPT2/OPT/Falcon naming variants).
+
+## What may be published
+
+`ricc/lora/policy_gate.py` is the single source of truth:
+
+| Requirement | Why |
+|---|---|
+| a `training_meta.json` exists | without it there is no record of what was trained |
+| `actual_steps` ≥ one full epoch of the **trainable** set | the corpus is covered, not a sample of it |
+| the run was not time-boxed | a `--hours` budget stops the run early by definition |
+| the coverage is measured against the trainable set | the held-out tail is never trained on |
+
+The gate runs in the trainer (before the Hub upload), in the release
+pipeline (`finalize_sync_all` skips non-compliant adapters) and in the
+registry generator (which records `policy_compliant` and the coverage).
+CI publishes the state of the whole zoo as
+`reports/lora_policy_compliance.json`.
+
+**The currently published zoo is entirely non-compliant** (0 of 56): the
+seven adapters with metadata cover 16.5–44.6 % of the corpus and the
+other 49 are pilot checkpoints without provenance. Retraining them is a
+GPU job (~25 h for a 3B model, ~13 h for 1.5B, ~5–7 h below 1B on the
+RTX 3060), not a code change.
+
+The canonical command for one adapter is derived from the dataset, not
+written down by hand:
+
+```bash
+python -m ricc.lora.batch_train_zoo --only <adapter_id> --profile full \
+    --samples 200000 --steps 21420 --eval-frac 0.005 --holdout-tail 1000 \
+    --seed 42 --force --keep-checkpoints --no-upload
+```
+
+`21420` is `ceil(171354 / 8)` — one epoch over the trainable set of the
+current corpus. `python -c "from ricc.lora.policy_gate import
+canonical_full_run; print(canonical_full_run(173216))"` prints the current
+value.
 
 ## Observability (12.2.0+)
 
@@ -52,7 +95,9 @@ plot the gauges; the `RiccLoraTrainFailing` alert fires on failures.
 `reports/LORA_MODEL_ZOO.md` and `reports/lora_zoo_index.json` catalog the
 trained adapters; `make reports` regenerates the catalog from local +
 Hub state. Release-side sync (finalize + upload + catalog) runs in the
-release workflow via `src.exporter.finalize_sync_all`.
+release workflow via `ricc.exporter.finalize_sync_all`. The registry
+carries the training provenance, so a policy-compliant adapter is
+distinguishable from a legacy one.
 
 ## Provenance & Retraining (prompt-masking rollout)
 
@@ -64,11 +109,11 @@ should be retrained:
 
 ```bash
 # validate the fixed objective on one adapter, without touching the repo
-python -m src.lora.batch_train_zoo --only qwen2.5_1.5b_instruct \
-    --steps 15 --output-dir /tmp/lora_smoke --no-upload --no-catalogs
+python -m ricc.lora.batch_train_zoo --only qwen2.5_1.5b_instruct \
+    --steps 15 --output-dir /tmp/lora_smoke --no-upload --no-report
 
 # full zoo rollout: retrain every existing adapter in place
-python -m src.lora.batch_train_zoo --force --steps 15
+python -m ricc.lora.batch_train_zoo --force --steps 15
 ```
 
 Useful `batch_train_zoo.py` flags: `--only <ids>` (comma-separated filter),
@@ -77,12 +122,14 @@ skip the run report, `--force` (retrain adapters that already exist).
 
 ## Full-corpus & night runs
 
-`batch_train_zoo.py --profile full` switches from the pilot smoke budget
-(400 dialogues / 15 steps) to per-size tier budgets (up to 20k dialogues /
-2000 steps), a 2% eval holdout, step-level `training_log.jsonl`, automatic
-checkpoints with resume from `checkpoint-*`, and a v2 `training_meta.json`
-(`actual_steps`, `corpus_coverage_pct`, `dataset_sha256`, tok/s, peak VRAM).
-The aggregate run report goes to `reports/lora_zoo_training_run.json` +
+`batch_train_zoo.py --profile full` runs one **complete epoch** over the
+whole corpus: the step count is derived from the dataset size, the sample
+cap is the corpus, there is a 2% eval holdout on top of the 1 000-dialogue
+held-out tail, step-level `training_log.jsonl`, automatic checkpoints with
+resume from `checkpoint-*`, and a v2 `training_meta.json`
+(`actual_steps`, `required_steps_for_full_epoch`, `corpus_coverage_pct`,
+`train_dialogues`, `dataset_sha256`, tok/s, peak VRAM). The aggregate run
+report goes to `reports/lora_zoo_training_run.json` +
 `reports/LORA_ZOO_TRAINING_REPORT.md` and never overwrites the canonical
 catalog.
 
@@ -90,10 +137,11 @@ For long unattended runs use wall-clock budgets. `--hours N` stops training
 gracefully after N hours (saving the adapter, and with `--keep-checkpoints`
 also resumable checkpoints); `--holdout-tail N` excludes the last N
 dialogues from training so the same dialogues stay clean for honest
-post-training benchmarks:
+post-training benchmarks. **A time-boxed run is a partial run**: it is
+recorded as `PARTIAL` and is not published.
 
 ```bash
-python -m src.lora.batch_train_zoo --only phi_3.5_mini_instruct \
+python -m ricc.lora.batch_train_zoo --only phi_3.5_mini_instruct \
     --profile full --hours 5 --holdout-tail 1000 --keep-checkpoints --no-upload
 ```
 
@@ -115,4 +163,5 @@ python scripts/night_run_full_corpus.py --total-hours 10 \
 
 A 10-hour night is only a partial epoch on a 3.8B model — each adapter
 records the honest fraction of the corpus it actually saw as
-`corpus_coverage_pct` in `training_meta.json`.
+`corpus_coverage_pct` in `training_meta.json`, and the policy gate
+refuses to publish it.
