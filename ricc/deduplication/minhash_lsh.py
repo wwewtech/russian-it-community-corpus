@@ -1,11 +1,22 @@
 """
 MinHash LSH (Locality-Sensitive Hashing) for fuzzy deduplication of chat messages and threads.
+
+Memory note: the signature index is the memory bottleneck at the corpus
+scale. 63 % of the 2.8M messages are long enough to be indexed, and a
+Python ``list[int]`` of 128 entries costs ~5.3 kB per message — about
+9.5 GB for the corpus. The signatures are therefore stored in a single
+contiguous ``numpy.uint32`` block (512 B per message, ~0.9 GB) with a
+dict mapping the item id to its row offset. The dict of ids is
+unavoidable, but the per-item overhead is what dominates.
 """
 
 import logging
 import re
 from collections.abc import Hashable
+from typing import cast
 
+import numpy as np
+import numpy.typing as npt
 import xxhash
 from tqdm import tqdm
 
@@ -18,6 +29,27 @@ logger = logging.getLogger(__name__)
 _PERM_A = [(i * 10007 + 34229) & 0xFFFFFFFF for i in range(settings.MINHASH_NUM_PERM)]
 _PERM_B = [(i * 49999 + 88123) & 0xFFFFFFFF for i in range(settings.MINHASH_NUM_PERM)]
 _PRIME = 4294967311  # 2^32 + 15 (large 32-bit prime)
+
+
+# The permutation parameters. They are derived from a FIXED formula
+# (not from a random seed) so the signature of a text is reproducible
+# across processes and machines. The arrays are built for the CONFIGURED
+# number of permutations; an index constructed with a different
+# ``num_perm`` derives its own permutations below, because the old
+# module-level constants were always 128 long — so an index built with
+# ``num_perm=32`` produced a 128-dimensional signature while its bands
+# were computed for 32, silently corrupting the similarity estimate.
+def _permutations(num_perm: int) -> tuple[npt.NDArray[np.uint64], npt.NDArray[np.uint64]]:
+    """The (a, b) permutation coefficients for ``num_perm`` hashes."""
+    a = np.array([(i * 10007 + 34229) & 0xFFFFFFFF for i in range(num_perm)], dtype=np.uint64)
+    b = np.array([(i * 49999 + 88123) & 0xFFFFFFFF for i in range(num_perm)], dtype=np.uint64)
+    return a, b
+
+
+# The permutation parameters as numpy arrays, so the signature of a
+# message is computed with vectorised arithmetic instead of a Python
+# loop over 128 permutations x N shingles.
+_PERM_A_ARR, _PERM_B_ARR = _permutations(settings.MINHASH_NUM_PERM)
 
 
 def _band_key(band_sig: tuple[int, ...]) -> int:
@@ -50,6 +82,11 @@ class MinHashLSH:
         self.threshold = threshold
         self.shingle_size = shingle_size
 
+        # The permutations belong to THIS index: they must have exactly
+        # num_perm entries, or the signature length and the band layout
+        # disagree.
+        self._perm_a, self._perm_b = _permutations(num_perm)
+
         # Calculate optimal number of bands and rows for high recall at threshold ~0.70-0.80
         self.b = 32
         self.r = num_perm // self.b
@@ -60,7 +97,14 @@ class MinHashLSH:
         # one chat — a bare msg_id collides across community nodes and
         # would overwrite foreign signatures/candidates.
         self.buckets: list[dict[int, list[Hashable]]] = [dict() for _ in range(self.b)]
-        self.signatures: dict[Hashable, list[int]] = {}
+
+        # Signatures live in ONE contiguous uint32 block: row `i` holds
+        # the signature of the i-th indexed item. A Python list of 128
+        # ints per item cost ~5.3 kB (9.5 GB for the corpus); a uint32
+        # row costs 512 B (0.9 GB).
+        self._signatures = np.zeros((0, self.num_perm), dtype=np.uint32)
+        self._signature_rows: dict[Hashable, int] = {}
+        self._signature_count = 0
 
     def _get_shingles(self, text: str) -> set[str]:
         """Extract word shingles of length k."""
@@ -72,30 +116,79 @@ class MinHashLSH:
             shingles.add(" ".join(words[i : i + self.shingle_size]))
         return shingles
 
-    def compute_minhash(self, text: str) -> list[int]:
-        """Compute MinHash signature vector of length num_perm."""
+    def compute_minhash(self, text: str) -> npt.NDArray[np.uint32]:
+        """Compute the MinHash signature vector of length num_perm.
+
+        Returns a ``uint32`` array. The permutation arithmetic is
+        vectorised over the shingles, which is both faster and the
+        reason the signatures fit in a compact block.
+        """
         shingles = self._get_shingles(text)
         if not shingles:
-            return [0] * self.num_perm
+            return np.zeros(self.num_perm, dtype=np.uint32)
 
         # Hash each shingle to uint32 using xxh32 (faster than MD5)
-        shingle_hashes = [xxhash.xxh32(s.encode("utf-8"), seed=0).intdigest() & 0xFFFFFFFF for s in shingles]
+        shingle_hashes = np.fromiter(
+            (xxhash.xxh32(s.encode("utf-8"), seed=0).intdigest() & 0xFFFFFFFF for s in shingles),
+            dtype=np.uint64,
+            count=len(shingles),
+        )
 
-        sig = []
-        for i in range(self.num_perm):
-            a = _PERM_A[i]
-            b = _PERM_B[i]
-            min_val = min(((a * h + b) % _PRIME) for h in shingle_hashes)
-            sig.append(min_val)
+        # sig[i] = min over shingles of (a_i * h + b_i) % PRIME
+        permuted = (self._perm_a[:, None] * shingle_hashes[None, :] + self._perm_b[:, None]) % _PRIME
+        sig = permuted.min(axis=1)
+        return cast("npt.NDArray[np.uint32]", sig.astype(np.uint32))
 
-        return sig
+    def jaccard_similarity(
+        self, sig1: npt.NDArray[np.uint32] | list[int], sig2: npt.NDArray[np.uint32] | list[int]
+    ) -> float:
+        """Estimate Jaccard similarity between two MinHash signatures.
 
-    def jaccard_similarity(self, sig1: list[int], sig2: list[int]) -> float:
-        """Estimate Jaccard similarity between two MinHash signatures."""
-        if not sig1 or not sig2:
+        Accepts a numpy array (what :meth:`compute_minhash` returns) or
+        a plain list (the historical shape), so existing callers keep
+        working.
+        """
+        a = np.asarray(sig1)
+        b = np.asarray(sig2)
+        if a.size == 0 or b.size == 0:
             return 0.0
-        matches = sum(1 for a, b in zip(sig1, sig2, strict=False) if a == b)
-        return matches / float(self.num_perm)
+        matches = int(np.count_nonzero(a == b))
+        return matches / float(a.size)
+
+    @property
+    def signatures(self) -> dict[Hashable, list[int]]:
+        """The indexed signatures, as a plain dict (compatibility view).
+
+        The index itself is a contiguous uint32 block; this property
+        materialises the old dict-of-lists shape for callers that need
+        it. Do NOT use it on a large index — it defeats the whole point
+        of the compact storage.
+        """
+        return {item_id: self._signatures[row].tolist() for item_id, row in self._signature_rows.items()}
+
+    def _append_signature(self, item_id: Hashable, sig: npt.NDArray[np.uint32]) -> None:
+        """Append one signature to the contiguous block.
+
+        The block grows geometrically so that appending stays amortised
+        O(1) per item, while the memory stays one contiguous allocation
+        instead of 1.8M separate Python lists.
+
+        ``_signatures.shape[0]`` is the CAPACITY of the block, not the
+        number of signatures in it, so the fill level is tracked
+        separately — growing from the capacity would double the block
+        on every reallocation.
+        """
+        if self._signature_count >= self._signatures.shape[0]:
+            # Grow geometrically: double the capacity, keeping the block
+            # contiguous. 64k rows is ~32 MB at 128 uint32 columns.
+            new_rows = max(65_536, self._signatures.shape[0] * 2)
+            grown = np.zeros((new_rows, self.num_perm), dtype=np.uint32)
+            if self._signature_count:
+                grown[: self._signature_count] = self._signatures[: self._signature_count]
+            self._signatures = grown
+        self._signatures[self._signature_count] = sig
+        self._signature_rows[item_id] = self._signature_count
+        self._signature_count += 1
 
     def insert(self, item_id: Hashable, text: str) -> tuple[bool, Hashable | None, float]:
         """
@@ -119,14 +212,15 @@ class MinHashLSH:
 
         # Verify exact signature similarity against candidates
         for cand_id in candidates:
-            if cand_id in self.signatures:
-                cand_sig = self.signatures[cand_id]
+            row = self._signature_rows.get(cand_id)
+            if row is not None:
+                cand_sig = self._signatures[row]
                 sim = self.jaccard_similarity(sig, cand_sig)
                 if sim >= self.threshold:
                     return True, cand_id, sim
 
         # Not a duplicate, insert into index
-        self.signatures[item_id] = sig
+        self._append_signature(item_id, sig)
         for band_idx in range(self.b):
             band_sig = tuple(sig[band_idx * self.r : (band_idx + 1) * self.r])
             bucket_key = _band_key(band_sig)

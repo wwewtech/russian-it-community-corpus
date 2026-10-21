@@ -45,13 +45,27 @@ class TestMinHashSignature:
         sig = lsh.compute_minhash(LONG_TEXT_A)
         assert len(sig) == 32
 
+    def test_signature_length_follows_num_perm(self):
+        """The permutations must match the index's own num_perm.
+
+        The permutation coefficients used to be module-level constants
+        of a FIXED length (128), so an index built with num_perm=32
+        still produced a 128-dimensional signature while its bands were
+        computed for 32 — the similarity estimate was then computed over
+        the wrong number of components.
+        """
+        for num_perm in (16, 32, 64, 128):
+            lsh = MinHashLSH(num_perm=num_perm)
+            sig = lsh.compute_minhash(LONG_TEXT_A)
+            assert len(sig) == num_perm, f"num_perm={num_perm} produced {len(sig)} components"
+
     def test_empty_text_zero_signature(self):
         lsh = MinHashLSH(num_perm=16)
-        assert lsh.compute_minhash("") == [0] * 16
+        assert list(lsh.compute_minhash("")) == [0] * 16
 
     def test_identical_texts_same_signature(self):
         lsh = MinHashLSH(num_perm=32)
-        assert lsh.compute_minhash(LONG_TEXT_A) == lsh.compute_minhash(LONG_TEXT_A)
+        assert (lsh.compute_minhash(LONG_TEXT_A) == lsh.compute_minhash(LONG_TEXT_A)).all()
 
 
 class TestJaccardSimilarity:

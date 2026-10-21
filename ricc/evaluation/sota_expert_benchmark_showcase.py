@@ -303,25 +303,35 @@ def run_sota_showcase(
             typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
             logger.warning(f"Failed to attach LoRA: {typed}")
 
+    # FAIL FAST: without the adapter there is no LoRA measurement. The
+    # previous code fell back to the BASE model's results and wrote them
+    # into the LoRA column, which made the comparison report identical
+    # numbers for base and LoRA — a fabricated benchmark.
+    if lora_model is None:
+        raise RuntimeError(
+            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
+            "Refusing to run the SOTA showcase: falling back to the base model would "
+            "put the base results into the LoRA column and report a comparison that "
+            "was never measured."
+        )
+
     logger.info("Evaluating LoRA & Hybrid...")
     for idx, item in enumerate(FLAGSHIP_CHALLENGES, 1):
         prompt = item["prompt"]
         logger.info(f"[{idx}/{len(FLAGSHIP_CHALLENGES)}] LoRA & Hybrid: {item['title']}...")
 
         # LoRA
-        if lora_model:
-            l_text = generate_expert(lora_model, prompt)
-            l_scores = score_response_quality(l_text, item["eval_criteria"])
-        else:
-            l_text, l_scores = base_outputs[idx - 1]
+        l_text = generate_expert(lora_model, prompt)
+        l_scores = score_response_quality(l_text, item["eval_criteria"])
 
         # Hybrid (LoRA + RAG)
         rag_hits = rag_kb.search(prompt, top_k=2)
         rag_ctx = "\n".join(f"- {str(h.get('content', ''))[:200]}" for h in rag_hits) if rag_hits else ""
-        if lora_model and rag_hits:
+        if rag_hits:
             h_text = generate_expert(lora_model, prompt, context=rag_ctx)
             h_scores = score_response_quality(h_text, item["eval_criteria"])
         else:
+            # No RAG context: the hybrid variant is the LoRA model alone.
             h_text, h_scores = l_text, l_scores
 
         rec = {
