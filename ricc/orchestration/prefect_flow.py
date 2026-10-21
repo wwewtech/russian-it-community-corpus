@@ -139,16 +139,21 @@ def task_validate_dataset(output_dir: str | Path | None = None) -> dict[str, Any
 def task_probabilistic_pii_audit(
     parquet_path: str | Path | None = None,
     report_path: str | Path | None = None,
-    sample_size: int = 100_000,
+    sample_size: int | None = None,
 ) -> dict[str, Any]:
-    """Run the stratified probabilistic PII audit with confidence bounds."""
+    """Run the stratified probabilistic PII audit with confidence bounds.
+
+    ``sample_size=None`` means "use the configured value"
+    (``settings.pii_audit.sample_size``, loaded from params.yaml).
+    """
     log = get_run_logger()
     try:
         from ricc.settings import settings
         from ricc.validation.probabilistic_audit import ProbabilisticPIIAuditor
 
         path = Path(parquet_path) if parquet_path else settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
-        report = ProbabilisticPIIAuditor(path).run_audit(sample_size=sample_size)
+        kwargs = {"sample_size": sample_size} if sample_size is not None else {}
+        report = ProbabilisticPIIAuditor(path).run_audit(**kwargs)
         out = Path(report_path) if report_path else settings.REPORTS_DIR / "probabilistic_pii_audit.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         import json
@@ -219,7 +224,7 @@ def curate_corpus_flow(
     current_drift_path: str | Path | None = None,
     audit_report_path: str | Path | None = None,
     drift_report_path: str | Path | None = None,
-    audit_sample_size: int = 100_000,
+    audit_sample_size: int | None = None,
     run_pipeline: bool = True,
 ) -> dict[str, Any]:
     """Full platform flow: curate -> validate -> probabilistic audit -> drift.
