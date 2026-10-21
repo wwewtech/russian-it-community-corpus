@@ -12,6 +12,11 @@ __pycache__/
 .coverage.*
 coverage.xml
 *.egg-info/
+# Local build output. `build/lib/` holds stale copies of the sources, which
+# made `ruff check .` report 65 unrelated E402 errors locally while CI
+# (which never has a build/ directory) stayed green.
+build/
+dist/
 
 # Environments & IDEs
 .env

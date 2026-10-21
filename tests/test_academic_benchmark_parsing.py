@@ -19,10 +19,31 @@ class TestMultipleChoiceAnswerParsing(unittest.TestCase):
         self.assertEqual(parse_mc_answer("B) Skip List"), "B")
         self.assertEqual(parse_mc_answer("Правильный ответ - D"), "D")
 
-    def test_cyrillic_homoglyphs_normalized(self):
-        self.assertEqual(parse_mc_answer("А"), "A")
-        self.assertEqual(parse_mc_answer("Вариант В"), "B")
-        self.assertEqual(parse_mc_answer("С"), "C")
+    def test_cyrillic_homoglyphs_need_an_explicit_marker(self):
+        """A bare Cyrillic homoglyph is a Russian word, not an answer.
+
+        The old parser mapped А/В/С to A/B/C at ANY position, so
+        "Я не знаю в чём дело" was scored as "B" and "Это вариант с" as
+        "C" — the same class of defect as the retracted substring bug,
+        inflating the RuMMLU accuracy with answers the model never gave.
+        """
+        # Prose: no marker -> not an answer.
+        self.assertIsNone(parse_mc_answer("Я не знаю в чём дело"))
+        self.assertIsNone(parse_mc_answer("Это вариант с"))
+        self.assertIsNone(parse_mc_answer("а и б"))
+        self.assertIsNone(parse_mc_answer("А"))
+        self.assertIsNone(parse_mc_answer("С"))
+
+        # Explicit marker -> accepted and normalized.
+        self.assertEqual(parse_mc_answer("Ответ: в"), "B")
+        self.assertEqual(parse_mc_answer("Ответ: а"), "A")
+        self.assertEqual(parse_mc_answer("Ответ (с)"), "C")
+        self.assertEqual(parse_mc_answer("Answer: c"), "C")
+        self.assertEqual(parse_mc_answer("вариант: В"), "B")
+
+    def test_lowercase_latin_article_is_not_an_answer(self):
+        """'Compose a docker file' must not be read as the answer 'A'."""
+        self.assertIsNone(parse_mc_answer("Compose a docker file"))
 
     def test_no_false_positive_inside_words(self):
         # "Docker..." must NOT count as answer D; "Cat" must not count as A... etc.

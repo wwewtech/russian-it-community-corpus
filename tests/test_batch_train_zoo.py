@@ -64,10 +64,28 @@ class TestBudgets(unittest.TestCase):
         self.assertEqual(PILOT_BUDGET["max_samples"], 400)
 
     def test_full_budgets_exceed_the_pilot_budget(self):
+        """The full profile must not be smaller than the smoke profile.
+
+        The step count is no longer a hardcoded tier table (it is derived
+        from the dataset size at runtime), so this asserts on the sample
+        budget and on the derived full-epoch step count.
+        """
         for tier, budget in FULL_TIER_BUDGETS.items():
             with self.subTest(tier=tier):
-                self.assertGreater(budget["steps"], PILOT_BUDGET["steps"])
                 self.assertGreater(budget["max_samples"], PILOT_BUDGET["max_samples"])
+
+    def test_full_profile_step_count_is_derived_from_the_dataset(self):
+        """One full epoch over the real corpus must be far beyond the pilot budget.
+
+        The old tier budgets (600-2000 steps) covered 2.77-9.24 % of the
+        corpus and could never satisfy the binding training policy.
+        """
+        from src.lora.policy_gate import required_steps_for_epoch, trainable_dialogues
+
+        trainable = trainable_dialogues(173216, holdout_tail=1000, eval_frac=0.005)
+        steps = required_steps_for_epoch(trainable)
+        self.assertEqual(steps, 21420)
+        self.assertGreater(steps, PILOT_BUDGET["steps"] * 100)
 
     def test_eval_frac_is_a_small_holdout(self):
         self.assertGreater(FULL_PROFILE_EVAL_FRAC, 0.0)

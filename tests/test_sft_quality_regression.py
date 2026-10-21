@@ -54,7 +54,7 @@ class TestSFTDialogueQualityMonitor(unittest.TestCase):
         self.assertFalse(report["checks"]["empty_response_ratio"]["passed"])
 
     def test_truncated_short_answers_fail(self):
-        # All assistant replies are < 30 chars → below the 80-char floor.
+        # All assistant replies are < 30 chars → below the length floor.
         short_dialogues = [_make_dialogue("Вопрос?", "Кратко: да.") for _ in range(20)]
         df = pd.DataFrame({"messages": short_dialogues})
         report = SFTDialogueQualityMonitor(df).run()
@@ -108,3 +108,41 @@ class TestSFTDialogueQualityMonitor(unittest.TestCase):
         df = pd.DataFrame({"other": [[]]})
         with self.assertRaises(ValueError):
             SFTDialogueQualityMonitor(df, messages_col="messages").run()
+
+
+class TestParquetListStructSchema(unittest.TestCase):
+    """The production parquet stores ``messages`` as ``list<struct<...>>``.
+
+    ``pd.read_parquet`` returns such a column as a ``numpy.ndarray`` of
+    dicts, NOT as a python list. The monitor used to understand only
+    ``list`` and JSON strings, so on the REAL corpus it parsed zero turns
+    and reported a hard FAIL while the synthetic CI fixture (which stores
+    JSON strings) passed — the quality gate was validating the fixture
+    instead of the data.
+    """
+
+    def test_numpy_array_of_dicts_is_parsed(self):
+        import numpy as np
+
+        # Build the frame the way parquet does: a list<struct> column read
+        # back as an object array of dicts.
+        rows = [list(_make_long_dialogue()) for _ in range(20)]
+        df = pd.DataFrame({"messages": pd.Series(rows, dtype=object)})
+        # Emulate the pyarrow read: object ndarray of dicts.
+        df["messages"] = pd.Series(
+            [np.array(r, dtype=object) for r in rows],
+            dtype=object,
+        )
+        report = SFTDialogueQualityMonitor(df).run()
+        self.assertEqual(report["n_dialogues"], 20)
+        self.assertEqual(report["total_assistant_turns"], 40)
+        self.assertEqual(report["overall_verdict"], "pass")
+
+    def test_unreadable_corpus_does_not_report_healthy(self):
+        """A monitor that parsed nothing must not claim the corpus is fine."""
+        df = pd.DataFrame({"messages": [[{"role": "user", "content": "только юзер"}] for _ in range(10)]})
+        report = SFTDialogueQualityMonitor(df).run()
+        self.assertEqual(report["total_assistant_turns"], 0)
+        self.assertEqual(report["overall_verdict"], "fail")
+        self.assertIn("dialogues_readable", report["checks"])
+        self.assertFalse(report["checks"]["dialogues_readable"]["passed"])

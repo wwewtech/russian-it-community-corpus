@@ -29,6 +29,8 @@ setup_runtime_env()
 
 import huggingface_hub
 
+from src.lora.policy_gate import evaluate_compliance, is_publishable
+
 logger = logging.getLogger("FinalizeSync")
 
 HF_TOKEN = os.getenv("HF_TOKEN", "")
@@ -136,17 +138,45 @@ def upload_dataset(
     api: huggingface_hub.HfApi,
     *,
     dataset_repo_id: str = DATASET_REPO_ID,
+    repo_root: Path | None = None,
 ) -> None:
     """Upload cleaned parquet files, dataset card, and reports to HF Hub.
 
     Failures are logged and re-raised so the caller (typically
     ``scripts/sync_to_hub.py``) can decide whether to retry or to
     surface a non-zero exit code.
+
+    ``repo_root`` overrides the repository root used to resolve the
+    artefact paths; it defaults to the checkout this module lives in, so
+    the function no longer depends on the current working directory.
     """
     logger.info("Uploading sanitized dataset artifacts to Hugging Face: %s...", dataset_repo_id)
 
+    if repo_root is None:
+        repo_root = Path(__file__).resolve().parents[2]
+
+    # 0. Provenance gate: the published artefacts must match the signed
+    # manifest snapshot. Without this check the release could publish a
+    # dataset that was modified after the manifest was created — the
+    # "provenance gate" in the SLO job compares a manifest with the very
+    # files it was just created from, so it always passes.
+    manifest_path = repo_root / "reports" / "dataset_manifest.json"
+    if manifest_path.exists():
+        try:
+            from src.validation.artifact_manifest import verify_manifest
+
+            verify_manifest(repo_root, manifest_path)
+            logger.info("Artifact manifest verified against the published files")
+        except Exception as exc:
+            raise RuntimeError(
+                f"Refusing to publish: the dataset artefacts do not match {manifest_path} ({exc}). "
+                "Re-create the manifest for the artefacts that are about to be published."
+            ) from exc
+    else:
+        logger.warning("No dataset_manifest.json found — publishing without a provenance check")
+
     # 1. Dataset Card (README.md)
-    dataset_card_path = Path("reports/DATASET_AND_ANALYTICS.md")
+    dataset_card_path = repo_root / "reports" / "DATASET_AND_ANALYTICS.md"
     if dataset_card_path.exists():
         api.upload_file(
             path_or_fileobj=str(dataset_card_path),
@@ -163,7 +193,7 @@ def upload_dataset(
         ("dataset_output/parquet/rag_knowledge_base.parquet", "data/rag_knowledge_base.parquet"),
     ]
     for local_path, repo_path in parquet_mappings:
-        p = Path(local_path)
+        p = repo_root / local_path
         if p.exists():
             logger.info(
                 "Uploading %s (%.2f MB) -> %s...",
@@ -185,7 +215,7 @@ def upload_dataset(
         ("reports/LORA_MODEL_ZOO.md", "LORA_MODEL_ZOO.md"),
     ]
     for local_path, repo_path in meta_files:
-        p = Path(local_path)
+        p = repo_root / local_path
         if p.exists():
             api.upload_file(
                 path_or_fileobj=str(p),
@@ -200,6 +230,7 @@ def upload_model_card(
     api: huggingface_hub.HfApi,
     *,
     model_repo_id: str = MODEL_REPO_ID,
+    repo_root: Path | None = None,
 ) -> bool:
     """Upload ``reports/HF_MODEL_CARD.md`` as the model repo README.
 
@@ -207,7 +238,9 @@ def upload_model_card(
     ``scripts/regenerate_model_catalog.py``; the Hub write lives here so
     ADR 0001 keeps a single sanctioned upload path.
     """
-    card_path = Path("reports/HF_MODEL_CARD.md")
+    if repo_root is None:
+        repo_root = Path(__file__).resolve().parents[2]
+    card_path = repo_root / "reports" / "HF_MODEL_CARD.md"
     if not card_path.exists():
         logger.warning("Model card not found at %s; nothing to upload", card_path)
         return False
@@ -243,8 +276,22 @@ def upload_missing_adapters(
     uploaded_folders = {f.split("/")[0] for f in hf_files if "/" in f}
 
     uploaded: list[str] = []
+    skipped: list[str] = []
     for d in local_adapters:
         if d.name in uploaded_folders:
+            continue
+        # Policy gate: an adapter that does not satisfy the binding training
+        # policy (partial epoch, time-boxed run, or no recorded provenance at
+        # all) is never uploaded to the public zoo. It is skipped and logged
+        # loudly instead of being published as a final adapter.
+        if not is_publishable(d):
+            report = evaluate_compliance(d)
+            logger.warning(
+                "Skipping adapter %s — it does not satisfy the training policy: %s",
+                d.name,
+                "; ".join(report.reasons),
+            )
+            skipped.append(d.name)
             continue
         logger.info("Uploading missing adapter %s to Hugging Face Model Hub...", d.name)
         last_exc: Exception | None = None
@@ -275,6 +322,12 @@ def upload_missing_adapters(
             raise RuntimeError(
                 f"Failed to upload adapter {d.name} after {max_attempts} attempts: {last_exc}"
             ) from last_exc
+    if skipped:
+        logger.warning(
+            "%d adapter(s) skipped for policy non-compliance: %s",
+            len(skipped),
+            ", ".join(skipped),
+        )
     return uploaded
 
 
@@ -283,25 +336,23 @@ def main() -> None:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
     api = huggingface_hub.HfApi(token=HF_TOKEN if HF_TOKEN else None)
-    adapters_dir = Path("lora_adapters")
+    # Resolve the adapters directory relative to the REPOSITORY ROOT, not the
+    # current working directory: the release job runs from the repo root, but
+    # a CWD-dependent path silently produced an empty catalogue when the
+    # script was invoked from elsewhere.
+    adapters_dir = Path(__file__).resolve().parents[2] / "lora_adapters"
 
-    # 1. Dataset artefacts
-    try:
-        upload_dataset(api)
-    except Exception as e:
-        logger.warning("Dataset upload to Hugging Face skipped or failed: %s", e)
+    # 1. Dataset artefacts — fail closed.
+    # Previously the upload error was swallowed with a warning, so a release
+    # could publish a broken or partial dataset without failing the job.
+    upload_dataset(api)
 
-    # 2. Model repository card (README.md)
-    try:
-        upload_model_card(api)
-    except Exception as e:
-        logger.warning("Model card upload to Hugging Face skipped or failed: %s", e)
+    # 2. Model repository card (README.md) — fail closed.
+    upload_model_card(api)
 
-    # 3. Missing LoRA adapters on the Model Hub
-    try:
-        upload_missing_adapters(api, adapters_dir)
-    except Exception as e:
-        logger.warning("LoRA adapter sync to Hugging Face skipped or failed: %s", e)
+    # 3. Missing LoRA adapters on the Model Hub.
+    # Policy-incompliant adapters are skipped inside the function.
+    upload_missing_adapters(api, adapters_dir)
 
     # 4. Render and persist the local LoRA-Zoo catalogue (works even
     # when the Hub sync failed, so the GitHub release is always updated).

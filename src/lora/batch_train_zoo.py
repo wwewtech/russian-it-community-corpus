@@ -47,6 +47,13 @@ from transformers import (
     TrainingArguments,
 )
 
+from src.lora.policy_gate import (
+    CANONICAL_HOLDOUT_TAIL,
+    compute_coverage,
+    evaluate_compliance,
+    required_steps_for_epoch,
+    trainable_dialogues,
+)
 from src.ml_runtime import set_deterministic_seed, with_retries
 from src.observability import record_classified_ml_error, record_lora_result
 
@@ -447,13 +454,22 @@ ZOO_44_MODELS = [
 ]
 
 # --- Training budgets ------------------------------------------------------ #
+# PILOT is a SMOKE profile: 15 steps over 400 dialogues. It exists to prove
+# that a base model, a dataset and the trainer fit together on the local GPU.
+# It is NOT a training run and must never be published as a final adapter.
 PILOT_BUDGET: dict[str, int] = {"max_samples": 400, "steps": 15}
 FULL_PROFILE_EVAL_FRAC = 0.02
+
+# The "full" profile is derived from the DATASET, not from a hardcoded tier.
+# The previous tier budgets (600-2000 steps) covered 2.77-9.24 % of the
+# corpus, so no run using them could ever satisfy the binding policy.
+# The step count for a full epoch is now computed by policy_gate from the
+# actual number of trainable dialogues; see budget_for() below.
 FULL_TIER_BUDGETS: dict[str, dict[str, int]] = {
-    "tiny": {"max_samples": 20000, "steps": 2000},
-    "small": {"max_samples": 20000, "steps": 1200},
-    "mid": {"max_samples": 16000, "steps": 800},
-    "large": {"max_samples": 12000, "steps": 600},
+    "tiny": {"max_samples": 200000, "steps": 0},
+    "small": {"max_samples": 200000, "steps": 0},
+    "mid": {"max_samples": 200000, "steps": 0},
+    "large": {"max_samples": 200000, "steps": 0},
 }
 _DATASET_SHA256_CACHE: dict[str, str] = {}
 
@@ -540,6 +556,24 @@ def detect_target_modules(model: torch.nn.Module) -> list[str]:
     if not module_names:
         module_names = {"q_proj", "v_proj"}
     return sorted(module_names)
+
+
+def _dataset_dialogue_count(dataset_path: str | Path) -> int:
+    """Number of dialogues in the SFT JSONL corpus (0 when unavailable).
+
+    Used to derive the full-profile step budget from the dataset instead of
+    a hardcoded tier table. Counts non-empty lines without loading the
+    corpus into memory.
+    """
+    path = Path(dataset_path)
+    if not path.exists():
+        return 0
+    count = 0
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                count += 1
+    return count
 
 
 def train_and_upload_single_model(
@@ -748,7 +782,13 @@ def train_and_upload_single_model(
         train_loss = float(train_res.training_loss)
         actual_steps = int(trainer.state.global_step)
         tokens_seen = int(actual_steps * 8 * avg_len)
-        coverage_pct = round(min(100.0, actual_steps * 8 / max(1, dataset_total) * 100.0), 2)
+        # Coverage is measured against the dialogues the trainer ACTUALLY saw.
+        # The previous denominator (dataset_total) included the held-out tail,
+        # so a run covering 101% of the real training set reported "100%"
+        # while a run covering exactly one real epoch reported "98.93%".
+        train_dialogues = len(tokenized_ds)
+        coverage_pct = compute_coverage(actual_steps, train_dialogues)
+        required_steps = required_steps_for_epoch(train_dialogues)
         peak_vram = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None
 
         eval_loss: float | None = None
@@ -800,10 +840,12 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
                     "dataset_sha256": dataset_sha256(dataset_path),
                     "max_steps": max_steps,
                     "actual_steps": actual_steps,
+                    "required_steps_for_full_epoch": required_steps,
                     "time_budget_hours": time_budget_hours,
                     "max_seq_length": max_seq_length,
                     "max_samples": max_samples,
                     "samples_used": len(tokenized_ds),
+                    "train_dialogues": train_dialogues,
                     "dataset_total_dialogues": dataset_total,
                     "holdout_tail_dialogues": holdout_tail,
                     "dialogues_seen_approx": actual_steps * 8,
@@ -830,6 +872,19 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             + "\n",
             encoding="utf-8",
         )
+
+        # --- Policy gate -----------------------------------------------------
+        # A time-boxed or partial run is NOT a final adapter. It must be
+        # labelled PARTIAL and must not be uploaded to the public zoo.
+        compliance = evaluate_compliance(out_dir)
+        partial = time_budget_hours is not None or not compliance.compliant
+        run_status = "PARTIAL" if partial else "SUCCESS"
+        if partial:
+            logger.warning(
+                f"{model_id}: run is PARTIAL — {'; '.join(compliance.reasons) or 'wall-clock budget hit'}. "
+                "It will not be uploaded as a final adapter."
+            )
+
         record_lora_result(
             model=model_name,
             adapter=model_id,
@@ -840,8 +895,11 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             vram_bytes=peak_vram,
         )
 
-        # Auto-upload to Hugging Face Model Zoo (opt-out with --no-upload)
-        if upload:
+        # Auto-upload to Hugging Face Model Zoo (opt-out with --no-upload).
+        # The policy gate runs first: a partial adapter is never published.
+        if upload and partial:
+            logger.warning(f"HF upload skipped for {model_id}: adapter does not satisfy the training policy")
+        elif upload:
             try:
                 api = huggingface_hub.HfApi(token=HF_TOKEN)
                 with_retries(
@@ -874,7 +932,11 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             "family": meta["family"],
             "params": meta["params"],
             "description": meta["desc"],
-            "status": "SUCCESS",
+            "status": run_status,
+            "policy_compliant": compliance.compliant,
+            "policy_reasons": list(compliance.reasons),
+            "required_steps_for_full_epoch": required_steps,
+            "train_dialogues": train_dialogues,
             "train_loss": round(train_loss, 4),
             "eval_loss": round(eval_loss, 4) if eval_loss is not None else None,
             "steps": actual_steps,
@@ -962,8 +1024,18 @@ def main() -> None:
     parser.add_argument(
         "--profile",
         choices=["pilot", "full"],
-        default="pilot",
-        help="Training budget: pilot (400 dialogues / 15 steps) or full (per-size tier budgets)",
+        default="full",
+        help=(
+            "Training budget: 'full' (default) runs one complete epoch over the whole corpus, "
+            "derived from the dataset size; 'pilot' is a 15-step SMOKE profile that must "
+            "never be published as a final adapter."
+        ),
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="dataset_output/jsonl/sft_openai_messages.jsonl",
+        help="SFT JSONL corpus used for training (its size drives the full-profile budget)",
     )
     parser.add_argument(
         "--steps", type=int, default=None, help="Optimizer steps per model (overrides the profile budget)"
@@ -983,8 +1055,11 @@ def main() -> None:
     parser.add_argument(
         "--holdout-tail",
         type=int,
-        default=0,
-        help="Reserve the last N dialogues as a benchmark holdout (excluded from training)",
+        default=CANONICAL_HOLDOUT_TAIL,
+        help=(
+            "Reserve the last N dialogues as a benchmark holdout (excluded from training). "
+            f"Default {CANONICAL_HOLDOUT_TAIL} (the canonical held-out tail). Use 0 to disable."
+        ),
     )
     parser.add_argument("--seed", type=int, default=42, help="Deterministic seed for reproducible runs")
     parser.add_argument(
@@ -1051,9 +1126,23 @@ def main() -> None:
         if args.profile == "pilot":
             steps, samples, eval_frac = PILOT_BUDGET["steps"], PILOT_BUDGET["max_samples"], 0.0
         else:
+            # The full profile is derived from the dataset: one complete epoch
+            # over the trainable dialogues, capped by --holdout-tail. This
+            # replaces the old hardcoded tier budgets (600-2000 steps), which
+            # covered only 2.77-9.24 % of the corpus and therefore could not
+            # satisfy the binding training policy.
             tier = param_tier(meta["params"])
-            steps, samples = FULL_TIER_BUDGETS[tier]["steps"], FULL_TIER_BUDGETS[tier]["max_samples"]
             eval_frac = FULL_PROFILE_EVAL_FRAC
+            total = _dataset_dialogue_count(args.dataset) if args.dataset else 0
+            holdout = args.holdout_tail if args.holdout_tail is not None else CANONICAL_HOLDOUT_TAIL
+            trainable = trainable_dialogues(total, holdout_tail=holdout, eval_frac=eval_frac)
+            steps = required_steps_for_epoch(trainable)
+            samples = FULL_TIER_BUDGETS[tier]["max_samples"]
+            if total:
+                logger.info(
+                    f"Full profile for {meta['id']}: {total} dialogues - {holdout} holdout - "
+                    f"{eval_frac:.3%} eval = {trainable} trainable -> {steps} steps for one epoch"
+                )
         overrides: dict[str, Any] = {**default_overrides, **dict(profile_file_data.get(meta["id"], {}))}
         steps = int(overrides.get("steps", steps))
         samples = int(overrides.get("samples", samples))
@@ -1078,6 +1167,7 @@ def main() -> None:
         )
         res = train_and_upload_single_model(
             meta,
+            dataset_path=args.dataset,
             base_output_dir=args.output_dir,
             max_steps=steps,
             max_samples=samples,

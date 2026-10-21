@@ -27,7 +27,17 @@ def main() -> None:
         default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Path to the production messages parquet",
     )
-    parser.add_argument("--sample-size", type=int, default=50_000, help="Number of messages to audit")
+    parser.add_argument(
+        "--sample-size",
+        type=int,
+        default=100_000,
+        help=(
+            "Number of messages to audit. Default 100000: with zero observed leaks the "
+            "one-sided 99% Wilson upper bound is 5.41e-05, below the 1e-04 tolerance. "
+            "A sample of 50000 yields 1.08e-04 and reports a false LEAKS_DETECTED on a "
+            "perfectly clean corpus."
+        ),
+    )
     parser.add_argument("--confidence", type=float, default=0.99, help="Confidence level for bounds")
     parser.add_argument(
         "--tolerance",

@@ -30,15 +30,18 @@ class SocialNetworkAnalyzer:
         in_degree: dict[str, int] = defaultdict(int)
         out_degree: dict[str, int] = defaultdict(int)
 
-        msg_map = {m.msg_id: m for m in messages}
-        sorted_msgs = sorted(messages, key=lambda m: m.unixtime)
+        # msg_id is only unique WITHIN a chat, so index by the composite (chat_id, msg_id) key.
+        # A global msg_id index resolves ~42% of replies to a message in a different chat,
+        # corrupting the social graph with cross-chat edges.
+        msg_map: dict[tuple[int, int], CleanedMessage] = {(m.chat_id, m.msg_id): m for m in messages}
+        sorted_msgs = sorted(messages, key=lambda m: (m.unixtime, m.chat_id, m.msg_id))
 
         for i, msg in enumerate(sorted_msgs):
             sender = msg.author_anon
 
-            # 1. Explicit reply_to
-            if msg.reply_to_id and msg.reply_to_id in msg_map:
-                target_msg = msg_map[msg.reply_to_id]
+            # 1. Explicit reply_to (resolved within the same chat only)
+            target_msg = msg_map.get((msg.chat_id, msg.reply_to_id)) if msg.reply_to_id is not None else None
+            if target_msg is not None:
                 recipient = target_msg.author_anon
                 if sender != recipient:
                     adjacency[sender][recipient] += 1
@@ -73,10 +76,11 @@ class SocialNetworkAnalyzer:
         total_interactions = sum(sum(targets.values()) for targets in adjacency.values())
 
         # Top influencers (users who receive the most questions/answers)
-        top_influencers = sorted(in_degree.items(), key=lambda x: x[1], reverse=True)[:15]
+        # Ties are broken alphabetically so the report is reproducible across runs.
+        top_influencers = sorted(in_degree.items(), key=lambda x: (-x[1], x[0]))[:15]
 
         # Top active conversationalists (users who reply the most)
-        top_responders = sorted(out_degree.items(), key=lambda x: x[1], reverse=True)[:15]
+        top_responders = sorted(out_degree.items(), key=lambda x: (-x[1], x[0]))[:15]
 
         # Calculate reciprocity (mutual interactions)
         reciprocal_pairs = 0
@@ -97,7 +101,8 @@ class SocialNetworkAnalyzer:
                         strong_pairs.append((u, v, total_weight))
                 seen_pairs.add((u, v))
 
-        strong_pairs.sort(key=lambda x: x[2], reverse=True)
+        # Deterministic ordering: weight descending, then (user_a, user_b) alphabetically.
+        strong_pairs.sort(key=lambda x: (-x[2], x[0], x[1]))
 
         # Graph density
         max_possible_edges = total_nodes * (total_nodes - 1) if total_nodes > 1 else 1

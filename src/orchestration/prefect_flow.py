@@ -104,7 +104,7 @@ def task_validate_dataset(output_dir: str | Path | None = None) -> dict[str, Any
 def task_probabilistic_pii_audit(
     parquet_path: str | Path | None = None,
     report_path: str | Path | None = None,
-    sample_size: int = 50_000,
+    sample_size: int = 100_000,
 ) -> dict[str, Any]:
     """Run the stratified probabilistic PII audit with confidence bounds."""
     log = get_run_logger()
@@ -184,7 +184,7 @@ def curate_corpus_flow(
     current_drift_path: str | Path | None = None,
     audit_report_path: str | Path | None = None,
     drift_report_path: str | Path | None = None,
-    audit_sample_size: int = 50_000,
+    audit_sample_size: int = 100_000,
     run_pipeline: bool = True,
 ) -> dict[str, Any]:
     """Full platform flow: curate -> validate -> probabilistic audit -> drift.

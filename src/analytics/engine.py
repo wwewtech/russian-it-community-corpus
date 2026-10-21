@@ -307,8 +307,10 @@ class DeepChatAnalyzer:
         # Chronological sorting
         self.sorted_messages = sorted(messages, key=lambda m: m.unixtime)
 
-        # Message indexes
-        self.msg_by_id = {m.msg_id: m for m in messages}
+        # Message indexes.
+        # msg_id is only unique WITHIN a chat, so index by the composite (chat_id, msg_id) key;
+        # a global msg_id index would resolve replies to messages in other chats.
+        self.msg_by_id: dict[tuple[int, int], CleanedMessage] = {(m.chat_id, m.msg_id): m for m in messages}
         self.authors = set(m.author_anon for m in messages)
         self.author_messages: dict[str, list[CleanedMessage]] = defaultdict(list)
         for m in messages:

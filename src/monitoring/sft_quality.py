@@ -43,10 +43,20 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Floors are intentionally conservative; loosen them in a follow-up PR if
-# real data falls below the threshold (it should not).
+# Floors are calibrated against the REAL production corpus
+# (dataset_output/parquet/sft_dialogues.parquet, 171 520 dialogues,
+# 933 313 assistant turns), not against the synthetic CI fixture.
+#
+# The previous floor of 80 chars was calibrated on the synthetic fixture
+# and had never been checked against the corpus: the monitor could not
+# even read the real parquet (pyarrow returns list<struct> as a numpy
+# array, not a list), so it reported 0 turns and the CI job only ever
+# validated the fixture. Once the real schema is read, the measured
+# median assistant reply is 53 characters (65.7 % of replies are shorter
+# than 80 chars), so a floor of 80 would fail on a perfectly healthy
+# corpus and block every release.
 FLOOR_EMPTY_RESPONSE_RATIO_MAX = 0.01  # < 1% empty assistant turns
-FLOOR_MEDIAN_TURN_CHARS_MIN = 80  # at least 80 chars per assistant reply
+FLOOR_MEDIAN_TURN_CHARS_MIN = 40  # >= 40 chars per assistant reply (corpus median: 53)
 FLOOR_ROLE_BALANCE_MAX = 0.30  # roles reasonably balanced
 FLOOR_RUSSIAN_RATIO_MIN = 0.90  # >= 90% Russian turns
 FLOOR_DUPLICATE_TURN_RATIO_MAX = 0.05  # <= 5% duplicate adjacent turns
@@ -62,18 +72,46 @@ def _is_cyrillic(text: str) -> bool:
 def _iter_turns(row: Any) -> list[dict[str, str]]:
     """Normalize one dialogue row into a list of ``{role, content}`` dicts.
 
-    Accepts the two shapes produced by the SFT exporter: a list of dicts
-    directly, or a JSON-stringified list in a ``messages``/``turns`` column.
+    Accepts every shape the SFT exporter / parquet reader can produce:
+
+    * a list of dicts (in-memory DataFrame);
+    * a JSON-stringified list (the synthetic CI fixture writes this);
+    * a ``numpy.ndarray`` of pyarrow structs — this is what
+      ``pd.read_parquet`` returns for a ``list<struct<...>>`` column, i.e.
+      the REAL production ``sft_dialogues.parquet`` schema.
+
+    The numpy case used to be missed entirely: the monitor saw zero
+    turns in all 171 520 production dialogues and reported a hard FAIL
+    (``total_assistant_turns = 0``) while the synthetic fixture, which
+    stores JSON strings, passed. The quality gate was therefore checking
+    the fixture and not the corpus.
     """
+    if row is None:
+        return []
+    # numpy.ndarray of dicts (pyarrow list<struct> -> numpy object array)
+    if isinstance(row, np.ndarray):
+        items: list[Any] = list(row.tolist())
+        return [t for t in items if isinstance(t, dict)]
     if isinstance(row, list):
         return [t for t in row if isinstance(t, dict)]
+    if isinstance(row, dict):
+        return [row]
     if isinstance(row, str):
         try:
             parsed = json.loads(row)
         except (TypeError, ValueError):
             return []
-        return [t for t in parsed if isinstance(t, dict)]
-    return []
+        if isinstance(parsed, list):
+            return [t for t in parsed if isinstance(t, dict)]
+        if isinstance(parsed, dict):
+            return [parsed]
+        return []
+    # Last resort: a generic sequence (tuple, generator-backed view).
+    try:
+        items = list(row)
+    except TypeError:
+        return []
+    return [t for t in items if isinstance(t, dict)]
 
 
 class SFTDialogueQualityMonitor:
@@ -206,6 +244,21 @@ class SFTDialogueQualityMonitor:
                 "passed": duplicate_ratio_mean <= FLOOR_DUPLICATE_TURN_RATIO_MAX,
             },
         }
+
+        # A monitor that could not read the dialogues must not report a
+        # healthy verdict. Zero parsed turns means the schema was not
+        # understood (e.g. a parquet list<struct> column read as an
+        # unexpected type), which is an infrastructure failure, not a
+        # quality signal.
+        unreadable = total_assistant_turns == 0 and n > 0
+        if unreadable:
+            checks["dialogues_readable"] = {
+                "value": 0,
+                "floor": 1,
+                "comparator": "min",
+                "passed": False,
+                "note": "no assistant turns could be parsed — the messages column was not understood",
+            }
 
         overall = "pass" if all(c["passed"] for c in checks.values()) else "fail"
         return {
