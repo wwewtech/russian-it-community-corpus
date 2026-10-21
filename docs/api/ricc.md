@@ -3,8 +3,12 @@
 ```python
 import ricc
 
-print(ricc.__version__)  # "12.1.0"
+print(ricc.__version__)  # "12.2.0"
 ```
+
+`import ricc` is cheap: `Settings` and `MasterDataPipeline` are resolved
+lazily (PEP 562), so importing a stdlib-only submodule such as
+`ricc.ml_runtime` does not drag in pandas, pydantic and torch.
 
 ## Configuration
 
@@ -20,11 +24,21 @@ settings.BASE_DIR
 settings.PARQUET_OUTPUT_DIR
 settings.MINHASH_NUM_PERM
 settings.DOMAIN_TAXONOMY
-# ...
+
+# The nested parameter sections come from params.yaml
+settings.pii_audit.sample_size  # 100000
+settings.pii_audit.confidence  # 0.99
+settings.pii_audit.max_leak_tolerance  # 1e-4
+settings.drift.psi_stable
+settings.benchmarks.humaneval_tasks
 
 # Custom instance
 custom = Settings(minhash_num_perm=256, pii_audit=PIIAuditSettings(sample_size=100000))
 ```
+
+`params.yaml` is the single source of these values — they are read at
+boot, so editing it changes the runtime behaviour (the audit, the drift
+thresholds, the benchmark sizes) without a code edit.
 
 ### Environment Variables
 
@@ -98,6 +112,61 @@ PIPELINE_STAGE_TOTAL.labels(stage="ingestion", status="success").inc()
 - `ricc_drift_psi_value` — Gauge
 - `ricc_validation_result_total` — Counter per check/status
 - `ricc_slo_gate_verdict_total` — Counter per verdict
+
+## Gates and Contracts
+
+### `ricc.lora.policy_gate` — what may be published
+
+```python
+from ricc.lora.policy_gate import (
+    assert_publishable,
+    canonical_full_run,
+    evaluate_compliance,
+)
+
+report = evaluate_compliance("lora_adapters/qwen2.5_3b_instruct")
+report.compliant  # bool
+report.reasons  # why not, when it is not
+report.coverage_pct
+
+# Raises PolicyViolation when the adapter covered less than one full
+# epoch of the corpus, or was stopped by a wall-clock budget.
+assert_publishable("lora_adapters/qwen2.5_3b_instruct")
+
+# The canonical command for the current corpus size.
+canonical_full_run(173216)["command"]
+```
+
+### `ricc.schema_version` — the published contract
+
+```python
+from ricc.schema_version import (
+    DATASET_SCHEMA_VERSION,
+    contract_manifest,
+    get_schema,
+    schema_fingerprint,
+    verify_against_file,
+)
+
+DATASET_SCHEMA_VERSION  # "1.0.0"
+schema_fingerprint()  # hash of the whole contract
+get_schema("full_clean_messages").names
+verify_against_file("data/full_clean_messages.parquet", "full_clean_messages")
+# -> [] when the file matches the contract, otherwise the list of problems
+```
+
+### `ricc.evaluation.statistical_power` — the confidence machinery
+
+```python
+from ricc.evaluation.statistical_power import (
+    mcnemar_test,
+    required_sample_size,
+    wilson_interval,
+)
+
+wilson_interval(3, 40, 0.95)
+mcnemar_test([(True, False), (False, True)])  # paired comparison
+```
 
 ## Error Handling
 

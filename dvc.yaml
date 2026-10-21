@@ -195,8 +195,9 @@ stages:
 
   # Stage 12: SLO Gate - Final release decision
   slo:
-    cmd: python -m ricc.monitoring.slo_gate --json-out reports/slo_verdict.json
+    cmd: python scripts/dvc_stages.py slo
     deps:
+      - scripts/dvc_stages.py
       - ricc/monitoring/slo_gate.py
       - ricc/validation/artifact_manifest.py
       - ricc/validation/hub_reconciliation.py
