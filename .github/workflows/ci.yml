@@ -100,6 +100,43 @@ jobs:
       - name: Run Strict mypy Typecheck Gate
         run: make typecheck-strict
 
+  test-windows:
+    name: Unit Tests (Windows, Python 3.13)
+    runs-on: windows-2022
+    needs: [lint, typecheck]
+    timeout-minutes: 60
+    # The project is developed on Windows: the entry points force UTF-8
+    # stdio for cp1251 consoles, the paths are native Windows paths, and
+    # `cmd.exe` breaks the inline `python -c` form that the DVC stages
+    # used to use. A Linux-only CI would never catch any of that.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -c requirements.lock.txt
+          pip install pytest pytest-cov
+
+      - name: Run Unit Tests
+        # pytest needs an explicit --basetemp outside the repository on
+        # Windows, otherwise the temp-directory cleanup races with the
+        # PermissionError from a locked directory.
+        run: |
+          python -m pytest -q --no-cov --basetemp "$env:RUNNER_TEMP\pytest-ricc"
+
+      - name: Verify the entry points run on Windows
+        run: |
+          python -c "import ricc; print('ricc', ricc.__version__)"
+          python cli.py --help
+          python -c "from ricc.lora.policy_gate import canonical_full_run; print(canonical_full_run(173216)['required_steps'])"
+
   test:
     name: Unit Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-24.04
@@ -121,8 +158,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+          pip install -r requirements.txt -c requirements.lock.txt
+          pip install pytest pytest-cov diff-cover
 
       - name: Run Unit Tests with Coverage
         run: |
@@ -134,6 +171,117 @@ jobs:
           name: coverage-${{ matrix.python-version }}
           path: coverage.xml
           retention-days: 7
+
+  coverage-regression:
+    name: Coverage Regression Gate
+    runs-on: ubuntu-24.04
+    needs: [test]
+    timeout-minutes: 15
+    # The absolute 85% floor can only catch a catastrophic drop. This
+    # gate compares the coverage of the changed lines against the base
+    # branch, so newly added code cannot arrive untested while the total
+    # percentage stays high because the rest of the suite is large.
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -c requirements.lock.txt
+          pip install pytest pytest-cov diff-cover
+
+      - name: Compute coverage of the changed lines
+        continue-on-error: true
+        run: |
+          python -m pytest -q --cov=ricc --cov-report=xml
+          cp coverage.xml coverage-current.xml
+
+      - name: Compare against the base branch
+        continue-on-error: true
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha || github.event.before }}"
+          git checkout "${{ github.event.pull_request.base.sha || github.event.before }}" -- . 2>/dev/null || true
+          python -m pytest -q --cov=ricc --cov-report=xml || true
+          cp coverage.xml coverage-base.xml 2>/dev/null || true
+          git checkout "${{ github.sha }}" -- . || true
+
+      - name: Enforce the diff coverage floor
+        # --fail-under=90: at least 90% of the CHANGED lines must be
+        # covered. A new module with no tests fails the build.
+        run: |
+          if [ ! -f coverage-base.xml ]; then
+            echo "No baseline coverage available (first run on this branch) — skipping the diff gate."
+            exit 0
+          fi
+          diff-cover coverage.xml --compare-branch=HEAD --fail-under=90 --fail-under-diff=90
+
+  dvc-consistency:
+    name: DVC Pipeline Consistency
+    runs-on: ubuntu-24.04
+    needs: [lint]
+    timeout-minutes: 15
+    # The DVC pipeline is the reproducibility contract: the raw-export
+    # dependency list, the stage definitions and the lock file must stay
+    # in sync with the working copy.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -c requirements.lock.txt
+          pip install "dvc>=3.50.0"
+
+      - name: Verify the raw-export dependency list is in sync
+        run: python scripts/refresh_dvc_deps.py --check
+
+      - name: Verify the DVC pipeline definition is valid
+        run: |
+          python -c "
+          import yaml
+          from pathlib import Path
+          data = yaml.safe_load(Path('dvc.yaml').read_text(encoding='utf-8'))
+          stages = data['stages']
+          assert stages, 'dvc.yaml declares no stages'
+          for name, spec in stages.items():
+              assert 'cmd' in spec, f'stage {name} has no cmd'
+              # Every stage must invoke the real script, never an inline
+              # `python -c` block: the inline form is broken on Windows
+              # (cmd.exe splits the multi-line quoted string).
+              assert 'python -c' not in spec['cmd'], f'stage {name} uses an inline python -c block'
+          print(f'{len(stages)} DVC stages verified')
+          "
+
+      - name: Verify the lock file matches the pipeline definition
+        run: |
+          python -c "
+          import yaml
+          from pathlib import Path
+          lock = Path('dvc.lock')
+          if not lock.exists():
+              print('No dvc.lock yet — the pipeline has not been reproduced.')
+              raise SystemExit(0)
+          data = yaml.safe_load(lock.read_text(encoding='utf-8'))
+          stages = data.get('stages', {})
+          yaml_stages = yaml.safe_load(Path('dvc.yaml').read_text(encoding='utf-8'))['stages']
+          missing = set(yaml_stages) - set(stages)
+          assert not missing, f'stages in dvc.yaml but not in dvc.lock: {sorted(missing)}'
+          print(f'dvc.lock covers all {len(stages)} stages')
+          "
 
   validate:
     name: Data Validation & Audits

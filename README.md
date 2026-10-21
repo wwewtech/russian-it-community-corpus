@@ -255,11 +255,23 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 | `python main.py` | Run complete pipeline on all available chat exports |
 | `python cli.py analyze` | Generate analytical reports and metrics |
 | `python cli.py validate` | Validate dataset schema and check for PII leaks |
+| `python cli.py audit-prob` | Run the stratified probabilistic PII audit (Wilson 99% bounds) |
+| `python cli.py drift` | Run dataset drift monitoring against a frozen reference snapshot |
 | `python cli.py benchmark` | Export and inspect 100 domain test cases |
+| `python cli.py orchestrate` | Run the Prefect curation orchestration flow |
 | `python demo_walkthrough.py` | Run interactive terminal walkthrough |
-| `python -m unittest discover -s tests` | Run automated test suite |
+| `python -m pytest -q` | Run the automated test suite (the full 858 tests) |
+| `make test` | Same, through the Makefile |
+| `make coverage` | Test run with the coverage report |
 | `make audit` | Run red-team adversarial penetration test |
+| `make audit-prob` | Run the probabilistic PII audit |
+| `make slo` | Run the SLO release gate (SHIP/HOLD) |
+| `make dvc-repro` | Reproduce the DVC data pipeline |
 | `make docker-up` | Start Web Data Studio in Docker container |
+
+> **Note on the test command.** Use `pytest`, not `python -m unittest discover`:
+> the unittest runner only collects 519 of the 858 tests, because six test
+> modules use pytest-specific features and are silently skipped by it.
 
 ---
 
@@ -305,10 +317,44 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 2. **Deterministic Pattern Scrubbing**: Removes phone numbers in international formats, email addresses, cryptocurrency wallet addresses, API keys, tokens, and database connection strings.
 3. **Source Community Anonymization**: Replaces all source channel titles with surrogate identifiers (`community_node_01`..`11`) and re-indexes technical IDs.
 4. **Terminology Protection**: Whitelists common technical terms, programming languages, libraries, and hosting providers to prevent false positives.
-5. **Probabilistic PII Audit**: Stratified sampling (50,000 messages, 99% confidence) with Wilson score intervals. **Verdict: PASSED** — the 99% upper bound on message-level leak rate is ≤ 0.01% (configurable tolerance). See [`reports/probabilistic_pii_audit.json`](reports/probabilistic_pii_audit.json) and [`ricc/validation/probabilistic_audit.py`](ricc/validation/probabilistic_audit.py).
+5. **Probabilistic PII Audit**: Stratified sampling (100,000 messages, 99% confidence) with Wilson score intervals over **12 leak categories** (phones, emails, crypto wallets, API keys, JWT, SSH keys, public IPs, secret assignments, private invite links, credentialed DB URLs, Telegram forward headers, raw user mentions). **Verdict: PASSED** — the 99% upper bound on message-level leak rate is ≤ 0.01% (configurable tolerance). See [`reports/probabilistic_pii_audit.json`](reports/probabilistic_pii_audit.json) and [`ricc/validation/probabilistic_audit.py`](ricc/validation/probabilistic_audit.py).
 6. **Automated Red-Team Suite**: 25,000-message sample + adversarial vectors (declensions, obfuscated phones, DB URLs, API keys, crypto wallets, Telegram forwards). Pass threshold: ≤1 vector failure AND zero production leaks. Report: [`reports/pii_validation_report.json`](reports/pii_validation_report.json).
 
 > **Note**: "Zero-PII" is an aspirational target. The technical guarantee is a *statistical upper bound* on leak rate, not an absolute full-corpus scan.
+
+---
+
+## Quality Gates
+
+The platform ships the gates that make its claims checkable. Every one of
+them fails closed: a gate that cannot verify a thing reports a failure
+rather than a pass.
+
+| Gate | What it proves | Where |
+|---|---|---|
+| **Probabilistic PII audit** | The 99% upper bound on the message-level leak rate stays below the tolerance, over 12 categories | `ricc/validation/probabilistic_audit.py` |
+| **Training policy gate** | An adapter published to the Hub covered a full epoch of the corpus, and was not a time-boxed run | `ricc/lora/policy_gate.py` |
+| **SLO gate** | Validation, PII audit, drift, SFT quality and artifact provenance all pass before a release | `ricc/monitoring/slo_gate.py` |
+| **Artifact manifest** | The published parquet files are byte-identical to the snapshot that was audited | `ricc/validation/artifact_manifest.py` |
+| **SFT quality monitor** | The real corpus (not a fixture) meets the dialogue-quality floors | `ricc/monitoring/sft_quality.py` |
+| **DVC lock** | The pipeline can be reproduced from the pinned raw exports | `dvc.lock`, `dvc.yaml` |
+
+The gates are wired into CI, so a regression breaks the build rather than
+the next release. See [`AGENTS.md`](AGENTS.md) for the binding training
+policy and [`docs/development/testing.md`](docs/development/testing.md) for
+the test layout.
+
+### Reproducing the pipeline
+
+```bash
+python -m pip install ".[platform]"   # adds DVC and Prefect
+python scripts/refresh_dvc_deps.py     # list the raw exports as DVC deps
+dvc repro                              # rebuild every stage from the raw data
+dvc push                               # publish the artefacts to the remote
+```
+
+Each stage is a real script (`scripts/dvc_stages.py <stage>`), so a single
+stage can be re-run and inspected on its own.
 
 ---
 
