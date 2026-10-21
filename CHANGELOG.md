@@ -12,12 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **The published wheel could not be imported at all.** `packages.find(where=["src"])`
   put the subpackages at the wheel's top level while every module imported
-  `from src.config import ...` — a package that was not in the wheel. Installing
+  `from ricc.config import ...` — a package that was not in the wheel. Installing
   it gave `ModuleNotFoundError: No module named 'src'`, and the console script
   `it-pipeline` failed the same way. The package now lives at the repository
   root as `ricc/`, ships `py.typed` and `params.yaml` as package data, and
   imports `Settings`/`MasterDataPipeline` lazily (PEP 562) so
   `import ricc.ml_runtime` does not drag in pandas, pydantic and torch.
+- **`--force` destroyed the resume points of a long run.** It deleted the
+  whole adapter directory, including the checkpoints, and
+  `save_total_limit=2` kept only two of them — so a 21 420-step run
+  (≈25 h on a 3B model) could neither be continued nor safely
+  interrupted. `--force` now clears the finished adapter but KEEPS the
+  checkpoints, and the limit is configurable (`--save-total-limit`,
+  default 10).
 - **The PII audit could certify a corpus it never read.** A parquet without
   the audited `text_clean` column produced an empty string for every row, so
   zero leaks were "found" and the report claimed PASSED with a 99 %
@@ -109,6 +116,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in batches: 29 row groups instead of 3, and the peak memory is bounded by
   the row group instead of growing with the corpus. The schema is pinned,
   the write is atomic, and the version travels in the file metadata.
+- **Streaming PII and deduplication stages** — `process_stream`,
+  `deduplicate_stream` and `MinHashLSH.deduplicate_stream` take an iterable
+  and yield their result, so the pipeline no longer holds the input list and
+  the output list at the same time. The raw messages are released as soon as
+  the PII stage is done.
+- **Documentation publishing** — a `docs-publish` job deploys the 40+ page
+  documentation to GitHub Pages. Until now it was built in CI and thrown
+  away: the site was never published anywhere.
 - **Dataset contract manifest** — `ricc/schema_version.py` declares the
   columns, order and types of every artefact, with a fingerprint; the
   validator enforces it and CI keeps the manifest in sync.
@@ -389,7 +404,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed (documentation accuracy)
 - **`reports/DATASET_AND_ANALYTICS.md`**: Corrected `TECH_WHITELIST` size claim from «4,500+» to **276** entries.
-  The previous figure was never backed by code; `len(src.pii.ner_scrubber.TECH_WHITELIST)` returns 276.
+  The previous figure was never backed by code; `len(ricc.pii.ner_scrubber.TECH_WHITELIST)` returns 276.
   The whitelist covers the essential coverage domain (languages, frameworks, cloud tools, tech terms in RU+EN)
   and is functionally sufficient — the number was simply wrong in the docs.
 - **`docs/architecture.md`**: Updated test count from outdated 271 (v12.0.2 baseline) to current **298**

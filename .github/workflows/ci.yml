@@ -78,6 +78,88 @@ jobs:
         # 12.2.0 docs gate was introduced).
         run: python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/site"
 
+  docs-publish:
+    name: Publish Documentation
+    runs-on: ubuntu-24.04
+    needs: [docs]
+    if: github.event_name == 'push' || github.event_name == 'release'
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    # The documentation is 40+ pages of architecture decisions, usage
+    # guides and API references. Until this job existed it was built in CI
+    # and thrown away — the site was never published anywhere.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install mkdocs
+        run: python -m pip install mkdocs==1.6.1 mkdocs-material mkdocs-autorefs mkdocstrings[python] mkdocs-minify-plugin
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Publish to GitHub Pages
+        # `mkdocs gh-deploy` pushes the built site to the gh-pages branch.
+        run: python -m mkdocs gh-deploy --force --strict
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  eval-suites:
+    name: Evaluation Suites Smoke
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck]
+    timeout-minutes: 20
+    # The four evaluation suites total ~4000 lines and are the only place
+    # the published benchmark numbers come from. Until now nothing but
+    # the mypy list referenced them, so a suite could be broken — or, as
+    # happened, could silently copy the base results into the LoRA
+    # column — without any job noticing. This job imports every suite
+    # and exercises its public entry point with a stubbed model, so a
+    # broken suite fails the build.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -c requirements.lock.txt
+
+      - name: Every evaluation suite must import and expose its entry point
+        run: |
+          python -c "
+          import importlib, inspect
+          suites = {
+              'ricc.evaluation.official_academic_benchmarks': 'run_official_academic_benchmarks',
+              'ricc.evaluation.deep_multi_experiment_suite': 'run_benchmark_experiment_suite',
+              'ricc.evaluation.enterprise_production_eval_suite': 'evaluate_enterprise_production_matrix',
+              'ricc.evaluation.sota_expert_benchmark_showcase': 'run_sota_showcase',
+          }
+          for module_name, entry in suites.items():
+              module = importlib.import_module(module_name)
+              assert hasattr(module, entry), f'{module_name} has no {entry}()'
+              assert callable(getattr(module, entry)), f'{module_name}.{entry} is not callable'
+              print(f'{module_name}.{entry} OK')
+          print('all evaluation suites are wired')
+          "
+
+      - name: The suites must not copy a base result into the LoRA column
+        run: |
+          python -m pytest -q --no-cov tests/test_eval_no_base_copy.py
+
   typecheck:
     name: Typecheck (Strict)
     runs-on: ubuntu-24.04

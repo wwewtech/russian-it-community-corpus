@@ -76,7 +76,7 @@ This is the pattern used in `deep_multi_experiment_suite.py` and
 | Date | Scope | Errors fixed |
 |---|---|---|
 | 2026-09-17 | engine, graph, inference, pipeline, finalize_sync_all, statistical_power, benchmark_comparator | (initial set, 31 modules) |
-| 2026-10-12 | src.lora.\* (5 modules), official_academic_benchmarks, benchmark_comparator annotation fix | 41 + 2 |
+| 2026-10-12 | ricc.lora.\* (5 modules), official_academic_benchmarks, benchmark_comparator annotation fix | 41 + 2 |
 | 2026-10-14 | deep_multi_experiment_suite, enterprise_production_eval_suite, sota_expert_benchmark_showcase | 89 + 34 + 29 |
 
 Version history lives in `pyproject.toml` comments and the

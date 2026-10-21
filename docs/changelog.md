@@ -34,7 +34,7 @@ All notable changes to RICC are documented here.
 - **MkDocs Documentation**: `mkdocs.yml` with Material theme, mkdocstrings for auto API reference
 
 ### Changed
-- Migrated 11 source files from `src.config` imports to `src.settings`
+- Migrated 11 source files from `ricc.config` imports to `ricc.settings`
 - Updated `cli.py` with backward-compat constants for tests
 - Refactored `MasterDataPipeline` to use observability metrics + structured logging
 - Updated `bootstrap.py` to configure structured logging

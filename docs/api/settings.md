@@ -4,7 +4,7 @@
 `pydantic-settings`.
 
 ```python
-from src.settings import Settings, settings  # settings is a singleton
+from ricc.settings import Settings, settings  # settings is a singleton
 
 settings.PARQUET_OUTPUT_DIR  # Path
 settings.load_params()  # dict — full params.yaml

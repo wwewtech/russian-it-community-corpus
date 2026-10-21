@@ -9,8 +9,8 @@
 
 The codebase started with mypy in "slow mode": strict checks only for a
 hand-picked module list (`make typecheck-strict`), with
-`[[tool.mypy.overrides]] ignore_errors` masking `src.evaluation.*` and
-`src.lora.*` — the heaviest, most failure-prone code in the repo (GPU
+`[[tool.mypy.overrides]] ignore_errors` masking `ricc.evaluation.*` and
+`ricc.lora.*` — the heaviest, most failure-prone code in the repo (GPU
 training, benchmark harnesses).
 
 This was a deliberate trade-off, not an accident: transformers/peft ship
@@ -34,7 +34,7 @@ errors in code nobody was ready to refactor. The cost was real, though:
 2. **The rollout is per-module, gated, and monotonic.** Modules enter
    `make typecheck-strict` one at a time, only when clean. Once in, never
    out. History: 31 modules (2026-09-17) → 40 (2026-10-12, phase 1:
-   `src.lora.*` + academic benchmarks, 43 errors) → 43 (2026-10-14,
+   `ricc.lora.*` + academic benchmarks, 43 errors) → 43 (2026-10-14,
    phase 2: the three heavy eval suites, 152 errors).
 3. **`cast(Any, ...)` is the single sanctioned fence** for untyped
    third-party calls (transformers/peft). Bare `# type: ignore` is banned

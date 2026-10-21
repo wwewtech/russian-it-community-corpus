@@ -92,6 +92,65 @@ class TestBudgets(unittest.TestCase):
         self.assertLess(FULL_PROFILE_EVAL_FRAC, 0.1)
 
 
+class TestForceKeepsTheCheckpoints(unittest.TestCase):
+    """``--force`` must not throw away the resume points.
+
+    The canonical full run is 21 420 steps (~25 h on a 3B model). The
+    checkpoints are the only way to CONTINUE such a run instead of
+    starting it again, so ``--force`` deletes the finished adapter but
+    keeps the checkpoints. Deleting them too would make the retraining
+    impossible to resume, and ``save_total_limit=2`` would delete every
+    resume point within a thousand steps.
+    """
+
+    def test_cleanup_keeps_checkpoints_and_removes_the_stale_adapter(self):
+        import shutil
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir) / "demo"
+            out_dir.mkdir(parents=True)
+            for step in (100, 200):
+                checkpoint = out_dir / f"checkpoint-{step}"
+                checkpoint.mkdir()
+                (checkpoint / "trainer_state.json").write_text("{}", encoding="utf-8")
+            (out_dir / "adapter_model.safetensors").write_bytes(b"\0" * 16)
+            (out_dir / "adapter_config.json").write_text("{}", encoding="utf-8")
+            (out_dir / "stale.txt").write_text("old", encoding="utf-8")
+
+            # The cleanup block of the trainer, verbatim.
+            checkpoints = [p for p in out_dir.glob("checkpoint-*") if p.is_dir()]
+            for stale in out_dir.iterdir():
+                if stale in checkpoints:
+                    continue
+                if stale.is_dir():
+                    shutil.rmtree(stale)
+                else:
+                    stale.unlink()
+
+            remaining = sorted(p.name for p in out_dir.iterdir())
+            self.assertEqual(
+                [n for n in remaining if n.startswith("checkpoint-")],
+                ["checkpoint-100", "checkpoint-200"],
+            )
+            self.assertNotIn("stale.txt", remaining)
+            self.assertNotIn("adapter_model.safetensors", remaining)
+
+    def test_the_default_checkpoint_limit_keeps_several_resume_points(self):
+        """Two checkpoints are not enough for a 21 420-step run."""
+        import inspect
+
+        from ricc.lora.batch_train_zoo import train_and_upload_single_model
+
+        signature = inspect.signature(train_and_upload_single_model)
+        default = signature.parameters["save_total_limit"].default
+        self.assertGreaterEqual(
+            default,
+            5,
+            "the checkpoint limit must leave several resume points for a long run",
+        )
+
+
 class _FakeSiLUActivation(torch.nn.Module):
     """Mirrors transformers' SiLUActivation wired as ``...activation_fn``."""
 

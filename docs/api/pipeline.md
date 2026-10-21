@@ -1,9 +1,9 @@
 # Pipeline API
 
-`src.pipeline.MasterDataPipeline` — end-to-end orchestration.
+`ricc.pipeline.MasterDataPipeline` — end-to-end orchestration.
 
 ```python
-from src.pipeline import MasterDataPipeline
+from ricc.pipeline import MasterDataPipeline
 
 pipeline = MasterDataPipeline()  # uses settings.RAW_EXPORT_DIRS
 summary = pipeline.run_all()  # runs all 7 stages
@@ -43,7 +43,7 @@ MasterDataPipeline(raw_export_dirs: list[Path] | None = None)
 
 `OUTPUT_DIR`, `PARQUET_OUTPUT_DIR`, `JSONL_OUTPUT_DIR`,
 `SAMPLES_OUTPUT_DIR`, `REPORTS_DIR`, `RAW_EXPORT_DIRS` are re-exported
-from `src.settings` for backward compatibility with tests that patch
+from `ricc.settings` for backward compatibility with tests that patch
 them.
 
 ## CLI

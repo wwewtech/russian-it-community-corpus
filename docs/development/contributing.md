@@ -30,7 +30,7 @@ versions (`ruff==0.16.2`, `mypy==2.3.1`).
 2. **Single formatter**: ruff format. (The Black fallback hook was
    removed — it disagreed with ruff and blocked commits.)
 3. **No bare `# type: ignore`** on new code.
-4. **Errors are typed.** Raise from `src.errors` hierarchy; raw torch/HF
+4. **Errors are typed.** Raise from `ricc.errors` hierarchy; raw torch/HF
    exceptions in train/eval entry points go through
    `record_classified_ml_error()`.
 5. **Metrics are deliberate.** A new metric name must be added to the

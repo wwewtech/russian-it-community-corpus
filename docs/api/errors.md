@@ -5,7 +5,7 @@ All RICC exceptions derive from `RICCError` and carry structured context
 logged, counted in Prometheus, and acted on programmatically.
 
 ```python
-from src.errors import GPUOutOfMemoryError, classify_ml_exception, RICCError
+from ricc.errors import GPUOutOfMemoryError, classify_ml_exception, RICCError
 ```
 
 ## Hierarchy Overview
@@ -82,7 +82,7 @@ driver errors and returns the typed exception with the original chained
 into context:
 
 ```python
-from src.errors import classify_ml_exception
+from ricc.errors import classify_ml_exception
 
 try:
     trainer.train()
@@ -107,7 +107,7 @@ except Exception as exc:
 and recording in one call (used by all train/eval entry points):
 
 ```python
-from src.observability import record_classified_ml_error
+from ricc.observability import record_classified_ml_error
 
 except Exception as exc:
     typed = record_classified_ml_error(exc, model_name=..., adapter_id=...)

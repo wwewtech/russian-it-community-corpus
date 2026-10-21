@@ -9,7 +9,7 @@ names in one place. Everything is defined in `ricc/observability/__init__.py`.
 The Streamlit Data Studio starts the metrics server automatically:
 
 ```python
-from src.observability import maybe_start_metrics_server
+from ricc.observability import maybe_start_metrics_server
 
 maybe_start_metrics_server(int(os.getenv("RICC_METRICS_PORT", "9090")))
 ```
@@ -55,7 +55,7 @@ docker compose --profile observability up   # Prometheus :9091, Grafana :3000
 ## Recording Helpers
 
 ```python
-from src.observability import (
+from ricc.observability import (
     record_stage_messages,  # (stage, count)
     record_pii_leak,  # (category, count=1)
     record_validation,  # (check, passed)
@@ -64,7 +64,7 @@ from src.observability import (
     record_ml_error,  # (typed_error) -> component
     record_classified_ml_error,  # (raw_exc, **ctx) -> typed RICCError
     record_lora_result,  # (model=, adapter=, status=, duration_sec=, loss=, steps=, vram_bytes=)
-    record_drift_metrics,  # (drift_report_dict)  — in src.monitoring.drift
+    record_drift_metrics,  # (drift_report_dict)  — in ricc.monitoring.drift
     time_stage,  # context manager: duration + success/failure counter
     timed_stage,  # decorator form of time_stage
 )
@@ -94,12 +94,12 @@ against the `ML_COMPONENTS` allowlist to bound label cardinality.
 ## Structured Logging
 
 ```python
-from src.observability import configure_logging, get_logger
+from ricc.observability import configure_logging, get_logger
 
 configure_logging(json_output=True)  # done once by setup_runtime_env()
 log = get_logger("my_module")
 log.info("stage_completed", stage="dedup", removed=123)
 ```
 
-Entry-point scripts call `src.bootstrap.setup_runtime_env()`, which
+Entry-point scripts call `ricc.bootstrap.setup_runtime_env()`, which
 configures UTF-8 stdio, HF cache env vars and JSON logging in one call.

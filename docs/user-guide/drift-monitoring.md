@@ -73,7 +73,7 @@ The Grafana panel "Drift metrics" plots the three gauges; the alert
 ## In Code
 
 ```python
-from src.monitoring.drift import DatasetDriftMonitor
+from ricc.monitoring.drift import DatasetDriftMonitor
 
 monitor = DatasetDriftMonitor(ref_df, cur_df)
 report = monitor.run()  # dict, not persisted

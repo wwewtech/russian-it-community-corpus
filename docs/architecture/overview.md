@@ -17,13 +17,13 @@ graph TD
 
 | Stage | Module | Input | Output |
 |-------|--------|-------|--------|
-| 1. Ingestion | `src.ingestion.loader` | JSON exports | `NormalizedMessage[]` |
-| 2. PII Anonymization | `src.pii.deep_anonymizer` | `NormalizedMessage[]` | `CleanedMessage[]` |
-| 3. Deduplication | `src.deduplication.*` | `CleanedMessage[]` | `CleanedMessage[]` (deduped) |
-| 4. Taxonomy Tagging | `src.taxonomy.tagger` | `CleanedMessage[]` | `CleanedMessage[]` (tagged) |
-| 5. Graph Extraction | `src.graph.*` | `CleanedMessage[]` | `SFTDialogue[]`, `RAGChunk[]`, `DPOPair[]` |
-| 6. Export | `src.exporter.*` | Datasets | Parquet + JSONL |
-| 7. Analytics/Validation | `src.analytics.*`, `src.validation.*` | Artifacts | Reports + SLO verdict |
+| 1. Ingestion | `ricc.ingestion.loader` | JSON exports | `NormalizedMessage[]` |
+| 2. PII Anonymization | `ricc.pii.deep_anonymizer` | `NormalizedMessage[]` | `CleanedMessage[]` |
+| 3. Deduplication | `ricc.deduplication.*` | `CleanedMessage[]` | `CleanedMessage[]` (deduped) |
+| 4. Taxonomy Tagging | `ricc.taxonomy.tagger` | `CleanedMessage[]` | `CleanedMessage[]` (tagged) |
+| 5. Graph Extraction | `ricc.graph.*` | `CleanedMessage[]` | `SFTDialogue[]`, `RAGChunk[]`, `DPOPair[]` |
+| 6. Export | `ricc.exporter.*` | Datasets | Parquet + JSONL |
+| 7. Analytics/Validation | `ricc.analytics.*`, `ricc.validation.*` | Artifacts | Reports + SLO verdict |
 
 ## Key Design Principles
 

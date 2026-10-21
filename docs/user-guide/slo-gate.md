@@ -5,7 +5,7 @@ release verdict. Exit code 0 = **SHIP**, 1 = **HOLD**; missing proof is
 fail-closed for privacy signals.
 
 ```bash
-make slo   # = python -m src.monitoring.slo_gate --json-out reports/slo_verdict.json
+make slo   # = python -m ricc.monitoring.slo_gate --json-out reports/slo_verdict.json
 ```
 
 ## Checks
