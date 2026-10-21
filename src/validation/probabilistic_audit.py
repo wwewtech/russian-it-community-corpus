@@ -22,6 +22,7 @@ guarantee. This module upgrades the audit to a *probabilistic* one:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -29,6 +30,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from src.evaluation.statistical_power import (
@@ -69,6 +71,36 @@ _PUBLIC_IP_RE = re.compile(
 )
 _REDACTED_TOKEN_RE = re.compile(r"\[(?:[A-Z_]+)_REDACTED\]|@user_anon|@user_\d+|\[PERSON_REDACTED\]")
 
+# --- Categories the deterministic scrubber handles but this audit missed -----
+# The scrubber (src/pii/regex_scrubber.py) cleans strictly more categories
+# than the audit used to verify. A category that is scrubbed but never
+# audited cannot fail the audit, so "PASSED" did not mean "clean". The
+# detectors below close that gap. See docs/architecture/overview.md.
+
+# `api_key=...`, `password=...`, `access_token=...` — assignment style secrets.
+_SECRET_ASSIGNMENT_RE = re.compile(
+    r"\b(?:api[_-]?key|secret[_-]?key|access[_-]?token|refresh[_-]?token|auth[_-]?token|"
+    r"client[_-]?secret|password|passwd|pwd|token)\s*[:=]\s*"
+    r"[\"']?[A-Za-z0-9_\-\.\/\+]{8,}[\"']?",
+    re.IGNORECASE,
+)
+# Private Telegram invite links: t.me/+hash, t.me/joinchat/hash.
+_PRIVATE_INVITE_RE = re.compile(r"t\.me/(?:\+|joinchat/)[A-Za-z0-9_\-]+", re.IGNORECASE)
+# Database connection URLs with credentials: postgres://user:pass@host/db
+_DB_URL_RE = re.compile(
+    r"\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|amqp|mssql|clickhouse)://"
+    r"[^\s:@/]+:[^\s:@/]+@[^\s/]+",
+    re.IGNORECASE,
+)
+# Telegram forward headers: "Forwarded from X", "Переслано от X".
+_FORWARD_HEADER_RE = re.compile(
+    r"(?:^|\n)\s*(?:forwarded\s+from|переслано\s+от|forward\s+from)\s*[:\-]?\s*(?P<who>[^\n]{2,80})",
+    re.IGNORECASE,
+)
+# Raw @username mentions. Already-anonymised handles (@user_1, @user_anon)
+# are NOT leaks and are excluded by the negative lookahead.
+_USER_MENTION_RE = re.compile(r"(?<![\w@])@(?!user_\d+\b|user_anon\b)[A-Za-z][A-Za-z0-9_]{3,31}\b")
+
 # Loopback / well-known IPs and semantic versions are NOT leaks.
 _BENIGN_IPS = {"127.0.0.1", "0.0.0.0", "1.1.1.1", "8.8.8.8", "8.8.4.4"}  # nosec B104
 _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -81,11 +113,21 @@ DETECTORS: dict[str, re.Pattern[str]] = {
     "jwt_tokens": _JWT_RE,
     "ssh_keys": _SSH_KEY_RE,
     "public_ips": _PUBLIC_IP_RE,
+    # Categories previously scrubbed but never audited.
+    "secret_assignments": _SECRET_ASSIGNMENT_RE,
+    "private_invites": _PRIVATE_INVITE_RE,
+    "db_urls": _DB_URL_RE,
+    "forward_headers": _FORWARD_HEADER_RE,
+    "user_mentions": _USER_MENTION_RE,
 }
 
 
 def find_leaks_in_text(text: str) -> dict[str, list[str]]:
-    """Return per-category lists of raw leak matches found in one message."""
+    """Return per-category lists of raw leak matches found in one message.
+
+    Matches that are already-redacted placeholders (e.g. ``@user_12``,
+    ``[PHONE_REDACTED]``) are not leaks and are filtered out.
+    """
     if not text:
         return {}
     found: dict[str, list[str]] = {}
@@ -101,6 +143,14 @@ def find_leaks_in_text(text: str) -> dict[str, list[str]]:
                 parts = [int(p) for p in token.split(".")]
                 if parts[0] == 0 or all(p < 10 for p in parts):
                     continue  # semantic-version-like octet tuple
+            if category == "user_mentions" and _REDACTED_TOKEN_RE.fullmatch(token):
+                continue
+            if category == "forward_headers":
+                who = m.group("who").strip()
+                if not who or _REDACTED_TOKEN_RE.search(who):
+                    continue
+                # A forward header whose author was anonymised is not a leak.
+                token = who
             matches.append(token)
         if matches:
             found[category] = matches
@@ -136,7 +186,13 @@ class ProbabilisticPIIAuditor:
     # -- sampling ------------------------------------------------------------
 
     def _stratified_sample(self, df: pd.DataFrame, sample_size: int) -> pd.DataFrame:
-        """Proportional allocation across strata, deterministic via seed."""
+        """Proportional allocation across strata with independent draws per stratum.
+
+        Each stratum is drawn with its OWN derived RNG, so the selection is
+        a genuine probability sample rather than a systematic sample that
+        repeats the same relative positions in every stratum (which would
+        bias the estimate and invalidate the confidence interval).
+        """
         if len(df) <= sample_size:
             return df
         strata = df.groupby(self.strata_column, dropna=False)
@@ -156,14 +212,27 @@ class ProbabilisticPIIAuditor:
             group = strata.get_group(stratum)
             n = min(n, len(group))
             if n > 0:
-                parts.append(group.sample(n=n, random_state=self.seed))
+                # Independent RNG per stratum: a distinct, reproducible
+                # draw for every stratum instead of one shared seed.
+                rng = np.random.default_rng(self._stratum_seed(stratum))
+                idx = rng.choice(len(group), size=n, replace=False)
+                parts.append(group.iloc[np.sort(idx)])
         return pd.concat(parts) if parts else df.head(0)
+
+    def _stratum_seed(self, stratum: object) -> int:
+        """Derive a stable per-stratum seed from the base seed.
+
+        ``hash()`` is salted per process (PYTHONHASHSEED), so the stratum
+        name is folded into a deterministic digest instead.
+        """
+        digest = hashlib.blake2b(str(stratum).encode("utf-8"), digest_size=8).digest()
+        return (self.seed + int.from_bytes(digest, "big")) % (2**32)
 
     # -- audit ----------------------------------------------------------------
 
     def run_audit(
         self,
-        sample_size: int = 50_000,
+        sample_size: int = 100_000,
         confidence: float = 0.99,
         max_leak_tolerance: float = 1e-4,
     ) -> dict[str, Any]:
@@ -176,11 +245,42 @@ class ProbabilisticPIIAuditor:
             }
 
         df = pd.read_parquet(self.parquet_path)
+
+        # --- Fail closed on an unusable corpus -----------------------------
+        # Previously a missing text column produced an empty string for
+        # every row, so zero leaks were "found" and the audit reported
+        # PASSED with a confidence statement — a green light on a corpus
+        # that was never actually inspected. A missing column (or an
+        # unreadable corpus) must be SKIPPED/FAILED, never PASSED.
+        missing: list[str] = [c for c in (self.text_column, self.strata_column) if c not in df.columns]
+        if missing:
+            return {
+                "status": "FAILED_MISSING_COLUMNS",
+                "dataset_path": str(self.parquet_path),
+                "verdict": "FAILED",
+                "missing_columns": missing,
+                "available_columns": list(df.columns),
+                "note": (
+                    f"Corpus does not contain the audited column(s) {missing}. "
+                    "The audit cannot inspect these rows — reporting PASSED here would "
+                    "certify a corpus that was never read. Refusing to certify."
+                ),
+            }
+
         total_corpus = len(df)
         sample = self._stratified_sample(df, sample_size)
         sampled = len(sample)
 
+        # Two distinct quantities, kept apart on purpose:
+        #   category_leaks[cat]      -> number of MESSAGES in which the
+        #                               category leaked (the Bernoulli
+        #                               trial the Wilson interval needs)
+        #   category_instances[cat]  -> total number of raw matches
+        #                               (diagnostics only; it may exceed
+        #                               the message count and MUST NOT be
+        #                               passed to wilson_interval)
         category_leaks: dict[str, int] = {name: 0 for name in DETECTORS}
+        category_instances: dict[str, int] = {name: 0 for name in DETECTORS}
         leak_examples: dict[str, list[str]] = {name: [] for name in DETECTORS}
         messages_with_leaks = 0
         per_stratum: dict[str, dict[str, int]] = {}
@@ -197,18 +297,22 @@ class ProbabilisticPIIAuditor:
                 messages_with_leaks += 1
                 stratum_stats["leaks"] += 1
             for category, matches in found.items():
-                category_leaks[category] += len(matches)
+                # One message counts as ONE leak for this category ...
+                category_leaks[category] += 1
+                # ... while every raw match is tracked for diagnostics.
+                category_instances[category] += len(matches)
                 leak_examples[category].extend(matches[:3])
 
         # Statistical estimates per category
         category_stats: dict[str, Any] = {}
         total_leak_instances = 0
         for category, count in category_leaks.items():
-            total_leak_instances += count
+            total_leak_instances += category_instances[category]
             low, high = wilson_interval(count, sampled, confidence)
             upper = leak_rate_upper_bound(count, sampled, confidence)
             category_stats[category] = {
-                "leaks_found": count,
+                "messages_with_leak": count,
+                "leak_instances": category_instances[category],
                 "observed_rate": round(count / sampled, 8) if sampled else 0.0,
                 "ci_lower": round(low, 8),
                 "ci_upper": round(high, 8),
@@ -246,6 +350,7 @@ class ProbabilisticPIIAuditor:
                 "categories": category_stats,
             },
             "per_stratum": per_stratum,
+            "audited_categories": sorted(DETECTORS),
             "tolerance": {
                 "max_message_leak_rate": max_leak_tolerance,
                 "confidence": confidence,
@@ -253,7 +358,10 @@ class ProbabilisticPIIAuditor:
             "verdict": "PASSED" if passed else "LEAKS_DETECTED",
             "statistical_guarantee": (
                 f"With {confidence:.0%} confidence the true message-level leak rate "
-                f"does not exceed {total_upper:.2e} (tolerance {max_leak_tolerance:.0e})."
+                f"does not exceed {total_upper:.2e} (tolerance {max_leak_tolerance:.0e}). "
+                f"Measured over {len(DETECTORS)} leak categories: {', '.join(sorted(DETECTORS))}. "
+                "Personal names and locations are anonymised by the NER pass and are not "
+                "re-detected by these pattern detectors; see reports/DATASET_AND_ANALYTICS.md."
             ),
         }
         logger.info(

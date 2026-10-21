@@ -44,6 +44,11 @@ SUMMARY_MD = LORA_ROOT / "SUMMARY.md"
 HF_HUB_BASE = "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main"
 HF_DATASET_BASE = "https://huggingface.co/datasets/wwewtech/russian-it-community-corpus"
 
+# The policy gate lives in the package; make it importable when this script
+# is executed directly from the scripts/ directory.
+sys.path.insert(0, str(REPO_ROOT))
+from src.lora.policy_gate import evaluate_compliance  # noqa: E402
+
 # Skip non-adapter directories that happen to live under lora_adapters/.
 SKIP_DIR_NAMES = {"registry.json", "SUMMARY.md", "__pycache__", ".git"}
 
@@ -74,6 +79,18 @@ class AdapterEntry:
     hf_hub_url: str = ""
     local_path: str = ""
     adapter_path: str = ""
+    # Training provenance (from training_meta.json). An adapter without a
+    # training_meta.json is a legacy/pilot checkpoint: it has no recorded
+    # coverage and is NOT publishable as a final adapter under the binding
+    # training policy. See src/lora/policy_gate.py.
+    has_training_meta: bool = False
+    actual_steps: int | None = None
+    required_steps: int | None = None
+    corpus_coverage_pct: float | None = None
+    train_dialogues: int | None = None
+    time_budget_hours: float | None = None
+    policy_compliant: bool = False
+    policy_reasons: list[str] = field(default_factory=list)
 
 
 # --------------------------------------------------------------------------- #
@@ -116,6 +133,34 @@ def _scan_adapter_dir(adapter_dir: Path) -> AdapterEntry | None:
     sf_sha = _sha256_of_file(safetensors) if safetensors.is_file() else None
 
     slug = adapter_dir.name
+
+    # Training provenance: read it so the registry distinguishes a
+    # policy-compliant adapter from a partial or legacy one.
+    meta_path = adapter_dir / "training_meta.json"
+    has_meta = meta_path.is_file()
+    actual_steps: int | None = None
+    required_steps: int | None = None
+    coverage: float | None = None
+    train_dialogues: int | None = None
+    time_budget: float | None = None
+    policy_compliant = False
+    policy_reasons: list[str] = []
+    if has_meta:
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            meta = {}
+        actual_steps = meta.get("actual_steps")
+        required_steps = meta.get("required_steps_for_full_epoch")
+        coverage = meta.get("corpus_coverage_pct")
+        train_dialogues = meta.get("train_dialogues")
+        time_budget = meta.get("time_budget_hours")
+        compliance = evaluate_compliance(adapter_dir)
+        policy_compliant = compliance.compliant
+        policy_reasons = list(compliance.reasons)
+        if required_steps is None:
+            required_steps = compliance.required_steps
+
     return AdapterEntry(
         slug=slug,
         base_model=cfg.get("base_model_name_or_path") or "unknown",
@@ -134,6 +179,14 @@ def _scan_adapter_dir(adapter_dir: Path) -> AdapterEntry | None:
         has_chat_template=(adapter_dir / "chat_template.jinja").is_file(),
         hf_hub_url=f"{HF_HUB_BASE}/{slug}",
         local_path=f"lora_adapters/{slug}/",
+        has_training_meta=has_meta,
+        actual_steps=actual_steps,
+        required_steps=required_steps,
+        corpus_coverage_pct=coverage,
+        train_dialogues=train_dialogues,
+        time_budget_hours=time_budget,
+        policy_compliant=policy_compliant,
+        policy_reasons=policy_reasons,
     )
 
 
@@ -173,17 +226,39 @@ def write_summary(entries: list[AdapterEntry], out: Path = SUMMARY_MD) -> None:
     )
     lines.append("")
     lines.append(f"**Total adapters:** {len(entries)}")
+    compliant = sum(1 for e in entries if e.policy_compliant)
+    with_meta = sum(1 for e in entries if e.has_training_meta)
     lines.append("")
-    lines.append("| # | Slug | Base model | r | α | Modules | Size | HF Hub |")
-    lines.append("| :---: | :--- | :--- | :---: | :---: | :--- | :---: | :--- |")
+    lines.append(
+        f"**Policy-compliant (full epoch over the corpus):** {compliant} / {len(entries)} · "
+        f"**with recorded training provenance:** {with_meta} / {len(entries)}"
+    )
+    lines.append("")
+    lines.append(
+        "> Adapters marked `partial` or `no-provenance` are NOT final adapters under the "
+        "binding training policy (AGENTS.md) and are not published to the Hub by the "
+        "release pipeline. See `src/lora/policy_gate.py`."
+    )
+    lines.append("")
+    lines.append("| # | Slug | Base model | r | α | Modules | Size | Coverage | Policy | HF Hub |")
+    lines.append("| :---: | :--- | :--- | :---: | :---: | :--- | :---: | :---: | :--- | :--- |")
     for idx, e in enumerate(entries, 1):
         size_mb = f"{e.safetensors_bytes / (1024 * 1024):.2f} MB" if e.safetensors_bytes else "—"
         modules = ", ".join(e.target_modules) if e.target_modules else "—"
         # Markdown table cell escape for pipe character
         base = e.base_model.replace("|", "\\|")
         slug = e.slug.replace("|", "\\|")
+        if e.policy_compliant:
+            policy = "✅ compliant"
+        elif e.has_training_meta:
+            cov = f"{e.corpus_coverage_pct:.2f}%" if e.corpus_coverage_pct is not None else "—"
+            policy = f"⚠️ partial ({cov})"
+        else:
+            policy = "❌ no provenance"
+        coverage = f"{e.corpus_coverage_pct:.2f}%" if e.corpus_coverage_pct is not None else "—"
         lines.append(
-            f"| {idx} | `{slug}` | `{base}` | {e.r} | {e.lora_alpha} | {modules} | {size_mb} | [link]({e.hf_hub_url}) |"
+            f"| {idx} | `{slug}` | `{base}` | {e.r} | {e.lora_alpha} | {modules} | {size_mb} | "
+            f"{coverage} | {policy} | [link]({e.hf_hub_url}) |"
         )
     lines.append("")
     lines.append("## How to add a new adapter")

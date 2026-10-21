@@ -903,30 +903,84 @@ _SAFE_BUILTINS = {
 
 
 # Cyrillic homoglyphs that map onto Latin multiple-choice letters.
-_CYRILLIC_TO_LATIN = str.maketrans({"А": "A", "В": "B", "С": "C"})
+_CYRILLIC_TO_LATIN = str.maketrans({"А": "A", "В": "B", "С": "C", "Е": "E"})
 
 # A valid MC answer letter must be surrounded by non-word characters (or
 # string boundaries). This prevents false positives such as the "C" inside
 # "Compose" or a Cyrillic "с" inside a Russian word.
-_MC_LETTER_RE = re.compile(r"(?:^|(?<=[^\w]))([ABCDАВС])(?=$|[^\w])")
+_MC_LETTER_RE = re.compile(r"(?:^|(?<=[^\w]))([ABCDАВСЕ])(?=$|[^\w])")
+
+# An explicit answer marker immediately before the letter. Only after one
+# of these may a CYRILLIC homoglyph be accepted: without a marker, a
+# standalone "в"/"с"/"а" is an ordinary Russian word ("Я не знаю в чём
+# дело", "Это вариант с", "а и б") and would be scored as answer B/C/A.
+# The previous implementation mapped the homoglyphs anywhere in the text,
+# which is the same class of defect as the retracted substring bug: it
+# inflated the RuMMLU accuracy with answers the model never gave.
+#
+# The marker must be followed by a SEPARATOR (":", "=", "-", whitespace)
+# and then the letter. "вариант с" (meaning "the variant with") is not a
+# marker usage — there is no separator and the letter is a preposition.
+_ANSWER_MARKER_RE = re.compile(
+    r"(?:^|[\s\(\[\{>,;:])"
+    r"(?:ответ|answer|вариант|option|choice|respuesta|antwort)"
+    r"\s*(?:is|=|:|-|–)\s*"  # an explicit separator is REQUIRED
+    r"[\(\[\{]?\s*(?P<letter>[ABCDАВСЕabcdавсе])(?=$|[^\w])",
+    re.IGNORECASE,
+)
+
+# The marker form also accepts a letter in brackets right after the marker
+# word: "Ответ (в)" / "Answer - (B)". The brackets make the intent
+# unambiguous even without a punctuation separator.
+_ANSWER_MARKER_BRACKET_RE = re.compile(
+    r"(?:^|[\s\(\[\{>,;:])"
+    r"(?:ответ|answer|вариант|option|choice)"
+    r"\s*(?:is|=|:|-|–)?\s*"
+    r"[\(\[\{]\s*(?P<letter>[ABCDАВСЕabcdавсе])\s*[\)\]\}]",
+    re.IGNORECASE,
+)
 
 
 def parse_mc_answer(response: str, valid_letters: str = "ABCD") -> str | None:
     """
     Strictly extract a standalone multiple-choice letter from a model response.
 
+    Rules:
+
+    1. A LATIN letter (A-D) is accepted when it appears as a standalone
+       token. This keeps "A", "Ответ: B", "(C)" and "The answer is D" working.
+    2. A CYRILLIC homoglyph (А/В/С/Е) is accepted ONLY when it directly
+       follows an explicit answer marker ("Ответ: в", "Answer: (c)") or
+       when it is wrapped in brackets/braces right after such a marker.
+       A bare Cyrillic homoglyph in prose is a normal Russian word and is
+       never an answer: "Я не знаю в чём дело" -> None, "а и б" -> None.
+
     Fixes the false-positive bug where ``key in response[:10]`` matched any
-    occurrence of the letter anywhere (e.g. "Docker..." counted as answer "D").
-    Returns the letter only if one of A-D appears as a standalone token;
-    Cyrillic homoglyphs (А/В/С) are normalized when standalone.
+    occurrence of the letter anywhere (e.g. "Docker..." counted as answer "D")
+    and the homoglyph variant of it, where "в чём дело" scored as "B".
     """
     if not response:
         return None
-    match = _MC_LETTER_RE.search(response.strip().upper())
-    if not match:
-        return None
-    letter = match.group(1).translate(_CYRILLIC_TO_LATIN)
-    return letter if letter in valid_letters else None
+    text = response.strip()
+
+    # 1) Explicit marker + letter (the only place a Cyrillic homoglyph counts).
+    for pattern in (_ANSWER_MARKER_RE, _ANSWER_MARKER_BRACKET_RE):
+        match = pattern.search(text)
+        if match:
+            letter = match.group("letter").upper().translate(_CYRILLIC_TO_LATIN)
+            if letter in valid_letters:
+                return letter
+
+    # 2) A standalone UPPERCASE LATIN letter anywhere. The uppercase
+    # requirement is what keeps "Compose a docker file" from being read as
+    # the answer "A" (the article "a" is lowercase).
+    latin_match = re.search(r"(?:^|(?<=[^\w]))([A-Z])(?=$|[^\w])", text)
+    if latin_match:
+        letter = latin_match.group(1)
+        if letter in valid_letters:
+            return letter
+
+    return None
 
 
 def _run_in_isolated_process(code_str: str, timeout_sec: float = 2.0) -> bool:
@@ -978,8 +1032,31 @@ def _run_in_isolated_process(code_str: str, timeout_sec: float = 2.0) -> bool:
         return False
 
 
+def _docker_available() -> bool:
+    """Whether a usable Docker daemon is reachable."""
+    try:
+        proc = subprocess.run(  # nosec B603
+            ["docker", "info", "--format", "{{.ServerVersion}}"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return proc.returncode == 0
+
+
 def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "python:3.11-slim") -> bool:
-    """Execute code_str inside a rootless container with network disabled and hard memory/cpu limits."""
+    """Execute code_str inside a rootless container with network disabled and hard memory/cpu limits.
+
+    This is the only mode that provides a real security boundary: the
+    process mode limits the code to an allowlisted ``__builtins__`` dict,
+    but that is NOT a sandbox — ``().__class__.__base__.__subclasses__()``
+    reaches a live class whose ``__init__.__globals__`` exposes ``os``,
+    and the model code can then run arbitrary commands with the CI
+    user's privileges. The container mode blocks that by isolating the
+    filesystem and disabling the network.
+    """
     runner_script = (
         "import builtins, sys\n"
         "safe_names = " + repr(sorted(list(_SAFE_BUILTINS))) + "\n"
@@ -1003,6 +1080,7 @@ def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "pyt
         "-c",
         runner_script,
     ]
+    proc: subprocess.Popen[str] | None = None
     try:
         # Fixed docker invocation with pinned flags (--network none,
         # memory/cpu limits); model code arrives via stdin.
@@ -1015,13 +1093,23 @@ def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "pyt
         )
         proc.communicate(input=code_str, timeout=timeout_sec)
         return proc.returncode == 0
-    except (subprocess.TimeoutExpired, Exception):
-        try:
-            proc.kill()
-            proc.communicate()
-        except Exception:
-            pass  # deliberate: process already terminating, nothing to report
+    except subprocess.TimeoutExpired:
+        if proc is not None:
+            try:
+                proc.kill()
+                proc.communicate()
+            except Exception:
+                pass  # deliberate: process already terminating, nothing to report
         return False
+    except (OSError, subprocess.SubprocessError):
+        # Docker is unavailable or failed to start: the container mode
+        # cannot provide containment. The caller decides how to degrade.
+        logger.warning("Container isolation unavailable: %s", cmd[0])
+        raise ContainerUnavailableError("docker is not available") from None
+
+
+class ContainerUnavailableError(RuntimeError):
+    """Raised when container isolation is requested but Docker is unusable."""
 
 
 def execute_humaneval_code(
@@ -1029,10 +1117,26 @@ def execute_humaneval_code(
     task: dict[str, Any],
     timeout_sec: float = 2.0,
     *,
-    isolation_mode: str = "process",
+    isolation_mode: str = "container",
     container_image: str = "python:3.11-slim",
 ) -> bool:
-    """Execute generated Python code against standard test assertions in an isolated process/container sandbox."""
+    """Execute generated Python code against standard test assertions.
+
+    ``isolation_mode``:
+
+    * ``"container"`` (DEFAULT) — the code runs inside a Docker container
+      with ``--network none`` and hard memory/CPU limits. This is the only
+      mode that provides a real containment boundary.
+    * ``"process"`` — the code runs in a child Python process with an
+      allowlisted ``__builtins__`` dict and a timeout. This is NOT a
+      security sandbox: the allowlist is trivially escapable via
+      ``().__class__.__base__.__subclasses__()`` (a live class's
+      ``__init__.__globals__`` exposes ``os``), so model code can run
+      arbitrary commands with the caller's privileges. It is kept as an
+      explicit opt-in for environments without Docker, and it is used as
+      the fallback when Docker is unavailable — with a loud warning, so
+      that nobody mistakes it for containment.
+    """
     code_match = re.search(r"```(?:python|py)?\n(.*?)```", generated_code, re.DOTALL)
     code_to_exec = code_match.group(1).strip() if code_match else generated_code.strip()
 
@@ -1042,7 +1146,15 @@ def execute_humaneval_code(
     full_program = f"{code_to_exec}\n\n{task['test']}"
 
     if isolation_mode == "container":
-        return _run_in_container(full_program, timeout_sec=timeout_sec, image=container_image)
+        try:
+            return _run_in_container(full_program, timeout_sec=timeout_sec, image=container_image)
+        except ContainerUnavailableError:
+            logger.warning(
+                "Docker is unavailable — falling back to the process mode. "
+                "This is NOT a security boundary: the model code can reach the host "
+                "filesystem and the network through the __subclasses__ escape."
+            )
+            return _run_in_isolated_process(full_program, timeout_sec=timeout_sec)
     return _run_in_isolated_process(full_program, timeout_sec=timeout_sec)
 
 

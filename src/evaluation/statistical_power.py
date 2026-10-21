@@ -33,6 +33,25 @@ def z_score(confidence: float = 0.95) -> float:
     return (lo + hi) / 2.0
 
 
+def z_score_one_sided(confidence: float = 0.99) -> float:
+    """One-sided z-score: P(Z <= z) = ``confidence`` (e.g. 0.99 -> 2.32635...).
+
+    Used wherever the claim is one-sided ("the true rate does not exceed X"),
+    which is the case for the leak-rate upper bound. ``z_score`` is the
+    two-sided counterpart and is the wrong constant for a one-sided bound.
+    """
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+    lo, hi = 0.0, 12.0
+    for _ in range(200):
+        mid = (lo + hi) / 2.0
+        if 0.5 * (1.0 + math.erf(mid / math.sqrt(2.0))) < confidence:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
 def wilson_interval(successes: int, total: int, confidence: float = 0.95) -> tuple[float, float]:
     """Wilson score interval for a binomial proportion.
 
@@ -89,6 +108,11 @@ def required_sample_size(expected_rate: float, margin: float, confidence: float 
     """Minimum sample size to estimate a proportion within +/- ``margin``.
 
     Standard Cochran formula n = z^2 * p * (1 - p) / E^2, rounded up.
+
+    The z-score here is TWO-SIDED because the claim is a two-sided
+    +/- margin interval. Leak-rate upper bounds are one-sided and use
+    :func:`z_score_one_sided` (via :func:`leak_rate_upper_bound`); mixing
+    the two constants produced a sample size ~10% larger than needed.
     """
     if not 0.0 <= expected_rate <= 1.0:
         raise ValueError("expected_rate must be in [0, 1]")

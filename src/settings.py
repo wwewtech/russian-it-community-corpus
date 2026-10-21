@@ -21,7 +21,10 @@ class DomainTaxonomyItem(BaseSettings):
 
 
 class PIIAuditSettings(BaseSettings):
-    sample_size: int = 50_000
+    # 100000 keeps the one-sided 99% Wilson upper bound (5.41e-05 with zero
+    # observed leaks) below max_leak_tolerance (1e-04). 50000 would give
+    # 1.08e-04 and report a false LEAKS_DETECTED on a clean corpus.
+    sample_size: int = 100_000
     confidence: float = 0.99
     max_leak_tolerance: float = 1e-4
 

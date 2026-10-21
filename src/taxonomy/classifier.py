@@ -43,7 +43,10 @@ class DomainClassifier:
             for domain in self.kw_to_domains[kw]:
                 scores[domain] += 1
 
-        sorted_domains = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        # Deterministic ordering: higher score first, ties broken alphabetically by domain name.
+        # Sorting on score alone would make the winner depend on dict iteration order,
+        # which varies with PYTHONHASHSEED and breaks corpus reproducibility.
+        sorted_domains = sorted(scores.items(), key=lambda x: (-x[1], x[0]))
         best_domain, best_count = sorted_domains[0]
         total_matches = sum(scores.values())
         confidence = round(best_count / total_matches, 3)

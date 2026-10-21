@@ -58,5 +58,45 @@ class TestRequirementsLock(unittest.TestCase):
             self.assertRegex(line, r"^[A-Za-z0-9._-]+==\S+$", f"non-exact pin: {line!r}")
 
 
+class TestToolVersionPinsAgree(unittest.TestCase):
+    """ruff and mypy must be pinned identically everywhere.
+
+    The three places that pin the linter/type-checker drifted apart
+    (pyproject said ruff 0.17.1 / mypy 2.4.0, CI and pre-commit used
+    0.16.2 / 2.3.1), so ``make lint`` locally did not reproduce CI and
+    a lint failure could appear in one place only. pyproject.toml is the
+    source of truth; the other two must agree with it.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        cls.ci = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        cls.precommit = (REPO_ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+
+    @staticmethod
+    def _pyproject_pin(text: str, tool: str) -> str:
+        match = re.search(rf'"{tool}==([0-9][^"]*)"', text)
+        if not match:
+            raise AssertionError(f"{tool} is not pinned in pyproject.toml")
+        return match.group(1)
+
+    @staticmethod
+    def _ci_env(text: str, tool: str) -> str:
+        match = re.search(rf"{tool.upper()}_VERSION:\s*\"([0-9][^\"]*)\"", text)
+        if not match:
+            raise AssertionError(f"{tool.upper()}_VERSION is not set in ci.yml")
+        return match.group(1)
+
+    def test_ruff_version_agrees_everywhere(self):
+        pinned = self._pyproject_pin(self.pyproject, "ruff")
+        self.assertEqual(self._ci_env(self.ci, "ruff"), pinned, "ruff version differs between pyproject and CI")
+        self.assertIn(f"rev: v{pinned}", self.precommit, "ruff rev differs between pyproject and pre-commit")
+
+    def test_mypy_version_agrees_everywhere(self):
+        pinned = self._pyproject_pin(self.pyproject, "mypy")
+        self.assertEqual(self._ci_env(self.ci, "mypy"), pinned, "mypy version differs between pyproject and CI")
+
+
 if __name__ == "__main__":
     unittest.main()

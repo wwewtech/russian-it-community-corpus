@@ -23,6 +23,11 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.12"
+  # These MUST match the pins in pyproject.toml [project.optional-dependencies].dev
+  # and the pre-commit hook revs. The three used to disagree (pyproject said
+  # ruff 0.17.1 / mypy 2.4.0 while CI and pre-commit used 0.16.2 / 2.3.1),
+  # so `make lint` locally did not reproduce CI. tests/test_requirements_lock.py
+  # now asserts that all three agree.
   RUFF_VERSION: "0.16.2"
   MYPY_VERSION: "2.3.1"
 
@@ -147,12 +152,41 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -c requirements.lock.txt
 
-      - name: Verify lock coverage and adapter cards
+      - name: Verify lock coverage, registry sync and adapter cards
         run: |
           python scripts/lock_requirements.py --check
+          # The registry must match the on-disk adapters. The generator
+          # implements --check but CI never called it, so the promise in
+          # lora_adapters/SUMMARY.md ("CI will fail if registry.json is
+          # out of sync") was not actually enforced.
+          python scripts/generate_lora_registry.py --check
           python scripts/generate_adapter_cards.py --check
+
+      - name: Training policy gate (no non-compliant adapter may be published)
+        # Every adapter in the zoo is checked against the binding training
+        # policy (one full epoch over the corpus, not a time-boxed run).
+        # This step only REPORTS which adapters are compliant; the release
+        # pipeline refuses to upload the non-compliant ones.
+        run: |
+          python -c "
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, '.')
+          from src.lora.policy_gate import evaluate_compliance
+          root = Path('lora_adapters')
+          rows = []
+          for d in sorted(p for p in root.iterdir() if p.is_dir()):
+              rep = evaluate_compliance(d)
+              rows.append({'id': d.name, 'compliant': rep.compliant, 'coverage': rep.coverage_pct, 'reasons': rep.reasons})
+          out = {'total': len(rows), 'compliant': sum(1 for r in rows if r['compliant']), 'adapters': rows}
+          Path('reports/lora_policy_compliance.json').write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding='utf-8')
+          print(f\"policy: {out['compliant']}/{out['total']} adapters satisfy the training policy\")
+          for r in rows:
+              if not r['compliant']:
+                  print(f\"  [not publishable] {r['id']}: {r['reasons'][0] if r['reasons'] else 'n/a'}\")
+          "
 
       - name: Build synthetic parquet fixtures
         run: |
@@ -279,7 +313,8 @@ jobs:
         run: |
           # Synthetic CI fixtures intentionally HOLD (synthetic-smoke guard):
           # the gate fails closed on reports/synthetic_fixture.json.
-          # Record the verdict for humans instead of failing the smoke job.
+          # The verdict is recorded for humans; the real-corpus gate below
+          # is the one that gates the release.
           make slo || true
           echo "### SLO verdict" >> "$GITHUB_STEP_SUMMARY"
           echo '```json' >> "$GITHUB_STEP_SUMMARY"
@@ -297,7 +332,10 @@ jobs:
   slo-gate-real:
     name: SLO Release Gate (Real Corpus)
     runs-on: ubuntu-24.04
-    needs: [lint, typecheck]
+    # The real-corpus gate MUST run after the unit tests and the data
+    # validation job. It previously only depended on lint+typecheck, so it
+    # could pass (and unblock the release) while the test suite was red.
+    needs: [lint, typecheck, test, validate]
     if: github.event_name == 'push' || github.event_name == 'release'
     timeout-minutes: 30
     steps:
@@ -312,7 +350,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -c requirements.lock.txt
           pip install huggingface_hub
 
       - name: Download real corpus at pinned HF revision

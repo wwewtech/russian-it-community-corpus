@@ -11,6 +11,7 @@ Unit tests for :mod:`src.exporter.finalize_sync_all`.
 
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -28,10 +29,55 @@ from src.exporter.finalize_sync_all import (
 
 
 def _make_adapter(root: Path, name: str, weight_bytes: int = 1024) -> Path:
-    """Create a minimal but valid adapter directory under ``root``."""
+    """Create a minimal but valid adapter directory under ``root``.
+
+    The adapter is policy-compliant (a full epoch over the corpus), so the
+    release pipeline is allowed to publish it. See
+    :func:`src.lora.policy_gate.evaluate_compliance`.
+    """
     d = root / name
     d.mkdir(parents=True, exist_ok=True)
     (d / "adapter_model.safetensors").write_bytes(b"\0" * weight_bytes)
+    (d / "training_meta.json").write_text(
+        json.dumps(
+            {
+                "model_id": name,
+                "actual_steps": 21420,
+                "required_steps_for_full_epoch": 21420,
+                "train_dialogues": 171354,
+                "corpus_coverage_pct": 100.0,
+                "dataset_total_dialogues": 173216,
+                "holdout_tail_dialogues": 1000,
+                "eval_frac": 0.005,
+                "time_budget_hours": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return d
+
+
+def _make_noncompliant_adapter(root: Path, name: str) -> Path:
+    """Adapter that covered only part of the corpus (not publishable)."""
+    d = root / name
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "adapter_model.safetensors").write_bytes(b"\0" * 1024)
+    (d / "training_meta.json").write_text(
+        json.dumps(
+            {
+                "model_id": name,
+                "actual_steps": 9662,
+                "required_steps_for_full_epoch": 21420,
+                "train_dialogues": 171354,
+                "corpus_coverage_pct": 45.11,
+                "dataset_total_dialogues": 173216,
+                "holdout_tail_dialogues": 1000,
+                "eval_frac": 0.005,
+                "time_budget_hours": 5.8,
+            }
+        ),
+        encoding="utf-8",
+    )
     return d
 
 
@@ -142,28 +188,23 @@ class TestUploadDataset(unittest.TestCase):
     def test_uploads_only_existing_artifacts(self):
         api = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
-            cwd = Path.cwd()
-            try:
-                # Switch into a controlled workspace so the relative
-                # "reports/..." and "dataset_output/..." paths the
-                # function uses resolve to files we control.
-                import os
+            root = Path(tmpdir)
+            # The upload resolves its artefact paths against an explicit
+            # repository root (it no longer depends on the current working
+            # directory, which previously made it publish whatever happened
+            # to sit in the CWD).
+            (root / "reports").mkdir()
+            (root / "reports/DATASET_AND_ANALYTICS.md").write_text("# dataset", encoding="utf-8")
+            (root / "dataset_output/parquet").mkdir(parents=True)
+            (root / "dataset_output/parquet/full_clean_messages.parquet").touch()
+            (root / "dataset_output/parquet/sft_dialogues.parquet").touch()
+            # rag_knowledge_base.parquet intentionally absent
+            (root / "reports/domain_benchmark_100.json").write_text("{}", encoding="utf-8")
+            # LORA_MODEL_ZOO.md intentionally absent
 
-                os.chdir(tmpdir)
-                Path("reports").mkdir()
-                Path("reports/DATASET_AND_ANALYTICS.md").write_text("# dataset", encoding="utf-8")
-                Path("dataset_output/parquet").mkdir(parents=True)
-                Path("dataset_output/parquet/full_clean_messages.parquet").touch()
-                Path("dataset_output/parquet/sft_dialogues.parquet").touch()
-                # rag_knowledge_base.parquet intentionally absent
-                Path("reports/domain_benchmark_100.json").write_text("{}", encoding="utf-8")
-                # LORA_MODEL_ZOO.md intentionally absent
+            upload_dataset(api, repo_root=root)
 
-                upload_dataset(api)
-
-                uploaded = [c.kwargs["path_in_repo"] for c in api.upload_file.call_args_list]
-            finally:
-                os.chdir(cwd)
+            uploaded = [c.kwargs["path_in_repo"] for c in api.upload_file.call_args_list]
 
         self.assertIn("README.md", uploaded)  # dataset card
         self.assertIn("data/full_clean_messages.parquet", uploaded)
@@ -175,49 +216,45 @@ class TestUploadDataset(unittest.TestCase):
     def test_uses_default_dataset_repo_id(self):
         api = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
-            import os
-
-            cwd = Path.cwd()
-            try:
-                os.chdir(tmpdir)
-                upload_dataset(api)
-            finally:
-                os.chdir(cwd)
+            upload_dataset(api, repo_root=Path(tmpdir))
         # No dataset card, no parquet -> zero upload_file calls,
         # but the function must still log the repo id it intends to
         # use; assert the default value matches the module constant.
         self.assertEqual(DATASET_REPO_ID, "wwewtech/russian-it-community-corpus")
+
+    def test_refuses_to_publish_when_manifest_mismatch(self):
+        """A dataset that does not match the manifest must not be published."""
+        api = MagicMock()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "reports").mkdir()
+            (root / "dataset_output/parquet").mkdir(parents=True)
+            (root / "dataset_output/parquet/full_clean_messages.parquet").write_bytes(b"tampered")
+            (root / "reports/dataset_manifest.json").write_text(
+                json.dumps({"schema_version": 1, "artifacts": {}}),
+                encoding="utf-8",
+            )
+            with self.assertRaises(RuntimeError):
+                upload_dataset(api, repo_root=root)
+        api.upload_file.assert_not_called()
 
 
 class TestUploadModelCard(unittest.TestCase):
     def test_skips_when_card_missing(self):
         api = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
-            import os
-
-            cwd = Path.cwd()
-            try:
-                os.chdir(tmpdir)
-                uploaded = upload_model_card(api)
-            finally:
-                os.chdir(cwd)
+            uploaded = upload_model_card(api, repo_root=Path(tmpdir))
         self.assertFalse(uploaded)
         api.upload_file.assert_not_called()
 
     def test_uploads_card_as_model_readme(self):
         api = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
-            import os
-
-            cwd = Path.cwd()
-            try:
-                os.chdir(tmpdir)
-                Path("reports").mkdir()
-                Path("reports/HF_MODEL_CARD.md").write_text("# card", encoding="utf-8")
-                uploaded = upload_model_card(api)
-                kwargs = api.upload_file.call_args.kwargs
-            finally:
-                os.chdir(cwd)
+            root = Path(tmpdir)
+            (root / "reports").mkdir()
+            (root / "reports/HF_MODEL_CARD.md").write_text("# card", encoding="utf-8")
+            uploaded = upload_model_card(api, repo_root=root)
+            kwargs = api.upload_file.call_args.kwargs
         self.assertTrue(uploaded)
         self.assertEqual(kwargs["path_in_repo"], "README.md")
         self.assertEqual(kwargs["repo_id"], MODEL_REPO_ID)
@@ -305,6 +342,44 @@ class TestUploadMissingAdapters(unittest.TestCase):
         uploaded = upload_missing_adapters(api, empty)
         self.assertEqual(uploaded, [])
         api.upload_folder.assert_not_called()
+
+    def test_policy_incompliant_adapters_are_not_uploaded(self):
+        """A partial/time-boxed adapter must never reach the public zoo.
+
+        Before the policy gate, every local adapter with weight files was
+        uploaded regardless of how much of the corpus it had seen.
+        """
+        _make_noncompliant_adapter(self.root, "partial")
+        api = MagicMock()
+        api.list_repo_files.return_value = []
+        uploaded = upload_missing_adapters(
+            api,
+            self.root,
+            max_attempts=1,
+            retry_sleep_seconds=0,
+        )
+        self.assertNotIn("partial", uploaded)
+        uploaded_paths = {c.kwargs["path_in_repo"] for c in api.upload_folder.call_args_list}
+        self.assertNotIn("partial", uploaded_paths)
+        # The compliant ones are still published.
+        self.assertEqual(set(uploaded), {"alpha", "beta", "gamma"})
+
+    def test_adapter_without_training_meta_is_not_uploaded(self):
+        """Legacy adapters have no recorded provenance and are not publishable."""
+        legacy = self.root / "legacy"
+        legacy.mkdir()
+        (legacy / "adapter_model.safetensors").write_bytes(b"\0" * 1024)
+        api = MagicMock()
+        api.list_repo_files.return_value = []
+        uploaded = upload_missing_adapters(
+            api,
+            self.root,
+            max_attempts=1,
+            retry_sleep_seconds=0,
+        )
+        self.assertNotIn("legacy", uploaded)
+        uploaded_paths = {c.kwargs["path_in_repo"] for c in api.upload_folder.call_args_list}
+        self.assertNotIn("legacy", uploaded_paths)
 
 
 if __name__ == "__main__":

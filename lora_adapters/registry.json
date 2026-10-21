@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-19T12:06:30+00:00",
+  "generated_at": "2026-10-21T07:11:02+00:00",
   "hf_dataset_url": "https://huggingface.co/datasets/wwewtech/russian-it-community-corpus",
   "hf_hub_base": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main",
   "adapter_count": 56,
@@ -24,7 +24,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/bloom_1b7",
       "local_path": "lora_adapters/bloom_1b7/",
-      "adapter_path": "lora_adapters/bloom_1b7/"
+      "adapter_path": "lora_adapters/bloom_1b7/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "bloom_560m",
@@ -45,7 +53,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/bloom_560m",
       "local_path": "lora_adapters/bloom_560m/",
-      "adapter_path": "lora_adapters/bloom_560m/"
+      "adapter_path": "lora_adapters/bloom_560m/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "deepseek_coder_1.3b_instruct",
@@ -70,7 +86,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/deepseek_coder_1.3b_instruct",
       "local_path": "lora_adapters/deepseek_coder_1.3b_instruct/",
-      "adapter_path": "lora_adapters/deepseek_coder_1.3b_instruct/"
+      "adapter_path": "lora_adapters/deepseek_coder_1.3b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "deepseek_r1_distill_qwen_1.5b",
@@ -94,7 +118,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/deepseek_r1_distill_qwen_1.5b",
       "local_path": "lora_adapters/deepseek_r1_distill_qwen_1.5b/",
-      "adapter_path": "lora_adapters/deepseek_r1_distill_qwen_1.5b/"
+      "adapter_path": "lora_adapters/deepseek_r1_distill_qwen_1.5b/",
+      "has_training_meta": true,
+      "actual_steps": 9662,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 44.62,
+      "train_dialogues": null,
+      "time_budget_hours": 5.8,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 9662 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 45.11% < 100.00% required",
+        "run was time-boxed (time_budget_hours=5.8); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "falcon3_1b_instruct",
@@ -121,7 +157,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/falcon3_1b_instruct",
       "local_path": "lora_adapters/falcon3_1b_instruct/",
-      "adapter_path": "lora_adapters/falcon3_1b_instruct/"
+      "adapter_path": "lora_adapters/falcon3_1b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "falcon3_3b_instruct",
@@ -148,7 +192,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/falcon3_3b_instruct",
       "local_path": "lora_adapters/falcon3_3b_instruct/",
-      "adapter_path": "lora_adapters/falcon3_3b_instruct/"
+      "adapter_path": "lora_adapters/falcon3_3b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "gemma_2_2b_it",
@@ -172,7 +224,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gemma_2_2b_it",
       "local_path": "lora_adapters/gemma_2_2b_it/",
-      "adapter_path": "lora_adapters/gemma_2_2b_it/"
+      "adapter_path": "lora_adapters/gemma_2_2b_it/",
+      "has_training_meta": true,
+      "actual_steps": 4492,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 20.75,
+      "train_dialogues": null,
+      "time_budget_hours": 5.8,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 4492 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 20.97% < 100.00% required",
+        "run was time-boxed (time_budget_hours=5.8); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "gpt2_large",
@@ -193,7 +257,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gpt2_large",
       "local_path": "lora_adapters/gpt2_large/",
-      "adapter_path": "lora_adapters/gpt2_large/"
+      "adapter_path": "lora_adapters/gpt2_large/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "gpt2_medium",
@@ -214,7 +286,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/gpt2_medium",
       "local_path": "lora_adapters/gpt2_medium/",
-      "adapter_path": "lora_adapters/gpt2_medium/"
+      "adapter_path": "lora_adapters/gpt2_medium/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "granite_3b_code_instruct",
@@ -239,7 +319,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/granite_3b_code_instruct",
       "local_path": "lora_adapters/granite_3b_code_instruct/",
-      "adapter_path": "lora_adapters/granite_3b_code_instruct/"
+      "adapter_path": "lora_adapters/granite_3b_code_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "heavyweight_deepseek_r1_7b",
@@ -266,7 +354,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/heavyweight_deepseek_r1_7b",
       "local_path": "lora_adapters/heavyweight_deepseek_r1_7b/",
-      "adapter_path": "lora_adapters/heavyweight_deepseek_r1_7b/"
+      "adapter_path": "lora_adapters/heavyweight_deepseek_r1_7b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "heavyweight_llama3.1_8b",
@@ -293,7 +389,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/heavyweight_llama3.1_8b",
       "local_path": "lora_adapters/heavyweight_llama3.1_8b/",
-      "adapter_path": "lora_adapters/heavyweight_llama3.1_8b/"
+      "adapter_path": "lora_adapters/heavyweight_llama3.1_8b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "heavyweight_qwen2.5_coder_7b",
@@ -320,7 +424,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/heavyweight_qwen2.5_coder_7b",
       "local_path": "lora_adapters/heavyweight_qwen2.5_coder_7b/",
-      "adapter_path": "lora_adapters/heavyweight_qwen2.5_coder_7b/"
+      "adapter_path": "lora_adapters/heavyweight_qwen2.5_coder_7b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "llama_3.2_1b_instruct",
@@ -344,7 +456,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/llama_3.2_1b_instruct",
       "local_path": "lora_adapters/llama_3.2_1b_instruct/",
-      "adapter_path": "lora_adapters/llama_3.2_1b_instruct/"
+      "adapter_path": "lora_adapters/llama_3.2_1b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "llama_3.2_3b_instruct",
@@ -368,7 +488,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/llama_3.2_3b_instruct",
       "local_path": "lora_adapters/llama_3.2_3b_instruct/",
-      "adapter_path": "lora_adapters/llama_3.2_3b_instruct/"
+      "adapter_path": "lora_adapters/llama_3.2_3b_instruct/",
+      "has_training_meta": true,
+      "actual_steps": 4956,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 22.89,
+      "train_dialogues": null,
+      "time_budget_hours": 5.8,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 4956 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 23.14% < 100.00% required",
+        "run was time-boxed (time_budget_hours=5.8); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "minicpm_2b_dpo",
@@ -393,7 +525,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/minicpm_2b_dpo",
       "local_path": "lora_adapters/minicpm_2b_dpo/",
-      "adapter_path": "lora_adapters/minicpm_2b_dpo/"
+      "adapter_path": "lora_adapters/minicpm_2b_dpo/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "opt_1.3b",
@@ -421,7 +561,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_1.3b",
       "local_path": "lora_adapters/opt_1.3b/",
-      "adapter_path": "lora_adapters/opt_1.3b/"
+      "adapter_path": "lora_adapters/opt_1.3b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "opt_125m",
@@ -449,7 +597,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_125m",
       "local_path": "lora_adapters/opt_125m/",
-      "adapter_path": "lora_adapters/opt_125m/"
+      "adapter_path": "lora_adapters/opt_125m/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "opt_2.7b",
@@ -477,7 +633,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_2.7b",
       "local_path": "lora_adapters/opt_2.7b/",
-      "adapter_path": "lora_adapters/opt_2.7b/"
+      "adapter_path": "lora_adapters/opt_2.7b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "opt_350m",
@@ -505,7 +669,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/opt_350m",
       "local_path": "lora_adapters/opt_350m/",
-      "adapter_path": "lora_adapters/opt_350m/"
+      "adapter_path": "lora_adapters/opt_350m/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "phi_1_5",
@@ -532,7 +704,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_1_5",
       "local_path": "lora_adapters/phi_1_5/",
-      "adapter_path": "lora_adapters/phi_1_5/"
+      "adapter_path": "lora_adapters/phi_1_5/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "phi_2",
@@ -559,7 +739,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_2",
       "local_path": "lora_adapters/phi_2/",
-      "adapter_path": "lora_adapters/phi_2/"
+      "adapter_path": "lora_adapters/phi_2/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "phi_3.5_mini_instruct",
@@ -581,7 +769,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_3.5_mini_instruct",
       "local_path": "lora_adapters/phi_3.5_mini_instruct/",
-      "adapter_path": "lora_adapters/phi_3.5_mini_instruct/"
+      "adapter_path": "lora_adapters/phi_3.5_mini_instruct/",
+      "has_training_meta": true,
+      "actual_steps": 3579,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 16.53,
+      "train_dialogues": null,
+      "time_budget_hours": 5.4,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 3579 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 16.71% < 100.00% required",
+        "run was time-boxed (time_budget_hours=5.4); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "phi_3_mini_4k_instruct",
@@ -608,7 +808,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/phi_3_mini_4k_instruct",
       "local_path": "lora_adapters/phi_3_mini_4k_instruct/",
-      "adapter_path": "lora_adapters/phi_3_mini_4k_instruct/"
+      "adapter_path": "lora_adapters/phi_3_mini_4k_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "pythia_1.4b",
@@ -629,7 +837,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_1.4b",
       "local_path": "lora_adapters/pythia_1.4b/",
-      "adapter_path": "lora_adapters/pythia_1.4b/"
+      "adapter_path": "lora_adapters/pythia_1.4b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "pythia_2.8b",
@@ -650,7 +866,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_2.8b",
       "local_path": "lora_adapters/pythia_2.8b/",
-      "adapter_path": "lora_adapters/pythia_2.8b/"
+      "adapter_path": "lora_adapters/pythia_2.8b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "pythia_410m",
@@ -671,7 +895,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_410m",
       "local_path": "lora_adapters/pythia_410m/",
-      "adapter_path": "lora_adapters/pythia_410m/"
+      "adapter_path": "lora_adapters/pythia_410m/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "pythia_70m",
@@ -692,7 +924,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/pythia_70m",
       "local_path": "lora_adapters/pythia_70m/",
-      "adapter_path": "lora_adapters/pythia_70m/"
+      "adapter_path": "lora_adapters/pythia_70m/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen1.5_0.5b_chat",
@@ -717,7 +957,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen1.5_0.5b_chat",
       "local_path": "lora_adapters/qwen1.5_0.5b_chat/",
-      "adapter_path": "lora_adapters/qwen1.5_0.5b_chat/"
+      "adapter_path": "lora_adapters/qwen1.5_0.5b_chat/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen1.5_1.8b_chat",
@@ -742,7 +990,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen1.5_1.8b_chat",
       "local_path": "lora_adapters/qwen1.5_1.8b_chat/",
-      "adapter_path": "lora_adapters/qwen1.5_1.8b_chat/"
+      "adapter_path": "lora_adapters/qwen1.5_1.8b_chat/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen2.5_0.5b_instruct",
@@ -766,7 +1022,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_0.5b_instruct",
       "local_path": "lora_adapters/qwen2.5_0.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_0.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_0.5b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen2.5_1.5b_instruct",
@@ -791,7 +1055,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_1.5b_instruct",
       "local_path": "lora_adapters/qwen2.5_1.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_1.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_1.5b_instruct/",
+      "has_training_meta": true,
+      "actual_steps": 5818,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 26.87,
+      "train_dialogues": null,
+      "time_budget_hours": 3.6,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 5818 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 27.16% < 100.00% required",
+        "run was time-boxed (time_budget_hours=3.6); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "qwen2.5_3b_instruct",
@@ -815,7 +1091,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_3b_instruct",
       "local_path": "lora_adapters/qwen2.5_3b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_3b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_3b_instruct/",
+      "has_training_meta": true,
+      "actual_steps": 5085,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 23.49,
+      "train_dialogues": null,
+      "time_budget_hours": 5.8,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 5085 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 23.74% < 100.00% required",
+        "run was time-boxed (time_budget_hours=5.8); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "qwen2.5_coder_0.5b_instruct",
@@ -839,7 +1127,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_0.5b_instruct",
       "local_path": "lora_adapters/qwen2.5_coder_0.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_coder_0.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_coder_0.5b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen2.5_coder_1.5b_instruct",
@@ -863,7 +1159,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_1.5b_instruct",
       "local_path": "lora_adapters/qwen2.5_coder_1.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_coder_1.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_coder_1.5b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen2.5_coder_3b_instruct",
@@ -887,7 +1191,19 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_coder_3b_instruct",
       "local_path": "lora_adapters/qwen2.5_coder_3b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_coder_3b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_coder_3b_instruct/",
+      "has_training_meta": true,
+      "actual_steps": 4132,
+      "required_steps": 21420,
+      "corpus_coverage_pct": 19.08,
+      "train_dialogues": null,
+      "time_budget_hours": 5.8,
+      "policy_compliant": false,
+      "policy_reasons": [
+        "partial epoch: 4132 steps < 21420 required for one full epoch over 171354 trainable dialogues",
+        "corpus coverage 19.29% < 100.00% required",
+        "run was time-boxed (time_budget_hours=5.8); a time-boxed run is never a final adapter under the binding policy"
+      ]
     },
     {
       "slug": "qwen2.5_math_1.5b_instruct",
@@ -912,7 +1228,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2.5_math_1.5b_instruct",
       "local_path": "lora_adapters/qwen2.5_math_1.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2.5_math_1.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2.5_math_1.5b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen2_0.5b_instruct",
@@ -939,7 +1263,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2_0.5b_instruct",
       "local_path": "lora_adapters/qwen2_0.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2_0.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2_0.5b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "qwen2_1.5b_instruct",
@@ -966,7 +1298,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/qwen2_1.5b_instruct",
       "local_path": "lora_adapters/qwen2_1.5b_instruct/",
-      "adapter_path": "lora_adapters/qwen2_1.5b_instruct/"
+      "adapter_path": "lora_adapters/qwen2_1.5b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "rugpt3_large",
@@ -987,7 +1327,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/rugpt3_large",
       "local_path": "lora_adapters/rugpt3_large/",
-      "adapter_path": "lora_adapters/rugpt3_large/"
+      "adapter_path": "lora_adapters/rugpt3_large/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "rugpt3_medium",
@@ -1008,7 +1356,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/rugpt3_medium",
       "local_path": "lora_adapters/rugpt3_medium/",
-      "adapter_path": "lora_adapters/rugpt3_medium/"
+      "adapter_path": "lora_adapters/rugpt3_medium/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "rugpt3_small",
@@ -1029,7 +1385,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/rugpt3_small",
       "local_path": "lora_adapters/rugpt3_small/",
-      "adapter_path": "lora_adapters/rugpt3_small/"
+      "adapter_path": "lora_adapters/rugpt3_small/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "russian_it_lora",
@@ -1053,7 +1417,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/russian_it_lora",
       "local_path": "lora_adapters/russian_it_lora/",
-      "adapter_path": "lora_adapters/russian_it_lora/"
+      "adapter_path": "lora_adapters/russian_it_lora/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "smollm2_1.7b_instruct",
@@ -1077,7 +1449,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm2_1.7b_instruct",
       "local_path": "lora_adapters/smollm2_1.7b_instruct/",
-      "adapter_path": "lora_adapters/smollm2_1.7b_instruct/"
+      "adapter_path": "lora_adapters/smollm2_1.7b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "smollm2_135m_instruct",
@@ -1101,7 +1481,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm2_135m_instruct",
       "local_path": "lora_adapters/smollm2_135m_instruct/",
-      "adapter_path": "lora_adapters/smollm2_135m_instruct/"
+      "adapter_path": "lora_adapters/smollm2_135m_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "smollm2_360m_instruct",
@@ -1125,7 +1513,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm2_360m_instruct",
       "local_path": "lora_adapters/smollm2_360m_instruct/",
-      "adapter_path": "lora_adapters/smollm2_360m_instruct/"
+      "adapter_path": "lora_adapters/smollm2_360m_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "smollm_1.7b_instruct",
@@ -1150,7 +1546,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm_1.7b_instruct",
       "local_path": "lora_adapters/smollm_1.7b_instruct/",
-      "adapter_path": "lora_adapters/smollm_1.7b_instruct/"
+      "adapter_path": "lora_adapters/smollm_1.7b_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "smollm_135m_instruct",
@@ -1175,7 +1579,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm_135m_instruct",
       "local_path": "lora_adapters/smollm_135m_instruct/",
-      "adapter_path": "lora_adapters/smollm_135m_instruct/"
+      "adapter_path": "lora_adapters/smollm_135m_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "smollm_360m_instruct",
@@ -1200,7 +1612,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/smollm_360m_instruct",
       "local_path": "lora_adapters/smollm_360m_instruct/",
-      "adapter_path": "lora_adapters/smollm_360m_instruct/"
+      "adapter_path": "lora_adapters/smollm_360m_instruct/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "stablelm_2_1_6b_chat",
@@ -1225,7 +1645,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/stablelm_2_1_6b_chat",
       "local_path": "lora_adapters/stablelm_2_1_6b_chat/",
-      "adapter_path": "lora_adapters/stablelm_2_1_6b_chat/"
+      "adapter_path": "lora_adapters/stablelm_2_1_6b_chat/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "stablelm_2_zephyr_1_6b",
@@ -1250,7 +1678,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/stablelm_2_zephyr_1_6b",
       "local_path": "lora_adapters/stablelm_2_zephyr_1_6b/",
-      "adapter_path": "lora_adapters/stablelm_2_zephyr_1_6b/"
+      "adapter_path": "lora_adapters/stablelm_2_zephyr_1_6b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "tiny_starcoder_py",
@@ -1280,7 +1716,15 @@
       "has_chat_template": false,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/tiny_starcoder_py",
       "local_path": "lora_adapters/tiny_starcoder_py/",
-      "adapter_path": "lora_adapters/tiny_starcoder_py/"
+      "adapter_path": "lora_adapters/tiny_starcoder_py/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "tinyllama_1.1b_chat",
@@ -1304,7 +1748,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/tinyllama_1.1b_chat",
       "local_path": "lora_adapters/tinyllama_1.1b_chat/",
-      "adapter_path": "lora_adapters/tinyllama_1.1b_chat/"
+      "adapter_path": "lora_adapters/tinyllama_1.1b_chat/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "vikhr_llama_3.2_1b",
@@ -1328,7 +1780,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_llama_3.2_1b",
       "local_path": "lora_adapters/vikhr_llama_3.2_1b/",
-      "adapter_path": "lora_adapters/vikhr_llama_3.2_1b/"
+      "adapter_path": "lora_adapters/vikhr_llama_3.2_1b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "vikhr_qwen_2.5_0.5b",
@@ -1352,7 +1812,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_qwen_2.5_0.5b",
       "local_path": "lora_adapters/vikhr_qwen_2.5_0.5b/",
-      "adapter_path": "lora_adapters/vikhr_qwen_2.5_0.5b/"
+      "adapter_path": "lora_adapters/vikhr_qwen_2.5_0.5b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     },
     {
       "slug": "vikhr_qwen_2.5_1.5b",
@@ -1376,7 +1844,15 @@
       "has_chat_template": true,
       "hf_hub_url": "https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/vikhr_qwen_2.5_1.5b",
       "local_path": "lora_adapters/vikhr_qwen_2.5_1.5b/",
-      "adapter_path": "lora_adapters/vikhr_qwen_2.5_1.5b/"
+      "adapter_path": "lora_adapters/vikhr_qwen_2.5_1.5b/",
+      "has_training_meta": false,
+      "actual_steps": null,
+      "required_steps": null,
+      "corpus_coverage_pct": null,
+      "train_dialogues": null,
+      "time_budget_hours": null,
+      "policy_compliant": false,
+      "policy_reasons": []
     }
   ]
 }

@@ -48,7 +48,15 @@ def main() -> None:
         default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Path to production messages parquet",
     )
-    parser_audit.add_argument("--sample-size", type=int, default=50000, help="Sample size to audit")
+    parser_audit.add_argument(
+        "--sample-size",
+        type=int,
+        default=100000,
+        help=(
+            "Sample size to audit. 100000 keeps the 99% upper bound (5.41e-05) below "
+            "the 1e-04 tolerance even with zero observed leaks."
+        ),
+    )
     parser_audit.add_argument("--confidence", type=float, default=0.99, help="Confidence level for bounds")
     parser_audit.add_argument("--tolerance", type=float, default=1e-4, help="Max acceptable leak rate tolerance")
     parser_audit.add_argument(
@@ -82,7 +90,7 @@ def main() -> None:
     # Command: orchestrate
     parser_orch = subparsers.add_parser("orchestrate", help="Run Prefect curation orchestration flow")
     parser_orch.add_argument("--skip-pipeline", action="store_true", help="Skip curation stage and run downstream")
-    parser_orch.add_argument("--sample-size", type=int, default=50000, help="Audit sample size")
+    parser_orch.add_argument("--sample-size", type=int, default=100000, help="Audit sample size")
 
     # Command: chat
     parser_chat = subparsers.add_parser("chat", help="Start interactive LLM + RAG terminal chat session")

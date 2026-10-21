@@ -328,7 +328,7 @@ stages:
 
       # Probabilistic PII Audit
       auditor = ProbabilisticPIIAuditor(PARQUET_OUTPUT_DIR / 'full_clean_messages.parquet')
-      audit_report = auditor.run_audit(sample_size=50000, confidence=0.99, max_leak_tolerance=1e-4)
+      audit_report = auditor.run_audit(sample_size=100000, confidence=0.99, max_leak_tolerance=1e-4)
       with open(REPORTS_DIR / 'probabilistic_pii_audit.json', 'w', encoding='utf-8') as f:
           json.dump(audit_report, f, ensure_ascii=False, indent=2)
 

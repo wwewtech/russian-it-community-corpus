@@ -70,10 +70,12 @@ dev = [
     "pytest-cov>=4.1",
     # Pinned to the exact ruff version used by pre-commit (.pre-commit-config.yaml)
     # and CI (.github/workflows/ci.yml) so local, hook, and CI lint always agree.
-    "ruff==0.17.1",
+    # The pins MUST stay in sync across all three files — a test enforces it
+    # (tests/test_requirements_lock.py).
+    "ruff==0.16.2",
     "black>=24.0.0",
     # Pinned so typechecking results remain deterministic between local and CI.
-    "mypy==2.4.0",
+    "mypy==2.3.1",
     "pre-commit>=3.6.0",
 ]
 
@@ -85,12 +87,28 @@ it-pipeline = "cli:main"
 # script outside the Streamlit runtime and render nothing.
 
 [tool.setuptools]
-# Root-level entry modules (cli.py, main.py)
+# The package lives in `src/` as a src-layout: the importable package is
+# `ricc`, and `src/` itself is NOT a package (it has no __init__.py that
+# should be shipped, and shipping it would make `import src.xxx` work only
+# by accident of the wheel layout).
+#
+# The previous configuration used `packages.find(where=["src"])`, which
+# put the SUBPACKAGES (analytics/, pii/, exporter/, ...) at the wheel
+# top level while every module inside them imported `from src.config
+# import ...`. The resulting wheel could not be imported at all:
+# `import ricc` -> ModuleNotFoundError: No module named 'src'.
+#
+# Now the whole `src` directory is shipped as the `ricc` package and the
+# internal imports use the `ricc.` prefix.
 py-modules = ["cli", "main"]
+packages = ["ricc", "ricc.analytics", "ricc.deduplication", "ricc.evaluation", "ricc.exporter",
+            "ricc.graph", "ricc.ingestion", "ricc.lora", "ricc.monitoring", "ricc.observability",
+            "ricc.orchestration", "ricc.pii", "ricc.rag", "ricc.taxonomy", "ricc.validation"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["*"]
+# PEP 561 marker: the package is fully typed (`mypy --strict` clean), so
+# consumers must be able to use the type information.
+[tool.setuptools.package-data]
+ricc = ["py.typed", "params.yaml"]
 
 [tool.ruff]
 line-length = 120
@@ -102,6 +120,10 @@ exclude = [
     ".pre-commit-cache",
     "ChatExport_*",
     "dataset_output",
+    # Local build output: build/lib/ holds stale copies of the sources and
+    # made `ruff check .` report unrelated E402 errors locally.
+    "build",
+    "dist",
 ]
 
 [tool.ruff.lint]
