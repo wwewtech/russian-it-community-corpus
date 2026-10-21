@@ -506,6 +506,33 @@ jobs:
                   print(f\"  [not publishable] {r['id']}: {r['reasons'][0] if r['reasons'] else 'n/a'}\")
           "
 
+      - name: Summarise the training policy state
+        # The gate REPORTS rather than fails: making the legacy zoo
+        # compliant is a GPU job (a full epoch is ~25 h per 3B adapter),
+        # not a code change. But the state must be visible on every run, so
+        # the summary states it explicitly instead of burying it in a log.
+        run: |
+          python -c "
+          import json, os
+          from pathlib import Path
+          data = json.loads(Path('reports/lora_policy_compliance.json').read_text(encoding='utf-8'))
+          compliant, total = data['compliant'], data['total']
+          print('### Training policy')
+          print()
+          print(f'{compliant} of {total} adapters cover a full epoch of the corpus and are publishable.')
+          if compliant < total:
+              print()
+              print(f'> The other {total - compliant} are partial or time-boxed runs and are NOT published')
+              print('> by the release pipeline. Retraining them is a GPU job, not a code change.')
+          "
+          echo "### Training policy" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          python -c "
+          import json
+          from pathlib import Path
+          data = json.loads(Path('reports/lora_policy_compliance.json').read_text(encoding='utf-8'))
+          print(f\"{data['compliant']} / {data['total']} adapters publishable (full epoch over the corpus)\")" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build synthetic parquet fixtures
         run: |
           if [ ! -f dataset_output/parquet/full_clean_messages.parquet ]; then
