@@ -23,7 +23,7 @@ query ──> Stage 1: lexical str.contains pre-filter (cap 5000)
 
 ```python
 from pathlib import Path
-from src.rag.rag_pipeline import LocalRAGPipeline
+from ricc.rag.rag_pipeline import LocalRAGPipeline
 
 kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
 hits = kb.search("как настроить nginx reverse proxy", top_k=3, domain_filter="devops_infra")

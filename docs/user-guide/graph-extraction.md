@@ -37,7 +37,7 @@ role balance, Russian-language ratio, duplicate-turn ratio — and fails
 the build when a floor is crossed. Run it standalone:
 
 ```bash
-python -m src.monitoring.sft_quality --input dataset_output/parquet/sft_dialogues.parquet
+python -m ricc.monitoring.sft_quality --input dataset_output/parquet/sft_dialogues.parquet
 ```
 
 The report lands in `reports/sft_quality_report.json` and is consumed by

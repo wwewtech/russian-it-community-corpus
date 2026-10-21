@@ -4,7 +4,20 @@
 
 Все адаптеры доступны как локально в каталоге [`lora_adapters/`](../lora_adapters/), так и на Hugging Face Hub: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora).
 
-> **Provenance:** a local adapter carries `training_meta.json` (`prompt_masking: true`) only if it was trained with the prompt-masked objective. Adapters without it predate the 2026-10-17 masking fix — retrain with `python -m src.lora.batch_train_zoo --force --only <id>`.
+> **Provenance:** a local adapter carries `training_meta.json` (`prompt_masking: true`) only if it was trained with the prompt-masked objective. Adapters without it predate the 2026-10-17 masking fix — retrain with `python -m ricc.lora.batch_train_zoo --force --only <id>`.
+
+> **Training policy:** an adapter is only publishable if it covered a full
+> epoch of the corpus and was not stopped by a wall-clock budget
+> (`ricc/lora/policy_gate.py`, ADR 0005). The registry records
+> `policy_compliant` and the measured coverage per adapter, and the
+> release pipeline refuses to upload a non-compliant one. Check the
+> current state with:
+>
+> ```bash
+> python -c "from pathlib import Path; from ricc.lora.policy_gate import evaluate_compliance; \
+> [print(p.name, evaluate_compliance(p).compliant, evaluate_compliance(p).coverage_pct) \
+>  for p in sorted(Path('lora_adapters').iterdir()) if p.is_dir()]"
+> ```
 
 ---
 
@@ -13,10 +26,10 @@
 ### 1. Запуск интерактивного терминала (Inference CLI):
 ```bash
 # Запуск Qwen 2.5 1.5B с доменным LoRA-адаптером и локальным RAG
-python src/inference.py --model Qwen/Qwen2.5-1.5B-Instruct --adapter qwen2.5_1.5b_instruct
+python -m ricc.inference --model Qwen/Qwen2.5-1.5B-Instruct --adapter qwen2.5_1.5b_instruct
 
 # Запуск флагманской 7B модели в 4-битном режиме (VRAM <= 6 GB)
-python src/inference.py --model unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit --adapter heavyweight_qwen2.5_coder_7b
+python -m ricc.inference --model unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit --adapter heavyweight_qwen2.5_coder_7b
 ```
 
 ### 2. Запуск в Python коде:

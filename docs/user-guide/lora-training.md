@@ -66,13 +66,28 @@ written down by hand:
 ```bash
 python -m ricc.lora.batch_train_zoo --only <adapter_id> --profile full \
     --samples 200000 --steps 21420 --eval-frac 0.005 --holdout-tail 1000 \
-    --seed 42 --force --keep-checkpoints --no-upload
+    --seed 42 --keep-checkpoints --no-upload
 ```
 
 `21420` is `ceil(171354 / 8)` — one epoch over the trainable set of the
 current corpus. `python -c "from ricc.lora.policy_gate import
 canonical_full_run; print(canonical_full_run(173216))"` prints the current
 value.
+
+### Continuing a long run
+
+A full run takes hours, so it must be resumable:
+
+- the checkpoints are the resume points, and `--force` **keeps** them
+  (it deletes the finished adapter, not the checkpoints);
+- `--save-total-limit` (default 10) decides how many are kept — the
+  previous limit of 2 deleted every resume point within a thousand steps;
+- a run that is interrupted simply re-issues the same command: the
+  trainer picks the latest checkpoint and continues to the target step
+  count.
+
+So the practical loop is: run the command, and if it stops (crash, power
+cut, Ctrl-C), run the same command again.
 
 ## Observability (12.2.0+)
 

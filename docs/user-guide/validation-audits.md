@@ -63,8 +63,8 @@ the confidence interval invalid.
 `artifact_manifest.py` pins canonical paths + sha256 digests:
 
 ```bash
-python -m src.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json
-python -m src.validation.artifact_manifest verify --root . --manifest reports/dataset_manifest.json
+python -m ricc.validation.artifact_manifest create --root . --manifest reports/dataset_manifest.json
+python -m ricc.validation.artifact_manifest verify --root . --manifest reports/dataset_manifest.json
 ```
 
 `verify_manifest` is used by the SLO gate (fail-closed: missing or stale

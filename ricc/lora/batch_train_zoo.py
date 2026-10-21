@@ -590,6 +590,7 @@ def train_and_upload_single_model(
     keep_checkpoints: bool = False,
     holdout_tail: int = 0,
     time_budget_hours: float | None = None,
+    save_total_limit: int = 10,
 ) -> dict[str, Any]:
     model_id = meta["id"]
     model_name = meta["model_name"]
@@ -677,9 +678,28 @@ def train_and_upload_single_model(
         # download, unsupported target modules, ...) must NOT destroy the
         # previously trained adapter. Phi-3.5's SiLUActivation crash did
         # exactly that before target detection was fixed.
+        # --force deletes the FINISHED adapter, but the checkpoints are
+        # kept: they are the only way to continue a long run instead of
+        # starting it again. The canonical full run is 21 420 steps
+        # (~25 h on a 3B model); discarding the checkpoints would throw
+        # away hours of work every time the command is re-issued.
         if force and out_dir.exists() and any(out_dir.iterdir()):
-            logger.info(f"--force: clearing existing adapter at {out_dir} for retraining")
-            shutil.rmtree(out_dir)
+            checkpoints = [p for p in out_dir.glob("checkpoint-*") if p.is_dir()]
+            for stale in out_dir.iterdir():
+                if stale in checkpoints:
+                    continue
+                if stale.is_dir():
+                    shutil.rmtree(stale)
+                else:
+                    stale.unlink()
+            if checkpoints:
+                logger.info(
+                    "--force: cleared the finished adapter at %s, keeping %d checkpoint(s) for resume",
+                    out_dir,
+                    len(checkpoints),
+                )
+            else:
+                logger.info("--force: cleared existing adapter at %s for retraining", out_dir)
             out_dir.mkdir(parents=True, exist_ok=True)
 
         raw_ds = load_dataset("json", data_files=dataset_path, split="train")
@@ -756,7 +776,11 @@ def train_and_upload_single_model(
             logging_steps=log_every,
             save_strategy="steps" if enable_saves else "no",
             save_steps=save_every,
-            save_total_limit=2,
+            # The checkpoints are the resume points of a multi-hour run, so
+            # more than two are kept: with the canonical 21 420 steps and
+            # a checkpoint every 500 steps, a limit of 2 would delete every
+            # resume point within a thousand steps.
+            save_total_limit=save_total_limit,
             eval_strategy="steps" if eval_ds is not None else "no",
             eval_steps=eval_every,
             report_to="none",
@@ -1091,7 +1115,17 @@ def main() -> None:
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Retrain adapters that already exist (prompt-masking fix rollout)",
+        help="Retrain adapters that already exist (the checkpoints are kept, so a long run can be continued)",
+    )
+    parser.add_argument(
+        "--save-total-limit",
+        type=int,
+        default=10,
+        help=(
+            "How many checkpoints to keep per adapter. The checkpoints are the resume "
+            "points of a multi-hour run, so the default keeps more than the two that "
+            "were kept before (which deleted every resume point within a thousand steps)."
+        ),
     )
     parser.add_argument(
         "--keep-checkpoints",
@@ -1178,6 +1212,7 @@ def main() -> None:
             keep_checkpoints=args.keep_checkpoints,
             holdout_tail=args.holdout_tail,
             time_budget_hours=args.hours,
+            save_total_limit=args.save_total_limit,
         )
         results.append(res)
         if not args.no_report:

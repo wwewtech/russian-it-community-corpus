@@ -49,7 +49,7 @@ Typed errors carry `stage` context — see [Errors](../api/errors.md).
 The pipeline is stateless between runs: every run rebuilds from the raw
 exports. Partial artifacts from a crashed run are overwritten; the
 artifact manifest must be re-created after any successful run
-(`python -m src.validation.artifact_manifest create ...`) so the
+(`python -m ricc.validation.artifact_manifest create ...`) so the
 [SLO gate](../user-guide/slo-gate.md) can verify provenance.
 
 ## Runtime Environment

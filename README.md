@@ -119,7 +119,7 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
 
 ## Local Datasets and Formats
 
-All datasets are automatically generated and saved in `dataset_output/`. Exact artifact identity — sha256, byte size, row count and schema — is snapshotted in [`reports/dataset_manifest.json`](reports/dataset_manifest.json) (`python -m src.validation.artifact_manifest create|verify`); the SLO gate re-verifies it on every release check. The Hugging Face Hub hosts a curated snapshot that may differ from the local working copy, so both are listed:
+All datasets are automatically generated and saved in `dataset_output/`. Exact artifact identity — sha256, byte size, row count and schema — is snapshotted in [`reports/dataset_manifest.json`](reports/dataset_manifest.json) (`python -m ricc.validation.artifact_manifest create|verify`); the SLO gate re-verifies it on every release check. The Hugging Face Hub hosts a curated snapshot that may differ from the local working copy, so both are listed:
 
 | File Path | Format | Local (verified) | Hub snapshot | Description | Direct Link |
 |---|---|---|---|---|:---:|
