@@ -147,7 +147,16 @@ def _rag_probe() -> pd.DataFrame:
 
 
 def _pinned_schema(probe: pd.DataFrame) -> pa.Schema:
-    return pa.Schema.from_pandas(probe, preserve_index=False)
+    """The pinned Arrow schema of an artefact, with the contract metadata.
+
+    The metadata carries the dataset schema version and the contract
+    fingerprint, so a consumer can tell WHICH contract version the file
+    was written against — and the validator can refuse a file whose
+    columns drifted away from the declared contract.
+    """
+    from ricc.schema_version import write_metadata
+
+    return write_metadata(pa.Schema.from_pandas(probe, preserve_index=False))
 
 
 MESSAGE_SCHEMA = _pinned_schema(_message_probe())
