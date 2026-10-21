@@ -185,7 +185,8 @@ def stage_export() -> None:
     from ricc.exporter.rag_exporter import RAGExporter
 
     sft, rag, dpo = _load(INTERMEDIATE / "extracted.pkl.gz")
-    ParquetExporter(PARQUET).export_messages(sft and _messages() or [], "full_clean_messages.parquet")
+    messages = _messages()
+    ParquetExporter(PARQUET).export_messages(messages, "full_clean_messages.parquet")
     ParquetExporter(PARQUET).export_sft_dialogues(sft)
     ParquetExporter(PARQUET).export_rag_chunks(rag)
     JSONLExporter(REPO_ROOT / "dataset_output" / "jsonl").export_sharegpt(sft)

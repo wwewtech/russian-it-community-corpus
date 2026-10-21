@@ -1,9 +1,15 @@
 """
 RAG Knowledge Base JSONL and Vector-ready chunk exporter.
+
+The writer streams: every chunk is serialised and written one line at a time,
+so the peak memory does not grow with the corpus. The exporter therefore
+accepts any ``Iterable`` of chunks (a generator included) and not only a
+materialised list.
 """
 
 import json
 import logging
+from collections.abc import Iterable, Sized
 from pathlib import Path
 
 from ricc.ingestion.schema import RAGChunk
@@ -20,10 +26,11 @@ class RAGExporter:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def export_rag_jsonl(self, chunks: list[RAGChunk], file_name: str = "rag_chunks_kb.jsonl") -> Path:
+    def export_rag_jsonl(self, chunks: Iterable[RAGChunk], file_name: str = "rag_chunks_kb.jsonl") -> Path:
         """Export RAG chunks to JSONL."""
         out_path = self.output_dir / file_name
-        logger.info(f"Exporting {len(chunks)} RAG chunks to JSONL at {out_path}...")
+        count = str(len(chunks)) if isinstance(chunks, Sized) else "all"
+        logger.info(f"Exporting {count} RAG chunks to JSONL at {out_path}...")
 
         with open(out_path, "w", encoding="utf-8") as f:
             for c in chunks:
