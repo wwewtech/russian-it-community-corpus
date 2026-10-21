@@ -356,6 +356,18 @@ def run_benchmark_experiment_suite(
             typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
             logger.warning(f"Could not attach LoRA adapter {adapter_path}: {typed}")
 
+    # FAIL FAST: without the adapter there is no LoRA measurement. The
+    # previous code fell back to the BASE model's results and wrote them
+    # into the LoRA column, which made the comparison report identical
+    # numbers for base and LoRA — a fabricated benchmark.
+    if lora_model is None:
+        raise RuntimeError(
+            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
+            "Refusing to run the multi-experiment suite: falling back to the base model "
+            "would put the base results into the LoRA column and report a comparison "
+            "that was never measured."
+        )
+
     for idx, suite in enumerate(BENCHMARK_SUITES, 1):
         prompt = suite["prompt"]
         kw = suite["ground_truth_keywords"]
@@ -368,34 +380,20 @@ def run_benchmark_experiment_suite(
         l_tps: float
         l_vram: float
         l_score: float
-        if lora_model:
-            l_out, l_lat, l_tps, l_vram = generate_response(lora_model, prompt)
-            l_matches = sum(1 for k in kw if k.lower() in l_out.lower())
-            l_score = (l_matches / len(kw)) * 100.0
-        else:
-            bprev = base_evals[idx - 1]
-            l_out = cast(str, bprev["out"])
-            l_lat = cast(float, bprev["latency"])
-            l_tps = cast(float, bprev["tps"])
-            l_vram = cast(float, bprev["vram"])
-            l_score = cast(float, bprev["score"])
+        l_out, l_lat, l_tps, l_vram = generate_response(lora_model, prompt)
+        l_matches = sum(1 for k in kw if k.lower() in l_out.lower())
+        l_score = (l_matches / len(kw)) * 100.0
 
         # 4. Hybrid (LoRA + RAG)
         rag_chunks = rag_kb.search(prompt, top_k=2)
         rag_ctx = "\n".join(f"- {str(c.get('content', ''))[:200]}" for c in rag_chunks) if rag_chunks else ""
         rag_prompt = f"Контекст из базы знаний:\n{rag_ctx}\n\nВопрос: {prompt}" if rag_chunks else prompt
-        if lora_model and rag_chunks:
+        if rag_chunks:
             h_out, h_lat, h_tps, h_vram = generate_response(lora_model, rag_prompt)
             h_matches = sum(1 for k in kw if k.lower() in h_out.lower())
             h_score = (h_matches / len(kw)) * 100.0
-        elif rag_chunks:
-            rprev = rag_evals[idx - 1]
-            h_out = cast(str, rprev["out"])
-            h_lat = cast(float, rprev["latency"])
-            h_tps = cast(float, rprev["tps"])
-            h_vram = cast(float, rprev["vram"])
-            h_score = cast(float, rprev["score"])
         else:
+            # No RAG context: the hybrid variant is the LoRA model alone.
             h_out, h_lat, h_tps, h_vram = l_out, l_lat, l_tps, l_vram
             h_score = l_score
 

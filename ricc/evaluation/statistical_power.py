@@ -13,6 +13,8 @@ published accuracy figure.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
+from typing import Any
 
 
 def z_score(confidence: float = 0.95) -> float:
@@ -128,3 +130,69 @@ def ci_half_width_pct(successes: int, total: int, confidence: float = 0.95) -> f
     """Half-width of the Wilson interval expressed in percentage points."""
     low, high = wilson_interval(successes, total, confidence)
     return round((high - low) / 2.0 * 100.0, 1)
+
+
+def mcnemar_test(
+    paired_outcomes: Sequence[tuple[bool, bool]],
+    confidence: float = 0.95,
+) -> dict[str, Any]:
+    """McNemar's exact test on paired binary outcomes.
+
+    The variants of a benchmark are evaluated on the SAME tasks, so the
+    outcomes are PAIRED — the right test for "is variant B actually
+    better than variant A?" is McNemar's, not a comparison of two
+    independent proportions. Overlapping Wilson intervals are only a
+    coarse screen; this test uses the discordant pairs.
+
+    Args:
+        paired_outcomes: a sequence of ``(outcome_a, outcome_b)`` pairs.
+        confidence: the confidence level of the two-sided p-value.
+
+    Returns the contingency counts, the exact two-sided p-value, the
+    difference in proportions and a plain-language ``significant``
+    verdict.
+    """
+    if not 0.0 < confidence < 1.0:
+        raise ValueError("confidence must be in (0, 1)")
+
+    both = a_only = b_only = neither = 0
+    for outcome_a, outcome_b in paired_outcomes:
+        if outcome_a and outcome_b:
+            both += 1
+        elif outcome_a:
+            a_only += 1
+        elif outcome_b:
+            b_only += 1
+        else:
+            neither += 1
+
+    total = both + a_only + b_only + neither
+    discordant = a_only + b_only
+    difference = (b_only - a_only) / total if total else 0.0
+
+    if discordant == 0:
+        # No discordant pair: the two variants agree everywhere, so
+        # there is nothing to test.
+        p_value = 1.0
+    else:
+        # Exact two-sided McNemar: under the null the discordant pairs
+        # split Binomial(discordant, 0.5).
+        n = discordant
+        k = min(a_only, b_only)
+        tail = sum(math.comb(n, i) for i in range(k + 1)) / (2.0**n)
+        p_value = min(1.0, 2.0 * tail)
+
+    alpha = 1.0 - confidence
+    return {
+        "n_pairs": total,
+        "both_pass": both,
+        "a_only_pass": a_only,
+        "b_only_pass": b_only,
+        "neither_pass": neither,
+        "discordant": discordant,
+        "difference_in_proportion": round(difference, 6),
+        "p_value": round(p_value, 6),
+        "confidence": confidence,
+        "significant": p_value < alpha,
+        "verdict": ("significant" if p_value < alpha else "not significant (the variants are not distinguishable)"),
+    }

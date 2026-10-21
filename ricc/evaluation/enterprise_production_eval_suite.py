@@ -967,6 +967,19 @@ def evaluate_enterprise_production_matrix(
             typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
             logger.warning(f"Could not load LoRA: {typed}")
 
+    # FAIL FAST: without the adapter there is no LoRA measurement. The
+    # previous code fell back to the BASE model's results and wrote them
+    # into the LoRA and Hybrid columns, which made the comparison
+    # report identical numbers for base and LoRA — a fabricated
+    # benchmark. Refuse to run instead.
+    if lora_model is None:
+        raise RuntimeError(
+            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
+            "Refusing to run the enterprise evaluation: falling back to the base model "
+            "would put the base results into the LoRA and Hybrid columns and report a "
+            "comparison that was never measured."
+        )
+
     # Phase B: Evaluate LoRA and Hybrid
     detailed_records = []
     logger.info("Executing Phase B: LoRA and Hybrid Evaluations...")
@@ -982,20 +995,11 @@ def evaluate_enterprise_production_matrix(
         l_ast: float
         l_concept_score: float
         l_total: float
-        if lora_model:
-            l_text, l_lat, l_tps = run_inference(lora_model, prompt)
-            l_ast = score_ast_compilation(l_text, sc["code_language"])
-            l_concept_hits = sum(1 for c in req if c.lower() in l_text.lower())
-            l_concept_score = (l_concept_hits / len(req)) * 100.0
-            l_total = (l_concept_score * 0.7) + (l_ast * 0.3)
-        else:
-            prev = base_results[idx - 1]
-            l_text = cast(str, prev["text"])
-            l_lat = cast(float, prev["latency"])
-            l_tps = cast(float, prev["tps"])
-            l_ast = cast(float, prev["ast_score"])
-            l_concept_score = cast(float, prev["concept_score"])
-            l_total = cast(float, prev["score"])
+        l_text, l_lat, l_tps = run_inference(lora_model, prompt)
+        l_ast = score_ast_compilation(l_text, sc["code_language"])
+        l_concept_hits = sum(1 for c in req if c.lower() in l_text.lower())
+        l_concept_score = (l_concept_hits / len(req)) * 100.0
+        l_total = (l_concept_score * 0.7) + (l_ast * 0.3)
 
         # Hybrid (annotated like the LoRA branch — see above)
         rag_hits = rag_kb.search(prompt, top_k=2)
@@ -1003,21 +1007,20 @@ def evaluate_enterprise_production_matrix(
         rag_prompt = (
             f"Контекст из инженерной базы знаний:\n{rag_context}\n\nИнженерный запрос: {prompt}" if rag_hits else prompt
         )
-        if lora_model and rag_hits:
+        if rag_hits:
+            # Hybrid is LoRA + RAG: the ADAPTER is active and the RAG
+            # context is prepended. Falling back to the "Base + RAG"
+            # result here would measure a different variant under the
+            # hybrid label.
             h_text, h_lat, h_tps = run_inference(lora_model, rag_prompt)
             h_ast = score_ast_compilation(h_text, sc["code_language"])
             h_concept_hits = sum(1 for c in req if c.lower() in h_text.lower())
             h_concept_score = (h_concept_hits / len(req)) * 100.0
             h_total = (h_concept_score * 0.7) + (h_ast * 0.3)
-        elif rag_hits:
-            rprev = rag_results[idx - 1]
-            h_text = cast(str, rprev["text"])
-            h_lat = cast(float, rprev["latency"])
-            h_tps = cast(float, rprev["tps"])
-            h_ast = cast(float, rprev["ast_score"])
-            h_concept_score = cast(float, rprev["concept_score"])
-            h_total = cast(float, rprev["score"])
         else:
+            # No RAG context available: the hybrid variant is the LoRA
+            # model alone. This is stated explicitly rather than
+            # silently reusing another variant's numbers.
             h_text, h_lat, h_tps = l_text, l_lat, l_tps
             h_ast = l_ast
             h_concept_score = l_concept_score
@@ -1031,7 +1034,7 @@ def evaluate_enterprise_production_matrix(
             "rag": rag_results[idx - 1],
             "lora": {
                 "score": round(l_total, 1),
-                "concept_score": round(l_concept_score, 1) if lora_model else base_results[idx - 1]["concept_score"],
+                "concept_score": round(l_concept_score, 1),
                 "ast_score": round(l_ast, 1),
                 "latency": round(l_lat, 2),
                 "tps": round(l_tps, 1),

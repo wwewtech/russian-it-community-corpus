@@ -34,7 +34,7 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from ricc.evaluation.statistical_power import wilson_interval
+from ricc.evaluation.statistical_power import mcnemar_test, wilson_interval
 from ricc.ml_runtime import set_deterministic_seed
 from ricc.observability import record_classified_ml_error
 from ricc.rag.rag_pipeline import LocalRAGPipeline
@@ -1334,6 +1334,37 @@ def execute_humaneval_code(
     raise ValueError(f"Unknown isolation_mode: {isolation_mode!r} (expected 'container' or 'process')")
 
 
+def _paired_significance(
+    outcomes: dict[str, dict[str, bool]],
+    comparisons: tuple[tuple[str, str], ...] = (("base", "lora"), ("base", "hybrid"), ("lora", "hybrid")),
+) -> dict[str, dict[str, object]]:
+    """McNemar's exact test for every variant pair.
+
+    ``outcomes`` maps a variant name to ``{task_key: passed}``. The
+    variants are evaluated on the same tasks, so the comparison is
+    paired and McNemar's test is the correct one — comparing two
+    independent proportions (or eyeballing overlapping Wilson
+    intervals) cannot answer "is B better than A?".
+
+    A comparison whose p-value is above the threshold is reported as
+    NOT significant, so the report cannot claim an improvement that the
+    data does not support.
+    """
+    results: dict[str, dict[str, object]] = {}
+    for variant_a, variant_b in comparisons:
+        a = outcomes.get(variant_a, {})
+        b = outcomes.get(variant_b, {})
+        shared = sorted(set(a) & set(b))
+        if not shared:
+            continue
+        pairs = [(a[key], b[key]) for key in shared]
+        result = mcnemar_test(pairs, confidence=0.95)
+        result["variant_a"] = variant_a
+        result["variant_b"] = variant_b
+        results[f"{variant_a}_vs_{variant_b}"] = result
+    return results
+
+
 def run_official_academic_benchmarks(
     model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
     adapter_id: str = "qwen2.5_1.5b_instruct",
@@ -1440,11 +1471,16 @@ def run_official_academic_benchmarks(
     logger.info("Running Benchmark 1: OpenAI HumanEval Code Execution (pass@1)...")
     humaneval_results = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0, "total": len(HUMANEVAL_TASKS)}
     task_exec_records = []
+    # Per-task outcomes, so the variants can be compared with a PAIRED
+    # test (McNemar) instead of two independent proportions. The variants
+    # run on the same tasks, so the pairing is exact.
+    humaneval_outcomes: dict[str, dict[str, bool]] = {"base": {}, "rag": {}, "lora": {}, "hybrid": {}}
 
     for task in HUMANEVAL_TASKS:
         # Base (adapter disabled)
         base_code = base_generate(task["prompt"], max_tokens=150)
         b_ok = execute_humaneval_code(base_code, task, isolation_mode=isolation_mode)
+        humaneval_outcomes["base"][task["task_id"]] = b_ok
         if b_ok:
             humaneval_results["base"] += 1
         record_raw_output(
@@ -1465,6 +1501,7 @@ def run_official_academic_benchmarks(
         rag_ctx = rag_hits[0].get("content", "")[:150] if rag_hits else ""
         rag_code = base_generate(f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
         r_ok = execute_humaneval_code(rag_code, task, isolation_mode=isolation_mode)
+        humaneval_outcomes["rag"][task["task_id"]] = r_ok
         if r_ok:
             humaneval_results["rag"] += 1
         record_raw_output(
@@ -1483,6 +1520,7 @@ def run_official_academic_benchmarks(
         # LoRA & Hybrid (lora_model is guaranteed non-None by the fail-fast check above)
         lora_code = generate_fn(lora_model, task["prompt"], max_tokens=150)
         l_ok = execute_humaneval_code(lora_code, task, isolation_mode=isolation_mode)
+        humaneval_outcomes["lora"][task["task_id"]] = l_ok
         if l_ok:
             humaneval_results["lora"] += 1
         record_raw_output(
@@ -1500,6 +1538,7 @@ def run_official_academic_benchmarks(
 
         hyb_code = generate_fn(lora_model, f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
         h_ok = execute_humaneval_code(hyb_code, task, isolation_mode=isolation_mode)
+        humaneval_outcomes["hybrid"][task["task_id"]] = h_ok
         if h_ok:
             humaneval_results["hybrid"] += 1
         record_raw_output(
@@ -1529,12 +1568,18 @@ def run_official_academic_benchmarks(
     humaneval_ci = {
         k: wilson_interval(humaneval_results[k], len(HUMANEVAL_TASKS), 0.95) for k in ("base", "rag", "lora", "hybrid")
     }
+    # Paired significance (McNemar) — see _paired_significance.
+    humaneval_significance = _paired_significance(humaneval_outcomes)
 
     # -------------------------------------------------------------
     # 2. EVALUATION ON RUMMLU CS (Exact Multiple-Choice Accuracy)
     # -------------------------------------------------------------
     logger.info("Running Benchmark 2: Sber AI / HSE RuMMLU CS Accuracy...")
     rummlu_results = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0, "total": len(RUMMLU_CS_QUESTIONS)}
+    # Per-question outcomes, so the variants can be compared with a PAIRED
+    # test (McNemar) instead of two independent proportions. The variants
+    # run on the same questions, so the pairing is exact.
+    rummlu_outcomes: dict[str, dict[str, bool]] = {"base": {}, "rag": {}, "lora": {}, "hybrid": {}}
 
     for q in RUMMLU_CS_QUESTIONS:
         prompt_q = (
@@ -1546,6 +1591,7 @@ def run_official_academic_benchmarks(
         # Base (adapter disabled)
         b_ans = base_generate(prompt_q, max_tokens=10)
         b_ok = parse_mc_answer(b_ans) == q["answer"]
+        rummlu_outcomes["base"][q["question"]] = b_ok
         if b_ok:
             rummlu_results["base"] += 1
         record_raw_output(
@@ -1568,6 +1614,7 @@ def run_official_academic_benchmarks(
         rag_prompt = f"Контекст:\n{rag_ctx}\n\n{prompt_q}"
         r_ans = base_generate(rag_prompt, max_tokens=10)
         r_ok = parse_mc_answer(r_ans) == q["answer"]
+        rummlu_outcomes["rag"][q["question"]] = r_ok
         if r_ok:
             rummlu_results["rag"] += 1
         record_raw_output(
@@ -1587,6 +1634,7 @@ def run_official_academic_benchmarks(
         # LoRA & Hybrid
         l_ans = generate_fn(lora_model, prompt_q, max_tokens=10)
         l_ok = parse_mc_answer(l_ans) == q["answer"]
+        rummlu_outcomes["lora"][q["question"]] = l_ok
         if l_ok:
             rummlu_results["lora"] += 1
         record_raw_output(
@@ -1605,6 +1653,7 @@ def run_official_academic_benchmarks(
 
         h_ans = generate_fn(lora_model, rag_prompt, max_tokens=10)
         h_ok = parse_mc_answer(h_ans) == q["answer"]
+        rummlu_outcomes["hybrid"][q["question"]] = h_ok
         if h_ok:
             rummlu_results["hybrid"] += 1
         record_raw_output(
@@ -1627,6 +1676,13 @@ def run_official_academic_benchmarks(
     rummlu_ci = {
         k: wilson_interval(rummlu_results[k], len(RUMMLU_CS_QUESTIONS), 0.95) for k in ("base", "rag", "lora", "hybrid")
     }
+
+    # Paired significance (McNemar). Every variant runs on the SAME
+    # questions, so the outcomes are paired and McNemar's exact test is
+    # the right tool. The report previously asserted an improvement
+    # whose confidence intervals OVERLAP; on the published raw outputs
+    # no comparison reaches significance (p >= 0.125).
+    rummlu_significance = _paired_significance(rummlu_outcomes)
 
     # -------------------------------------------------------------
     # 3. MATHEMATICAL INFORMATION-THEORETIC PERPLEXITY (PPL)
@@ -1762,17 +1818,52 @@ def run_official_academic_benchmarks(
         f"| **RuMMLU CS Subset ({len(RUMMLU_CS_QUESTIONS)} вопр.)** | `Accuracy (%)` | **{rummlu_acc['base']}%** | **{rummlu_acc['rag']}%** | **{rummlu_acc['lora']}%** | **{rummlu_acc['hybrid']}%** |",
         f"| **HumanEval pass@1 — 95% Wilson CI** | `интервал` | {humaneval_ci['base'][0] * 100:.1f}–{humaneval_ci['base'][1] * 100:.1f}% | {humaneval_ci['rag'][0] * 100:.1f}–{humaneval_ci['rag'][1] * 100:.1f}% | {humaneval_ci['lora'][0] * 100:.1f}–{humaneval_ci['lora'][1] * 100:.1f}% | {humaneval_ci['hybrid'][0] * 100:.1f}–{humaneval_ci['hybrid'][1] * 100:.1f}% |",
         f"| **RuMMLU accuracy — 95% Wilson CI** | `интервал` | {rummlu_ci['base'][0] * 100:.1f}–{rummlu_ci['base'][1] * 100:.1f}% | {rummlu_ci['rag'][0] * 100:.1f}–{rummlu_ci['rag'][1] * 100:.1f}% | {rummlu_ci['lora'][0] * 100:.1f}–{rummlu_ci['lora'][1] * 100:.1f}% | {rummlu_ci['hybrid'][0] * 100:.1f}–{rummlu_ci['hybrid'][1] * 100:.1f}% |",
-        f"| **Test Set Perplexity** | `PPL (ниже = лучше)` | `{base_ppl}` | N/A | **`{lora_ppl}`** | **`{lora_ppl}`** |",
-        f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rouge1'] * 100, 1)}%`** | **`{round(lora_rouge['rouge1'] * 100, 1)}%`** |",
-        f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rougeL'] * 100, 1)}%`** | **`{round(lora_rouge['rougeL'] * 100, 1)}%`** |",
+        # The Hybrid column is NOT a copy of the LoRA column: hybrid PPL
+        # and ROUGE were never measured (the RAG context is prepended to
+        # the prompt, which changes what a perplexity over the answer
+        # means). Printing the LoRA value in the Hybrid column made the
+        # table claim a measurement that does not exist.
+        f"| **Test Set Perplexity** | `PPL (ниже = лучше)` | `{base_ppl}` | N/A | **`{lora_ppl}`** | `н/д` |",
+        f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rouge1'] * 100, 1)}%`** | `н/д` |",
+        f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rougeL'] * 100, 1)}%`** | `н/д` |",
         "",
-        "---",
+        "### Значимость различий (парный тест Мак-Немера, 95%)",
         "",
-        "## 3. Детальный разбор выполнения HumanEval subset",
+        "Все варианты прогоняются на ОДНИХ И ТЕХ ЖЕ задачах, поэтому сравнение парное:",
+        "используется точный тест Мак-Немера по дискордантным парам, а не сравнение двух",
+        "независимых долей. Перекрывающиеся доверительные интервалы Уилсона — только грубый",
+        "фильтр; вывод делается по p-значению.",
         "",
-        "| Задача HumanEval | Сигнатура функции | Unit-тесты Base | Unit-тесты LoRA | Unit-тесты Hybrid |",
-        "| :--- | :--- | :---: | :---: | :---: |",
+        "| Бенчмарк | Сравнение | Δ (п.п.) | p-значение | Вывод |",
+        "| :--- | :--- | ---: | ---: | :--- |",
     ]
+
+    for bench_name, significance in (
+        ("HumanEval", humaneval_significance),
+        ("RuMMLU_CS", rummlu_significance),
+    ):
+        for res in significance.values():
+            delta = float(cast(float, res["difference_in_proportion"])) * 100.0
+            verdict = "значимо" if res["significant"] else "**не значимо**"
+            report_lines.append(
+                f"| {bench_name} | {res['variant_a']} vs {res['variant_b']} | {delta:+.1f} | "
+                f"{float(cast(float, res['p_value'])):.4f} | {verdict} |"
+            )
+
+    report_lines.extend(
+        [
+            "",
+            "> Если p-значение выше 0.05, различие нельзя объявлять улучшением: на этой",
+            "> выборке варианты статистически неразличимы.",
+            "",
+            "---",
+            "",
+            "## 3. Детальный разбор выполнения HumanEval subset",
+            "",
+            "| Задача HumanEval | Сигнатура функции | Unit-тесты Base | Unit-тесты LoRA | Unit-тесты Hybrid |",
+            "| :--- | :--- | :---: | :---: | :---: |",
+        ]
+    )
 
     if BENCHMARK_STATUS == "RETRACTED":
         report_lines[1:1] = [
@@ -1788,6 +1879,30 @@ def run_official_academic_benchmarks(
         h_str = "PASSED" if rec["hybrid_ok"] else "FAILED"
         report_lines.append(f"| `{rec['task_id']}` | `{rec['entry_point']}` | {b_str} | {l_str} | {h_str} |")
 
+    # The conclusions must follow the data. Every comparison in the
+    # published run is NOT significant (p >= 0.125), so the report may
+    # not claim that one variant beats another; it states the measured
+    # values and says the variants are indistinguishable.
+    significant_comparisons = [
+        f"{res['variant_a']} vs {res['variant_b']} ({bench}, p={float(cast(float, res['p_value'])):.3f})"
+        for bench, significance in (
+            ("HumanEval", humaneval_significance),
+            ("RuMMLU_CS", rummlu_significance),
+        )
+        for res in significance.values()
+        if res["significant"]
+    ]
+    if significant_comparisons:
+        significance_line = (
+            "Значимые различия (парный тест Мак-Немера, p < 0.05): " + ", ".join(significant_comparisons) + "."
+        )
+    else:
+        significance_line = (
+            "**Ни одно сравнение вариантов не является статистически значимым** "
+            "(парный тест Мак-Немера, p >= 0.05): при такой выборке варианты статистически "
+            "неразличимы, поэтому утверждать превосходство одного над другим нельзя."
+        )
+
     report_lines.extend(
         [
             "",
@@ -1795,9 +1910,15 @@ def run_official_academic_benchmarks(
             "",
             "## 4. Выводы",
             "",
-            f"1. **Перплексия на доменном тесте (PPL {base_ppl} {lora_ppl})**: Доменный LoRA адаптер снижает кросс-энтропийную потерю на русскоязычном инженерном тексте.",
-            f"2. **Кодогенерация HumanEval (pass@1 = {pass_at_1['hybrid']}%)**: Проверка работоспособности сгенерированных Python-функций на тестовых ассертах.",
-            f"3. **RuMMLU Точность ({rummlu_acc['hybrid']}%)**: Оценка точности выбора вариантов ответов на контрольных вопросах по архитектуре БД, сетей и ОС.",
+            f"1. **Перплексия на доменном тесте (PPL base={base_ppl}, LoRA={lora_ppl})**: измерено "
+            f"на отложенной выборке; гибридный PPL не измерялся и не приводится.",
+            f"2. **Кодогенерация HumanEval (pass@1: base={pass_at_1['base']}%, rag={pass_at_1['rag']}%, "
+            f"LoRA={pass_at_1['lora']}%, hybrid={pass_at_1['hybrid']}%)**: проверка работоспособности "
+            f"сгенерированных Python-функций на тестовых ассертах.",
+            f"3. **RuMMLU (accuracy: base={rummlu_acc['base']}%, rag={rummlu_acc['rag']}%, "
+            f"LoRA={rummlu_acc['lora']}%, hybrid={rummlu_acc['hybrid']}%)**: точность выбора "
+            f"вариантов ответа на контрольных вопросах по архитектуре БД, сетей и ОС.",
+            f"4. **{significance_line}**",
         ]
     )
 
@@ -1809,12 +1930,30 @@ def run_official_academic_benchmarks(
         "humaneval_pass_at_1_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in humaneval_ci.items()},
         "rummlu_accuracy": rummlu_acc,
         "rummlu_accuracy_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in rummlu_ci.items()},
+        # Paired significance: the variants run on the same tasks, so
+        # McNemar's exact test is the right comparison. The published
+        # run has NO significant difference (p >= 0.125) — the point
+        # estimates alone must not be read as an improvement.
+        "significance": {
+            "method": "McNemar exact test on paired per-task outcomes, two-sided, 95%",
+            "humaneval": humaneval_significance,
+            "rummlu": rummlu_significance,
+            "any_significant": bool(
+                [r for s in (humaneval_significance, rummlu_significance) for r in s.values() if r["significant"]]
+            ),
+        },
         "sample_sizes": {
             "humaneval_tasks": len(HUMANEVAL_TASKS),
             "rummlu_questions": len(RUMMLU_CS_QUESTIONS),
         },
-        "perplexity": {"base": base_ppl, "lora": lora_ppl},
-        "rouge": {"base": base_rouge, "lora": lora_rouge},
+        "perplexity": {"base": base_ppl, "lora": lora_ppl, "hybrid": None},
+        "rouge": {"base": base_rouge, "lora": lora_rouge, "hybrid": None},
+        "not_measured": {
+            "hybrid_perplexity": "the RAG context is prepended to the prompt, so a perplexity "
+            "over the answer is not the same quantity for the hybrid variant; it is not reported "
+            "rather than copied from the LoRA column",
+            "hybrid_rouge": "same reason; not measured and not reported",
+        },
         # Provenance: every number above must be recomputable from the raw
         # generation logs; the sha256 pins the exact log this matrix was
         # derived from (verified by tests/test_academic_benchmark_matrix_consistency.py).
