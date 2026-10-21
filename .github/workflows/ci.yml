@@ -292,6 +292,85 @@ jobs:
           print(f'dvc.lock covers all {len(stages)} stages')
           "
 
+  dvc-repro:
+    name: DVC Pipeline Reproduction
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck]
+    timeout-minutes: 60
+    # The DVC pipeline is the reproducibility contract of a data project.
+    # This job builds a small raw export, runs the REAL stages through
+    # `dvc repro`, and checks that the artefacts appear — so a stage that
+    # does not work fails the build instead of failing in a nightly run.
+    #
+    # The stages read the raw exports from the repository root, so the
+    # fixture REPLACES them: the 11 real exports (2.8M messages) are
+    # moved aside first, otherwise the job would run for hours.
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -c requirements.lock.txt
+          pip install "dvc>=3.50.0"
+
+      - name: Move the real exports aside and write a small fixture
+        run: |
+          mkdir -p /tmp/real_exports
+          for d in ChatExport_*; do
+            [ -d "$d" ] && mv "$d" /tmp/real_exports/ || true
+          done
+          python -c "
+          import json
+          from pathlib import Path
+          export = Path('ChatExport_2026-01-01')
+          export.mkdir(parents=True, exist_ok=True)
+          payload = {
+              'name': 'community', 'type': 'personal_chat', 'id': 1001,
+              'messages': [
+                  {
+                      'id': i + 1, 'type': 'message',
+                      'date': f'2026-01-01T00:{i:02d}:00',
+                      'date_unixtime': str(1767225600 + i * 60),
+                      'from': 'Алексей', 'from_id': 'user_a',
+                      'text': f'Сообщение номер {i} про настройку nginx и postgres в продакшене.',
+                      'reply_to_message_id': i if i else None,
+                  }
+                  for i in range(6)
+              ],
+          }
+          (export / 'result.json').write_text(json.dumps(payload, ensure_ascii=False), encoding='utf-8')
+          print('fixture written')
+          "
+
+      - name: Run the pipeline
+        run: |
+          python scripts/refresh_dvc_deps.py
+          dvc repro
+          ls -la dataset_output/parquet/ dataset_output/jsonl/ reports/
+
+      - name: Check the produced artefacts
+        run: |
+          python -c "
+          from pathlib import Path
+          import pyarrow.parquet as pq
+          for name in ('full_clean_messages', 'sft_dialogues', 'rag_knowledge_base'):
+              path = Path('dataset_output/parquet') / f'{name}.parquet'
+              assert path.exists(), f'{name}.parquet was not produced'
+              meta = pq.ParquetFile(path).metadata
+              print(f'{name}: {meta.num_rows} rows, {meta.num_row_groups} row groups')
+          assert Path('reports/validation_results.json').exists()
+          assert Path('reports/probabilistic_pii_audit.json').exists()
+          assert Path('dvc.lock').exists()
+          print('the DVC pipeline produced every artefact')
+          "
+
   validate:
     name: Data Validation & Audits
     runs-on: ubuntu-24.04
