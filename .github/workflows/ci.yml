@@ -249,6 +249,15 @@ jobs:
       - name: Verify the raw-export dependency list is in sync
         run: python scripts/refresh_dvc_deps.py --check
 
+      - name: Verify the dataset contract manifest is in sync
+        # The published contract (column names, order and types of every
+        # exported artefact) is versioned; the manifest must match the
+        # code, otherwise a consumer cannot tell which contract a file
+        # was written against.
+        run: |
+          python scripts/generate_schema_manifest.py --check
+          python scripts/generate_lora_registry.py --check
+
       - name: Verify the DVC pipeline definition is valid
         run: |
           python -c "

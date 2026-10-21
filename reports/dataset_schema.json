@@ -1,0 +1,247 @@
+{
+  "dataset_schema_version": "1.0.0",
+  "schema_fingerprint": "7b1061dfed7212f3dc838d7b953ab36cd2fc079b27808f7f9f8a58b855f26a43",
+  "artifacts": {
+    "full_clean_messages": {
+      "artifact": "full_clean_messages",
+      "columns": [
+        {
+          "name": "msg_id",
+          "type": "int64",
+          "nullable": true,
+          "description": "Message id, unique within a chat"
+        },
+        {
+          "name": "chat_id",
+          "type": "int64",
+          "nullable": true,
+          "description": "Source community node id"
+        },
+        {
+          "name": "chat_name",
+          "type": "string",
+          "nullable": true,
+          "description": "Surrogate community node name"
+        },
+        {
+          "name": "timestamp",
+          "type": "string",
+          "nullable": true,
+          "description": "ISO-8601 UTC timestamp"
+        },
+        {
+          "name": "unixtime",
+          "type": "int64",
+          "nullable": true,
+          "description": "Unix timestamp, seconds"
+        },
+        {
+          "name": "author_anon",
+          "type": "string",
+          "nullable": true,
+          "description": "Pseudonymised author display name"
+        },
+        {
+          "name": "author_id_anon",
+          "type": "string",
+          "nullable": true,
+          "description": "Pseudonymised author id"
+        },
+        {
+          "name": "text_clean",
+          "type": "string",
+          "nullable": true,
+          "description": "Anonymised message text"
+        },
+        {
+          "name": "reply_to_id",
+          "type": "double",
+          "nullable": true,
+          "description": "Replied-to message id (null when not a reply)"
+        },
+        {
+          "name": "domain",
+          "type": "string",
+          "nullable": true,
+          "description": "Taxonomy domain"
+        },
+        {
+          "name": "tags",
+          "type": "list<item: string>",
+          "nullable": true,
+          "description": "Technical keyword tags"
+        },
+        {
+          "name": "sentiment_score",
+          "type": "int64",
+          "nullable": true,
+          "description": "Sentiment score"
+        },
+        {
+          "name": "token_count_approx",
+          "type": "int64",
+          "nullable": true,
+          "description": "Approximate token count"
+        },
+        {
+          "name": "is_question",
+          "type": "bool",
+          "nullable": true,
+          "description": "Whether the message is a question"
+        },
+        {
+          "name": "thread_id",
+          "type": "int64",
+          "nullable": true,
+          "description": "Thread id (null when unthreaded)"
+        }
+      ]
+    },
+    "rag_knowledge_base": {
+      "artifact": "rag_knowledge_base",
+      "columns": [
+        {
+          "name": "chunk_id",
+          "type": "string",
+          "nullable": true,
+          "description": "Chunk id"
+        },
+        {
+          "name": "thread_id",
+          "type": "int64",
+          "nullable": true,
+          "description": "Source thread id"
+        },
+        {
+          "name": "chat_name",
+          "type": "string",
+          "nullable": true,
+          "description": "Surrogate community node name"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": true,
+          "description": "Chunk title"
+        },
+        {
+          "name": "topic_domain",
+          "type": "string",
+          "nullable": true,
+          "description": "Taxonomy domain"
+        },
+        {
+          "name": "topic_tags",
+          "type": "list<item: string>",
+          "nullable": true,
+          "description": "Topic keyword tags"
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "nullable": true,
+          "description": "Chunk text"
+        },
+        {
+          "name": "date_range",
+          "type": "string",
+          "nullable": true,
+          "description": "Date range of the source thread"
+        },
+        {
+          "name": "participants_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "Participants in the source thread"
+        },
+        {
+          "name": "message_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "Messages in the source thread"
+        },
+        {
+          "name": "token_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "Approximate token count"
+        }
+      ]
+    },
+    "sft_dialogues": {
+      "artifact": "sft_dialogues",
+      "columns": [
+        {
+          "name": "thread_id",
+          "type": "int64",
+          "nullable": true,
+          "description": "Thread id"
+        },
+        {
+          "name": "chat_name",
+          "type": "string",
+          "nullable": true,
+          "description": "Surrogate community node name"
+        },
+        {
+          "name": "topic_domain",
+          "type": "string",
+          "nullable": true,
+          "description": "Taxonomy domain of the thread"
+        },
+        {
+          "name": "topic_tags",
+          "type": "list<item: string>",
+          "nullable": true,
+          "description": "Topic keyword tags"
+        },
+        {
+          "name": "messages",
+          "type": "list<item: struct<author: string, content: string, role: string, timestamp: string>>",
+          "nullable": true,
+          "description": "The dialogue turns"
+        },
+        {
+          "name": "quality_score",
+          "type": "double",
+          "nullable": true,
+          "description": "Quality score of the dialogue"
+        },
+        {
+          "name": "turn_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "Number of turns"
+        },
+        {
+          "name": "total_tokens",
+          "type": "int64",
+          "nullable": true,
+          "description": "Approximate token count"
+        }
+      ]
+    }
+  },
+  "jsonl": {
+    "dpo_preference_pairs": {
+      "format": "dpo",
+      "record": "one pair per line: {\"prompt\", \"chosen\", \"rejected\"}"
+    },
+    "rag_chunks_kb": {
+      "format": "rag-chunk",
+      "record": "one chunk per line: the RAG chunk object"
+    },
+    "sft_alpaca_format": {
+      "format": "alpaca",
+      "record": "one pair per line: {\"instruction\", \"input\", \"output\"}"
+    },
+    "sft_openai_messages": {
+      "format": "openai-chatml",
+      "record": "one conversation per line: {\"messages\": [{\"role\", \"content\"}, ...]}"
+    },
+    "sft_sharegpt_format": {
+      "format": "sharegpt",
+      "record": "one conversation per line: {\"conversations\": [{\"from\", \"value\"}, ...]}"
+    }
+  }
+}

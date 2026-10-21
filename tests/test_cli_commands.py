@@ -54,10 +54,55 @@ def build_synthetic_dataset(root: Path) -> Path:
             "thread_id": [1, 1],
         }
     )
-    messages.to_parquet(parquet_dir / "full_clean_messages.parquet", index=False)
-    pd.DataFrame({"dialogue_id": [1], "turns": [3]}).to_parquet(parquet_dir / "sft_dialogues.parquet", index=False)
-    pd.DataFrame({"chunk_id": [1], "content": ["nginx reverse proxy guide"]}).to_parquet(
-        parquet_dir / "rag_knowledge_base.parquet", index=False
+    # The parquet files must match the published CONTRACT
+    # (ricc/schema_version.py): the column names, their order, their
+    # types and the version metadata. A fixture that does not match is
+    # now correctly rejected by the validator, so the fixture has to be
+    # built from the contract itself.
+    from ricc.exporter.parquet_exporter import MESSAGE_SCHEMA, RAG_SCHEMA, SFT_SCHEMA
+
+    messages.to_parquet(
+        parquet_dir / "full_clean_messages.parquet",
+        index=False,
+        engine="pyarrow",
+        schema=MESSAGE_SCHEMA,
+    )
+    pd.DataFrame(
+        {
+            "thread_id": [1],
+            "chat_name": ["community_node_01"],
+            "topic_domain": ["devops_infra"],
+            "topic_tags": [["nginx"]],
+            "messages": [[{"author": "u", "content": "c", "role": "assistant", "timestamp": "2026-01-01T00:00:00"}]],
+            "quality_score": [1.0],
+            "turn_count": [3],
+            "total_tokens": [12],
+        }
+    ).to_parquet(
+        parquet_dir / "sft_dialogues.parquet",
+        index=False,
+        engine="pyarrow",
+        schema=SFT_SCHEMA,
+    )
+    pd.DataFrame(
+        {
+            "chunk_id": ["c1"],
+            "thread_id": [1],
+            "chat_name": ["community_node_01"],
+            "title": ["nginx"],
+            "topic_domain": ["devops_infra"],
+            "topic_tags": [["nginx"]],
+            "content": ["nginx reverse proxy guide"],
+            "date_range": ["2026-01-01"],
+            "participants_count": [1],
+            "message_count": [2],
+            "token_count": [6],
+        }
+    ).to_parquet(
+        parquet_dir / "rag_knowledge_base.parquet",
+        index=False,
+        engine="pyarrow",
+        schema=RAG_SCHEMA,
     )
 
     dialogue = {

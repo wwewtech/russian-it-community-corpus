@@ -10,6 +10,7 @@ from typing import Any
 import pyarrow.parquet as pq
 
 from ricc.pii.regex_scrubber import RegexPIIScrubber
+from ricc.schema_version import read_metadata, verify_against_file
 
 logger = logging.getLogger(__name__)
 
@@ -43,18 +44,26 @@ class DatasetValidator:
         return results
 
     def validate_parquet_files(self) -> dict[str, Any]:
-        """Check all Parquet files for existence, valid schema, and row counts."""
+        """Check all Parquet files for existence, valid schema, and row counts.
+
+        The schema check is a real contract check: the column names,
+        their order and their types must match the declared dataset
+        contract (``ricc.schema_version``), and the file must carry the
+        current contract version and fingerprint. The previous
+        implementation only counted columns, so a renamed or retyped
+        column passed validation silently.
+        """
         parquet_dir = self.dataset_dir / "parquet"
         files_to_check = [
-            "full_clean_messages.parquet",
-            "sft_dialogues.parquet",
-            "rag_knowledge_base.parquet",
+            ("full_clean_messages.parquet", "full_clean_messages"),
+            ("sft_dialogues.parquet", "sft_dialogues"),
+            ("rag_knowledge_base.parquet", "rag_knowledge_base"),
         ]
 
         details = {}
         all_ok = True
 
-        for fname in files_to_check:
+        for fname, artifact in files_to_check:
             fpath = parquet_dir / fname
             if not fpath.exists():
                 details[fname] = {"exists": False, "rows": 0, "error": "File not found"}
@@ -66,14 +75,28 @@ class DatasetValidator:
                 row_count = table.num_rows
                 col_count = table.num_columns
                 size_mb = round(fpath.stat().st_size / (1024 * 1024), 2)
+
+                contract_problems = verify_against_file(fpath, artifact)
+                meta = read_metadata(table.schema)
+                if row_count == 0:
+                    status = "EMPTY"
+                elif contract_problems:
+                    status = "INVALID"
+                else:
+                    status = "VALID"
                 details[fname] = {
                     "exists": True,
                     "rows": row_count,
                     "columns": col_count,
                     "size_mb": size_mb,
-                    "status": "VALID" if row_count > 0 else "EMPTY",
+                    "schema_version": meta["version"],
+                    "schema_fingerprint": meta["fingerprint"],
+                    "schema_problems": contract_problems,
+                    "status": status,
                 }
                 if row_count == 0:
+                    all_ok = False
+                if contract_problems:
                     all_ok = False
             except Exception as e:
                 details[fname] = {"exists": True, "error": str(e), "status": "CORRUPT"}

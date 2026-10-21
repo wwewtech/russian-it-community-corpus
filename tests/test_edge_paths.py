@@ -434,14 +434,43 @@ class TestValidatorExtra(unittest.TestCase):
             res = v.validate_parquet_files()
             self.assertFalse(res["passed"])
             (root / "parquet").mkdir()
-            df = pd.DataFrame({"a": [1, 2]})
-            df.to_parquet(root / "parquet" / "full_clean_messages.parquet")
+            # The first file matches the published contract, so it is
+            # VALID; the second is empty; the third is not a parquet file
+            # at all. The validator must tell the three apart.
+            from ricc.exporter.parquet_exporter import MESSAGE_SCHEMA
+
+            df = pd.DataFrame(
+                {
+                    "msg_id": [1],
+                    "chat_id": [1],
+                    "chat_name": ["community_node_01"],
+                    "timestamp": ["2026-01-01T00:00:00"],
+                    "unixtime": [1767225600],
+                    "author_anon": ["Developer_00001"],
+                    "author_id_anon": ["user_00001"],
+                    "text_clean": ["текст"],
+                    "reply_to_id": [None],
+                    "domain": ["devops_infra"],
+                    "tags": [["nginx"]],
+                    "sentiment_score": [0],
+                    "token_count_approx": [3],
+                    "is_question": [False],
+                    "thread_id": [1],
+                }
+            )
+            df.to_parquet(
+                root / "parquet" / "full_clean_messages.parquet",
+                index=False,
+                engine="pyarrow",
+                schema=MESSAGE_SCHEMA,
+            )
             pd.DataFrame({"a": []}).to_parquet(root / "parquet" / "sft_dialogues.parquet")
             (root / "parquet" / "rag_knowledge_base.parquet").write_bytes(b"not a parquet")
             res = v.validate_parquet_files()
             self.assertFalse(res["passed"])
             self.assertEqual(res["details"]["sft_dialogues.parquet"]["status"], "EMPTY")
             self.assertEqual(res["details"]["rag_knowledge_base.parquet"]["status"], "CORRUPT")
+            self.assertEqual(res["details"]["full_clean_messages.parquet"]["status"], "VALID")
 
     def test_jsonl_valid_corrupt_and_empty_lines(self) -> None:
         with tempfile.TemporaryDirectory() as d:
