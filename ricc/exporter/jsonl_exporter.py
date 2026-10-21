@@ -1,9 +1,15 @@
 """
 JSONL Exporters for standard LLM fine-tuning formats (ShareGPT, Alpaca, OpenAI ChatML).
+
+The writers stream: every record is serialised and flushed to the file handle
+one line at a time, so the peak memory does not grow with the corpus. The
+exporters therefore accept any ``Iterable`` of dialogues (a generator included)
+and not only a materialised list.
 """
 
 import json
 import logging
+from collections.abc import Iterable, Sized
 from pathlib import Path
 
 from ricc.ingestion.schema import SFTDialogue
@@ -17,6 +23,11 @@ SYSTEM_PROMPT_DEFAULT = (
 )
 
 
+def _count(items: Iterable[object]) -> str:
+    """Human-readable item count for the log line (``all`` for a lazy iterable)."""
+    return str(len(items)) if isinstance(items, Sized) else "all"
+
+
 class JSONLExporter:
     """
     Exports SFT dialogues to standard JSONL formats for various training frameworks (Unsloth, Axolotl, TRL).
@@ -26,13 +37,13 @@ class JSONLExporter:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def export_sharegpt(self, dialogues: list[SFTDialogue], file_name: str = "sft_sharegpt_format.jsonl") -> Path:
+    def export_sharegpt(self, dialogues: Iterable[SFTDialogue], file_name: str = "sft_sharegpt_format.jsonl") -> Path:
         """
         Export dialogues to ShareGPT format:
         {"id": "...", "topic": "...", "conversations": [{"from": "human", "value": "..."}, {"from": "gpt", "value": "..."}]}
         """
         out_path = self.output_dir / file_name
-        logger.info(f"Exporting {len(dialogues)} dialogues to ShareGPT JSONL at {out_path}...")
+        logger.info(f"Exporting {_count(dialogues)} dialogues to ShareGPT JSONL at {out_path}...")
 
         with open(out_path, "w", encoding="utf-8") as f:
             for d in dialogues:
@@ -59,13 +70,13 @@ class JSONLExporter:
         logger.info(f"Saved ShareGPT JSONL at {out_path}")
         return out_path
 
-    def export_alpaca(self, dialogues: list[SFTDialogue], file_name: str = "sft_alpaca_format.jsonl") -> Path:
+    def export_alpaca(self, dialogues: Iterable[SFTDialogue], file_name: str = "sft_alpaca_format.jsonl") -> Path:
         """
         Export dialogues to Alpaca/Instruction format:
         {"instruction": "...", "input": "...", "output": "...", "domain": "..."}
         """
         out_path = self.output_dir / file_name
-        logger.info(f"Exporting {len(dialogues)} instruction pairs to Alpaca JSONL at {out_path}...")
+        logger.info(f"Exporting {_count(dialogues)} instruction pairs to Alpaca JSONL at {out_path}...")
 
         pair_count = 0
         with open(out_path, "w", encoding="utf-8") as f:
@@ -90,7 +101,7 @@ class JSONLExporter:
 
     def export_openai_chatml(
         self,
-        dialogues: list[SFTDialogue],
+        dialogues: Iterable[SFTDialogue],
         file_name: str = "sft_openai_messages.jsonl",
         system_prompt: str = SYSTEM_PROMPT_DEFAULT,
     ) -> Path:
@@ -99,7 +110,7 @@ class JSONLExporter:
         {"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
         """
         out_path = self.output_dir / file_name
-        logger.info(f"Exporting {len(dialogues)} dialogues to OpenAI ChatML JSONL at {out_path}...")
+        logger.info(f"Exporting {_count(dialogues)} dialogues to OpenAI ChatML JSONL at {out_path}...")
 
         with open(out_path, "w", encoding="utf-8") as f:
             for d in dialogues:
