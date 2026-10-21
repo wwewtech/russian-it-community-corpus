@@ -32,6 +32,7 @@ from ricc.graph.thread_builder import ThreadDAGBuilder
 from ricc.ingestion.loader import merge_multiple_exports
 from ricc.ingestion.schema import CleanedMessage, NormalizedMessage, RAGChunk, SFTDialogue
 from ricc.observability import (
+    bind_run_context,
     pipeline_logger,
     record_stage_messages,
     time_stage,
@@ -116,7 +117,10 @@ class MasterDataPipeline:
     def run_all(self) -> dict[str, Any]:
         """Execute all pipeline stages in sequence."""
         start_time = time.time()
-        pipeline_logger.stage_start("pipeline_start")
+        # Bind the run to every log line, so the messages of two runs can
+        # be told apart and correlated with the artefacts of this one.
+        run_id = bind_run_context(pipeline_name="ricc")
+        pipeline_logger.stage_start("pipeline_start", run_id=run_id)
         pipeline_logger.progress("STARTING MASTER DATA ENGINEERING & CURATION PIPELINE")
 
         # Stage 1: Ingestion
@@ -265,6 +269,7 @@ class MasterDataPipeline:
         # Save pipeline execution summary
         exec_summary = {
             "execution_time_seconds": round(total_time, 2),
+            "run_id": run_id,
             "raw_messages_count": raw_messages_count,
             "cleaned_messages_count": len(self.cleaned_messages),
             "threads_count": len(self.threads),

@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import sys
 import time
+import uuid
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
@@ -81,6 +82,40 @@ def configure_logging(
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a structured logger instance."""
     return structlog.get_logger(name)  # type: ignore[no-any-return]
+
+
+def bind_run_context(run_id: str | None = None, **extra: Any) -> str:
+    """Bind the current run to every log line and return its id.
+
+    Without a run id, the log lines of two pipeline runs are
+    indistinguishable — there is no way to tell which run produced a
+    given message, and the JSON logs cannot be correlated with the
+    artefacts of a specific run.
+
+    The context is bound through ``structlog.contextvars``, so every
+    logger created afterwards carries it.
+
+    Args:
+        run_id: the run identifier; a new UUID4 is generated when omitted.
+        extra: additional key/value pairs to bind.
+
+    Returns:
+        The run id that was bound.
+    """
+    resolved = run_id or uuid.uuid4().hex
+    structlog.contextvars.bind_contextvars(run_id=resolved, **extra)
+    get_logger("run").info("run_started", run_id=resolved)
+    return resolved
+
+
+def get_run_context() -> dict[str, Any]:
+    """The currently bound run context."""
+    return dict(structlog.contextvars.get_contextvars())
+
+
+def clear_run_context() -> None:
+    """Drop the bound run context (used between runs in the same process)."""
+    structlog.contextvars.clear_contextvars()
 
 
 # =============================================================================
