@@ -1,0 +1,17 @@
+[core]
+    remote = storage
+    analytics = false
+
+['remote "storage"']
+    # The default remote is a LOCAL directory outside the working copy.
+    # It is what a single-machine setup needs: DVC keeps the pipeline
+    # reproducible (the lock file records every hash) and the artefacts
+    # are versioned, without requiring a cloud account.
+    #
+    # For a shared setup, point the remote at object storage instead —
+    # the rest of the configuration does not change:
+    #
+    #   dvc remote add -d s3remote s3://my-bucket/ricc
+    #
+    # ... and set `remote = s3remote` in the [core] section above.
+    url = ../ricc-dvc-storage
