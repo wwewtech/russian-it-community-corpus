@@ -12,8 +12,10 @@ no effect.
 from __future__ import annotations
 
 import inspect
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -81,8 +83,6 @@ class TestAuditUsesTheConfiguredDefaults(unittest.TestCase):
         leaked. That is the statistics working correctly, and it is why
         the configured sample size is 100000.
         """
-        import tempfile
-
         with tempfile.TemporaryDirectory() as tmp:
             import pandas as pd
 
@@ -145,6 +145,13 @@ class TestSettingsFallBackSafely(unittest.TestCase):
         """A stray key must not break the boot."""
         instance = Settings()
         self.assertTrue(hasattr(instance, "pii_audit"))
+
+    def test_strict_mode_rejects_malformed_params(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            params_path = Path(tmp) / "params.yaml"
+            params_path.write_text("not: [valid", encoding="utf-8")
+            with patch.object(Settings, "_params_path", return_value=params_path), self.assertRaises(ValueError):
+                Settings(strict_params=True, discover_exports=False)
 
 
 if __name__ == "__main__":
