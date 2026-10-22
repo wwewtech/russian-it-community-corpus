@@ -84,7 +84,7 @@ rpds-py==2026.9.1
 safetensors==0.8.0
 scikit-learn==1.9.1
 scipy==1.17.1
-setuptools==75.8.2
+setuptools==80.9.0
 six==1.17.0
 slovnet==0.6.0
 smmap==5.0.3
