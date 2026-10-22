@@ -1,1 +1,6 @@
-Success: no issues found in 44 source files
+ricc\lora\batch_train_zoo.py:1246: error: Value of type "object" is not indexable  [index]
+ricc\lora\batch_train_zoo.py:1250: error: Value of type "object" is not indexable  [index]
+ricc\lora\batch_train_zoo.py:1297: error: Argument 1 to "budget_for" has incompatible type "object"; expected "dict[str, Any]"  [arg-type]
+ricc\lora\batch_train_zoo.py:1299: error: Value of type "object" is not indexable  [index]
+ricc\lora\batch_train_zoo.py:1303: error: Argument 1 to "train_and_upload_single_model" has incompatible type "object"; expected "dict[str, Any]"  [arg-type]
+Found 5 errors in 1 file (checked 41 source files)

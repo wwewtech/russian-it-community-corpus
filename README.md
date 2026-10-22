@@ -253,7 +253,11 @@ make ui
 ### 4. Fine-Tune LoRA
 
 ```bash
-python ricc/lora/train_lora.py --model Qwen/Qwen2.5-0.5B-Instruct --steps 100
+# a smoke test (15 steps, 400 dialogues) — proves the pipeline fits on your GPU
+python -m ricc.lora.batch_train_zoo --only qwen2.5_0.5b_instruct --profile pilot
+
+# a real run: one full epoch over the corpus (~5 h on a 1.5B model)
+python -m ricc.lora.batch_train_zoo --only qwen2.5_1.5b_instruct --profile full
 ```
 
 ### 5. Run LoRA Inference
