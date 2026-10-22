@@ -63,7 +63,7 @@ logger = logging.getLogger("LoRAZoo44")
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 MODEL_REPO_ID = "wwewtech/russian-it-community-lora"
 
-ZOO_44_MODELS = [
+ZOO_44_MODELS: list[dict[str, Any]] = [
     # --- 1. Qwen 2.5 General & Coder Family (6 models) ---
     {
         "id": "qwen2.5_0.5b_instruct",
@@ -451,6 +451,74 @@ ZOO_44_MODELS = [
         "params": "774M",
         "desc": "Classic GPT-2 Large 774M generative foundation",
     },
+    # --- Flagship 7B-8B models (4-bit QLoRA) -------------------------------
+    # These do not fit on a 12 GB consumer card in fp16, so they are
+    # quantized to 4 bits (NF4). The capability used to live in
+    # a separate copy of the training
+    # loop; it is now a flag on the one trainer.
+    {
+        "id": "heavyweight_qwen2.5_coder_7b",
+        "model_name": "unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit",
+        "family": "Qwen 2.5 Heavyweight",
+        "params": "7B",
+        "desc": "Flagship 7B coding model, 4-bit QLoRA for a 12 GB consumer card",
+        "load_in_4bit": True,
+    },
+    {
+        "id": "heavyweight_deepseek_r1_7b",
+        "model_name": "unsloth/DeepSeek-R1-Distill-Qwen-7B-bnb-4bit",
+        "family": "DeepSeek R1 Heavyweight",
+        "params": "7B",
+        "desc": "Flagship 7B reasoning model, 4-bit QLoRA for a 12 GB consumer card",
+        "load_in_4bit": True,
+    },
+    {
+        "id": "heavyweight_llama3.1_8b",
+        "model_name": "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        "family": "Llama 3.1 Heavyweight",
+        "params": "8B",
+        "desc": "Flagship 8B general model, 4-bit QLoRA for a 12 GB consumer card",
+        "load_in_4bit": True,
+    },
+    # --- Models that were only reachable through the legacy scripts -------
+    # These adapters exist on disk, but their base models were not in this
+    # zoo. With the models added here, every adapter in `lora_adapters/` is
+    # covered by the single trainer.
+    {
+        "id": "qwen2_0.5b_instruct",
+        "model_name": "Qwen/Qwen2-0.5B-Instruct",
+        "family": "Qwen 2",
+        "params": "0.5B",
+        "desc": "First-generation Qwen 2 instruct model",
+    },
+    {
+        "id": "qwen2_1.5b_instruct",
+        "model_name": "Qwen/Qwen2-1.5B-Instruct",
+        "family": "Qwen 2",
+        "params": "1.5B",
+        "desc": "First-generation Qwen 2 1.5B instruct model",
+    },
+    {
+        "id": "falcon3_1b_instruct",
+        "model_name": "tiiuae/Falcon3-1B-Instruct",
+        "family": "TII Falcon 3",
+        "params": "1.0B",
+        "desc": "Falcon 3 1B instruct model",
+    },
+    {
+        "id": "falcon3_3b_instruct",
+        "model_name": "tiiuae/Falcon3-3B-Instruct",
+        "family": "TII Falcon 3",
+        "params": "3.0B",
+        "desc": "Falcon 3 3B instruct model",
+    },
+    {
+        "id": "tiny_starcoder_py",
+        "model_name": "bigcode/tiny_starcoder_py",
+        "family": "BigCode StarCoder",
+        "params": "164M",
+        "desc": "Tiny Python code model from the StarCoder family",
+    },
 ]
 
 # --- Training budgets ------------------------------------------------------ #
@@ -638,15 +706,43 @@ def train_and_upload_single_model(
             tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
 
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+        # 4-bit (QLoRA) models: quantize base weights so a 7-8B model fits
+        # on a 12 GB consumer card. This capability used to live in copies
+        # of the training loop; it now lives in the single trainer.
+        load_in_4bit = bool(meta.get("load_in_4bit", False))
+        model_kwargs: dict[str, Any] = {
+            "torch_dtype": dtype,
+            "device_map": "auto" if torch.cuda.is_available() else None,
+            "trust_remote_code": True,
+        }
+        if load_in_4bit:
+            if not torch.cuda.is_available():
+                raise RuntimeError(
+                    f"{model_name} needs 4-bit quantization, which requires a GPU. "
+                    "Run it on a CUDA machine, or drop the 'load_in_4bit' flag."
+                )
+            from transformers import BitsAndBytesConfig
+
+            model_kwargs["quantization_config"] = cast(Any, BitsAndBytesConfig)(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+            )
+
         model: Any = with_retries(
             lambda: AutoModelForCausalLM.from_pretrained(
                 model_name,
-                torch_dtype=dtype,
-                device_map="auto" if torch.cuda.is_available() else None,
-                trust_remote_code=True,
+                **model_kwargs,
             ),
             what=f"model load {model_name}",
         )
+
+        if load_in_4bit:
+            from peft import prepare_model_for_kbit_training
+
+            model = cast(Any, prepare_model_for_kbit_training)(model)
 
         grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
         if callable(grad_ckpt):
@@ -718,7 +814,7 @@ def train_and_upload_single_model(
             # on prompt tokens (the old `labels = input_ids.copy()`
             # behaviour) teaches the model to parrot the user instead of
             # answering — see the v12.0.4 prompt-loss-masking fix in
-            # ricc/lora/train_lora.py, mirrored here.
+            # the training loop that used to live in ricc/lora/train_lora.py.
             try:
                 txt = _tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
             except Exception:

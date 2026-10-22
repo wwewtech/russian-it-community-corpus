@@ -7,15 +7,28 @@ single RTX 3060 (12GB) and scaled up to a multi-model zoo.
 
 | Script | Purpose |
 |---|---|
-| `train_lora.py` | single adapter, full-corpus SFT, resumable checkpoints (save every ~20% steps, keep 3) |
-| `batch_train_zoo.py` | 44-model zoo: train + auto-upload to `wwewtech/russian-it-community-lora` |
-| `train_20_popular_models.py` | 20 popular families incl. 4-bit QLoRA for 7B-class models |
-| `train_heavyweight_5_sota.py` | five 7–8B flagships, 4-bit NF4 + gradient checkpointing |
-| `generate_demo.py` | inference demo against a trained adapter |
+| `batch_train_zoo.py` | **the trainer**: 61-model zoo, full-corpus SFT, 4-bit QLoRA for the 7–8B flagships, resumable checkpoints, provenance, auto-upload to `wwewtech/russian-it-community-lora` |
 
 ```bash
-python -m ricc.lora.train_lora --model Qwen/Qwen2.5-0.5B-Instruct --steps 30
+# one adapter
+python -m ricc.lora.batch_train_zoo --only qwen2.5_1.5b_instruct --profile full
+
+# a smoke test (15 steps, 400 dialogues) — NOT publishable
+python -m ricc.lora.batch_train_zoo --only qwen2.5_1.5b_instruct --profile pilot
 ```
+
+> **One trainer, not four.** The zoo used to be four scripts with four
+> copies of the same training loop: `train_lora.py`,
+> `train_20_popular_models.py`, `train_heavyweight_5_sota.py` and
+> `batch_train_zoo.py` (~130 duplicated lines of model loading, LoRA
+> wrapping, tokenisation and `TrainingArguments`). The 4-bit QLoRA path
+> lived only in the two legacy scripts, so the flagship 7–8B adapters
+> could not be retrained by the zoo trainer at all — and `train_lora.py`
+> had no resume, no held-out tail, no eval split and no
+> `training_meta.json`, so it could not produce a policy-compliant
+> adapter even in principle. The capability is now a flag on the one
+> trainer (`load_in_4bit`), the zoo covers every adapter in
+> `lora_adapters/`, and the three legacy scripts are gone.
 
 > **The training policy is binding.** `AGENTS.md` requires a real run to
 > cover the **whole corpus for at least one complete epoch**. The
@@ -30,12 +43,13 @@ python -m ricc.lora.train_lora --model Qwen/Qwen2.5-0.5B-Instruct --steps 30
 - **VRAM**: `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` set by
   `setup_runtime_env(pytorch_alloc_conf=True)`; fp16 on CUDA, fp32
   fallback on CPU.
-- **Full corpus**: `train_lora` trains on the whole JSONL (a silent
-  1000-row truncation was removed — see module docstring); use
-  `--max-samples` for smoke runs.
-- **LoRA config**: r=16/α=32 for single runs, r=8/α=16 for the 20-model
-  batch; target modules auto-detected (`detect_target_modules` handles
-  GPT2/OPT/Falcon naming variants).
+- **Full corpus**: the trainer uses the whole JSONL (a silent 1000-row
+  truncation was removed — see the module docstring); use `--samples` for
+  smoke runs.
+- **LoRA config**: r=16/α=32 for every run; target modules auto-detected
+  (`detect_target_modules` handles GPT2/OPT/Falcon naming variants).
+- **4-bit QLoRA**: the 7–8B flagships are quantized to NF4 so they fit on
+  a 12 GB consumer card (`load_in_4bit` in the zoo definition).
 
 ## What may be published
 

@@ -25,6 +25,9 @@ peft>=0.10.0
 trl>=0.8.0
 datasets>=2.18.0
 evaluate>=0.4.0
+# 4-bit quantization (QLoRA) for the 7-8B flagship adapters, which do
+# not fit on a 12 GB consumer card in fp16.
+bitsandbytes>=0.43.0
 
 # Interactive Web Data Studio & CLI
 streamlit>=1.32.0
