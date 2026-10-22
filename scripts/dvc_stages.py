@@ -69,10 +69,10 @@ def _save(obj: Any, path: Path) -> None:
 
 
 def stage_ingest() -> None:
-    from ricc.config import RAW_EXPORT_DIRS
     from ricc.ingestion.loader import merge_multiple_exports
+    from ricc.settings import settings
 
-    chats, messages = merge_multiple_exports(list(RAW_EXPORT_DIRS))
+    chats, messages = merge_multiple_exports(list(settings.RAW_EXPORT_DIRS))
     _save((chats, messages), INTERMEDIATE / "raw_messages.pkl.gz")
     print(f"Ingested {len(messages)} messages from {len(chats)} chats")
 
@@ -113,14 +113,14 @@ def stage_exact_dedup() -> None:
 
 
 def stage_minhash_dedup() -> None:
-    from ricc.config import MINHASH_NUM_PERM, MINHASH_SHINGLE_SIZE, MINHASH_THRESHOLD
     from ricc.deduplication.minhash_lsh import MinHashLSH
+    from ricc.settings import settings
 
     messages = _load(INTERMEDIATE / "dedup_exact.pkl.gz")
     lsh = MinHashLSH(
-        num_perm=MINHASH_NUM_PERM,
-        threshold=MINHASH_THRESHOLD,
-        shingle_size=MINHASH_SHINGLE_SIZE,
+        num_perm=settings.MINHASH_NUM_PERM,
+        threshold=settings.MINHASH_THRESHOLD,
+        shingle_size=settings.MINHASH_SHINGLE_SIZE,
     )
     unique, removed = lsh.deduplicate_messages(messages)
     _save(unique, INTERMEDIATE / "dedup_minhash.pkl.gz")
@@ -210,16 +210,16 @@ def _messages() -> list[Any]:
 def stage_analytics() -> None:
     from ricc.analytics.engine import DeepChatAnalyzer
     from ricc.analytics.report_generator import ReportGenerator
-    from ricc.config import REPORTS_DIR
+    from ricc.settings import settings
     from ricc.validation.benchmark import BenchmarkRunner
 
     messages = _messages()
     report = DeepChatAnalyzer(messages, sample_limit_for_nlp=100000).run_full_analysis()
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     generator = ReportGenerator(report)
-    generator.export_json(REPORTS_DIR / "analytics_summary.json")
-    generator.export_markdown(REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md")
-    BenchmarkRunner().export_benchmark_file(REPORTS_DIR / "domain_benchmark_100.json")
+    generator.export_json(settings.REPORTS_DIR / "analytics_summary.json")
+    generator.export_markdown(settings.REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md")
+    BenchmarkRunner().export_benchmark_file(settings.REPORTS_DIR / "domain_benchmark_100.json")
     print("Analytics + reports written")
 
 
@@ -229,7 +229,7 @@ def stage_analytics() -> None:
 
 
 def stage_validate() -> None:
-    from ricc.config import OUTPUT_DIR, REPORTS_DIR
+    from ricc.settings import settings
     from ricc.validation.probabilistic_audit import ProbabilisticPIIAuditor
     from ricc.validation.validator import DatasetValidator
 
@@ -238,9 +238,9 @@ def stage_validate() -> None:
     confidence = float(params.get("confidence", 0.99))
     tolerance = float(params.get("max_leak_tolerance", 1e-4))
 
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    result = DatasetValidator(OUTPUT_DIR).validate_all()
-    (REPORTS_DIR / "validation_results.json").write_text(
+    settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    result = DatasetValidator(settings.OUTPUT_DIR).validate_all()
+    (settings.REPORTS_DIR / "validation_results.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
@@ -249,7 +249,7 @@ def stage_validate() -> None:
         confidence=confidence,
         max_leak_tolerance=tolerance,
     )
-    (REPORTS_DIR / "probabilistic_pii_audit.json").write_text(
+    (settings.REPORTS_DIR / "probabilistic_pii_audit.json").write_text(
         json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(f"Validation: {'PASSED' if result['overall_passed'] else 'FAILED'}")

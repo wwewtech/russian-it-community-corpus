@@ -179,7 +179,7 @@ class TestCLICommands(unittest.TestCase):
             # Patch the name imported into cli's module namespace.
             with (
                 patch("sys.argv", ["cli.py", "validate"]),
-                patch("cli.OUTPUT_DIR", data_dir),
+                patch("ricc.settings.settings.output_dir", data_dir),
                 redirect_stdout(f),
             ):
                 main()
@@ -202,7 +202,7 @@ class TestCLICommands(unittest.TestCase):
             f = io.StringIO()
             with (
                 patch("sys.argv", ["cli.py", "validate"]),
-                patch("cli.OUTPUT_DIR", data_dir),
+                patch("ricc.settings.settings.output_dir", data_dir),
                 redirect_stdout(f),
             ):
                 with self.assertRaises(SystemExit) as exc:
@@ -234,7 +234,7 @@ class TestCLICommands(unittest.TestCase):
             f = io.StringIO()
             with (
                 patch("sys.argv", ["cli.py", "validate"]),
-                patch("cli.OUTPUT_DIR", data_dir),
+                patch("ricc.settings.settings.output_dir", data_dir),
                 redirect_stdout(f),
             ):
                 with self.assertRaises(SystemExit) as exc:
@@ -297,7 +297,7 @@ class TestCLICommands(unittest.TestCase):
             reports_dir = Path(tmp) / "reports"
             with (
                 patch("sys.argv", ["cli.py", "benchmark"]),
-                patch("cli.REPORTS_DIR", reports_dir),
+                patch("ricc.settings.settings.reports_dir", reports_dir),
                 redirect_stdout(f),
             ):
                 main()

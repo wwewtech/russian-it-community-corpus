@@ -104,11 +104,11 @@ class TestMasterDataPipelineRunAll(unittest.TestCase):
         # Patch the path constants so the exporter classes write inside
         # our temp tree, not the repo's real dataset_output/.
         self.patches = [
-            patch("ricc.pipeline.PARQUET_OUTPUT_DIR", self.data_dir / "parquet"),
-            patch("ricc.pipeline.JSONL_OUTPUT_DIR", self.data_dir / "jsonl"),
-            patch("ricc.pipeline.SAMPLES_OUTPUT_DIR", self.data_dir / "samples"),
-            patch("ricc.pipeline.OUTPUT_DIR", self.data_dir),
-            patch("ricc.pipeline.REPORTS_DIR", self.tmpdir / "reports"),
+            patch("ricc.settings.settings.parquet_output_dir", self.data_dir / "parquet"),
+            patch("ricc.settings.settings.jsonl_output_dir", self.data_dir / "jsonl"),
+            patch("ricc.settings.settings.samples_output_dir", self.data_dir / "samples"),
+            patch("ricc.settings.settings.output_dir", self.data_dir),
+            patch("ricc.settings.settings.reports_dir", self.tmpdir / "reports"),
             # run_all() writes validation_results.json,
             # pipeline_execution_stats.json and the sample previews through
             # the settings singleton (settings.REPORTS_DIR /

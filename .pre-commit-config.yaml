@@ -34,7 +34,6 @@ repos:
         pass_filenames: false
         args:
           - --strict
-          - ricc/config.py
           - ricc/errors.py
           - ricc/bootstrap.py
           - ricc/ingestion/schema.py

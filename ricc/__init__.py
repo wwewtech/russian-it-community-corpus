@@ -22,11 +22,10 @@ Public API:
 from __future__ import annotations
 
 import importlib
-from typing import Any
+from typing import Any, cast
 
 __version__ = "12.2.0"
 
-from ricc.config import load_params
 from ricc.errors import (
     AdapterLoadError,
     AnalyticsError,
@@ -168,6 +167,15 @@ def __dir__() -> list[str]:
 _settings_module = importlib.import_module("ricc.settings")
 settings = _settings_module.settings
 del _settings_module
+
+
+def load_params() -> dict[str, Any]:
+    """Load the raw ``params.yaml``.
+
+    Kept at the package level because it was part of the public API; the
+    implementation lives in :meth:`ricc.settings.Settings.load_params`.
+    """
+    return cast("dict[str, Any]", settings.load_params())
 
 
 __all__ = [

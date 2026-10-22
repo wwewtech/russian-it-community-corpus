@@ -118,7 +118,7 @@ class TestStagesExecute(unittest.TestCase):
     def test_ingest_stage_produces_the_intermediate_artefact(self):
         with (
             patch.object(dvc_stages, "INTERMEDIATE", self.root / "intermediate"),
-            patch("ricc.config.RAW_EXPORT_DIRS", [str(self.exports)]),
+            patch("ricc.settings.settings.raw_export_dirs", [str(self.exports)]),
         ):
             dvc_stages.stage_ingest()
         artefact = self.root / "intermediate" / "raw_messages.pkl.gz"
@@ -130,7 +130,7 @@ class TestStagesExecute(unittest.TestCase):
         export_dirs = [str(p) for p in sorted(self.exports.iterdir()) if p.is_dir()]
         with (
             patch.object(dvc_stages, "INTERMEDIATE", self.root / "intermediate"),
-            patch("ricc.config.RAW_EXPORT_DIRS", export_dirs),
+            patch("ricc.settings.settings.raw_export_dirs", export_dirs),
         ):
             dvc_stages.stage_ingest()
         import gzip

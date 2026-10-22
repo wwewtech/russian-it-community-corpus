@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 
-from ricc.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
 from ricc.ingestion.schema import CleanedMessage
+from ricc.settings import settings
 from ricc.taxonomy.classifier import DomainClassifier
 from ricc.taxonomy.tagger import TechnicalTagger
 
@@ -226,7 +226,7 @@ class TestComputeSentiment:
         assert self.tagger.compute_sentiment(None) == 0
 
     def test_positive_word(self):
-        assert self.tagger.compute_sentiment("хорошо") == SENTIMENT_DICT["хорошо"]
+        assert self.tagger.compute_sentiment("хорошо") == settings.SENTIMENT_DICT["хорошо"]
 
     def test_high_positive_word(self):
         assert self.tagger.compute_sentiment("отлично") == 2
@@ -434,16 +434,16 @@ class TestTagBatch:
 # ---------------------------------------------------------------------------
 class TestConfigConsistency:
     def test_all_domains_have_keywords(self):
-        for domain, info in DOMAIN_TAXONOMY.items():
+        for domain, info in settings.DOMAIN_TAXONOMY.items():
             assert info["keywords"], f"domain {domain} has no keywords"
 
     def test_sentiment_values_are_ints(self):
-        assert all(isinstance(v, int) for v in SENTIMENT_DICT.values())
+        assert all(isinstance(v, int) for v in settings.SENTIMENT_DICT.values())
 
     def test_every_keyword_is_lowercased_and_indexable(self):
         classifier = _make_classifier()
         tagger = _make_tagger()
-        for _domain, info in DOMAIN_TAXONOMY.items():
+        for _domain, info in settings.DOMAIN_TAXONOMY.items():
             for kw in info["keywords"]:
                 lowered = kw.lower()
                 if " " not in lowered:

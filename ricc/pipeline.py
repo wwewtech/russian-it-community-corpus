@@ -43,14 +43,6 @@ from ricc.taxonomy.tagger import TechnicalTagger
 from ricc.validation.benchmark import BenchmarkRunner
 from ricc.validation.validator import DatasetValidator
 
-# Backward compatibility for tests that patch these module-level constants
-OUTPUT_DIR = settings.OUTPUT_DIR
-PARQUET_OUTPUT_DIR = settings.PARQUET_OUTPUT_DIR
-JSONL_OUTPUT_DIR = settings.JSONL_OUTPUT_DIR
-SAMPLES_OUTPUT_DIR = settings.SAMPLES_OUTPUT_DIR
-REPORTS_DIR = settings.REPORTS_DIR
-RAW_EXPORT_DIRS = settings.RAW_EXPORT_DIRS
-
 # Stage name -> typed error raised when the stage body fails. Documented
 # in docs/api/pipeline.md: run_all() surfaces PipelineError subclasses.
 _STAGE_ERRORS: dict[str, type[PipelineError]] = {
@@ -132,7 +124,7 @@ class MasterDataPipeline:
                 # successful run that overwrites the published artifacts.
                 raise IngestionError(
                     f"ingestion produced 0 messages from {self.raw_export_dirs} "
-                    "(empty RAW_EXPORT_DIRS?) — refusing to continue"
+                    "(empty settings.RAW_EXPORT_DIRS?) — refusing to continue"
                 )
             record_stage_messages("ingestion", len(self.raw_messages))
             pipeline_logger.stage_end("ingestion", success=True, messages=len(self.raw_messages))

@@ -86,6 +86,7 @@ nav:
       - ADR 0005 — Training Policy Gate: adr/0005-training-policy-gate.md
       - ADR 0006 — Dataset Contract Versioning: adr/0006-dataset-contract-versioning.md
       - ADR 0007 — Streaming Export and DVC: adr/0007-streaming-export-and-dvc.md
+      - ADR 0008 — One Live Configuration: adr/0008-single-source-of-configuration.md
   - Changelog: changelog.md
 
 plugins:
