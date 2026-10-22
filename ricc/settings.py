@@ -7,12 +7,15 @@ Environment variables take precedence (e.g., RICC_MINHASH_NUM_PERM=256).
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 
 class DomainTaxonomyItem(BaseSettings):
@@ -55,6 +58,11 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    # Development keeps the historical fallback behavior. Production callers
+    # can opt into fail-closed configuration loading explicitly.
+    strict_params: bool = False
+    discover_exports: bool = True
 
     # --- Base paths ---
     base_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parent.parent)
@@ -287,7 +295,29 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
         self._load_params_sections()
         self._load_domain_taxonomy()
-        self._auto_discover_exports()
+        if self.discover_exports:
+            self._auto_discover_exports()
+
+    def _read_params_file(self) -> dict[str, Any]:
+        """Read params.yaml once with explicit, typed failure semantics."""
+        params_path = self._params_path()
+        if not params_path.exists():
+            return {}
+        try:
+            with params_path.open("r", encoding="utf-8") as handle:
+                params = yaml.safe_load(handle) or {}
+        except (OSError, yaml.YAMLError) as exc:
+            if self.strict_params:
+                raise ValueError(f"Cannot read configuration file {params_path}: {exc}") from exc
+            logger.warning("Could not read %s; using configured defaults: %s", params_path, exc)
+            return {}
+        if not isinstance(params, dict):
+            error = ValueError(f"Configuration file {params_path} must contain a mapping")
+            if self.strict_params:
+                raise error
+            logger.warning("%s; using configured defaults", error)
+            return {}
+        return params
 
     def _load_params_sections(self) -> None:
         """Load the nested parameter sections from params.yaml.
@@ -305,16 +335,8 @@ class Settings(BaseSettings):
         ``settings.pii_audit`` / ``settings.benchmarks``.
         """
         params_path = self._params_path()
-        if not params_path.exists():
-            return
-        try:
-            import yaml
-
-            with params_path.open("r", encoding="utf-8") as f:
-                params = yaml.safe_load(f) or {}
-        except Exception:
-            # deliberate: an unreadable params.yaml must not stop the
-            # platform from booting — the class defaults apply.
+        params = self._read_params_file()
+        if not params:
             return
 
         for section, model in (
@@ -331,10 +353,10 @@ class Settings(BaseSettings):
                 continue
             try:
                 setattr(self, section, model(**filtered))
-            except Exception:
-                # deliberate: a malformed section falls back to the
-                # class defaults rather than breaking the boot.
-                continue
+            except ValueError as exc:
+                if self.strict_params:
+                    raise ValueError(f"Invalid {section} configuration in {params_path}: {exc}") from exc
+                logger.warning("Invalid %s configuration in %s; using defaults: %s", section, params_path, exc)
 
     def _params_path(self) -> Path:
         """Locate ``params.yaml``.
@@ -357,18 +379,18 @@ class Settings(BaseSettings):
     def _load_domain_taxonomy(self) -> None:
         """Load domain taxonomy from params.yaml, fallback to hardcoded defaults."""
         params_path = self._params_path()
-        if params_path.exists():
+        params = self._read_params_file()
+        taxonomy = params.get("domain_taxonomy", {})
+        if taxonomy:
             try:
-                with params_path.open("r", encoding="utf-8") as f:
-                    params = yaml.safe_load(f) or {}
-                taxonomy = params.get("domain_taxonomy", {})
-                if taxonomy:
-                    for domain, info in taxonomy.items():
-                        if isinstance(info, dict) and "title" in info and "keywords" in info:
-                            self.domain_taxonomy[domain] = DomainTaxonomyItem(**info)
-                    return
-            except Exception:
-                pass  # deliberate: params.yaml unreadable/corrupt -> hardcoded fallback (platform must boot)
+                for domain, info in taxonomy.items():
+                    if isinstance(info, dict) and "title" in info and "keywords" in info:
+                        self.domain_taxonomy[domain] = DomainTaxonomyItem(**info)
+                return
+            except (TypeError, ValueError) as exc:
+                if self.strict_params:
+                    raise ValueError(f"Invalid domain_taxonomy configuration in {params_path}: {exc}") from exc
+                logger.warning("Invalid domain_taxonomy in %s; using hardcoded defaults: %s", params_path, exc)
 
         # Hardcoded fallback
         self.domain_taxonomy = {
@@ -770,16 +792,15 @@ class Settings(BaseSettings):
     def DOMAIN_TAXONOMY(self) -> dict[str, dict[str, Any]]:
         return {k: v.model_dump() for k, v in self.domain_taxonomy.items()}
 
-    def load_params(self) -> dict[str, Any]:
-        """Load raw params.yaml for DVC/drift monitoring."""
-        params_path = self._params_path()
-        if params_path.exists():
-            try:
-                with params_path.open("r", encoding="utf-8") as f:
-                    return yaml.safe_load(f) or {}
-            except Exception:
-                pass  # deliberate: load_params returns {} on unreadable yaml; callers use defaults
-        return {}
+    def load_params(self, *, strict: bool | None = None) -> dict[str, Any]:
+        """Load raw params.yaml for DVC/drift monitoring.
+
+        ``strict`` defaults to the instance policy. Strict callers fail closed
+        instead of silently running with a different configuration.
+        """
+        if strict is None or strict == self.strict_params:
+            return self._read_params_file()
+        return type(self)(strict_params=strict, discover_exports=False)._read_params_file()
 
 
 # Global instance
