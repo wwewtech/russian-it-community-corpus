@@ -53,7 +53,7 @@ networkx==3.6.1
 numpy==2.4.6
 packaging==25.0
 pandas==3.0.6
-peft==0.21.2
+peft==0.17.1
 pillow==11.3.0
 pluggy==1.7.0
 prometheus_client==0.26.0
@@ -101,8 +101,8 @@ toml==0.10.2
 torch==2.14.1
 tornado==6.5.10
 tqdm==4.70.1
-transformers==5.20.1
-trl==1.16.0
+transformers==4.57.1
+trl==0.23.1
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 tzdata==2026.5
