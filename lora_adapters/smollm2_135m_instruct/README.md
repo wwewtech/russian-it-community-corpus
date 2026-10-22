@@ -18,8 +18,8 @@ Community Corpus (RICC) LoRA Zoo.
 
 - **Developed by:** wwewtech (Russian IT Community Corpus project)
 - **Model type:** LORA adapter (rank r=16, alpha=32, dropout=0.05), task type `CAUSAL_LM`
-- **Target modules:** o_proj, q_proj, v_proj, k_proj
-- **Adapter weights:** 7.06 MB, sha256 `db89937e5be97d2e286d6508b6758b088d55d9f7b0b21935dddfc1feef4dd0d8`
+- **Target modules:** v_proj, o_proj, k_proj, q_proj
+- **Adapter weights:** 7.06 MB, sha256 `ebf061344f9388d97e050a4cd89e617ed35194d013db865118b12803ae36e10a`
 - **Language(s) (NLP):** Russian (ru), English technical terms
 - **License:** MIT (repository license, see `LICENSE`); the base model retains its own license
 - **Finetuned from model:** `HuggingFaceTB/SmolLM2-135M-Instruct`
@@ -61,9 +61,7 @@ model = PeftModel.from_pretrained(base_model, "lora_adapters/smollm2_135m_instru
 ## Training Details
 
 - **Training data:** RICC SFT dialogues (171,520 curated multi-turn dialogues).
-- **Training regime:** pilot domain-adaptation checkpoint — 50-100 training
-  steps on sampled domain batches (statement from `reports/HF_MODEL_CARD.md`),
-  **not** multi-epoch training over the whole corpus.
+- **Training regime:** full-corpus domain adaptation — 21,420 optimizer steps over the full RICC SFT corpus with prompt masking; 100.0% of one epoch (honest coverage from `training_meta.json`, local adapter directory).
 - **Framework:** PEFT 0.20.0 (see `adapter_config.json` in this directory).
 
 ## Evaluation
