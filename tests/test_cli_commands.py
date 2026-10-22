@@ -105,19 +105,32 @@ def build_synthetic_dataset(root: Path) -> Path:
         schema=RAG_SCHEMA,
     )
 
-    dialogue = {
-        "messages": [
-            {"role": "system", "content": "You are a helpful IT assistant."},
-            {"role": "user", "content": "How do I configure nginx as a reverse proxy?"},
-            {"role": "assistant", "content": "Add a location block with proxy_pass pointing to your upstream."},
-        ]
+    # Each export carries its own record shape: the validator checks the
+    # shape, not just the JSON syntax, so a fixture that writes the same
+    # object everywhere would be (correctly) rejected.
+    records = {
+        "sft_openai_messages.jsonl": {
+            "messages": [
+                {"role": "system", "content": "You are a helpful IT assistant."},
+                {"role": "user", "content": "How do I configure nginx as a reverse proxy?"},
+                {"role": "assistant", "content": "Add a location block with proxy_pass pointing to your upstream."},
+            ]
+        },
+        "sft_sharegpt_format.jsonl": {
+            "conversations": [
+                {"from": "system", "value": "You are a helpful IT assistant."},
+                {"from": "human", "value": "How do I configure nginx as a reverse proxy?"},
+                {"from": "gpt", "value": "Add a location block with proxy_pass pointing to your upstream."},
+            ]
+        },
+        "sft_alpaca_format.jsonl": {
+            "instruction": "How do I configure nginx as a reverse proxy?",
+            "input": "",
+            "output": "Add a location block with proxy_pass pointing to your upstream.",
+        },
     }
-    for name in [
-        "sft_sharegpt_format.jsonl",
-        "sft_alpaca_format.jsonl",
-        "sft_openai_messages.jsonl",
-    ]:
-        (jsonl_dir / name).write_text(json.dumps(dialogue) + "\n", encoding="utf-8")
+    for name, record in records.items():
+        (jsonl_dir / name).write_text(json.dumps(record) + "\n", encoding="utf-8")
 
     (jsonl_dir / "rag_chunks_kb.jsonl").write_text(
         json.dumps({"chunk_id": 1, "content": "nginx reverse proxy guide"}) + "\n",
