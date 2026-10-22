@@ -106,10 +106,10 @@ SLO Gate → SHIP / HOLD
 ```
 ricc/
 ├── bootstrap.py          # Runtime env setup (UTF-8, HF, tokenizers)
-├── config.py             # Legacy config (deprecated, use settings.py)
-├── settings.py           # Unified pydantic-settings config
+├── settings.py           # Unified pydantic-settings config (the ONLY source)
 ├── errors.py             # Typed exception hierarchy
-├── observability/        # Logging + metrics
+├── schema_version.py     # The published dataset contract (columns + version)
+├── observability/        # Logging + metrics + run context
 ├── pipeline.py           # MasterDataPipeline orchestrator
 ├── ingestion/            # Load & normalize Telegram exports
 ├── pii/                  # PII scrubbing + anonymization

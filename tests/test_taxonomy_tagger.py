@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from ricc.config import DOMAIN_TAXONOMY, SENTIMENT_DICT
 from ricc.ingestion.schema import CleanedMessage
+from ricc.settings import settings
 from ricc.taxonomy.tagger import TechnicalTagger
 
 GENERAL_DOMAIN = "general_tech_chat"
@@ -84,8 +84,8 @@ class TestTagBatch:
 
 class TestConfigConsistency:
     def test_taxonomy_domains_have_keywords(self):
-        for domain, info in DOMAIN_TAXONOMY.items():
+        for domain, info in settings.DOMAIN_TAXONOMY.items():
             assert info["keywords"], f"domain {domain} has no keywords"
 
     def test_sentiment_scores_are_ints(self):
-        assert all(isinstance(v, int) for v in SENTIMENT_DICT.values())
+        assert all(isinstance(v, int) for v in settings.SENTIMENT_DICT.values())

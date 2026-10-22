@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ricc.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
+from ricc.settings import settings  # noqa: E402
 from ricc.validation.probabilistic_audit import ProbabilisticPIIAuditor  # noqa: E402
 
 
@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument(
         "--parquet",
         type=Path,
-        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        default=settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Path to the production messages parquet",
     )
     parser.add_argument(
@@ -48,7 +48,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=REPORTS_DIR / "probabilistic_pii_audit.json",
+        default=settings.REPORTS_DIR / "probabilistic_pii_audit.json",
         help="Output JSON report path",
     )
     args = parser.parse_args()

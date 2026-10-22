@@ -26,8 +26,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-REPORTS_DIR = REPO_ROOT / "reports"
+from ricc.settings import settings
 
 
 @dataclass
@@ -89,7 +88,14 @@ def _is_synthetic(reports_dir: Path) -> tuple[bool, str]:
     return False, ""
 
 
-def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
+def evaluate(reports_dir: Path | None = None) -> SloVerdict:
+    """Evaluate the SLO gate.
+
+    ``reports_dir`` defaults to the live settings value, so a consumer
+    that moves the reports directory moves the gate with it.
+    """
+    if reports_dir is None:
+        reports_dir = settings.REPORTS_DIR
     checks: list[Check] = []
 
     synthetic, reason = _is_synthetic(reports_dir)
@@ -188,7 +194,7 @@ def evaluate(reports_dir: Path = REPORTS_DIR) -> SloVerdict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="RICC SLO release gate (SHIP/HOLD)")
-    parser.add_argument("--reports", type=Path, default=REPORTS_DIR)
+    parser.add_argument("--reports", type=Path, default=settings.REPORTS_DIR)
     parser.add_argument("--json-out", type=Path, default=None)
     args = parser.parse_args()
 

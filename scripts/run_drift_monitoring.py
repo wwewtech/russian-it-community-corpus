@@ -26,8 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd  # noqa: E402
 
-from ricc.config import PARQUET_OUTPUT_DIR, REPORTS_DIR  # noqa: E402
 from ricc.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # noqa: E402
+from ricc.settings import settings  # noqa: E402
 
 # The default reference is a frozen snapshot. Comparing the corpus with
 # itself reports "stable" by construction and tells the operator
@@ -35,7 +35,7 @@ from ricc.monitoring.drift import DatasetDriftMonitor, record_drift_metrics  # n
 DEFAULT_REFERENCE = Path(
     os.environ.get(
         "RICC_DRIFT_REFERENCE",
-        str(PARQUET_OUTPUT_DIR / "full_clean_messages_reference.parquet"),
+        str(settings.PARQUET_OUTPUT_DIR / "full_clean_messages_reference.parquet"),
     )
 )
 
@@ -51,13 +51,13 @@ def main() -> None:
     parser.add_argument(
         "--current",
         type=Path,
-        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        default=settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Current snapshot parquet",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=REPORTS_DIR / "drift_report.json",
+        default=settings.REPORTS_DIR / "drift_report.json",
         help="Output JSON report path",
     )
     args = parser.parse_args()

@@ -4,13 +4,13 @@ from unittest.mock import patch
 
 import pytest
 
-from ricc.config import MAX_SFT_TURNS
 from ricc.graph.conversation_extractor import (
     AI_CONTAMINATION_PATTERNS,
     ConversationExtractor,
     is_llm_contaminated,
 )
 from ricc.ingestion.schema import CleanedMessage, RAGChunk, SFTDialogue
+from ricc.settings import settings
 
 HIGH_QUALITY_REPLY = (
     "Для PostgreSQL настройте синхронную репликацию через primary_conninfo и standby_conninfo. "
@@ -50,7 +50,7 @@ def make_message(
     )
 
 
-def build_sft_thread(*, turns: int = MAX_SFT_TURNS + 4, thread_id: int = 1) -> dict[int, list[CleanedMessage]]:
+def build_sft_thread(*, turns: int = settings.MAX_SFT_TURNS + 4, thread_id: int = 1) -> dict[int, list[CleanedMessage]]:
     messages = []
     for index in range(turns):
         author_id = "user_a" if index % 2 == 0 else "user_b"
@@ -133,11 +133,11 @@ class TestExtractSFTDialogues:
         assert self.extractor.extract_sft_dialogues(threads) == []
 
     def test_caps_mega_thread_at_max_sft_turns(self) -> None:
-        dialogues = self.extractor.extract_sft_dialogues(build_sft_thread(turns=MAX_SFT_TURNS + 20))
+        dialogues = self.extractor.extract_sft_dialogues(build_sft_thread(turns=settings.MAX_SFT_TURNS + 20))
 
         assert len(dialogues) == 1
-        assert dialogues[0].turn_count == MAX_SFT_TURNS
-        assert len(dialogues[0].messages) == MAX_SFT_TURNS
+        assert dialogues[0].turn_count == settings.MAX_SFT_TURNS
+        assert len(dialogues[0].messages) == settings.MAX_SFT_TURNS
         assert dialogues[0].messages[0].content.startswith("Технический вопрос номер 0")
         assert dialogues[0].messages[-1].content == HIGH_QUALITY_REPLY
 

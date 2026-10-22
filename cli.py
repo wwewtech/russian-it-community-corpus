@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 from ricc.bootstrap import setup_runtime_env
-from ricc.config import OUTPUT_DIR, PARQUET_OUTPUT_DIR, RAW_EXPORT_DIRS, REPORTS_DIR
+from ricc.settings import settings
 
 
 def main() -> None:
@@ -45,7 +45,7 @@ def main() -> None:
     parser_audit.add_argument(
         "--parquet",
         type=Path,
-        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        default=settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Path to production messages parquet",
     )
     parser_audit.add_argument(
@@ -73,7 +73,7 @@ def main() -> None:
     parser_audit.add_argument(
         "--output",
         type=Path,
-        default=REPORTS_DIR / "probabilistic_pii_audit.json",
+        default=settings.REPORTS_DIR / "probabilistic_pii_audit.json",
         help="Output report JSON path",
     )
 
@@ -82,19 +82,19 @@ def main() -> None:
     parser_drift.add_argument(
         "--reference",
         type=Path,
-        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        default=settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Reference snapshot parquet",
     )
     parser_drift.add_argument(
         "--current",
         type=Path,
-        default=PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
+        default=settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet",
         help="Current snapshot parquet",
     )
     parser_drift.add_argument(
         "--output",
         type=Path,
-        default=REPORTS_DIR / "drift_report.json",
+        default=settings.REPORTS_DIR / "drift_report.json",
         help="Output report JSON path",
     )
 
@@ -154,7 +154,7 @@ def main() -> None:
         from ricc.ingestion.schema import CleanedMessage
 
         print("Loading messages for analytical profiling...")
-        clean_parquet_path = PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
+        clean_parquet_path = settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
 
         if clean_parquet_path.exists():
             import pandas as pd
@@ -186,7 +186,7 @@ def main() -> None:
         else:
             from ricc.ingestion.loader import merge_multiple_exports
 
-            chats_info, msgs = merge_multiple_exports(RAW_EXPORT_DIRS)
+            chats_info, msgs = merge_multiple_exports(settings.RAW_EXPORT_DIRS)
             cleaned = [
                 CleanedMessage(
                     msg_id=m.msg_id,
@@ -206,14 +206,14 @@ def main() -> None:
         report = analyzer.run_full_analysis()
         gen = ReportGenerator(report)
         gen.print_terminal_summary()
-        gen.export_markdown(REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md")
-        gen.export_json(REPORTS_DIR / "analytics_summary.json")
+        gen.export_markdown(settings.REPORTS_DIR / "DEEP_ANALYTICAL_REPORT.md")
+        gen.export_json(settings.REPORTS_DIR / "analytics_summary.json")
 
     elif args.command == "validate":
         from ricc.validation.validator import DatasetValidator
 
         print("Validating datasets in output directory...")
-        validator = DatasetValidator(OUTPUT_DIR)
+        validator = DatasetValidator(settings.OUTPUT_DIR)
         res = validator.validate_all()
         print(json.dumps(res, indent=2, ensure_ascii=False))
         if not res.get("overall_passed", False):
@@ -227,7 +227,7 @@ def main() -> None:
 
         print("Generating domain evaluation benchmark...")
         bench = BenchmarkRunner()
-        out = bench.export_benchmark_file(REPORTS_DIR / "domain_benchmark_100.json")
+        out = bench.export_benchmark_file(settings.REPORTS_DIR / "domain_benchmark_100.json")
         print(f"Benchmark saved to {out} (Total questions: {len(bench.questions)})")
 
     elif args.command == "audit-prob":
