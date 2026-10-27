@@ -290,6 +290,10 @@ def _check_drift(entries: list[AdapterEntry], registry_path: Path) -> int:
             drift.append(f"+ added: {slug}")
             continue
         # Compare only the fields a human could meaningfully change.
+        # Exclude safetensors_* fields: the .safetensors binary files are
+        # gitignored and hosted on Hugging Face Hub, so on CI (and any clone
+        # without LFS) they are absent and build_registry() reports None for
+        # those fields. Only commit the config-derived fields.
         comparable = {
             k: current[k]
             for k in (
@@ -301,7 +305,6 @@ def _check_drift(entries: list[AdapterEntry], registry_path: Path) -> int:
                 "bias",
                 "task_type",
                 "peft_type",
-                "safetensors_sha256",
             )
         }
         prev = {k: saved_map[slug].get(k) for k in comparable}

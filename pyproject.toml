@@ -45,9 +45,9 @@ dependencies = [
     "tiktoken>=0.7.0",
     "scikit-learn>=1.4.0",
     "torch>=2.2.0,<3.0.0",
-    "transformers>=4.40.0,<5.0.0",
+    "transformers>=4.40.0,<6.0.0",
     "accelerate>=0.28.0,<2.0.0",
-    "peft>=0.10.0,<0.18.0",
+    "peft>=0.10.0,<0.22.0",
     "trl>=0.8.0,<1.0.0",
     "datasets>=2.18.0,<6.0.0",
     "evaluate>=0.4.0,<1.0.0",
@@ -73,10 +73,10 @@ dev = [
     # and CI (.github/workflows/ci.yml) so local, hook, and CI lint always agree.
     # The pins MUST stay in sync across all three files — a test enforces it
     # (tests/test_requirements_lock.py).
-    "ruff==0.16.2",
+    "ruff==0.17.2",
     "black>=24.0.0",
     # Pinned so typechecking results remain deterministic between local and CI.
-    "mypy==2.3.1",
+    "mypy==2.4.0",
     "pre-commit>=3.6.0",
 ]
 
