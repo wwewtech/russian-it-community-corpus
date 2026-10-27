@@ -23,17 +23,11 @@ stages:
       # DVC does not expand globs in `deps:`, so every export is listed
       # explicitly. When a new export directory is added, refresh this
       # list (scripts/refresh_dvc_deps.py).
-      - ChatExport_2026-08-15/result.json
-      - ChatExport_2026-08-16/result.json
-      - ChatExport_2026-08-17/result.json
-      - ChatExport_2026-08-18/result.json
-      - ChatExport_2026-08-19/result.json
-      - ChatExport_2026-08-20/result.json
-      - ChatExport_2026-08-21/result.json
-      - ChatExport_2026-08-22/result.json
-      - ChatExport_2026-08-23/result.json
-      - ChatExport_2026-08-24/result.json
-      - ChatExport_2026-08-25/result.json
+      #
+      # NOTE: ChatExport_* directories are gitignored data, not source code.
+      # They are NOT listed here as deps because DVC tracks data separately
+      # via its cache. CI creates a small ChatExport_2026-01-01 fixture for
+      # the reproduction step.
       - ricc/ingestion/loader.py
       - ricc/ingestion/schema.py
       - ricc/settings.py
