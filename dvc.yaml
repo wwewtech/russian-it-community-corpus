@@ -36,7 +36,7 @@ stages:
       - ChatExport_2026-08-25/result.json
       - ricc/ingestion/loader.py
       - ricc/ingestion/schema.py
-      - ricc/config.py
+      - ricc/settings.py
       - ricc/bootstrap.py
     outs:
       - dataset_output/intermediate/raw_messages.pkl.gz:
@@ -51,7 +51,7 @@ stages:
       - ricc/pii/ner_scrubber.py
       - ricc/pii/anonymizer.py
       - ricc/ingestion/schema.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - dataset_output/intermediate/cleaned_messages.pkl.gz:
           cache: true
@@ -71,7 +71,7 @@ stages:
     cmd: python scripts/dvc_stages.py minhash_dedup
     deps:
       - ricc/deduplication/minhash_lsh.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - dataset_output/intermediate/dedup_minhash.pkl.gz:
           cache: true
@@ -82,7 +82,7 @@ stages:
     deps:
       - ricc/taxonomy/tagger.py
       - ricc/taxonomy/classifier.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - dataset_output/intermediate/tagged_messages.pkl.gz:
           cache: true
@@ -94,7 +94,7 @@ stages:
       - ricc/graph/thread_builder.py
       - ricc/graph/conversation_extractor.py
       - ricc/ingestion/schema.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - dataset_output/intermediate/threaded_messages.pkl.gz:
           cache: true
@@ -105,7 +105,7 @@ stages:
     deps:
       - ricc/graph/conversation_extractor.py
       - ricc/ingestion/schema.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - dataset_output/intermediate/extracted.pkl.gz:
           cache: true
@@ -119,7 +119,7 @@ stages:
       - ricc/exporter/rag_exporter.py
       - ricc/exporter/dpo_exporter.py
       - ricc/ingestion/schema.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - dataset_output/parquet/full_clean_messages.parquet:
           cache: true
@@ -147,7 +147,7 @@ stages:
       - ricc/analytics/metrics.py
       - ricc/analytics/network.py
       - ricc/validation/benchmark.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - reports/analytics_summary.json:
           cache: true
@@ -165,7 +165,7 @@ stages:
       - ricc/validation/artifact_manifest.py
       - ricc/validation/hub_reconciliation.py
       - ricc/pii/regex_scrubber.py
-      - ricc/config.py
+      - ricc/settings.py
     params:
       - pii_audit.sample_size
       - pii_audit.confidence
@@ -181,7 +181,7 @@ stages:
     cmd: python scripts/dvc_stages.py drift
     deps:
       - ricc/monitoring/drift.py
-      - ricc/config.py
+      - ricc/settings.py
     params:
       - drift.psi_stable
       - drift.psi_moderate
@@ -201,7 +201,7 @@ stages:
       - ricc/monitoring/slo_gate.py
       - ricc/validation/artifact_manifest.py
       - ricc/validation/hub_reconciliation.py
-      - ricc/config.py
+      - ricc/settings.py
     outs:
       - reports/slo_verdict.json:
           cache: true
