@@ -3,50 +3,6 @@ stages:
   ingest:
     cmd: python scripts/dvc_stages.py ingest
     deps:
-    - path: ChatExport_2026-08-15/result.json
-      hash: md5
-      md5: 90c9fc3d45c9ef78419f29a5494a49f4
-      size: 28095603
-    - path: ChatExport_2026-08-16/result.json
-      hash: md5
-      md5: 7c9b520410d101bb7761bf03e24dd473
-      size: 3313768
-    - path: ChatExport_2026-08-17/result.json
-      hash: md5
-      md5: fe44e24542b6fdde53b7d63b73560bb9
-      size: 106405295
-    - path: ChatExport_2026-08-18/result.json
-      hash: md5
-      md5: 741712974b270b2ccc832ac925fe2074
-      size: 991175
-    - path: ChatExport_2026-08-19/result.json
-      hash: md5
-      md5: a90309eea87eb81a66ebb3d33a56aeb1
-      size: 40325192
-    - path: ChatExport_2026-08-20/result.json
-      hash: md5
-      md5: 7293d35d38a0fce22696d5f26a734241
-      size: 9203579
-    - path: ChatExport_2026-08-21/result.json
-      hash: md5
-      md5: 59a03f3d27bec29e27221527b0f425c0
-      size: 346632327
-    - path: ChatExport_2026-08-22/result.json
-      hash: md5
-      md5: 51de2ba4bcb274a36296c8714bd06828
-      size: 123906081
-    - path: ChatExport_2026-08-23/result.json
-      hash: md5
-      md5: 2c516b5d23c1b5c6ddb731e37645ccd9
-      size: 517816667
-    - path: ChatExport_2026-08-24/result.json
-      hash: md5
-      md5: caabf971de0f3d83c9761b7a20892161
-      size: 346517377
-    - path: ChatExport_2026-08-25/result.json
-      hash: md5
-      md5: 16badc4aa26146b663209aaf63d33869
-      size: 620090685
     - path: ricc/ingestion/loader.py
       hash: md5
       md5: 9dc9f9e8255e33684d4a754100f14c28
