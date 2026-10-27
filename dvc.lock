@@ -47,14 +47,6 @@ stages:
       hash: md5
       md5: 16badc4aa26146b663209aaf63d33869
       size: 620090685
-    - path: ricc/bootstrap.py
-      hash: md5
-      md5: 903a96e9d83274c8f699a87a1cc91a3c
-      size: 3037
-    - path: ricc/settings.py
-      hash: md5
-      md5: aac30b960b1ff206c793a4b33f9c0103
-      size: 2417
     - path: ricc/ingestion/loader.py
       hash: md5
       md5: 9dc9f9e8255e33684d4a754100f14c28
@@ -63,11 +55,20 @@ stages:
       hash: md5
       md5: 6dae7ac6a782b6a8a92796bf02cf6082
       size: 1687
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    - path: ricc/bootstrap.py
+      hash: md5
+      md5: 903a96e9d83274c8f699a87a1cc91a3c
+      size: 3037
     outs:
     - path: dataset_output/intermediate/raw_messages.pkl.gz
       hash: md5
-      md5: 4e2042a5afd3dd114b275454801acb9d
-      size: 222314682
+      md5: '00000000000000000000000000000000'
+      size: 0
+      cache: true
   pii_anonymize:
     cmd: python scripts/dvc_stages.py pii_anonymize
     deps:
@@ -96,12 +97,11 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        dataset_output/intermediate/cleaned_messages.pkl.gz:
-          cache: true
+    - path: dataset_output/intermediate/cleaned_messages.pkl.gz
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   exact_dedup:
     cmd: python scripts/dvc_stages.py exact_dedup
     deps:
@@ -114,12 +114,11 @@ stages:
       md5: 6dae7ac6a782b6a8a92796bf02cf6082
       size: 1687
     outs:
-    - path:
-        dataset_output/intermediate/dedup_exact.pkl.gz:
-          cache: true
+    - path: dataset_output/intermediate/dedup_exact.pkl.gz
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   minhash_dedup:
     cmd: python scripts/dvc_stages.py minhash_dedup
     deps:
@@ -132,12 +131,11 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        dataset_output/intermediate/dedup_minhash.pkl.gz:
-          cache: true
+    - path: dataset_output/intermediate/dedup_minhash.pkl.gz
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   taxonomy:
     cmd: python scripts/dvc_stages.py taxonomy
     deps:
@@ -154,12 +152,11 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        dataset_output/intermediate/tagged_messages.pkl.gz:
-          cache: true
+    - path: dataset_output/intermediate/tagged_messages.pkl.gz
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   graph:
     cmd: python scripts/dvc_stages.py graph
     deps:
@@ -180,12 +177,11 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        dataset_output/intermediate/threaded_messages.pkl.gz:
-          cache: true
+    - path: dataset_output/intermediate/threaded_messages.pkl.gz
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   extract:
     cmd: python scripts/dvc_stages.py extract
     deps:
@@ -202,12 +198,11 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        dataset_output/intermediate/extracted.pkl.gz:
-          cache: true
+    - path: dataset_output/intermediate/extracted.pkl.gz
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   export:
     cmd: python scripts/dvc_stages.py export
     deps:
@@ -236,54 +231,46 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        dataset_output/parquet/full_clean_messages.parquet:
-          cache: true
+    - path: dataset_output/parquet/full_clean_messages.parquet
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/parquet/sft_dialogues.parquet:
-          cache: true
+      cache: true
+    - path: dataset_output/parquet/sft_dialogues.parquet
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/parquet/rag_knowledge_base.parquet:
-          cache: true
+      cache: true
+    - path: dataset_output/parquet/rag_knowledge_base.parquet
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/jsonl/sft_sharegpt_format.jsonl:
-          cache: true
+      cache: true
+    - path: dataset_output/jsonl/sft_sharegpt_format.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/jsonl/sft_alpaca_format.jsonl:
-          cache: true
+      cache: true
+    - path: dataset_output/jsonl/sft_alpaca_format.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/jsonl/sft_openai_messages.jsonl:
-          cache: true
+      cache: true
+    - path: dataset_output/jsonl/sft_openai_messages.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/jsonl/rag_chunks_kb.jsonl:
-          cache: true
+      cache: true
+    - path: dataset_output/jsonl/rag_chunks_kb.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        dataset_output/jsonl/dpo_preference_pairs.jsonl:
-          cache: true
+      cache: true
+    - path: dataset_output/jsonl/dpo_preference_pairs.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   analytics:
     cmd: python scripts/dvc_stages.py analytics
     deps:
@@ -312,24 +299,21 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        reports/analytics_summary.json:
-          cache: true
+    - path: reports/analytics_summary.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        reports/DEEP_ANALYTICAL_REPORT.md:
-          cache: true
+      cache: true
+    - path: reports/DEEP_ANALYTICAL_REPORT.md
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        reports/domain_benchmark_100.json:
-          cache: true
+      cache: true
+    - path: reports/domain_benchmark_100.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   validate:
     cmd: python scripts/dvc_stages.py validate
     deps:
@@ -358,18 +342,16 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        reports/validation_results.json:
-          cache: true
+    - path: reports/validation_results.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-    - path:
-        reports/probabilistic_pii_audit.json:
-          cache: true
+      cache: true
+    - path: reports/probabilistic_pii_audit.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   drift:
     cmd: python scripts/dvc_stages.py drift
     deps:
@@ -382,12 +364,11 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        reports/drift_report.json:
-          cache: true
+    - path: reports/drift_report.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
   slo:
     cmd: python scripts/dvc_stages.py slo
     deps:
@@ -412,9 +393,8 @@ stages:
       md5: dbf470d81ac7276477df003f5f06f9a2
       size: 25430
     outs:
-    - path:
-        reports/slo_verdict.json:
-          cache: true
+    - path: reports/slo_verdict.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
+      cache: true
