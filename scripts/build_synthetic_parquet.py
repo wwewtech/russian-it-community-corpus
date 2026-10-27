@@ -41,6 +41,10 @@ import random
 from pathlib import Path
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+from ricc.schema_version import write_metadata
 
 # --- Schemas --------------------------------------------------------------- #
 
@@ -64,24 +68,36 @@ _FULL_MESSAGES_COLUMNS = [
     "thread_id",
 ]
 
-# Required column for ricc/monitoring/sft_quality.py is `messages` (a JSON
-# string of [{role, content}, ...]) plus a handful of trace columns so
-# the regression report has something to summarise.
+# Required column for ricc/monitoring/sft_quality.py is `messages` (a list of
+# {role, content} dicts) plus trace columns matching the declared contract.
 _SFT_DIALOGUES_COLUMNS = [
-    "dialogue_id",
     "thread_id",
+    "chat_name",
+    "topic_domain",
+    "topic_tags",
     "messages",
-    "source_domain",
     "quality_score",
-    "n_turns",
+    "turn_count",
+    "total_tokens",
 ]
 
-# Required column for the RAG knowledge base index. The exporter emits
-# {id, content, domain, embedding, source}. We skip the embedding column
-# (the LocalRAGPipeline only uses it at query time and is happy with None
-# for the fixture); the validator only checks that the file exists and
-# has rows.
-_RAG_COLUMNS = ["id", "content", "domain", "source"]
+# Required column for the RAG knowledge base index. Must match the declared
+# RAG contract: chunk_id, thread_id, chat_name, title, topic_domain,
+# topic_tags, content, date_range, participants_count, message_count,
+# token_count.
+_RAG_COLUMNS = [
+    "chunk_id",
+    "thread_id",
+    "chat_name",
+    "title",
+    "topic_domain",
+    "topic_tags",
+    "content",
+    "date_range",
+    "participants_count",
+    "message_count",
+    "token_count",
+]
 
 
 # --- Sample data ----------------------------------------------------------- #
@@ -180,15 +196,25 @@ def _make_sft_dialogues(n: int, *, seed: int = 42) -> pd.DataFrame:
     """
     rng = random.Random(seed)
     rows = []
-    for i in range(n):
+    for _i in range(n):
         rows.append(
             {
-                "dialogue_id": i,
                 "thread_id": rng.randint(0, max(1, n // 4)),
-                "messages": json.dumps(_RUSSIAN_SAMPLE_TURNS, ensure_ascii=False),
-                "source_domain": rng.choice(_DOMAINS),
+                "chat_name": f"community_node_{rng.randint(1, 11):02d}",
+                "topic_domain": rng.choice(_DOMAINS),
+                "topic_tags": [rng.choice(["question", "answer", "discussion"])],
+                "messages": [
+                    {
+                        "author": t["role"],
+                        "content": t["content"],
+                        "role": t["role"],
+                        "timestamp": f"2026-08-{1 + (j % 28):02d}T10:00:00Z",
+                    }
+                    for j, t in enumerate(_RUSSIAN_SAMPLE_TURNS)
+                ],
                 "quality_score": round(rng.uniform(3.5, 5.0), 2),
-                "n_turns": len(_RUSSIAN_SAMPLE_TURNS),
+                "turn_count": len(_RUSSIAN_SAMPLE_TURNS),
+                "total_tokens": sum(len(t["content"]) for t in _RUSSIAN_SAMPLE_TURNS),
             }
         )
     return pd.DataFrame(rows, columns=_SFT_DIALOGUES_COLUMNS)
@@ -206,14 +232,21 @@ def _make_rag_kb(n: int, *, seed: int = 42) -> pd.DataFrame:
     for i in range(n):
         rows.append(
             {
-                "id": i,
+                "chunk_id": f"chunk_{i:05d}",
+                "thread_id": rng.randint(0, max(1, n // 4)),
+                "chat_name": f"community_node_{rng.randint(1, 11):02d}",
+                "title": f"Фрагмент #{i}: описание архитектурного решения",
+                "topic_domain": rng.choice(_DOMAINS),
+                "topic_tags": [rng.choice(["question", "answer", "discussion"])],
                 "content": (
                     f"Фрагмент #{i}: описание архитектурного решения в домене "
                     f"{rng.choice(_DOMAINS)}. Содержит практические рекомендации, "
                     "примеры конфигураций и ссылки на документацию."
                 ),
-                "domain": rng.choice(_DOMAINS),
-                "source": f"synthetic_fixture/{i}",
+                "date_range": "2026-08-01..2026-08-25",
+                "participants_count": rng.randint(2, 20),
+                "message_count": rng.randint(10, 100),
+                "token_count": rng.randint(50, 500),
             }
         )
     return pd.DataFrame(rows, columns=_RAG_COLUMNS)
@@ -343,7 +376,12 @@ def build(out_dir: Path, rows: int) -> list[Path]:
         ("rag_knowledge_base.parquet", _make_rag_kb),
     ):
         path = parquet_dir / name
-        builder(rows).to_parquet(path, index=False, compression="zstd")
+        df = builder(rows)
+        # Stamp the contract metadata (version + fingerprint) so the validator
+        # accepts the synthetic fixtures as conforming to the current schema.
+        table = pa.Table.from_pandas(df, preserve_index=False)
+        table = table.replace_schema_metadata(write_metadata(table.schema).metadata)
+        pq.write_table(table, path, compression="zstd")
         paths.append(path)
 
     paths.append(_make_sft_openai_jsonl(rows, jsonl_dir / "sft_openai_messages.jsonl"))

@@ -51,7 +51,7 @@ stages:
       hash: md5
       md5: 903a96e9d83274c8f699a87a1cc91a3c
       size: 3037
-    - path: ricc/config.py
+    - path: ricc/settings.py
       hash: md5
       md5: aac30b960b1ff206c793a4b33f9c0103
       size: 2417
@@ -68,3 +68,353 @@ stages:
       hash: md5
       md5: 4e2042a5afd3dd114b275454801acb9d
       size: 222314682
+  pii_anonymize:
+    cmd: python scripts/dvc_stages.py pii_anonymize
+    deps:
+    - path: ricc/pii/deep_anonymizer.py
+      hash: md5
+      md5: 279affb44c2e12e3305ef7e2e6fecc01
+      size: 14279
+    - path: ricc/pii/regex_scrubber.py
+      hash: md5
+      md5: aa843a312fd27c23f7c5f95027ce3ce0
+      size: 9666
+    - path: ricc/pii/ner_scrubber.py
+      hash: md5
+      md5: be7c2742ffdc7c852b1706701e4bfe3f
+      size: 7954
+    - path: ricc/pii/anonymizer.py
+      hash: md5
+      md5: 6454a8785b3cae9047d70fc70ca16957
+      size: 1910
+    - path: ricc/ingestion/schema.py
+      hash: md5
+      md5: 6dae7ac6a782b6a8a92796bf02cf6082
+      size: 1687
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        dataset_output/intermediate/cleaned_messages.pkl.gz:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  exact_dedup:
+    cmd: python scripts/dvc_stages.py exact_dedup
+    deps:
+    - path: ricc/deduplication/exact_dedup.py
+      hash: md5
+      md5: e60255820cf3320c8946ad650382fb3e
+      size: 2865
+    - path: ricc/ingestion/schema.py
+      hash: md5
+      md5: 6dae7ac6a782b6a8a92796bf02cf6082
+      size: 1687
+    outs:
+    - path:
+        dataset_output/intermediate/dedup_exact.pkl.gz:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  minhash_dedup:
+    cmd: python scripts/dvc_stages.py minhash_dedup
+    deps:
+    - path: ricc/deduplication/minhash_lsh.py
+      hash: md5
+      md5: 110ef84f74e83a9bf3976cb280ca4669
+      size: 12037
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        dataset_output/intermediate/dedup_minhash.pkl.gz:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  taxonomy:
+    cmd: python scripts/dvc_stages.py taxonomy
+    deps:
+    - path: ricc/taxonomy/tagger.py
+      hash: md5
+      md5: 2e52d108935070df45bae4c014e96634
+      size: 4605
+    - path: ricc/taxonomy/classifier.py
+      hash: md5
+      md5: c496896ba40a8ea57c6d53fe8e0ec0ae
+      size: 1975
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        dataset_output/intermediate/tagged_messages.pkl.gz:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  graph:
+    cmd: python scripts/dvc_stages.py graph
+    deps:
+    - path: ricc/graph/thread_builder.py
+      hash: md5
+      md5: c14ed3e25378e7441eb1be72e9abcaa3
+      size: 5444
+    - path: ricc/graph/conversation_extractor.py
+      hash: md5
+      md5: f23ac407473b1f8209a5946bc1dc42d4
+      size: 14145
+    - path: ricc/ingestion/schema.py
+      hash: md5
+      md5: 6dae7ac6a782b6a8a92796bf02cf6082
+      size: 1687
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        dataset_output/intermediate/threaded_messages.pkl.gz:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  extract:
+    cmd: python scripts/dvc_stages.py extract
+    deps:
+    - path: ricc/graph/conversation_extractor.py
+      hash: md5
+      md5: f23ac407473b1f8209a5946bc1dc42d4
+      size: 14145
+    - path: ricc/ingestion/schema.py
+      hash: md5
+      md5: 6dae7ac6a782b6a8a92796bf02cf6082
+      size: 1687
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        dataset_output/intermediate/extracted.pkl.gz:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  export:
+    cmd: python scripts/dvc_stages.py export
+    deps:
+    - path: ricc/exporter/parquet_exporter.py
+      hash: md5
+      md5: 421847efe3fe583a9c547ee28b81c483
+      size: 24870
+    - path: ricc/exporter/jsonl_exporter.py
+      hash: md5
+      md5: 6c6ec0d53df59433c29c23cda8095bb4
+      size: 5647
+    - path: ricc/exporter/rag_exporter.py
+      hash: md5
+      md5: de0f3f09727477cc03d0e23bbd701896
+      size: 1372
+    - path: ricc/exporter/dpo_exporter.py
+      hash: md5
+      md5: ea1d2335be56fd4cacb7e1e05916b6ec
+      size: 1383
+    - path: ricc/ingestion/schema.py
+      hash: md5
+      md5: 6dae7ac6a782b6a8a92796bf02cf6082
+      size: 1687
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        dataset_output/parquet/full_clean_messages.parquet:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/parquet/sft_dialogues.parquet:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/parquet/rag_knowledge_base.parquet:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/jsonl/sft_sharegpt_format.jsonl:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/jsonl/sft_alpaca_format.jsonl:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/jsonl/sft_openai_messages.jsonl:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/jsonl/rag_chunks_kb.jsonl:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        dataset_output/jsonl/dpo_preference_pairs.jsonl:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  analytics:
+    cmd: python scripts/dvc_stages.py analytics
+    deps:
+    - path: ricc/analytics/engine.py
+      hash: md5
+      md5: aee8d1c4b6f0ad4990794c859e0b98c2
+      size: 32127
+    - path: ricc/analytics/report_generator.py
+      hash: md5
+      md5: 2402964f25415b47ea759bf8607e0003
+      size: 16049
+    - path: ricc/analytics/metrics.py
+      hash: md5
+      md5: 125017bea9d3240ca808852b2f5243f1
+      size: 3307
+    - path: ricc/analytics/network.py
+      hash: md5
+      md5: a7d8494a9e096c68e7f4b7548d050688
+      size: 5321
+    - path: ricc/validation/benchmark.py
+      hash: md5
+      md5: dc3735943a8d39307a874abceaa8606f
+      size: 43355
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        reports/analytics_summary.json:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        reports/DEEP_ANALYTICAL_REPORT.md:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        reports/domain_benchmark_100.json:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  validate:
+    cmd: python scripts/dvc_stages.py validate
+    deps:
+    - path: ricc/validation/validator.py
+      hash: md5
+      md5: 2fb2cb7ac05972ad02f128f644ce0db0
+      size: 10867
+    - path: ricc/validation/probabilistic_audit.py
+      hash: md5
+      md5: 90e7e0c4526199dabc27fe255a8e6bf0
+      size: 17722
+    - path: ricc/validation/artifact_manifest.py
+      hash: md5
+      md5: 14f6ce55a1cd274212a11e6a25af4c47
+      size: 11547
+    - path: ricc/validation/hub_reconciliation.py
+      hash: md5
+      md5: e7e21b8e18e1593bb9d4cb7bba82ff5c
+      size: 8907
+    - path: ricc/pii/regex_scrubber.py
+      hash: md5
+      md5: aa843a312fd27c23f7c5f95027ce3ce0
+      size: 9666
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        reports/validation_results.json:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+    - path:
+        reports/probabilistic_pii_audit.json:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  drift:
+    cmd: python scripts/dvc_stages.py drift
+    deps:
+    - path: ricc/monitoring/drift.py
+      hash: md5
+      md5: 770bcc442927561a2890afa704e486e9
+      size: 10974
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        reports/drift_report.json:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
+  slo:
+    cmd: python scripts/dvc_stages.py slo
+    deps:
+    - path: scripts/dvc_stages.py
+      hash: md5
+      md5: 0623598a78a27fb8c882edb0c9a21a59
+      size: 12359
+    - path: ricc/monitoring/slo_gate.py
+      hash: md5
+      md5: 516f73af8730ad10bc9ecb9cbe754fe2
+      size: 8657
+    - path: ricc/validation/artifact_manifest.py
+      hash: md5
+      md5: 14f6ce55a1cd274212a11e6a25af4c47
+      size: 11547
+    - path: ricc/validation/hub_reconciliation.py
+      hash: md5
+      md5: e7e21b8e18e1593bb9d4cb7bba82ff5c
+      size: 8907
+    - path: ricc/settings.py
+      hash: md5
+      md5: dbf470d81ac7276477df003f5f06f9a2
+      size: 25430
+    outs:
+    - path:
+        reports/slo_verdict.json:
+          cache: true
+      hash: md5
+      md5: '00000000000000000000000000000000'
+      size: 0
