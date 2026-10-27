@@ -68,7 +68,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   pii_anonymize:
     cmd: python scripts/dvc_stages.py pii_anonymize
     deps:
@@ -101,7 +100,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   exact_dedup:
     cmd: python scripts/dvc_stages.py exact_dedup
     deps:
@@ -118,7 +116,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   minhash_dedup:
     cmd: python scripts/dvc_stages.py minhash_dedup
     deps:
@@ -135,7 +132,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   taxonomy:
     cmd: python scripts/dvc_stages.py taxonomy
     deps:
@@ -156,7 +152,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   graph:
     cmd: python scripts/dvc_stages.py graph
     deps:
@@ -181,7 +176,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   extract:
     cmd: python scripts/dvc_stages.py extract
     deps:
@@ -202,7 +196,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   export:
     cmd: python scripts/dvc_stages.py export
     deps:
@@ -235,42 +228,34 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/parquet/sft_dialogues.parquet
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/parquet/rag_knowledge_base.parquet
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/jsonl/sft_sharegpt_format.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/jsonl/sft_alpaca_format.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/jsonl/sft_openai_messages.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/jsonl/rag_chunks_kb.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: dataset_output/jsonl/dpo_preference_pairs.jsonl
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   analytics:
     cmd: python scripts/dvc_stages.py analytics
     deps:
@@ -303,17 +288,14 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: reports/DEEP_ANALYTICAL_REPORT.md
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: reports/domain_benchmark_100.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   validate:
     cmd: python scripts/dvc_stages.py validate
     deps:
@@ -346,12 +328,10 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
     - path: reports/probabilistic_pii_audit.json
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   drift:
     cmd: python scripts/dvc_stages.py drift
     deps:
@@ -368,7 +348,6 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
   slo:
     cmd: python scripts/dvc_stages.py slo
     deps:
@@ -397,4 +376,3 @@ stages:
       hash: md5
       md5: '00000000000000000000000000000000'
       size: 0
-      cache: true
