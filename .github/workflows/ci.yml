@@ -806,7 +806,7 @@ jobs:
         # already-clean tree. Any known CVE in the requirements.txt tree now
         # fails the security job. JSON report is still uploaded for triage.
         run: |
-          python -m pip_audit -r requirements.txt --desc off -f json -o pip_audit_report.json --progress-spinner off
+          python -m pip_audit -r requirements.txt --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           python - <<'PY'
           import json
           try:
