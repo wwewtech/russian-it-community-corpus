@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from ricc.validation.hub_reconciliation import (
+    PATH_MAPPINGS,
     PINNED_HUB_REPO_ID,
     PINNED_HUB_REVISION,
     generate_reconciliation_report,
@@ -104,5 +105,11 @@ class TestHubReconciliation(unittest.TestCase):
         real_manifest = Path("reports/pinned_hub_manifest.json")
         if real_manifest.exists():
             data = load_pinned_hub_manifest(real_manifest)
+            self.assertEqual(data["repo_id"], PINNED_HUB_REPO_ID)
             self.assertEqual(data["pinned_revision"], PINNED_HUB_REVISION)
-            self.assertIn("data/full_clean_messages.parquet", data["artifacts"])
+            self.assertEqual(set(data["artifacts"]), set(PATH_MAPPINGS.values()))
+            for meta in data["artifacts"].values():
+                self.assertEqual(len(meta["lfs_sha256"]), 64)
+                int(meta["lfs_sha256"], 16)
+                self.assertGreater(meta["bytes"], 0)
+                self.assertGreater(meta["published_rows"], 0)
