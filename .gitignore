@@ -131,7 +131,6 @@ _tmp_*.py
 # Additional DVC-generated reports
 reports/heuristic_benchmark_eval.json
 reports/lora_zoo_index.json
-reports/pinned_hub_manifest.json
 reports/pipeline_execution_stats.json
 
 # Local CI-debug dumps (never commit)
