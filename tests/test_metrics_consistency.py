@@ -40,6 +40,8 @@ FORBIDDEN = ["2.91M", "2,418,695", "60,899", "173,216 dialogues", "173,216 ди�
 class TestMetricsConsistency(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not (REPO_ROOT / "reports" / "dataset_manifest.json").exists() or not VALIDATION.exists():
+            raise unittest.SkipTest("dataset manifest/validation report not generated")
         cls.m = get_metrics()
         cls.readme = README.read_text(encoding="utf-8")
         cls.dataset_card = DATASET_CARD.read_text(encoding="utf-8")

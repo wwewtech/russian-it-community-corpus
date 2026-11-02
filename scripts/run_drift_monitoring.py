@@ -67,6 +67,21 @@ def main() -> None:
         print("Run the pipeline first (make run), or point --reference/--current at existing parquet files.")
         print("The reference must be a FROZEN earlier release — comparing the corpus with itself")
         print("always reports 'stable' and detects no drift.")
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(
+            json.dumps(
+                {
+                    "status": "skipped",
+                    "reason": "reference or current snapshot missing",
+                    "reference_present": args.reference.exists(),
+                    "current_present": args.current.exists(),
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
         sys.exit(0)
 
     if args.reference.resolve() == args.current.resolve():

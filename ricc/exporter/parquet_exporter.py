@@ -118,7 +118,7 @@ def _sft_probe() -> pd.DataFrame:
             "topic_domain": pd.Series(["domain"], dtype="object"),
             "topic_tags": pd.Series([["tag"]], dtype="object"),
             "messages": pd.Series(
-                [[{"role": "user", "author": "a", "content": "c", "timestamp": "2026-01-01T00:00:00"}]],
+                [[{"author": "a", "content": "c", "role": "user", "timestamp": "2026-01-01T00:00:00"}]],
                 dtype="object",
             ),
             "quality_score": pd.Series([1.0], dtype="float64"),
