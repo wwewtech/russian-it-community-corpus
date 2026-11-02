@@ -717,6 +717,12 @@ jobs:
               print(f'downloaded {name}.parquet -> {target} ({target.stat().st_size} bytes)')
           "
 
+      - name: Validate the real corpus
+        # The pinned 81a3495 release predates the schema-metadata contract.
+        # This flag accepts absent metadata only; columns and types are still
+        # checked strictly. Remove it after the corpus is republished.
+        run: python scripts/validate_real_corpus.py --allow-legacy-metadata
+
       - name: Run real probabilistic PII audit
         # Sample size 100000 matches the committed audit methodology: with zero
         # observed leaks the Wilson 99% upper bound is ~5.41e-5 (z^2/2n with
