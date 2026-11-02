@@ -26,7 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # requirements.txt is the single source of truth; pyproject mirrors it.
 COPY requirements.txt pyproject.toml ./
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+        --index-url https://download.pytorch.org/whl/cpu \
+        --extra-index-url https://pypi.org/simple
 
 # Non-root runtime user (hardening: no container-as-root).
 # Pre-create writable dirs for read-only rootfs + tmpfs mounts.
