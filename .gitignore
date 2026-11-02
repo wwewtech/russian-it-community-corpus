@@ -36,7 +36,6 @@ reports/slo_verdict.json
 reports/drift_report.json
 reports/dataset_manifest.json
 reports/dataset_reconciliation_report.json
-reports/dataset_schema.json
 
 # Environments & IDEs
 .env
