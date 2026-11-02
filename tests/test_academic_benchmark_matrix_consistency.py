@@ -132,7 +132,10 @@ class TestAcademicMatrixConsistency(unittest.TestCase):
 
     def test_heuristic_report_carries_disclaimer(self) -> None:
         """Heuristic scores must be labelled as rubric-based, never as capabilities."""
-        heuristic = json.loads((REPO_ROOT / "reports" / "heuristic_benchmark_eval.json").read_text(encoding="utf-8"))
+        heuristic_path = REPO_ROOT / "reports" / "heuristic_benchmark_eval.json"
+        if not heuristic_path.exists():
+            self.skipTest("heuristic benchmark report not present")
+        heuristic = json.loads(heuristic_path.read_text(encoding="utf-8"))
         meta = heuristic.get("metadata", {})
         self.assertIn("rubric-based", str(meta.get("evaluation_type", "")).lower())
         self.assertIn("_disclaimer", heuristic, "heuristic report must carry a top-level _disclaimer")

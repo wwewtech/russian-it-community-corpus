@@ -32,12 +32,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from metrics_source import get_metrics  # noqa: E402
+from metrics_source import Metrics, get_metrics  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PATH = REPO_ROOT / "lora_adapters" / "registry.json"
 PLACEHOLDER = "[More Information Needed]"
-_METRICS = get_metrics()
 
 
 CARD_TEMPLATE = """---
@@ -151,7 +150,7 @@ def _training_regime(slug: str) -> str:
     )
 
 
-def build_card(entry: dict) -> str:
+def build_card(entry: dict, metrics: Metrics) -> str:
     return CARD_TEMPLATE.format(
         slug=entry["slug"],
         base_model=entry["base_model"],
@@ -166,7 +165,7 @@ def build_card(entry: dict) -> str:
         hf_hub_url=entry.get("hf_hub_url") or "",
         adapter_path=entry.get("adapter_path") or entry.get("local_path") or "",
         peft_version=entry.get("peft_version") or "unknown",
-        sft_dialogues_fmt=_METRICS.sft_dialogues_fmt,
+        sft_dialogues_fmt=metrics.sft_dialogues_fmt,
         training_regime=_training_regime(entry["slug"]),
     )
 
@@ -191,6 +190,7 @@ def main() -> int:
         print(f"{'FAIL' if placeholders else 'OK'}: {len(placeholders)} placeholder card(s) among {len(cards)} cards")
         return 1 if placeholders else 0
 
+    metrics = get_metrics()
     written = 0
     for card_path in cards:
         slug = card_path.parent.name
@@ -202,7 +202,7 @@ def main() -> int:
         # "\n" to os.linesep (CRLF on Windows), and `ruff format --check .`
         # (line-ending = "lf") flags every card as unformatted on Windows.
         with card_path.open("w", encoding="utf-8", newline="\n") as handle:
-            handle.write(build_card(entry))
+            handle.write(build_card(entry, metrics))
         written += 1
     print(f"rewrote {written} card(s)")
     return 0
