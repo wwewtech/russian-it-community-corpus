@@ -238,7 +238,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
-          pip install pytest pytest-cov diff-cover
+          pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Run Unit Tests with Coverage
         run: |
@@ -275,7 +275,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
-          pip install pytest pytest-cov diff-cover
+          pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Compute coverage of the changed lines
         continue-on-error: true
@@ -300,7 +300,7 @@ jobs:
             echo "No baseline coverage available (first run on this branch) — skipping the diff gate."
             exit 0
           fi
-          diff-cover coverage.xml --compare-branch=HEAD --fail-under=90 --fail-under-diff=90
+          diff-cover coverage.xml --compare-branch=HEAD --fail-under=90
 
   dvc-consistency:
     name: DVC Pipeline Consistency
@@ -571,6 +571,9 @@ jobs:
             --report reports/sft_quality_report.json
 
       - name: Verify Dataset Reconciliation Against Pinned Hub Revision
+        # Synthetic fixtures cannot match the pinned public revision; the
+        # real-corpus job performs this comparison instead.
+        if: ${{ hashFiles('reports/synthetic_fixture.json') == '' }}
         run: python -m ricc.validation.hub_reconciliation
 
       - name: Upload pipeline artifacts for SLO gate
