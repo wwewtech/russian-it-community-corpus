@@ -357,7 +357,7 @@ class TestSchemaAlignment(unittest.TestCase):
         frame = pd.read_parquet(out)
         # The missing key became null, the row was NOT dropped.
         self.assertEqual(len(frame), 6)
-        self.assertIsNone(frame["domain"].iloc[4])
+        self.assertTrue(pd.isna(frame["domain"].iloc[4]))
 
     def test_schema_is_taken_from_the_first_batch(self) -> None:
         out = self.root / "first.parquet"

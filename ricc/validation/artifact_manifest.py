@@ -75,8 +75,13 @@ def _safe_path(root: Path, path: Path) -> Path:
     candidate = path if path.is_absolute() else root / path
     try:
         relative = candidate.relative_to(root)
-    except ValueError as exc:
-        raise ManifestError("Path must be inside root") from exc
+    except ValueError:
+        # Windows temp roots may be handed to us as 8.3 short paths while
+        # ``root`` is resolved; compare canonical forms before rejecting.
+        resolved = candidate.resolve()
+        if not resolved.is_relative_to(root):
+            raise ManifestError("Path must be inside root") from None
+        relative = resolved.relative_to(root)
     current = root
     for part in relative.parts:
         if ":" in part:

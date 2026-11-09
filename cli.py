@@ -54,7 +54,7 @@ def main() -> None:
         default=None,
         help=(
             "Sample size to audit. The default comes from params.yaml "
-            "(pii_audit.sample_size = 100000), which keeps the 99% upper bound "
+            "(pii_audit.sample_size = 100000), which keeps the 99%% upper bound "
             "(5.41e-05) below the 1e-04 tolerance even with zero observed leaks."
         ),
     )

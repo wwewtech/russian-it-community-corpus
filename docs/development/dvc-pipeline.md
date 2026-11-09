@@ -31,9 +31,9 @@ dvc dag
 | `extract` | `... extract` | `extracted.pkl.gz` |
 | `export` | `... export` | the parquet and JSONL artefacts |
 | `analytics` | `... analytics` | `reports/analytics_summary.json` |
-| `validate` | `... validate` | the validation and PII audit reports |
+| `validate` | `... validate` | validation, PII audit and dataset manifest reports |
 | `drift` | `... drift` | `reports/drift_report.json` |
-| `slo` | `... slo` | `reports/slo_verdict.json` |
+| `slo` | `... slo` | `reports/slo_verdict.json` (enforcement is `make slo`) |
 
 Each stage is invocable on its own:
 
@@ -86,8 +86,9 @@ RICC_DRIFT_REFERENCE=dataset_output/parquet/full_clean_messages_reference.parque
     dvc repro drift
 ```
 
-Without a reference the stage says so and skips, rather than producing a
-meaningless "stable" verdict.
+Without a reference the stage writes a `status: skipped` report so the DVC
+output exists, rather than producing a meaningless "stable" verdict. The SLO
+gate treats that report as informational; it does not gate a release.
 
 ## Remote storage
 

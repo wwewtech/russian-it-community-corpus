@@ -240,10 +240,18 @@ def write_contract_manifest(path: str | Path) -> Path:
     return out
 
 
-def verify_against_file(parquet_path: str | Path, artifact: str) -> list[str]:
+def verify_against_file(
+    parquet_path: str | Path,
+    artifact: str,
+    *,
+    allow_missing_metadata: bool = False,
+) -> list[str]:
     """Check a Parquet file against the declared contract.
 
     Returns the list of problems; an empty list means the file matches.
+    ``allow_missing_metadata`` accepts a pre-contract file whose key-value
+    metadata is entirely absent, while still enforcing the columns and types.
+    It never accepts metadata that is present but wrong.
     """
     import pyarrow.parquet as pq
 
@@ -275,6 +283,9 @@ def verify_against_file(parquet_path: str | Path, artifact: str) -> list[str]:
             problems.append(f"column {spec.name!r}: expected {spec.arrow_type}, got {actual_type}")
 
     meta = read_metadata(file_schema)
+    metadata_absent = not meta["version"] and not meta["fingerprint"]
+    if allow_missing_metadata and metadata_absent:
+        return problems
     if meta["version"] != DATASET_SCHEMA_VERSION:
         problems.append(f"schema version metadata is {meta['version']!r}, expected {DATASET_SCHEMA_VERSION!r}")
     if meta["fingerprint"] != schema_fingerprint():

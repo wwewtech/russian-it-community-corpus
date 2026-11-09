@@ -169,6 +169,8 @@ stages:
           cache: true
       - reports/probabilistic_pii_audit.json:
           cache: true
+      - reports/dataset_manifest.json:
+          cache: true
 
   # Stage 11: Drift Monitoring (compare against reference)
   drift:
@@ -196,6 +198,10 @@ stages:
       - ricc/validation/artifact_manifest.py
       - ricc/validation/hub_reconciliation.py
       - ricc/settings.py
+      - reports/dataset_manifest.json
+      - reports/validation_results.json
+      - reports/probabilistic_pii_audit.json
+      - reports/drift_report.json
     outs:
       - reports/slo_verdict.json:
           cache: true
