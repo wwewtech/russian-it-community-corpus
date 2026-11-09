@@ -38,13 +38,16 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import sys
 from pathlib import Path
 
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ricc.schema_version import write_metadata
+import pandas as pd  # noqa: E402
+import pyarrow as pa  # noqa: E402
+import pyarrow.parquet as pq  # noqa: E402
+
+from ricc.schema_version import get_schema, write_metadata  # noqa: E402
 
 # --- Schemas --------------------------------------------------------------- #
 
@@ -370,16 +373,22 @@ def build(out_dir: Path, rows: int) -> list[Path]:
     jsonl_dir.mkdir(parents=True, exist_ok=True)
 
     paths = []
-    for name, builder in (
-        ("full_clean_messages.parquet", _make_full_messages),
-        ("sft_dialogues.parquet", _make_sft_dialogues),
-        ("rag_knowledge_base.parquet", _make_rag_kb),
+    for name, artifact, builder in (
+        ("full_clean_messages.parquet", "full_clean_messages", _make_full_messages),
+        ("sft_dialogues.parquet", "sft_dialogues", _make_sft_dialogues),
+        ("rag_knowledge_base.parquet", "rag_knowledge_base", _make_rag_kb),
     ):
         path = parquet_dir / name
         df = builder(rows)
+        # Use the published contract explicitly: pandas 3.1 infers
+        # ``large_string`` for object columns, while the validator (and the
+        # contract manifest) expect plain ``string``. The explicit schema also
+        # fixes the order of the nested SFT turn struct fields.
+        contract = get_schema(artifact)
+        arrow_schema = pa.schema([(col.name, col.arrow_type) for col in contract.columns])
+        table = pa.Table.from_pandas(df, schema=arrow_schema, preserve_index=False)
         # Stamp the contract metadata (version + fingerprint) so the validator
         # accepts the synthetic fixtures as conforming to the current schema.
-        table = pa.Table.from_pandas(df, preserve_index=False)
         table = table.replace_schema_metadata(write_metadata(table.schema).metadata)
         pq.write_table(table, path, compression="zstd")
         paths.append(path)

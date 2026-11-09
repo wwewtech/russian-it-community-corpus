@@ -157,7 +157,7 @@ class TestMetadataRoundTrip(unittest.TestCase):
 class TestValidatorChecksTheContract(unittest.TestCase):
     """The validator must actually enforce the contract."""
 
-    def _write_dataset(self, root: Path, tampered: bool = False) -> Path:
+    def _write_dataset(self, root: Path, tampered: bool = False, with_metadata: bool = True) -> Path:
         parquet_dir = root / "parquet"
         parquet_dir.mkdir(parents=True)
         from ricc.exporter.parquet_exporter import MESSAGE_SCHEMA
@@ -191,6 +191,8 @@ class TestValidatorChecksTheContract(unittest.TestCase):
             schema = schema.with_metadata(MESSAGE_SCHEMA.metadata or {})
 
         table = pa.Table.from_pylist(records, schema=schema)
+        if not with_metadata:
+            table = table.replace_schema_metadata(None)
         pq.write_table(table, parquet_dir / "full_clean_messages.parquet")
         return root
 
@@ -211,6 +213,28 @@ class TestValidatorChecksTheContract(unittest.TestCase):
             self.assertEqual(details["schema_problems"], [])
             self.assertEqual(details["status"], "VALID")
             self.assertEqual(details["schema_version"], DATASET_SCHEMA_VERSION)
+
+    def test_legacy_metadata_is_rejected_by_default_but_explicitly_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._write_dataset(Path(tmp), with_metadata=False)
+
+            strict = DatasetValidator(root).validate_parquet_files()
+            strict_details = strict["details"]["full_clean_messages.parquet"]
+            self.assertEqual(strict_details["status"], "INVALID")
+            self.assertTrue(strict_details["schema_problems"])
+
+            legacy = DatasetValidator(root, allow_legacy_metadata=True).validate_parquet_files()
+            legacy_details = legacy["details"]["full_clean_messages.parquet"]
+            self.assertEqual(legacy_details["schema_problems"], [])
+            self.assertEqual(legacy_details["status"], "VALID")
+
+    def test_legacy_metadata_does_not_hide_a_renamed_column(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._write_dataset(Path(tmp), tampered=True, with_metadata=False)
+            result = DatasetValidator(root, allow_legacy_metadata=True).validate_parquet_files()
+            details = result["details"]["full_clean_messages.parquet"]
+            self.assertEqual(details["status"], "INVALID")
+            self.assertTrue(any("column" in problem.lower() for problem in details["schema_problems"]))
 
 
 class TestGeneratedManifest(unittest.TestCase):

@@ -77,3 +77,10 @@ and partial-write attacks — see `tests/test_artifact_manifest.py`.
 Hugging Face Hub revision snapshot (`reports/pinned_hub_manifest.json`).
 Statuses: `EXACT_MATCH`, `DOCUMENTED_DIVERGENCE` (acceptable, documented),
 or mismatch (fails the gate).
+
+The real-corpus release gate validates the downloaded Parquet files with
+`scripts/validate_real_corpus.py`. The pinned historical revision predates
+the schema-metadata contract, so the gate explicitly accepts absent metadata
+for that snapshot; column names, order and types remain strict. Remove the
+`--allow-legacy-metadata` flag after the corpus is republished with the
+current exporter.

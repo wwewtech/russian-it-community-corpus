@@ -48,9 +48,9 @@ class CleanedMessage(BaseModel):
 
 
 class SFTTurn(BaseModel):
-    role: str  # "user" or "assistant" (or "human" / "gpt")
     author: str
     content: str
+    role: str  # "user" or "assistant" (or "human" / "gpt")
     timestamp: str | None = None
 
 
