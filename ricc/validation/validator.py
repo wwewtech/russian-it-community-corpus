@@ -33,8 +33,9 @@ class DatasetValidator:
     Validates exported Parquet and JSONL datasets for structural integrity and PII safety.
     """
 
-    def __init__(self, dataset_dir: Path):
+    def __init__(self, dataset_dir: Path, *, allow_legacy_metadata: bool = False):
         self.dataset_dir = Path(dataset_dir)
+        self.allow_legacy_metadata = allow_legacy_metadata
         self.regex_scrubber = RegexPIIScrubber()
 
     def validate_all(self, sample_lines: int = 10000) -> dict[str, Any]:
@@ -89,7 +90,11 @@ class DatasetValidator:
                 col_count = table.num_columns
                 size_mb = round(fpath.stat().st_size / (1024 * 1024), 2)
 
-                contract_problems = verify_against_file(fpath, artifact)
+                contract_problems = verify_against_file(
+                    fpath,
+                    artifact,
+                    allow_missing_metadata=self.allow_legacy_metadata,
+                )
                 meta = read_metadata(table.schema)
                 if row_count == 0:
                     status = "EMPTY"
