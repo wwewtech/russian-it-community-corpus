@@ -244,35 +244,35 @@ class ReportGenerator:
         val = self.data.get("quality_and_readiness") or self.data.get("valuation_and_readiness", {})
         s = self.data.get("domain_slang_analytics", {})
 
-        print("\n" + "=" * 80)
-        print("АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ (RICC)")
-        print("=" * 80)
-        print("\nОБЩАЯ СТАТИСТИКА")
-        print(f"   Сообщений: {v.get('total_messages', 0):,}")
-        print(f"   Участников: {v.get('unique_authors', 0):,}")
-        print(
+        logger.info("\n" + "=" * 80)
+        logger.info("АНАЛИТИЧЕСКИЙ ОТЧЁТ ПО КОРПУСУ ДАННЫХ (RICC)")
+        logger.info("=" * 80)
+        logger.info("\nОБЩАЯ СТАТИСТИКА")
+        logger.info(f"   Сообщений: {v.get('total_messages', 0):,}")
+        logger.info(f"   Участников: {v.get('unique_authors', 0):,}")
+        logger.info(
             f"   Период: {v.get('date_start', '')[:10]} — {v.get('date_end', '')[:10]} ({v.get('total_days_active', 0)} дней)"
         )
-        print(f"   Общее число слов: {v.get('total_words', 0):,}")
-        print(
+        logger.info(f"   Общее число слов: {v.get('total_words', 0):,}")
+        logger.info(
             f"   Оценка токенов: {v.get('total_tokens_estimated', 0):,} (~{v.get('total_tokens_estimated', 0) / 1e6:.2f}M)"
         )
-        print(f"   Уникальных слов: {v.get('vocabulary_unique_words', 0):,}")
+        logger.info(f"   Уникальных слов: {v.get('vocabulary_unique_words', 0):,}")
 
-        print("\n⏰ ВРЕМЕННЫЕ ПАТТЕРНЫ")
-        print(f"   Пиковый час: {t.get('peak_hour', 0)}:00")
-        print(f"   Пиковый день: {t.get('peak_weekday', '')}")
-        print("   Часы активности:")
+        logger.info("\n⏰ ВРЕМЕННЫЕ ПАТТЕРНЫ")
+        logger.info(f"   Пиковый час: {t.get('peak_hour', 0)}:00")
+        logger.info(f"   Пиковый день: {t.get('peak_weekday', '')}")
+        logger.info("   Часы активности:")
         hourly = t.get("hourly_distribution", {})
         max_h = max(hourly.values(), default=1)
         for h_str, cnt in list(hourly.items())[::2]:
             bar = "█" * int((cnt / max_h) * 25)
-            print(f"     {h_str}: {bar:<25} {cnt:>6,}")
+            logger.info(f"     {h_str}: {bar:<25} {cnt:>6,}")
 
-        print("\nТЕМАТИЧЕСКАЯ СТРУКТУРА (ТОП ДОМЕНОВ):")
+        logger.info("\nТЕМАТИЧЕСКАЯ СТРУКТУРА (ТОП ДОМЕНОВ):")
         for dom, info in list(s.get("domain_message_distribution", {}).items())[:6]:
-            print(f"   • {dom:<25}: {info.get('count', 0):>6,} ({info.get('percentage', 0):.1f}%)")
+            logger.info(f"   • {dom:<25}: {info.get('count', 0):>6,} ({info.get('percentage', 0):.1f}%)")
 
-        print("\nИНДЕКС СТРУКТУРНОГО КАЧЕСТВА ДЛЯ LLM")
-        print(f"   Балл: {val.get('total_score', 0)} из 100 ({val.get('quality_tier', '')})")
-        print("=" * 80 + "\n")
+        logger.info("\nИНДЕКС СТРУКТУРНОГО КАЧЕСТВА ДЛЯ LLM")
+        logger.info(f"   Балл: {val.get('total_score', 0)} из 100 ({val.get('quality_tier', '')})")
+        logger.info("=" * 80 + "\n")
