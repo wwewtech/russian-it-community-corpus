@@ -59,7 +59,7 @@ pluggy==1.7.0
 prometheus_client==0.26.0
 protobuf==6.33.6
 psutil==7.2.2
-pyarrow==21.0.0
+pyarrow==26.0.1
 pydantic==2.14.3
 pydantic-settings==2.16.2
 pydantic_core==2.50.4
