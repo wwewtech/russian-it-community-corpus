@@ -1,11 +1,11 @@
 # .pre-commit-config.yaml
-# Mirrors CI exactly: ruff==0.17.2, black, mypy==2.4.0
+# Mirrors CI exactly: ruff==0.17.4, black, mypy==2.4.1
 # Run: pre-commit install && pre-commit run --all-files
 
 repos:
   # Ruff - fast Python linter & formatter (replaces flake8, isort, pyupgrade, black)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.2
+    rev: v0.17.4
     hooks:
       - id: ruff
         name: Ruff Lint
