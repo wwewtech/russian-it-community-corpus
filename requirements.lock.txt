@@ -1,5 +1,5 @@
 # requirements.lock.txt - exact versions of the requirements.txt transitive closure.
-# Captured: 2026-11-09T18:15:00+00:00
+# Captured: 2026-11-09T19:00:00+00:00
 # Captured on: Python 3.13.5 / win32 / AMD64
 #
 # REFERENCE SNAPSHOT: verify on Linux CI before enforcing with -c.

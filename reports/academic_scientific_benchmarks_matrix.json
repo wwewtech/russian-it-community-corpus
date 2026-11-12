@@ -1,9 +1,9 @@
 {
   "humaneval_pass_at_1": {
     "base": 7.5,
-    "rag": 2.5,
-    "lora": 5.0,
-    "hybrid": 15.0
+    "rag": 7.5,
+    "lora": 0.0,
+    "hybrid": 2.5
   },
   "humaneval_pass_at_1_ci95": {
     "base": [
@@ -11,23 +11,23 @@
       19.9
     ],
     "rag": [
-      0.4,
-      12.9
+      2.6,
+      19.9
     ],
     "lora": [
-      1.4,
-      16.5
+      0.0,
+      8.8
     ],
     "hybrid": [
-      7.1,
-      29.1
+      0.4,
+      12.9
     ]
   },
   "rummlu_accuracy": {
     "base": 88.0,
     "rag": 90.0,
-    "lora": 88.0,
-    "hybrid": 92.0
+    "lora": 76.0,
+    "hybrid": 70.0
   },
   "rummlu_accuracy_ci95": {
     "base": [
@@ -39,21 +39,120 @@
       95.7
     ],
     "lora": [
-      76.2,
-      94.4
+      62.6,
+      85.7
     ],
     "hybrid": [
-      81.2,
-      96.8
+      56.2,
+      80.9
     ]
+  },
+  "significance": {
+    "method": "McNemar exact test on paired per-task outcomes, two-sided, 95%",
+    "humaneval": {
+      "base_vs_lora": {
+        "n_pairs": 40,
+        "both_pass": 0,
+        "a_only_pass": 3,
+        "b_only_pass": 0,
+        "neither_pass": 37,
+        "discordant": 3,
+        "difference_in_proportion": -0.075,
+        "p_value": 0.25,
+        "confidence": 0.95,
+        "significant": false,
+        "verdict": "not significant (the variants are not distinguishable)",
+        "variant_a": "base",
+        "variant_b": "lora"
+      },
+      "base_vs_hybrid": {
+        "n_pairs": 40,
+        "both_pass": 0,
+        "a_only_pass": 3,
+        "b_only_pass": 1,
+        "neither_pass": 36,
+        "discordant": 4,
+        "difference_in_proportion": -0.05,
+        "p_value": 0.625,
+        "confidence": 0.95,
+        "significant": false,
+        "verdict": "not significant (the variants are not distinguishable)",
+        "variant_a": "base",
+        "variant_b": "hybrid"
+      },
+      "lora_vs_hybrid": {
+        "n_pairs": 40,
+        "both_pass": 0,
+        "a_only_pass": 0,
+        "b_only_pass": 1,
+        "neither_pass": 39,
+        "discordant": 1,
+        "difference_in_proportion": 0.025,
+        "p_value": 1.0,
+        "confidence": 0.95,
+        "significant": false,
+        "verdict": "not significant (the variants are not distinguishable)",
+        "variant_a": "lora",
+        "variant_b": "hybrid"
+      }
+    },
+    "rummlu": {
+      "base_vs_lora": {
+        "n_pairs": 50,
+        "both_pass": 37,
+        "a_only_pass": 7,
+        "b_only_pass": 1,
+        "neither_pass": 5,
+        "discordant": 8,
+        "difference_in_proportion": -0.12,
+        "p_value": 0.070312,
+        "confidence": 0.95,
+        "significant": false,
+        "verdict": "not significant (the variants are not distinguishable)",
+        "variant_a": "base",
+        "variant_b": "lora"
+      },
+      "base_vs_hybrid": {
+        "n_pairs": 50,
+        "both_pass": 34,
+        "a_only_pass": 10,
+        "b_only_pass": 1,
+        "neither_pass": 5,
+        "discordant": 11,
+        "difference_in_proportion": -0.18,
+        "p_value": 0.011719,
+        "confidence": 0.95,
+        "significant": true,
+        "verdict": "significant",
+        "variant_a": "base",
+        "variant_b": "hybrid"
+      },
+      "lora_vs_hybrid": {
+        "n_pairs": 50,
+        "both_pass": 33,
+        "a_only_pass": 5,
+        "b_only_pass": 2,
+        "neither_pass": 10,
+        "discordant": 7,
+        "difference_in_proportion": -0.06,
+        "p_value": 0.453125,
+        "confidence": 0.95,
+        "significant": false,
+        "verdict": "not significant (the variants are not distinguishable)",
+        "variant_a": "lora",
+        "variant_b": "hybrid"
+      }
+    },
+    "any_significant": true
   },
   "sample_sizes": {
     "humaneval_tasks": 40,
     "rummlu_questions": 50
   },
   "perplexity": {
-    "base": 35.44,
-    "lora": 32.19
+    "base": 7.01,
+    "lora": 11.89,
+    "hybrid": null
   },
   "rouge": {
     "base": {
@@ -63,22 +162,21 @@
       "rougeLsum": 0.3639705882352941
     },
     "lora": {
-      "rouge1": 0.45416666666666666,
-      "rouge2": 0.29670329670329676,
-      "rougeL": 0.3875,
-      "rougeLsum": 0.3875
-    }
+      "rouge1": 0.0,
+      "rouge2": 0.0,
+      "rougeL": 0.0,
+      "rougeLsum": 0.0
+    },
+    "hybrid": null
   },
-  "raw_outputs_sha256": "74f873ae0a35f7c353028bee8e0d104437c08a1f3d6946b087f9dcf948675dee",
-  "generated_at_utc": "2026-09-17T13:16:34+00:00",
+  "not_measured": {
+    "hybrid_perplexity": "the RAG context is prepended to the prompt, so a perplexity over the answer is not the same quantity for the hybrid variant; it is not reported rather than copied from the LoRA column",
+    "hybrid_rouge": "same reason; not measured and not reported"
+  },
+  "raw_outputs_sha256": "68f580c4188d3bb390d021d77bc8d71e8c2f6a80871f71f636814c62d378395e",
+  "generated_at_utc": "2026-11-10T16:47:50+00:00",
   "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
   "adapter_id": "qwen2.5_1.5b_instruct",
-  "_source": {
-    "synthetic": false,
-    "note": "generated_at_utc = max raw_outputs timestamp; raw_outputs_sha256 pins the raw log"
-  },
   "status": "RETRACTED",
-  "retraction_reason": "harness defects in the original run: substring MCQ scoring, perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load. All of them are FIXED as of 2026-10-21 (the suites fail fast without the adapter, the MCQ parser needs an explicit answer marker, the perplexity is computed on real text, and the hybrid PPL/ROUGE cells are reported as not measured). The published NUMBERS are still invalid, because they were produced by the broken harness: a GPU re-run is required before any accuracy claim. The variants also run on the same tasks, so the comparison is paired: McNemar's exact test over the raw outputs gives p >= 0.125 for EVERY variant pair, i.e. the point estimates differ but the data does not support calling one variant better.",
-  "retraction_fixed_at": "2026-10-21",
-  "revalidation_required": true
+  "retraction_reason": "harness defects in the original run: substring MCQ scoring, Cyrillic homoglyph MCQ scoring (Russian prose such as 'в чём дело' scored as answer B), perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load, and a HumanEval sandbox that was escapable and had no real containment"
 }
