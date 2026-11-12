@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Benchmark figures are marked as retracted / self-reported.** The academic benchmark suite (HumanEval / RuMMLU) was retracted after a code audit found parsing, empty-generation, adapter-loading and sandbox defects. All published accuracy numbers are invalid until a fresh GPU re-run; the dataset and adapters ship without benchmark scores. README row counts (2,816,434 messages, 171.5k SFT dialogues, 325.7k RAG chunks, 95,300+ dedup) are flagged as Hub/local claims pending independent re-verification.
+- **Adapter counts made truthful.** Local `lora_adapters/registry.json` tracks 56 adapters; Hugging Face Hub hosts 58 adapter directories (+3 duplicate `models/heavyweight_*` entries). Only `smollm2_135m_instruct` is policy-compliant (one full epoch, 100 % corpus coverage). The remaining 55 adapters are pilot/time-boxed runs and must not be treated as final.
+- **`.mypy_cache/` added to `.gitignore`** (documentation-only; `git check-ignore` already matched it).
+
 ### Fixed
 - **The published wheel could not be imported at all.** `packages.find(where=["src"])`
   put the subpackages at the wheel's top level while every module imported

@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.mypy_cache/
 .pytest_cache/
 .pytest_temp/
 .pytest_tmp_local/
