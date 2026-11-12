@@ -8,7 +8,7 @@
 
 **High-throughput data engineering and Probabilistic PII Audit platform for language models**
 
-2,816,434 discussions (Hub) · 2,816,434 (local) · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
+2,816,434 messages (Hub claim) · 2,816,434 (local claim) · 2017–2026 history · SFT dialogues · DPO pairs · RAG knowledge base · LoRA on RTX 3060
 
 <br />
 
@@ -26,8 +26,8 @@
 
 > [!TIP]
 > **Official Hugging Face Hub Integration**:
-> - **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — 2,816,434 clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet.
-> - **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 adapters on Hugging Face Hub (55 domain adapters + 3 flagship 7B–8B QLoRA; 56 adapters cloned locally in `lora_adapters/`).
+> - **Dataset**: [`wwewtech/russian-it-community-corpus`](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus) — dataset snapshot claims 2,816,434 clean messages, 171.5k multi-turn SFT dialogues, and 325.7k RAG knowledge base chunks in Apache Parquet. *Row counts are self-reported by the snapshot; independent re-verification is pending.*
+> - **LoRA Model Zoo**: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) — 58 adapter directories on Hugging Face Hub (55 domain adapters + 3 flagship QLoRA: Qwen2.5 Coder 7B, DeepSeek R1 Distill 7B, LLaMA 3.1 8B). Local registry [`lora_adapters/registry.json`](lora_adapters/registry.json) tracks 56 adapters; **only `smollm2_135m_instruct` is policy-compliant** (full epoch, 100% corpus coverage). The remaining 55 are pilot/smoke-test adapters and must not be treated as final.
 >
 > ```python
 > from datasets import load_dataset
@@ -40,15 +40,15 @@
 
 **RICC** (**R**ussian **I**T **C**ommunity **C**orpus) is an open data engineering and curation stack that ingests, cleans, deduplicates, and structures engineering, infrastructure, business, and software development messages from 11 community nodes spanning 2017–2026.
 
-> **Row count note**: The Hugging Face Hub snapshot (2,816,434 messages) matches the local working copy (2,816,434 messages, verified 2026-10-06). Earlier pipeline runs diverged from the published snapshot by up to ~14%; the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
+> **Row count note**: The Hugging Face Hub snapshot claims 2,816,434 messages; the local working copy claims the same. These are **self-reported, not independently re-verified**. Earlier pipeline runs diverged from the published snapshot by up to ~14%; the authoritative check is [`reports/dataset_reconciliation_report.json`](reports/dataset_reconciliation_report.json) against the pinned Hub revision `81a3495`.
 
 The platform produces datasets for instruction fine-tuning, direct preference optimization, and a retrieval-augmented knowledge base.
 
 | Metric | Property | Factual Value |
 |---|---|---|
 | Privacy & Anonymization | Multi-pass Regex + Natasha NER + case declension | 11 community nodes anonymized (`community_node_01`..`11`) |
-| Deduplication | MinHash LSH (128 permutations, 0.80 Jaccard threshold) | 95,300+ duplicate / spam messages removed |
-| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues (Hub + local) |
+| Deduplication | MinHash LSH (128 permutations, 0.80 Jaccard threshold) | 95,300+ duplicate / spam messages removed *(self-reported; pending re-verification)* |
+| SFT dialogue quality | Multi-turn dialogues extracted from reconstructed thread DAGs | 171,520 curated dialogues *(Hub + local claim; pending re-verification)* |
 | Local LoRA execution | PEFT QLoRA adaptation on consumer hardware | ~4.35 GB VRAM on RTX 3060 (12GB) |
 
 ---
@@ -104,16 +104,16 @@ The corpus and trained adapters are available both remotely on **Hugging Face Hu
 ### Hugging Face Hub Repositories:
 - **Dataset Hub (Full Corpus, SFT, RAG)**:
   [**`https://huggingface.co/datasets/wwewtech/russian-it-community-corpus`**](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus)
-  - [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows (2,816,434 records, 189 MB)
-  - [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171,520 multi-turn dialogues (132 MB)
-  - [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325,690 knowledge chunks (159 MB)
+  - [Full Clean Corpus (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) — 2.82M rows *(Hub claim: 2,816,434 records, 189 MB; self-reported)*
+  - [SFT Dialogues (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) — 171.5k multi-turn dialogues *(Hub claim; 132 MB; self-reported)*
+  - [RAG Knowledge Base (Parquet)](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) — 325.7k knowledge chunks *(Hub claim; 159 MB; self-reported)*
   - [Heuristic Benchmark Evaluation (JSON)](reports/heuristic_benchmark_eval.json) — 50-scenario matrix of **rubric-based heuristics** (concept-overlap + AST-parseability), not capability measurements
 
-- **Model Hub (58 LoRA Adapters on Hub / 56 Local Adapters)**:
+- **Model Hub (LoRA Adapters)**:
   [**`https://huggingface.co/wwewtech/russian-it-community-lora`**](https://huggingface.co/wwewtech/russian-it-community-lora)
-  - [Flagship Qwen 2.5 Coder 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_qwen2.5_coder_7b)
-  - [Flagship DeepSeek R1 Distill 7B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_deepseek_r1_7b)
-  - [Flagship Meta LLaMA 3.1 8B Adapter](https://huggingface.co/wwewtech/russian-it-community-lora/tree/main/models/heavyweight_llama3.1_8b)
+  - 58 adapter directories on Hub; local registry [`lora_adapters/registry.json`](lora_adapters/registry.json) tracks 56 adapters.
+  - Only `smollm2_135m_instruct` is policy-compliant (full epoch, 100% corpus coverage). The remaining 55 are pilot/smoke-test adapters.
+  - Flagship Qwen 2.5 Coder 7B Adapter, DeepSeek R1 Distill 7B Adapter, Meta LLaMA 3.1 8B Adapter exist on Hub but are **not policy-compliant** (partial epochs, time-boxed runs).
 
 ---
 
@@ -123,19 +123,19 @@ All datasets are automatically generated and saved in `dataset_output/`. Exact a
 
 | File Path | Format | Local (verified) | Hub snapshot | Description | Direct Link |
 |---|---|---|---|---|:---:|
-| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,434 rows (189.33 MB) | 2,816,434 rows (189 MB) | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
-| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,520 dialogues (132.29 MB) | 171,520 dialogues (132 MB) | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
-| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks (159.31 MB) | 325,690 chunks (159 MB) | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
+| `dataset_output/parquet/full_clean_messages.parquet` | Parquet (zstd) | 2,816,434 rows *(local claim; self-reported)* | 2,816,434 rows *(Hub claim; self-reported)* | Full cleaned corpus with metadata | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/full_clean_messages.parquet) |
+| `dataset_output/parquet/sft_dialogues.parquet` | Parquet (zstd) | 171,520 dialogues *(local claim)* | 171,520 dialogues *(Hub claim)* | Multi-turn dialogues for SFT | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/sft_dialogues.parquet) |
+| `dataset_output/parquet/rag_knowledge_base.parquet` | Parquet (zstd) | 325,690 chunks *(local claim)* | 325,690 chunks *(Hub claim)* | Vector knowledge base | [HF Mirror](https://huggingface.co/datasets/wwewtech/russian-it-community-corpus/blob/main/data/rag_knowledge_base.parquet) |
 
 JSONL counts below are line-validator `valid_lines` from [`reports/validation_results.json`](reports/validation_results.json), surfaced through [`scripts/metrics_source.py`](scripts/metrics_source.py):
 
 | File Path | Format | Verified volume | Description | Availability |
 |---|---|---|---|---|
-| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 173,216 records | OpenAI format for Unsloth / TRL | Local / HF |
-| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 173,216 records | Axolotl & LLaMA-Factory format | Local / HF |
-| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 660,900 pairs | Single-turn instruction-response pairs | Local / HF |
-| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 332,690 chunks | Segmented technical documents | Local / HF |
-| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 57,501 pairs | Chosen / Rejected alignment pairs | Local / HF |
+| `dataset_output/jsonl/sft_openai_messages.jsonl` | ChatML JSONL | 173,216 records *(self-reported)* | OpenAI format for Unsloth / TRL | Local / HF |
+| `dataset_output/jsonl/sft_sharegpt_format.jsonl` | ShareGPT JSONL | 173,216 records *(self-reported)* | Axolotl & LLaMA-Factory format | Local / HF |
+| `dataset_output/jsonl/sft_alpaca_format.jsonl` | Alpaca JSONL | 660,900 pairs *(self-reported)* | Single-turn instruction-response pairs | Local / HF |
+| `dataset_output/jsonl/rag_chunks_kb.jsonl` | RAG JSONL | 332,690 chunks *(self-reported)* | Segmented technical documents | Local / HF |
+| `dataset_output/jsonl/dpo_preference_pairs.jsonl` | DPO JSONL | 57,501 pairs *(self-reported)* | Chosen / Rejected alignment pairs | Local / HF |
 
 ---
 
@@ -191,19 +191,19 @@ Load pre-built dataset splits in Python with a single line:
 ```python
 from datasets import load_dataset
 
-# 1. Load SFT Multi-Turn Dialogues (171.5k dialogues)
+# 1. Load SFT Multi-Turn Dialogues (Hub claim: 171.5k dialogues)
 sft_ds = load_dataset("wwewtech/russian-it-community-corpus", "sft_dialogues", split="train")
 
-# 2. Load RAG Knowledge Base Chunks (325.7k chunks)
+# 2. Load RAG Knowledge Base Chunks (Hub claim: 325.7k chunks)
 rag_ds = load_dataset("wwewtech/russian-it-community-corpus", "rag_knowledge_base", split="train")
 
-# 3. Load Full Clean Messages (2.81M records)
+# 3. Load Full Clean Messages (Hub claim: 2.81M records)
 full_ds = load_dataset("wwewtech/russian-it-community-corpus", "full_corpus", split="train")
 ```
 
-### LoRA Model Zoo (56 Local Adapters / 58 Adapters on Hugging Face Hub)
+### LoRA Model Zoo (56 Local Adapters / 58 Adapter Directories on Hugging Face Hub)
 
-Pre-trained adapters fine-tuned in pilot domain-adaptation runs on RICC dataset are available locally in [`lora_adapters/`](lora_adapters/) (56 adapters) and on Hugging Face: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) (58 adapters, including `codegen_350m_multi` and `sber_mgpt`). The local [`lora_adapters/registry.json`](lora_adapters/registry.json) is the single source of truth for on-disk adapters, generated by [`scripts/generate_lora_registry.py`](scripts/generate_lora_registry.py). To mirror the registry to the Hub, see [`docs/adr/0001-hf-token-handling.md`](docs/adr/0001-hf-token-handling.md) and [`scripts/sync_to_hub.py`](scripts/sync_to_hub.py). Full hand-maintained catalog lives in [`reports/LORA_MODEL_ZOO.md`](reports/LORA_MODEL_ZOO.md).
+Pre-trained adapters fine-tuned in pilot domain-adaptation runs on RICC dataset are available locally in [`lora_adapters/`](lora_adapters/) (56 adapters tracked in `registry.json`) and on Hugging Face: [`wwewtech/russian-it-community-lora`](https://huggingface.co/wwewtech/russian-it-community-lora) (58 adapter directories). The local [`lora_adapters/registry.json`](lora_adapters/registry.json) is the single source of truth for on-disk adapters. **Only `smollm2_135m_instruct` is policy-compliant**; the remaining 55 local adapters (and all Hub directories) are pilot/smoke-test adapters and must not be treated as final. Full hand-maintained catalog lives in [`reports/LORA_MODEL_ZOO.md`](reports/LORA_MODEL_ZOO.md).
 
 | Base Model | Family | Parameters | LoRA Size | Local Path |
 | :--- | :--- | :---: | :---: | :--- |
@@ -256,7 +256,7 @@ make ui
 # a smoke test (15 steps, 400 dialogues) — proves the pipeline fits on your GPU
 python -m ricc.lora.batch_train_zoo --only qwen2.5_0.5b_instruct --profile pilot
 
-# a real run: one full epoch over the corpus (~5 h on a 1.5B model)
+# a real run: one full epoch over the corpus (~13 h on a 1.5B model on RTX 3060; see AGENTS.md for the canonical command)
 python -m ricc.lora.batch_train_zoo --only qwen2.5_1.5b_instruct --profile full
 ```
 
@@ -278,7 +278,7 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 | `python cli.py benchmark` | Export and inspect 100 domain test cases |
 | `python cli.py orchestrate` | Run the Prefect curation orchestration flow |
 | `python demo_walkthrough.py` | Run interactive terminal walkthrough |
-| `python -m pytest -q` | Run the automated test suite (the full 936 tests) |
+| `python -m pytest -q` | Run the automated test suite *(claim: 936 tests — pending re-verification in an environment with pytest installed)* |
 | `make test` | Same, through the Makefile |
 | `make coverage` | Test run with the coverage report |
 | `make audit` | Run red-team adversarial penetration test |
@@ -288,8 +288,8 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 | `make docker-up` | Start Web Data Studio in Docker container |
 
 > **Note on the test command.** Use `pytest`, not `python -m unittest discover`:
-> the unittest runner only collects 519 of the 936 tests, because six test
-> modules use pytest-specific features and are silently skipped by it.
+> the unittest runner only collects 519 of the 936 tests *(claim pending re-verification)*,
+> because six test modules use pytest-specific features and are silently skipped by it.
 
 ---
 
@@ -313,7 +313,7 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 ├── reports/                    # Canonical dataset & model cards and benchmark suites
 │   ├── DATASET_AND_ANALYTICS.md   # Dataset Card and Zero-PII Protocol
 │   ├── HF_MODEL_CARD.md           # Hugging Face Model Card
-│   ├── LORA_MODEL_ZOO.md          # Catalog of 58 LoRA Adapters on Hub (56 local)
+│   ├── LORA_MODEL_ZOO.md          # Catalog of LoRA Adapters on Hub (58 directories) / local registry (56)
 │   ├── heuristic_benchmark_eval.json # 50-Scenario Heuristic Benchmark Matrix
 │   └── domain_benchmark_100.json  # 100-Scenario Domain Benchmark Suite
 ├── tests/                      # Automated unit tests
