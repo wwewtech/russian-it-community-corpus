@@ -108,6 +108,6 @@ typing_extensions==4.16.0
 tzdata==2026.6
 ujson==5.12.0
 urllib3==2.8.0
-watchdog==6.0.0
+watchdog==7.1.0
 xxhash==4.0.2
 yargy==0.16.0
