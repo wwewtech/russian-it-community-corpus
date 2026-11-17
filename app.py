@@ -81,6 +81,7 @@ def load_dpo_sample(max_rows: int = 200) -> list[dict]:
 NAV_MAIN = "Главная и метрики"
 NAV_MESSAGES = "Просмотр сообщений"
 NAV_SFT_DPO = "Диалоговая студия SFT и DPO"
+NAV_CHAT = "Чат с LoRA-адаптером"
 NAV_RAG = "База знаний RAG"
 NAV_PII = "Проверка деидентификации"
 NAV_RADAR = "Технологический радар"
@@ -99,6 +100,7 @@ nav = st.sidebar.radio(
         NAV_MAIN,
         NAV_MESSAGES,
         NAV_SFT_DPO,
+        NAV_CHAT,
         NAV_RAG,
         NAV_PII,
         NAV_RADAR,
@@ -300,6 +302,83 @@ elif nav == NAV_SFT_DPO:
             with col_rejected:
                 st.error(f"**REJECTED (Отклоненный ответ, Скор: {pair.get('rejected_quality', 'N/A')})**")
                 st.write(pair["rejected"])
+
+# =============================================================================
+# 3b. ЧАТ С LORA-АДАПТЕРОМ
+# =============================================================================
+elif nav == NAV_CHAT:
+    import chat_ui
+
+    st.title("Чат с LoRA-адаптером (RICC Zoo)")
+    st.caption(
+        "Инференс локального адаптера на GPU хоста. Политика обучения: только адаптеры с "
+        "полной эпохой публикуются как финальные; PARTIAL-адаптеры помечены в интерфейсе."
+    )
+
+    adapter_ids = chat_ui.list_chat_adapters(BASE_DIR)
+    if not adapter_ids:
+        st.warning("Адаптеры не найдены в lora_adapters/ — запустите обучение (python -m ricc.lora.batch_train_zoo).")
+    else:
+        # Policy-compliant adapter is the recommended default partner.
+        default_idx = (
+            adapter_ids.index(chat_ui.POLICY_COMPLIANT_DEFAULT)
+            if chat_ui.POLICY_COMPLIANT_DEFAULT in adapter_ids
+            else 0
+        )
+        selected_adapter = st.selectbox("Адаптер:", adapter_ids, index=default_idx)
+
+        summary = chat_ui.adapter_summary(BASE_DIR, selected_adapter)
+        with st.sidebar:
+            st.markdown("---")
+            st.subheader("Провенанс адаптера")
+            if summary["base_model"]:
+                st.write(f"База: `{summary['base_model']}`")
+            if summary["actual_steps"] is not None:
+                st.write(f"Шаги: {summary['actual_steps']} / {summary['required_steps']} (полная эпоха)")
+                coverage = summary["corpus_coverage_pct"]
+                if coverage is not None:
+                    st.progress(min(100.0, float(coverage)) / 100.0, text=f"Coverage корпуса: {coverage}%")
+            if summary["compliant"]:
+                st.success("Соответствует политике обучения (полная эпоха)")
+            elif summary["actual_steps"] is not None:
+                st.warning("PARTIAL: неполный прогон — демо, не финальный адаптер")
+            else:
+                st.info("training_meta.json отсутствует — legacy-адаптер до policy-gate")
+
+        # Model choice follows the adapter's recorded base model when known.
+        model_default = summary["base_model"] or "Qwen/Qwen2.5-0.5B-Instruct"
+        model_name = st.text_input("Базовая модель (HF id):", value=model_default)
+
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+
+        # Render the conversation so far.
+        for turn in st.session_state.chat_history:
+            with st.chat_message(turn["role"]):
+                st.markdown(turn["content"])
+
+        prompt = st.chat_input("Ваш технический вопрос сообществу:")
+        if prompt:
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            with st.chat_message("assistant"):
+                with st.spinner("Генерация ответа..."):
+                    try:
+                        reply = chat_ui.generate_reply(
+                            query=prompt,
+                            history=st.session_state.chat_history[:-1],
+                            model_name=model_name,
+                            adapter_id=selected_adapter,
+                        )
+                    except Exception as exc:  # noqa: BLE001 — the UI must show the error, not crash
+                        reply = f"**Ошибка инференса:** `{exc}`"
+                st.markdown(reply)
+            st.session_state.chat_history.append({"role": "assistant", "content": reply})
+
+        if st.button("Очистить историю"):
+            st.session_state.chat_history = []
+            st.rerun()
 
 # =============================================================================
 # 4. БАЗА ЗНАНИЙ RAG И СЕМАНТИЧЕСКИЙ ПОИСК

@@ -581,7 +581,7 @@ def main() -> None:
         "--samples", type=int, default=None, help="Max SFT dialogues per model (overrides the profile budget)"
     )
     parser.add_argument(
-        "--eval-frac", type=float, default=None, help="Holdout fraction for eval (full profile default: 0.02)"
+        "--eval-frac", type=float, default=None, help="Holdout fraction for eval (full profile default: 0.005)"
     )
     parser.add_argument(
         "--hours",
