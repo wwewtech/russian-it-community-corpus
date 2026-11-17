@@ -6,10 +6,12 @@ Two budgets are available via ``--profile``:
 
 * ``pilot`` — the tiny smoke budget (400 dialogues / 15 steps) used to validate
   the pipeline end to end.
-* ``full`` — production budgets per model size tier (up to 20k dialogues /
-  2000 steps), with a 2% holdout eval split, step-level training logs
-  (``training_log.jsonl``), automatic checkpoints and resume support for
-  multi-hour runs, and an aggregated run report in ``reports/``.
+* ``full`` — one complete epoch over the trainable corpus (the step count
+  is derived from the dataset by :mod:`ricc.lora.policy_gate`; ~21 420
+  steps at the current corpus size), with a 0.5% holdout eval split,
+  step-level training logs (``training_log.jsonl``), automatic checkpoints
+  and resume support for multi-hour runs, and an aggregated run report in
+  ``reports/``.
 
 ``--hours N`` replaces the step budget with a wall-clock budget per model
 (graceful stop + save), ``--holdout-tail N`` reserves the last N dialogues of

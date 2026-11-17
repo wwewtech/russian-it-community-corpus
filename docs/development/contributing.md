@@ -46,9 +46,9 @@ versions (`ruff==0.16.2`, `mypy==2.3.1`).
 ## Commits
 
 Conventional, scope-tagged: `feat(2-4): ...`, `sec(5): ...`,
-`fix(release): ...`, `types(2-final): ...`. Version bumps touch all four
-places — `pyproject.toml`, `CITATION.cff`, `ricc/__init__.py`,
-`ricc/ricc/__init__.py` — enforced by `test_version_consistency`.
+`fix(release): ...`, `types(2-final): ...`. Version bumps touch all three
+places — `pyproject.toml`, `CITATION.cff`, `ricc/__init__.py` — enforced by
+`test_version_consistency`.
 
 ## Pull Requests
 

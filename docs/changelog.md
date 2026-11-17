@@ -2,7 +2,30 @@
 
 All notable changes to RICC are documented here.
 
-> Full history: [`CHANGELOG.md`](https://github.com/wwewtech/russian-it-community-corpus/blob/main/CHANGELOG.md) in the repository root.
+> Full history: [`CHANGELOG.md`](https://github.com/wwewtech/russian-it-community-corpus/blob/main/CHANGELOG.md) in the repository root. This page mirrors the most recent releases; the root changelog is the source of truth.
+
+## [12.2.0] - 2026-10-14
+
+### Added
+- **GPU/ML error taxonomy (P3)**: `ricc/errors.py` extended with `MLError`
+  (`TrainingError`, `InferenceError`, `EvaluationError`, `TokenizerError`,
+  `CheckpointError`, `AdapterLoadError`, `QuantizationError`) and `GPUError`.
+- **Monitoring stack (P4)**: ServiceMonitor, Prometheus rules (12 alerts),
+  Grafana dashboard (18 panels); metrics server in the Streamlit app.
+- **LoRA run metrics**: `ricc_lora_train_total{model,adapter,status}` counter.
+- **Drift gauges wired in**: PSI / JS-divergence / vocab-Jaccard gauges.
+- **Security gate hardening (P5)**: pip-audit promoted to a hard gate.
+- **mkdocs docs gate**: `mkdocs build --strict` in CI.
+
+### Changed
+- **mypy strict rollout complete**: every `ricc/` module passes `mypy --strict`.
+- **pre-commit hygiene**: Black fallback hook removed; mypy hook is local.
+
+### Fixed
+- Hybrid RAG retrieval upgraded (lexical pre-filter + per-query TF-IDF re-rank).
+- SLO release gate (`ricc/monitoring/slo_gate.py` + `make slo`).
+- Loader crash on list-shaped exports; Docker hardening; SLO verdict mapping
+  (`PASSED` accepted).
 
 ## [12.1.0] - 2026-10-10
 
@@ -19,40 +42,31 @@ All notable changes to RICC are documented here.
 - `test_pipeline.py` no longer poisons committed reports mid-session.
 - CI: coverage.xml artifacts, pinned `ubuntu-24.04`, actions bumped (Node 20 warnings cleared).
 
-## [12.0.4] - 2026-10-04
+## [12.0.4] - 2026-09-08
 
 ### Added
 - **Unified Configuration**: `ricc/settings.py` using `pydantic-settings.BaseSettings` — single source of truth merging `config.py` + `params.yaml` with env var overrides (`RICC__`)
-- **Observability Module**: `ricc/observability/__init__.py` with structured logging (structlog) + Prometheus metrics for pipeline stages, PII audit, drift, validation, LoRA, SLO, HTTP, errors
-- **Error Taxonomy**: `ricc/errors.py` with complete typed exception hierarchy (`RICCError`, `PipelineError*`, `ValidationError*`, `DataQualityError*`, `ConfigurationError*`, `ExternalServiceError*`, `ResourceError*`) + functional `Result[T, E]` type with `Ok`/`Err`
-- **Public API Package**: `ricc/ricc/__init__.py` with `__version__`, `Settings`, `MasterDataPipeline`, all exceptions, observability, and `Result` type
+- **Observability Module**: `ricc/observability/__init__.py` with structured logging (structlog) + Prometheus metrics
+- **Error Taxonomy**: `ricc/errors.py` with complete typed exception hierarchy
 - **CI/CD Pipeline**: `.github/workflows/ci.yml` with lint (ruff), typecheck (mypy strict), test (pytest cov≥85%), Docker build/push, SLO gate, HF Hub release
-- **Pre-commit Hooks**: `.pre-commit-config.yaml` mirroring CI (ruff, mypy strict, YAML/JSON/TOML checks)
+- **Pre-commit Hooks**: `.pre-commit-config.yaml` mirroring CI
 - **DVC Pipeline**: `dvc.yaml` with 12 reproducible stages matching `MasterDataPipeline`
 - **Secrets Management**: `.env.example` template + `.secrets.baseline` for detect-secrets
 - **Hardened Docker**: `Dockerfile` + `docker-compose.yml` with `read_only`, `no-new-privileges`, tmpfs mounts
-- **MkDocs Documentation**: `mkdocs.yml` with Material theme, mkdocstrings for auto API reference
+- **MkDocs Documentation**: `mkdocs.yml` with Material theme
 
 ### Changed
 - Migrated 11 source files from `ricc.config` imports to `ricc.settings`
-- Updated `cli.py` with backward-compat constants for tests
-- Refactored `MasterDataPipeline` to use observability metrics + structured logging
-- Updated `bootstrap.py` to configure structured logging
 - Removed `ahocorasick` from dependencies (optional, Windows compatibility)
 
-### Fixed
-- Coverage gate enforcement in CI (85% → 87%)
-- MyPy strict mode passes on 32 modules (including new `errors.py`, `observability/`)
-- SLO gate consistently returns SHIP
-
-## [12.0.3] - 2026-09-17
+## [12.0.3] - 2026-08-30
 
 ### Added
 - Probabilistic PII audit with stratified sampling + Wilson CI + power analysis
 - Drift monitoring: PSI + Jensen-Shannon + Vocabulary Jaccard
 - SLO gate with 6 checks (validation, pii-audit, drift, pipeline-volume, artifact-manifest, hub-reconciliation)
 - LoRA batch training for 20+ models with model zoo registry
-- Hybrid RAG pipeline (dense + sparse retrieval)
+- Hybrid RAG pipeline (lexical retrieval; no embeddings)
 - Dataset reconciliation with pinned Hub revision
 - Artifact manifest with SHA256 verification
 
@@ -61,13 +75,13 @@ All notable changes to RICC are documented here.
 - Centralized runtime env setup in `ricc/bootstrap.py`
 - MinHash LSH optimized with precomputed permutations
 
-## [12.0.0] - 2026-08-15
+## [12.0.0] - 2026-08-28
 
 ### Added
 - Initial production release
 - End-to-end pipeline: ingestion → PII → dedup → taxonomy → graph → export → analytics
 - Dual-layer PII scrubbing (Regex + Natasha NER) + pseudonymization
-- 9 IT domain taxonomy with 500+ keywords
+- 8 IT domain taxonomy with 268 keywords
 - Thread DAG reconstruction with reply-time heuristics
 - SFT/DPO/RAG extraction from conversations
 - Multi-format export (Parquet, ShareGPT, Alpaca, ChatML, RAG JSONL, DPO)

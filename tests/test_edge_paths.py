@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from ricc.ingestion.loader import (
+    ExportLoadError,
     extract_raw_text,
     load_export_file,
     merge_multiple_exports,
@@ -196,6 +197,44 @@ class TestLoaderEdgeCases(unittest.TestCase):
             infos, msgs = merge_multiple_exports([Path(d, "missing"), good])
             self.assertEqual(len(infos), 1)
             self.assertEqual([m.text_raw for m in msgs], ["first", "second"])
+
+    def test_merge_raises_when_every_export_fails(self) -> None:
+        """All exports broken must raise, not silently return empty lists."""
+        with tempfile.TemporaryDirectory() as d:
+            bad = Path(d, "bad")
+            bad.mkdir()  # no result.json inside
+            with self.assertRaises(ExportLoadError) as ctx:
+                merge_multiple_exports([bad])
+            self.assertIn(str(bad), str(ctx.exception))
+
+    def test_merge_raises_on_empty_input(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ExportLoadError):
+                merge_multiple_exports([])
+            with self.assertRaises(ExportLoadError):
+                merge_multiple_exports([Path(d, "never-existed")])
+
+    def test_merge_partial_failure_still_returns_good_data(self) -> None:
+        """One broken export among good ones: skip it, keep the rest."""
+        with tempfile.TemporaryDirectory() as d:
+            good1 = Path(d, "g1")
+            good1.mkdir()
+            (good1 / "result.json").write_text(
+                json.dumps(
+                    {
+                        "name": "chat one",
+                        "messages": [
+                            {"id": 1, "type": "message", "from": "A", "from_id": "1", "date_unixtime": 1, "text": "x"}
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            bad = Path(d, "bad")
+            bad.mkdir()
+            infos, msgs = merge_multiple_exports([good1, bad])
+            self.assertEqual(len(infos), 1)
+            self.assertEqual(len(msgs), 1)
 
 
 class TestBenchmarkComparator(unittest.TestCase):
@@ -395,6 +434,48 @@ class TestSloGateExtra(unittest.TestCase):
             verdict = evaluate(root)
             self.assertEqual(verdict.verdict, "HOLD")
             self.assertTrue(any(c.name == "sft-quality" and not c.passed for c in verdict.checks))
+
+    def test_sft_gate_reads_overall_verdict_fail(self) -> None:
+        """sft_quality.py writes overall_verdict; a real fail must HOLD."""
+        from ricc.monitoring.slo_gate import evaluate
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (root / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASSED"}), encoding="utf-8")
+            (root / "sft_quality_report.json").write_text(json.dumps({"overall_verdict": "fail"}), encoding="utf-8")
+            verdict = evaluate(root)
+            self.assertEqual(verdict.verdict, "HOLD")
+            check = next(c for c in verdict.checks if c.name == "sft-quality")
+            self.assertFalse(check.passed)
+            self.assertIn("overall_verdict=fail", check.detail)
+
+    def test_sft_gate_reads_overall_verdict_pass(self) -> None:
+        from ricc.monitoring.slo_gate import evaluate
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (root / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASSED"}), encoding="utf-8")
+            (root / "sft_quality_report.json").write_text(json.dumps({"overall_verdict": "pass"}), encoding="utf-8")
+            verdict = evaluate(root)
+            check = next(c for c in verdict.checks if c.name == "sft-quality")
+            self.assertTrue(check.passed, check.detail)
+
+    def test_sft_gate_is_fail_closed_on_unknown_report_shape(self) -> None:
+        """A report with no readable verdict must block, not silently pass."""
+        from ricc.monitoring.slo_gate import evaluate
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "validation_results.json").write_text(json.dumps({"overall_passed": True}), encoding="utf-8")
+            (root / "probabilistic_pii_audit.json").write_text(json.dumps({"verdict": "PASSED"}), encoding="utf-8")
+            (root / "sft_quality_report.json").write_text(json.dumps({"n_dialogues": 5}), encoding="utf-8")
+            verdict = evaluate(root)
+            self.assertEqual(verdict.verdict, "HOLD")
+            check = next(c for c in verdict.checks if c.name == "sft-quality")
+            self.assertFalse(check.passed)
+            self.assertIn("fail-closed", check.detail)
 
     def test_main_writes_json_out(self) -> None:
         from ricc.monitoring.slo_gate import main

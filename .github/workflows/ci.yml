@@ -283,24 +283,35 @@ jobs:
           python -m pytest -q --cov=ricc --cov-report=xml
           cp coverage.xml coverage-current.xml
 
-      - name: Compare against the base branch
+      - name: Compute base-branch coverage into a separate file
         continue-on-error: true
         run: |
-          git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha || github.event.before }}"
-          git checkout "${{ github.event.pull_request.base.sha || github.event.before }}" -- . 2>/dev/null || true
+          BASE_REF="${{ github.event.pull_request.base.sha || github.event.before }}"
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          # Stash the CURRENT coverage before the worktree is switched to the
+          # base code: the old job overwrote coverage.xml with the base run
+          # and then compared the base against itself.
+          mv coverage-current.xml coverage-current.keep
+          git checkout "$BASE_REF" -- ricc tests pyproject.toml 2>/dev/null || true
           python -m pytest -q --cov=ricc --cov-report=xml || true
           cp coverage.xml coverage-base.xml 2>/dev/null || true
-          git checkout "${{ github.sha }}" -- . || true
+          mv coverage-current.keep coverage-current.xml
+          git checkout "${{ github.sha }}" -- ricc tests pyproject.toml || true
 
       - name: Enforce the diff coverage floor
         # --fail-under=90: at least 90% of the CHANGED lines must be
         # covered. A new module with no tests fails the build.
+        # diff-cover compares the CURRENT coverage (coverage.xml, restored
+        # above) against the base branch snapshot; the changed-lines diff is
+        # computed between the checked-out HEAD and the base ref.
         run: |
           if [ ! -f coverage-base.xml ]; then
             echo "No baseline coverage available (first run on this branch) — skipping the diff gate."
             exit 0
           fi
-          diff-cover coverage.xml --compare-branch=HEAD --fail-under=90
+          BASE_REF="${{ github.event.pull_request.base.sha || github.event.before }}"
+          git fetch --no-tags --depth=1 origin "$BASE_REF" || true
+          diff-cover coverage-current.xml --compare-branch "origin/${{ github.event.pull_request.base.ref || 'main' }}" --fail-under=90
 
   dvc-consistency:
     name: DVC Pipeline Consistency

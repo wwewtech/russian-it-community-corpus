@@ -202,6 +202,21 @@ def load_export_file(file_path: str | Path, node_index: int = 1) -> tuple[dict[s
     return chat_info, normalized_msgs
 
 
+class ExportLoadError(RuntimeError):
+    """Raised when one or more export directories failed to load.
+
+    The loader deliberately does not abort on the FIRST failure (one broken
+    export must not lose the whole corpus), but the caller must be able to
+    tell "no input" from "every input failed": silently returning an empty
+    stream used to build an empty corpus while logging one line.
+    """
+
+    def __init__(self, failures: dict[str | Path, str]):
+        self.failures = dict(failures)
+        summary = "; ".join(f"{k}: {v}" for k, v in self.failures.items())
+        super().__init__(f"{len(self.failures)} export(s) failed to load: {summary}")
+
+
 def merge_multiple_exports(
     export_dirs: Sequence[str | Path],
 ) -> tuple[list[dict[str, Any]], list[NormalizedMessage]]:
@@ -209,9 +224,15 @@ def merge_multiple_exports(
     Load and merge multiple Telegram export directories into a single unified stream.
     Anonymizes chat names to community_node_XX and assigns synthetic surrogate IDs.
     Sorts all messages chronologically.
+
+    A single failing export is skipped (logged) so one broken file cannot
+    discard the whole corpus, but if EVERY export fails — or none were given —
+    :class:`ExportLoadError` is raised instead of silently returning empty
+    containers.
     """
     all_chats_info: list[dict[str, Any]] = []
     all_messages: list[NormalizedMessage] = []
+    failures: dict[str | Path, str] = {}
 
     for idx, d in enumerate(export_dirs, 1):
         try:
@@ -220,6 +241,10 @@ def merge_multiple_exports(
             all_messages.extend(msgs)
         except Exception as e:
             logger.error(f"Failed to load export from {d}: {e}")
+            failures[d] = str(e) or type(e).__name__
+
+    if not all_chats_info and (failures or not list(export_dirs)):
+        raise ExportLoadError(failures)
 
     # Sort all messages chronologically by timestamp / unixtime
     all_messages.sort(key=lambda m: (m.unixtime, m.msg_id))

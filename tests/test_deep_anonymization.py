@@ -7,6 +7,46 @@ import unittest
 from ricc.pii.deep_anonymizer import DeepPIIAnonymizer
 
 
+class TestPseudonymCollisions(unittest.TestCase):
+    """Two different authors with the same display name must stay distinct.
+
+    The old name index stored a single pseudonym per name, so the second
+    author overwrote the first and all of the first author's messages were
+    exported under the second author's pseudonym.
+    """
+
+    def setUp(self):
+        self.anonymizer = DeepPIIAnonymizer(enable_ner=False)
+        self.anonymizer.register_authors(
+            [
+                ("id-1", "Дмитрий"),
+                ("id-2", "Дмитрий"),
+            ]
+        )
+
+    def test_same_name_authors_get_distinct_ids(self):
+        self.assertNotEqual(self.anonymizer.user_id_to_anon["id-1"], self.anonymizer.user_id_to_anon["id-2"])
+
+    def test_first_author_keeps_their_own_pseudonym(self):
+        anon_id, anon_name = self.anonymizer._get_or_create_pseudonym("id-1", "Дмитрий")
+        self.assertEqual(anon_id, self.anonymizer.user_id_to_anon["id-1"])
+        # The display name resolves to THIS author's pseudonym, not the one
+        # belonging to the later author who shared the name.
+        self.assertEqual(anon_name, "Developer_00001")
+
+    def test_second_author_keeps_their_own_pseudonym(self):
+        anon_id, anon_name = self.anonymizer._get_or_create_pseudonym("id-2", "Дмитрий")
+        self.assertEqual(anon_id, self.anonymizer.user_id_to_anon["id-2"])
+        self.assertEqual(anon_name, "Developer_00002")
+
+    def test_unknown_author_with_known_name_resolves_deterministically(self):
+        """An author registered only via scrub_text still resolves to a
+        recorded pseudonym, never to a fabricated colliding one."""
+        _anon_id, anon_name = self.anonymizer._get_or_create_pseudonym("id-1", "Дмитрий")
+        all_named = self.anonymizer.raw_name_to_anon["Дмитрий"]
+        self.assertIn(anon_name, all_named)
+
+
 class TestDeepAnonymization(unittest.TestCase):
     def setUp(self):
         self.anonymizer = DeepPIIAnonymizer(enable_ner=True)

@@ -480,6 +480,7 @@ def run_official_academic_benchmarks(
     adapter_id: str = "qwen2.5_1.5b_instruct",
     seed: int = 42,
     isolation_mode: str = "container",
+    holdout_tail: int = 1000,
 ) -> dict[str, Any]:
     """Run the academic benchmark suite.
 
@@ -488,6 +489,10 @@ def run_official_academic_benchmarks(
     the untrusted model-generated code. With ``"process"`` the HumanEval
     tasks are executed WITHOUT a security boundary (see
     ``execute_humaneval_code``); that opt-in must be deliberate.
+
+    ``holdout_tail`` must match the ``--holdout-tail`` value the adapter
+    was trained with: the perplexity sample is drawn from exactly that
+    held-out tail of the SFT JSONL, never from the training corpus.
     """
     logger.info(f"=== Running Official Academic Scientific Benchmarks for {model_name} ===")
     set_deterministic_seed(seed)
@@ -790,22 +795,56 @@ def run_official_academic_benchmarks(
     # Paired significance (McNemar). Every variant runs on the SAME
     # questions, so the outcomes are paired and McNemar's exact test is
     # the right tool. The report previously asserted an improvement
-    # whose confidence intervals OVERLAP; on the published raw outputs
-    # no comparison reaches significance (p >= 0.125).
+    # whose confidence intervals OVERLAP; the verdicts are derived from
+    # the measured outcomes (see the significance block below).
     rummlu_significance = _paired_significance(rummlu_outcomes)
 
     # -------------------------------------------------------------
     # 3. MATHEMATICAL INFORMATION-THEORETIC PERPLEXITY (PPL)
     # -------------------------------------------------------------
     logger.info("Running Benchmark 3: Mathematical Perplexity (PPL) on Held-Out Test Set...")
-    test_df = pd.read_parquet("dataset_output/parquet/sft_dialogues.parquet").sample(n=50, random_state=42)
-    # NOTE: the SFT parquet schema stores dialogues in a `messages` column of
+    # The sample MUST come from the held-out tail (the last CANONICAL holdout
+    # dialogues, excluded from training by batch_train_zoo --holdout-tail),
+    # not from the SFT corpus the adapter was trained on: PPL over seen text
+    # flatters the LoRA variant. The JSONL corpus is read from the end so the
+    # same tail the trainer reserved is the tail the PPL is computed on.
+    holdout_tail = max(0, int(holdout_tail))
+    dataset_jsonl = Path("dataset_output/jsonl/sft_openai_messages.jsonl")
+    tail_rows: list[dict[str, Any]] = []
+    if dataset_jsonl.exists() and holdout_tail > 0:
+        from collections import deque
+
+        ring: deque[dict[str, Any]] = deque(maxlen=holdout_tail)
+        with dataset_jsonl.open(encoding="utf-8") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                try:
+                    ring.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        tail_rows = list(ring)
+        logger.info("PPL sample source: held-out tail of %s (last %d dialogues)", dataset_jsonl, len(tail_rows))
+    else:
+        # No holdout was reserved (or the JSONL is missing): fall back to the
+        # parquet corpus, but say so — such PPL numbers train-see the adapter.
+        logger.warning(
+            "Held-out tail unavailable (file=%s, holdout_tail=%d); "
+            "falling back to the SFT parquet — perplexity will be measured on TRAINING-seen text",
+            dataset_jsonl,
+            holdout_tail,
+        )
+    # NOTE: the SFT schema stores dialogues in a `messages` column of
     # role/content dicts. The previous implementation read non-existent
     # `query`/`response` columns and computed PPL on the constant string
     # "None None", which made base and LoRA perplexities identical.
-    test_texts = []
-    for _, row in test_df.iterrows():
-        turns = row.get("messages")
+    test_texts: list[str] = []
+    source_rows = tail_rows if tail_rows else []
+    if not source_rows:
+        test_df = pd.read_parquet("dataset_output/parquet/sft_dialogues.parquet")
+        source_rows = cast(list[dict[str, Any]], test_df.to_dict("records"))
+    for row in source_rows:
+        turns = row.get("messages") if isinstance(row, dict) else None
         if turns is None:
             continue
         text = " ".join(f"{t.get('role', '')}: {t.get('content', '')}" for t in turns if isinstance(t, dict))
@@ -835,12 +874,18 @@ def run_official_academic_benchmarks(
 
     base_ppl = compute_base_ppl()
     lora_ppl = compute_ppl(lora_model) if lora_model else base_ppl
+    ppl_sample_source = (
+        f"held-out tail ({len(tail_rows)} dialogues of {dataset_jsonl})"
+        if tail_rows
+        else "sft_dialogues.parquet (TRAINING-SEEN fallback — not held-out)"
+    )
     record_raw_output(
         {
             "benchmark": "Perplexity",
             "variant": "base",
             "ppl": base_ppl,
             "sample_size": len(test_texts),
+            "sample_source": ppl_sample_source,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
     )
@@ -850,6 +895,7 @@ def run_official_academic_benchmarks(
             "variant": "lora",
             "ppl": lora_ppl,
             "sample_size": len(test_texts),
+            "sample_source": ppl_sample_source,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
     )
@@ -989,10 +1035,9 @@ def run_official_academic_benchmarks(
         h_str = "PASSED" if rec["hybrid_ok"] else "FAILED"
         report_lines.append(f"| `{rec['task_id']}` | `{rec['entry_point']}` | {b_str} | {l_str} | {h_str} |")
 
-    # The conclusions must follow the data. Every comparison in the
-    # published run is NOT significant (p >= 0.125), so the report may
-    # not claim that one variant beats another; it states the measured
-    # values and says the variants are indistinguishable.
+    # The conclusions must follow the data. The verdict per comparison is
+    # derived from the McNemar outcomes above; the prose below adapts to
+    # whichever comparisons reached significance in THIS run.
     significant_comparisons = [
         f"{res['variant_a']} vs {res['variant_b']} ({bench}, p={float(cast(float, res['p_value'])):.3f})"
         for bench, significance in (
@@ -1041,9 +1086,9 @@ def run_official_academic_benchmarks(
         "rummlu_accuracy": rummlu_acc,
         "rummlu_accuracy_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in rummlu_ci.items()},
         # Paired significance: the variants run on the same tasks, so
-        # McNemar's exact test is the right comparison. The published
-        # run has NO significant difference (p >= 0.125) — the point
-        # estimates alone must not be read as an improvement.
+        # McNemar's exact test is the right comparison. any_significant is
+        # DERIVED from the measured outcomes (OR over all comparisons) and
+        # must never be hand-edited to a desired verdict.
         "significance": {
             "method": "McNemar exact test on paired per-task outcomes, two-sided, 95%",
             "humaneval": humaneval_significance,
@@ -1056,8 +1101,13 @@ def run_official_academic_benchmarks(
             "humaneval_tasks": len(HUMANEVAL_TASKS),
             "rummlu_questions": len(RUMMLU_CS_QUESTIONS),
         },
-        "perplexity": {"base": base_ppl, "lora": lora_ppl, "hybrid": None},
-        "rouge": {"base": base_rouge, "lora": lora_rouge, "hybrid": None},
+        # Only the variants that were actually measured get a key here:
+        # raw logs record Perplexity/ROUGE for base and lora only, and the
+        # consistency tests compare these dicts against the raw logs with
+        # strict equality. A "hybrid": None key would break that contract.
+        "perplexity": {"base": base_ppl, "lora": lora_ppl},
+        "perplexity_sample_source": ppl_sample_source,
+        "rouge": {"base": base_rouge, "lora": lora_rouge},
         "not_measured": {
             "hybrid_perplexity": "the RAG context is prepended to the prompt, so a perplexity "
             "over the answer is not the same quantity for the hybrid variant; it is not reported "
@@ -1097,6 +1147,12 @@ def main() -> None:
             "untrusted model code; 'process' does NOT and is only for trusted code."
         ),
     )
+    parser.add_argument(
+        "--holdout-tail",
+        type=int,
+        default=1000,
+        help="Size of the held-out tail the adapter was trained with; PPL is sampled from it",
+    )
     args = parser.parse_args()
 
     run_official_academic_benchmarks(
@@ -1104,6 +1160,7 @@ def main() -> None:
         adapter_id=args.adapter,
         seed=args.seed,
         isolation_mode=args.isolation_mode,
+        holdout_tail=args.holdout_tail,
     )
 
 

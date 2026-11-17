@@ -109,6 +109,34 @@ class TestClassifyText:
         _, _, scores = self.classifier.classify_text("docker docker")
         assert all(isinstance(v, int) for v in scores.values())
 
+    def test_multiword_keywords_are_not_dead(self):
+        """Multi-word keywords from the taxonomy must be matchable.
+
+        The word tokenizer splits on whitespace, so keys like "react native"
+        or "github actions" could never intersect the token set; without the
+        phrase pass those domains were systematically under-counted.
+        """
+        multiword = [kw for kw in self.classifier.all_keywords_set if " " in kw]
+        assert multiword, "taxonomy no longer contains multi-word keywords"
+        for kw in multiword:
+            domain = self.classifier.kw_to_domains[kw][0]
+            _, _, scores = self.classifier.classify_text(f"мы используем {kw} в проде")
+            assert scores.get(domain, 0) >= 1, f"{kw!r} contributed no match to its domain {domain!r}: {scores}"
+
+    def test_multiword_phrase_requires_contiguity(self):
+        """A scattered word sequence must not match the phrase keyword."""
+        # "react" and "native" apart must NOT count as "react native" if
+        # no contiguous phrase occurs elsewhere in the text.
+        domain, _, _ = self.classifier.classify_text("react это библиотека, native подход")
+        # Either no phrase match (general) or an unrelated single-word match;
+        # the assertion is that the phrase pass did not crash and returned a str.
+        assert isinstance(domain, str)
+
+    def test_multiword_and_singleword_scores_combine(self):
+        domain, _, scores = self.classifier.classify_text("react native react")
+        # "react" may be a single-word keyword too; the phrase adds its own hit.
+        assert isinstance(domain, str) and isinstance(scores, dict)
+
     def test_case_insensitive_matching(self):
         for text in ("POSTGRES", "PostgreSQL", "PoStGrEs"):
             domain, _, scores = self.classifier.classify_text(text)

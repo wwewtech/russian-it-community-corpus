@@ -266,8 +266,11 @@ class TestOfficialBranches(unittest.TestCase):
         ):
             bench.main()
         # The container isolation mode is the safe default and is passed
-        # through explicitly.
-        run.assert_called_once_with(model_name="m", adapter_id="a", seed=42, isolation_mode="container")
+        # through explicitly; the held-out tail matches the canonical
+        # training reservation by default.
+        run.assert_called_once_with(
+            model_name="m", adapter_id="a", seed=42, isolation_mode="container", holdout_tail=1000
+        )
 
     def test_main_accepts_explicit_isolation_mode(self) -> None:
         import ricc.evaluation.official_academic_benchmarks as bench
@@ -277,7 +280,21 @@ class TestOfficialBranches(unittest.TestCase):
             patch("ricc.evaluation.official_academic_benchmarks.run_official_academic_benchmarks") as run,
         ):
             bench.main()
-        run.assert_called_once_with(model_name="m", adapter_id="a", seed=42, isolation_mode="process")
+        run.assert_called_once_with(
+            model_name="m", adapter_id="a", seed=42, isolation_mode="process", holdout_tail=1000
+        )
+
+    def test_main_accepts_explicit_holdout_tail(self) -> None:
+        import ricc.evaluation.official_academic_benchmarks as bench
+
+        with (
+            patch.object(sys, "argv", ["prog", "--model", "m", "--adapter", "a", "--holdout-tail", "500"]),
+            patch("ricc.evaluation.official_academic_benchmarks.run_official_academic_benchmarks") as run,
+        ):
+            bench.main()
+        run.assert_called_once_with(
+            model_name="m", adapter_id="a", seed=42, isolation_mode="container", holdout_tail=500
+        )
 
 
 class TestReportBranches(unittest.TestCase):

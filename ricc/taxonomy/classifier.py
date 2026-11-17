@@ -24,6 +24,14 @@ class DomainClassifier:
             for kw in info["keywords"]:
                 self.kw_to_domains[kw.lower()].append(domain)
         self.all_keywords_set: set[str] = set(self.kw_to_domains.keys())
+        # Multi-word keywords ("react native", "github actions", ...) can
+        # never appear as a single token of the word tokenizer below; they
+        # are matched as phrases over the lowercased text instead. Without
+        # this, those keys were dead and the affected domains were
+        # systematically under-counted.
+        self._multiword_keywords: list[tuple[str, list[str]]] = [
+            (kw, kw.split()) for kw in self.all_keywords_set if " " in kw
+        ]
 
     def classify_text(self, text: str) -> tuple[str, float, dict[str, int]]:
         """
@@ -32,8 +40,16 @@ class DomainClassifier:
         if not text:
             return "general_tech_chat", 0.0, {}
 
-        tokens = set(re.findall(r"[a-zA-Zа-яё0-9_\-\+\#\.]+", text.lower()))
+        lowered = text.lower()
+        tokens = set(re.findall(r"[a-zA-Zа-яё0-9_\-\+\#\.]+", lowered))
         matched_kws = tokens.intersection(self.all_keywords_set)
+        # Phrase pass for multi-word keywords: the phrase must appear as a
+        # contiguous sequence, so "reactive native" never matches "react native".
+        for kw, parts in self._multiword_keywords:
+            if kw in matched_kws:
+                continue
+            if all(f" {part} " in f" {lowered} " for part in parts):
+                matched_kws.add(kw)
 
         if not matched_kws:
             return "general_tech_chat", 0.0, {}

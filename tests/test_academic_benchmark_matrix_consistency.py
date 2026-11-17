@@ -82,7 +82,11 @@ class TestAcademicMatrixConsistency(unittest.TestCase):
 
     def test_perplexity_matches_raw(self) -> None:
         ppl = {r["variant"]: r["ppl"] for r in self.records if r.get("benchmark") == "Perplexity"}
-        self.assertEqual(ppl, self.matrix["perplexity"])
+        # The matrix may only carry keys that the raw logs actually measured
+        # (a "hybrid": None placeholder broke strict dict equality before).
+        self.assertEqual(set(self.matrix["perplexity"]), set(ppl))
+        for variant, value in ppl.items():
+            self.assertEqual(self.matrix["perplexity"][variant], value, f"perplexity/{variant}")
 
     def test_rouge_matches_raw(self) -> None:
         rouge = {r["variant"]: r["scores"] for r in self.records if r.get("benchmark") == "ROUGE"}
@@ -94,6 +98,35 @@ class TestAcademicMatrixConsistency(unittest.TestCase):
         """Matrix must state provenance: raw file + generation timestamp."""
         for key in ("raw_outputs_sha256", "generated_at_utc"):
             self.assertIn(key, self.matrix, f"matrix missing provenance field {key!r}")
+        # The recorded sha must still match the raw log it claims to pin —
+        # otherwise the provenance is decorative and drift goes unnoticed.
+        import hashlib
+
+        actual_sha = hashlib.sha256(RAW_PATH.read_bytes()).hexdigest()
+        self.assertEqual(
+            self.matrix["raw_outputs_sha256"],
+            actual_sha,
+            "raw_outputs_sha256 no longer matches reports/academic_benchmarks_raw_outputs.jsonl — "
+            "the matrix was derived from a different (older) version of the raw log",
+        )
+
+    def test_any_significant_agrees_with_the_comparisons(self) -> None:
+        """any_significant must equal the OR over all recorded comparisons.
+
+        Cements neither True nor False: it cross-checks the derived flag
+        against the data it is derived from, so regenerating the matrix
+        cannot silently contradict itself.
+        """
+        significance = self.matrix.get("significance")
+        if significance is None:
+            self.skipTest("matrix has not been regenerated with the significance block yet")
+        or_over_data = any(
+            comp.get("significant") is True
+            for bench in ("humaneval", "rummlu")
+            for comp in (significance.get(bench) or {}).values()
+            if isinstance(comp, dict)
+        )
+        self.assertEqual(significance.get("any_significant"), or_over_data)
 
     # --- Retraction gate ----------------------------------------------------- #
 

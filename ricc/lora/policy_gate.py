@@ -32,6 +32,13 @@ Two defects this module also fixes:
    epoch over the trainable set is 21 420 steps, not 21 652. The canonical
    number is now DERIVED from the dataset instead of hardcoded, and
    :func:`canonical_full_run` returns the exact command to run.
+
+3. **A capped sample pool must not look like a full run.** ``--samples`` /
+   a profile file can silently shrink the training pool, after which
+   coverage measured over the shrunk pool reads 100 % and the adapter is
+   published. :func:`evaluate_compliance` now cross-checks ``max_samples``
+   against ``dataset_total_dialogues``: a run whose sample pool was capped
+   below the full corpus is never compliant, exactly like a partial epoch.
 """
 
 from __future__ import annotations
@@ -102,16 +109,19 @@ def trainable_dialogues(
     total_dialogues: int,
     holdout_tail: int = 0,
     eval_frac: float = 0.0,
+    max_samples: int | None = None,
 ) -> int:
     """Number of dialogues actually fed to the trainer.
 
     Mirrors the order of operations in ``batch_train_zoo.py``:
-    the held-out tail is removed first, then the eval split is carved out
-    of what remains, then the ``max_samples`` cap is applied.
+    the held-out tail is removed first, then the ``max_samples`` cap is
+    applied, then the eval split is carved out of what remains.
     """
     remaining = total_dialogues
     if holdout_tail > 0 and remaining > holdout_tail:
         remaining -= holdout_tail
+    if max_samples is not None and max_samples > 0 and remaining > max_samples:
+        remaining = max_samples
     if eval_frac > 0:
         remaining = int(remaining * (1.0 - eval_frac))
     return max(0, remaining)
@@ -161,16 +171,18 @@ def evaluate_compliance(
     report.actual_steps = actual_steps
 
     # Prefer the explicitly recorded trainable size; fall back to the
-    # corpus size minus the holdout.
+    # corpus size minus the holdout (and the sample cap, if one was set).
     train_dialogues = meta.get("train_dialogues")
     if not isinstance(train_dialogues, int) or train_dialogues <= 0:
         total = meta.get("dataset_total_dialogues")
         holdout = meta.get("holdout_tail_dialogues")
         eval_frac = meta.get("eval_frac")
+        max_samples = meta.get("max_samples")
         if isinstance(total, int):
             train_dialogues = trainable_dialogues(
                 total,
                 holdout_tail=holdout if isinstance(holdout, int) else 0,
+                max_samples=max_samples if isinstance(max_samples, int) else None,
                 eval_frac=eval_frac if isinstance(eval_frac, (int, float)) else 0.0,
             )
     if not isinstance(train_dialogues, int) or train_dialogues <= 0:
@@ -192,9 +204,29 @@ def evaluate_compliance(
     if coverage < required_coverage_pct:
         report.reasons.append(f"corpus coverage {coverage:.2f}% < {required_coverage_pct:.2f}% required")
 
+    # A capped sample pool is a shrunk run, not a full run: coverage over the
+    # shrunk pool would read 100 % while most of the corpus was never seen.
+    # The canonical full run passes --samples 200000, which is above the
+    # corpus size and therefore never caps anything; a capping value is a
+    # deliberate reduction of the training set and disqualifies the adapter.
+    max_samples = meta.get("max_samples")
+    dataset_total = meta.get("dataset_total_dialogues")
+    if isinstance(max_samples, int) and isinstance(dataset_total, int):
+        effective_pool = trainable_dialogues(
+            dataset_total,
+            holdout_tail=meta.get("holdout_tail_dialogues")
+            if isinstance(meta.get("holdout_tail_dialogues"), int)
+            else 0,
+        )
+        if effective_pool > max_samples:
+            report.reasons.append(
+                f"sample pool capped: max_samples={max_samples} < {effective_pool} dialogues "
+                "available after the held-out tail — the run did not cover the full corpus"
+            )
+
     # A wall-clock budget means the run was stopped early by definition.
     time_budget = meta.get("time_budget_hours")
-    if time_budget:
+    if time_budget is not None and time_budget > 0:
         report.reasons.append(
             f"run was time-boxed (time_budget_hours={time_budget}); a time-boxed run is "
             "never a final adapter under the binding policy"
@@ -239,6 +271,11 @@ def canonical_full_run(
     """
     trainable = trainable_dialogues(total_dialogues, holdout_tail=holdout_tail, eval_frac=eval_frac)
     steps = required_steps_for_epoch(trainable)
+    # 200 000 exceeds the current corpus size, so the sample pool is never
+    # actually capped; the value exists only as an explicit "no cap" marker.
+    samples = 200_000
+    if trainable > samples:
+        samples = trainable
     return {
         "adapter_id": adapter_id,
         "total_dialogues": total_dialogues,
@@ -247,10 +284,10 @@ def canonical_full_run(
         "trainable_dialogues": trainable,
         "effective_batch_size": EFFECTIVE_BATCH_SIZE,
         "required_steps": steps,
-        "samples": 200_000,
+        "samples": samples,
         "command": (
             f"python -m ricc.lora.batch_train_zoo --only {adapter_id} --profile full "
-            f"--samples 200000 --steps {steps} --eval-frac {eval_frac} "
+            f"--samples {samples} --steps {steps} --eval-frac {eval_frac} "
             f"--holdout-tail {holdout_tail} --seed 42 --force --keep-checkpoints --no-upload"
         ),
     }

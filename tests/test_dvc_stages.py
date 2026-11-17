@@ -116,14 +116,28 @@ class TestStagesExecute(unittest.TestCase):
             getattr(dvc_stages, stage)()
 
     def test_ingest_stage_produces_the_intermediate_artefact(self):
+        # raw_export_dirs must point at the export directories themselves
+        # (each containing result.json), not at their common parent: before
+        # merge_multiple_exports became fail-closed, this test passed a
+        # parent dir, swallowed the FileNotFoundError and wrote an EMPTY
+        # pickle — the artefact existed but held zero messages.
+        export_dirs = [str(p) for p in sorted(self.exports.iterdir()) if p.is_dir()]
         with (
             patch.object(dvc_stages, "INTERMEDIATE", self.root / "intermediate"),
-            patch("ricc.settings.settings.raw_export_dirs", [str(self.exports)]),
+            patch("ricc.settings.settings.raw_export_dirs", export_dirs),
         ):
             dvc_stages.stage_ingest()
         artefact = self.root / "intermediate" / "raw_messages.pkl.gz"
         self.assertTrue(artefact.exists())
         self.assertGreater(artefact.stat().st_size, 0)
+        # The artefact must actually contain the ingested messages.
+        import gzip
+        import pickle
+
+        with gzip.open(artefact, "rb") as handle:
+            chats, messages = pickle.load(handle)
+        self.assertEqual(len(messages), 10)
+        self.assertEqual(len(chats), 2)
 
     def test_ingest_reads_the_exports(self):
         """The stage must find and read the export files."""

@@ -138,8 +138,24 @@ def evaluate(reports_dir: Path | None = None) -> SloVerdict:
 
     sft = _load_json(reports_dir / "sft_quality_report.json")
     if sft is not None:
-        ok = bool(sft.get("passed", sft.get("overall_passed", True)))
-        checks.append(Check("sft-quality", ok, "sft_quality_report present"))
+        # sft_quality.py writes "overall_verdict": "pass"|"fail" (and legacy
+        # variants may carry a boolean). Fail-CLOSED: an unrecognized report
+        # shape must block the release, not pass it — the previous default
+        # of True turned a real "fail" verdict into a silent PASS.
+        raw_verdict = sft.get("overall_verdict")
+        raw_passed = sft.get("passed", sft.get("overall_passed"))
+        sft_verdict: str | None = raw_verdict if isinstance(raw_verdict, str) else None
+        sft_passed: bool | None = raw_passed if isinstance(raw_passed, bool) else None
+        if sft_verdict is not None:
+            ok = sft_verdict.strip().lower() in ("pass", "passed", "ok", "ship")
+            detail = f"overall_verdict={sft_verdict}"
+        elif sft_passed is not None:
+            ok = sft_passed
+            detail = f"passed={sft_passed}"
+        else:
+            ok = False
+            detail = "sft_quality_report has neither overall_verdict nor a boolean verdict — fail-closed"
+        checks.append(Check("sft-quality", ok, detail))
 
     stats = _load_json(reports_dir / "pipeline_execution_stats.json")
     if stats is not None:

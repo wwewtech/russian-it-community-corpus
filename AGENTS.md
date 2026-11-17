@@ -15,12 +15,18 @@
     step) and `corpus_coverage_pct` in `training_meta.json` must read 100;
   - `--keep-checkpoints` and held-out benchmarks after training.
 - Canonical full run (no `--hours`, exactly one epoch; effective batch 8):
-  `python -m src.lora.batch_train_zoo --only <id> --profile full
-  --samples 200000 --steps 21652 --eval-frac 0.005 --holdout-tail 1000
-  --seed 42 --force --keep-checkpoints --no-upload` where 21652 =
-  `ceil(173216 / 8)` and 173216 is the current corpus size; recompute when
-  the corpus changes. Verify `actual_steps == 21652` and
-  `corpus_coverage_pct == 100.0` in `training_meta.json`.
+  `python -m ricc.lora.batch_train_zoo --only <id> --profile full
+  --samples 200000 --steps 21420 --eval-frac 0.005 --holdout-tail 1000
+  --seed 42 --force --keep-checkpoints --no-upload` where 21420 =
+  `ceil((173216 - 1000 holdout) * (1 - 0.005 eval) / 8)` — one full epoch
+  over the trainable set (the 1,000-dialogue held-out tail and the eval
+  split are never trained on) and 173216 is the current corpus size;
+  recompute when the corpus changes, or take the number from
+  `ricc.lora.policy_gate.canonical_full_run(total_dialogues)`, which derives
+  it from the dataset. Verify `actual_steps == required_steps_for_full_epoch`
+  and `corpus_coverage_pct == 100.0` in `training_meta.json`; also check
+  that `max_samples` did not cap the pool (`max_samples >= dataset_total -
+  holdout_tail`).
 - Partial / time-boxed runs are allowed only for smoke tests or when the user
   explicitly asks for them; never present or publish such adapters as final.
   `scripts/night_run_full_corpus.py` is time-boxed by design and therefore

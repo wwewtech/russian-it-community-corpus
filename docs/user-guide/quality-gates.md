@@ -68,8 +68,9 @@ python -m ricc.monitoring.slo_gate --json-out reports/slo_verdict.json
 
 The evaluation suites compare variants that run on the **same tasks**, so
 the comparison is paired and McNemar's exact test applies. On the
-published raw outputs **no comparison is significant** (p ≥ 0.125), and
-the report says so instead of claiming an improvement. The benchmark
+published raw outputs one comparison reaches significance (RuMMLU base vs
+hybrid, p = 0.0117) and the rest do not; the report states each verdict
+instead of claiming an improvement. The benchmark
 suites also refuse to run without the adapter rather than writing the
 base results into the LoRA column — that fallback is what produced the
 previously retracted numbers.

@@ -121,6 +121,5 @@ and the `RiccMLComponentErrorSpike` alert consume this series.
 
 ## Full Public API
 
-Import everything from the package root — `ricc/ricc/__init__.py`
-re-exports the whole hierarchy plus the Result type (`Ok`/`Err`) used for
-functional error handling in pipeline stages.
+Import everything from the package root — `ricc/__init__.py`
+re-exports the whole exception hierarchy.

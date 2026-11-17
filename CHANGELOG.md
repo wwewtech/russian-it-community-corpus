@@ -10,11 +10,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **A capped sample pool can no longer pass as a full run.** `--samples` /
+  a profile file silently shrank the training pool, after which coverage
+  measured over the shrunk pool read 100 % and the adapter was published as
+  final. `ricc/lora/policy_gate.py` now cross-checks `max_samples` against
+  `dataset_total_dialogues` — a capped run is rejected exactly like a
+  partial epoch. `trainable_dialogues()` mirrors the trainer's real order
+  (holdout → cap → eval split), and the full profile's default eval split
+  is aligned with the canonical 0.005 (was 0.02, silently shortening the
+  "full epoch by default" by ~320 steps).
+- **The canonical full run is 21 420 steps** (`ceil((173216 − 1000
+  holdout) × (1 − 0.005 eval) / 8)`), not 21 652: the held-out tail and the
+  eval split are never trained on. AGENTS.md now carries the derived formula
+  and points at `policy_gate.canonical_full_run()` so the canon cannot drift
+  again.
 - **Benchmark figures are marked as retracted / self-reported.** The academic benchmark suite (HumanEval / RuMMLU) was retracted after a code audit found parsing, empty-generation, adapter-loading and sandbox defects. All published accuracy numbers are invalid until a fresh GPU re-run; the dataset and adapters ship without benchmark scores. README row counts (2,816,434 messages, 171.5k SFT dialogues, 325.7k RAG chunks, 95,300+ dedup) are flagged as Hub/local claims pending independent re-verification.
 - **Adapter counts made truthful.** Local `lora_adapters/registry.json` tracks 56 adapters; Hugging Face Hub hosts 58 adapter directories (+3 duplicate `models/heavyweight_*` entries). Only `smollm2_135m_instruct` is policy-compliant (one full epoch, 100 % corpus coverage). The remaining 55 adapters are pilot/time-boxed runs and must not be treated as final.
 - **`.mypy_cache/` added to `.gitignore`** (documentation-only; `git check-ignore` already matched it).
 
 ### Fixed
+- **The benchmark matrix contradicted its own significance data.** The
+  generator wrote a `hybrid: None` placeholder into perplexity/ROUGE (which
+  raw logs never measured) and the committed matrix carried
+  `any_significant: false` while `rummlu.base_vs_hybrid` read
+  `p=0.011719, significant: true`. The generator now emits only the
+  measured keys; `any_significant` is cross-checked against the
+  comparisons by tests instead of being cemented to a desired verdict, the
+  provenance test verifies `raw_outputs_sha256` against the actual raw log,
+  and the retraction rationale in README / CHANGELOG / quality-gates states
+  the real significance verdict (one significant comparison, p = 0.0117).
+- **The SFT-quality check inside the SLO gate was fail-open.** The gate read
+  `passed`/`overall_passed` while `sft_quality.py` writes
+  `overall_verdict: "pass"|"fail"` — a real "fail" verdict silently passed.
+  The gate now reads `overall_verdict` first, falls back to a legacy
+  boolean, and an unrecognized report shape blocks the release (fail-closed).
+- **Perplexity was measured on the training corpus.** The academic suite
+  sampled PPL texts from `sft_dialogues.parquet` — the corpus the adapter
+  was trained on — while calling them a held-out test set, flattering the
+  LoRA variant. The sample is now drawn from the held-out tail of the SFT
+  JSONL (the same tail `--holdout-tail` reserved from training), the sample
+  source is recorded in the raw outputs and the matrix
+  (`perplexity_sample_source`), and a fallback to training-seen text is
+  logged as a warning.
+- **The CI coverage-regression gate compared the base branch against
+  itself.** The base-branch run overwrote `coverage.xml` (the current
+  coverage) before `diff-cover` used it, the saved `coverage-current.xml`
+  was never consumed, and `--compare-branch=HEAD` ignored the fetched base
+  sha. The job now keeps the current coverage in a separate file, computes
+  the base coverage into `coverage-base.xml`, and runs `diff-cover` on the
+  current file against the base ref.
+- **Two authors sharing a display name collapsed into one pseudonym.** The
+  name index kept a single pseudonym per name, so the second author
+  overwrote the first and the first author's messages were exported under
+  the second author's `Developer_XXXXX`. Each id now carries its own
+  authoritative pseudonym (`user_id_to_anon_name`); the name index keeps
+  per-name lists for authors never registered by id.
+- **Multi-word taxonomy keywords could never match.** The domain classifier
+  tokenizes on word boundaries, so keys like "react native", "github
+  actions", "yandex cloud" or "kotlin multiplatform" never intersected the
+  token set and their domains were systematically under-counted. A phrase
+  pass over the lowercased text now matches contiguous multi-word
+  keywords.
+- **`merge_multiple_exports` swallowed every load failure.** One broken
+  `result.json` silently dropped a whole chat from the corpus; all broken,
+  an empty corpus was returned without an error. Individual failures are
+  still skipped (one broken file must not discard the corpus), but an
+  all-failed or empty input now raises `ExportLoadError`.
 - **The published wheel could not be imported at all.** `packages.find(where=["src"])`
   put the subpackages at the wheel's top level while every module imported
   `from ricc.config import ...` — a package that was not in the wheel. Installing
@@ -77,9 +138,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   model alone.
 - **The benchmark report claimed improvements the data does not support.**
   The variants run on the same tasks, so the comparison is paired and
-  McNemar's exact test applies: on the published raw outputs NO comparison
-  is significant (p ≥ 0.125). The report now carries a significance table
-  and says the variants are indistinguishable.
+  McNemar's exact test applies: on the published raw outputs one comparison
+  reaches significance (RuMMLU base vs hybrid, p = 0.0117) and the rest do
+  not. The report now carries a significance table and states the verdicts
+  per comparison instead of claiming blanket improvements.
 - **The hybrid PPL and ROUGE cells were copies of the LoRA cells** although
   they were never measured; they are now reported as "not measured".
 - **The MCQ parser read Russian words as answers** ("Я не знаю в чём

@@ -1,13 +1,13 @@
 # RICC — Russian IT Community Corpus
 
-**RICC** (Russian IT Community Corpus) is a production-grade data engineering platform for LLM dataset curation with Zero-PII guarantees.
+**RICC** (Russian IT Community Corpus) is a production-grade data engineering platform for LLM dataset curation with a Zero-PII target.
 
 ## Features
 
 - **End-to-end Pipeline**: 7-stage data curation from raw Telegram exports to SFT/DPO/RAG datasets
-- **Zero-PII Guarantees**: Dual-layer scrubbing (Regex + NER) + pseudonymization + probabilistic audit
+- **Zero-PII Aspirational Target**: Dual-layer scrubbing (Regex + NER) + pseudonymization + probabilistic audit — a statistical upper bound on residual PII, not an absolute guarantee (see README)
 - **Deduplication**: Exact hashing + MinHash LSH for fuzzy near-duplicate detection
-- **Taxonomy Classification**: 9 IT domains with 500+ technical keywords via Aho-Corasick
+- **Taxonomy Classification**: 8 IT domains with 268 technical keywords via Aho-Corasick
 - **Conversation Graph**: Thread DAG reconstruction with reply-time heuristics
 - **Multi-format Export**: Parquet, ShareGPT, Alpaca, OpenAI ChatML, RAG JSONL, DPO pairs
 - **Analytics Engine**: Deep statistical + semantic analysis with interactive reports

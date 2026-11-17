@@ -175,13 +175,20 @@ class TestPublishedNumbersAreHonest(unittest.TestCase):
         if not matrix_path.exists():
             self.skipTest("published matrix not present")
         matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
-        # The matrix was published before the significance block
-        # existed; when it is regenerated the verdict must be present
-        # and must not claim a significant difference.
         significance = matrix.get("significance")
         if significance is None:
             self.skipTest("matrix has not been regenerated with the significance block yet")
-        self.assertFalse(significance["any_significant"])
+        # Cross-check, not a cemented value: any_significant must equal the
+        # OR over the recorded comparisons. (The published run DOES contain
+        # a significant comparison — rummlu base_vs_hybrid, p=0.0117 — so
+        # the flag must read True; hand-editing it to False was the bug.)
+        or_over_data = any(
+            comp.get("significant") is True
+            for bench in ("humaneval", "rummlu")
+            for comp in (significance.get(bench) or {}).values()
+            if isinstance(comp, dict)
+        )
+        self.assertEqual(significance["any_significant"], or_over_data)
 
     def test_raw_outputs_contain_every_variant(self):
         raw_path = REPO_ROOT / "reports" / "academic_benchmarks_raw_outputs.jsonl"

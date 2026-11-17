@@ -170,7 +170,11 @@ class DeepPIIAnonymizer:
 
         # User ID and pseudonym mappings
         self.user_id_to_anon: dict[str, str] = {}
-        self.raw_name_to_anon: dict[str, str] = {}
+        self.raw_name_to_anon: dict[str, list[str]] = {}
+        # Author key -> display pseudonym: the authoritative id-to-name map.
+        # Two authors sharing a display name get different pseudonyms, and
+        # each id always resolves to its own.
+        self.user_id_to_anon_name: dict[str, str] = {}
         self.username_handles_map: dict[str, str] = {}
 
         # Set of all inflected name forms to redact in text
@@ -204,7 +208,13 @@ class DeepPIIAnonymizer:
         logger.info(f"Generated {len(self.name_forms_to_mask):,} inflected name forms for deep redaction.")
 
     def _get_or_create_pseudonym(self, raw_id: str, raw_name: str) -> tuple[str, str]:
-        """Get or assign persistent pseudonym."""
+        """Get or assign persistent pseudonym.
+
+        Two authors sharing the same display name must stay distinct: the
+        name index keeps a LIST of pseudonyms per name and an author always
+        resolves to the pseudonym assigned to their id, never to another
+        author who happens to carry the same display name.
+        """
         key = str(raw_id).strip()
         if not key or key.lower() in ("none", "unknown", "anonymous", "null"):
             key = str(raw_name).strip()
@@ -214,12 +224,23 @@ class DeepPIIAnonymizer:
             anon_id = f"user_{idx:05d}"
             anon_name = f"Developer_{idx:05d}"
             self.user_id_to_anon[key] = anon_id
-            self.raw_name_to_anon[str(raw_name).strip()] = anon_name
+            self.user_id_to_anon_name[key] = anon_name
+            # Same display name as an existing author is a collision, not the
+            # same person: keep per-name lists so lookups stay name-only safe.
+            name_key = str(raw_name).strip()
+            self.raw_name_to_anon.setdefault(name_key, []).append(anon_name)
             self.stats["authors_anonymized"] += 1
 
-        return self.user_id_to_anon[key], self.raw_name_to_anon.get(
-            str(raw_name).strip(), f"Developer_{len(self.user_id_to_anon):05d}"
-        )
+        anon_id = self.user_id_to_anon[key]
+        # The id's own pseudonym always wins; the name index is only a
+        # fallback for authors never registered (e.g. forward headers).
+        own_name = self.user_id_to_anon_name.get(key)
+        if own_name is not None:
+            anon_name = own_name
+        else:
+            name_anons = self.raw_name_to_anon.get(str(raw_name).strip()) or []
+            anon_name = name_anons[0] if name_anons else f"Developer_{len(self.user_id_to_anon):05d}"
+        return anon_id, anon_name
 
     def _harvest_name_inflections(self, raw_name: str) -> None:
         """Extract first/last names from display name and generate all 6 Russian grammatical cases."""

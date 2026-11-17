@@ -66,7 +66,7 @@ Optional:
 python -m pytest -q
 
 # Type check
-python -m mypy ricc/ricc --strict
+python -m mypy ricc --strict
 
 # SLO gate
 make slo

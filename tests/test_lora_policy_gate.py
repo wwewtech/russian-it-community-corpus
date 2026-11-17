@@ -62,6 +62,13 @@ class TestPolicyMath(unittest.TestCase):
         self.assertEqual(trainable_dialogues(173216, holdout_tail=1000, eval_frac=0.005), 171354)
         self.assertEqual(trainable_dialogues(173216, holdout_tail=0, eval_frac=0.0), 173216)
 
+    def test_trainable_dialogues_applies_samples_cap_before_eval(self):
+        """The sample cap mirrors the trainer: holdout -> cap -> eval split."""
+        # 173216 - 1000 = 172216; cap at 40000; minus 0.5% eval = 39800.
+        self.assertEqual(trainable_dialogues(173216, holdout_tail=1000, eval_frac=0.005, max_samples=40000), 39800)
+        # A cap above the pool size never shrinks it (the canonical 200000).
+        self.assertEqual(trainable_dialogues(173216, holdout_tail=1000, eval_frac=0.005, max_samples=200000), 171354)
+
     def test_coverage_is_measured_against_the_training_set(self):
         """The old denominator included the held-out tail and was wrong.
 
@@ -144,6 +151,42 @@ class TestComplianceEvaluation(unittest.TestCase):
         # 173216 - 1000 holdout - 0.5% eval = 171354 trainable -> 21420 steps needed.
         self.assertEqual(report.train_dialogues, 171354)
         self.assertEqual(report.required_steps, 21420)
+        self.assertTrue(report.compliant, report.reasons)
+
+    def test_capped_sample_pool_is_not_compliant_even_at_full_coverage(self):
+        """--samples shrinking the pool must not read as a full run.
+
+        Coverage over the shrunk pool is 100 %, but most of the corpus was
+        never seen — the exact 'quiet partial run' the policy forbids.
+        """
+        d = self.root / "capped"
+        _write_meta(d, max_samples=40000)
+        report = evaluate_compliance(d)
+        self.assertFalse(report.compliant)
+        self.assertTrue(any("sample pool capped" in r for r in report.reasons))
+
+    def test_uncapped_full_run_stays_compliant(self):
+        d = self.root / "uncapped"
+        _write_meta(d, max_samples=200000)
+        report = evaluate_compliance(d)
+        self.assertTrue(report.compliant, report.reasons)
+
+    def test_meta_without_max_samples_stays_compliant(self):
+        """Legacy metadata predating the max_samples field must keep passing."""
+        d = self.root / "legacy_nosamples"
+        _write_meta(d)
+        # Remove max_samples entirely to simulate old metadata.
+        meta = json.loads((d / "training_meta.json").read_text(encoding="utf-8"))
+        meta.pop("max_samples", None)
+        (d / "training_meta.json").write_text(json.dumps(meta), encoding="utf-8")
+        report = evaluate_compliance(d)
+        self.assertTrue(report.compliant, report.reasons)
+
+    def test_zero_time_budget_is_not_time_boxed(self):
+        """time_budget_hours=0.0 means no budget was set."""
+        d = self.root / "zerobudget"
+        _write_meta(d, time_budget_hours=0.0)
+        report = evaluate_compliance(d)
         self.assertTrue(report.compliant, report.reasons)
 
 

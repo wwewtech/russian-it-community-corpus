@@ -13,7 +13,7 @@ All contributors are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT
 ## Development Setup
 
 ### 1. Prerequisites
-- Python **3.11, 3.12, or 3.13**
+- Python **3.11, 3.12, 3.13, or 3.14**
 - Git & Git LFS
 - NVIDIA GPU with CUDA support (optional, for LoRA training and embeddings)
 
@@ -48,9 +48,11 @@ pip install -r requirements.txt
 3. Make your changes adhering to code standards.
 4. Run the test suite and Zero-PII audit:
    ```bash
-   python -m unittest discover -s tests
+   python -m pytest tests
    make audit
    ```
+   (Do NOT use `python -m unittest discover` — it collects only a subset
+   of the suite; see the note in README.)
 5. Commit your changes using conventional commit messages (`feat:`, `fix:`, `docs:`, `refactor:`).
 6. Push to your fork and submit a **Pull Request**.
 
@@ -58,7 +60,7 @@ pip install -r requirements.txt
 
 ## Pull Request Guidelines
 
-- Ensure all existing and new unit tests pass (`python -m unittest discover -s tests`).
+- Ensure all existing and new unit tests pass (`python -m pytest tests`).
 - Include tests for any new functionality (e.g. new PII scrubber patterns or taxonomy domains).
 - If your change affects dataset outputs, ensure no personal data (PII) is introduced.
 - Provide a clear explanation in the PR description following our [PR Template](.github/PULL_REQUEST_TEMPLATE.md).

@@ -29,8 +29,8 @@ graph TD
 
 ### 1. Type Safety
 - All data models use **Pydantic v2** (`ricc/ingestion/schema.py`)
-- `mypy --strict` on 31+ modules
-- `Result[T, E]` for functional error handling
+- `mypy --strict` on all `ricc/` modules
+- Typed exception hierarchy (`ricc/errors.py`) for GPU/ML/pipeline errors
 
 ### 2. Single Source of Truth
 - Configuration: `ricc/settings.py` (`pydantic-settings`)

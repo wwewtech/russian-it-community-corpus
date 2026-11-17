@@ -468,7 +468,10 @@ ZOO_44_MODELS: list[dict[str, Any]] = [
 # that a base model, a dataset and the trainer fit together on the local GPU.
 # It is NOT a training run and must never be published as a final adapter.
 PILOT_BUDGET: dict[str, int] = {"max_samples": 400, "steps": 15}
-FULL_PROFILE_EVAL_FRAC = 0.02
+# The eval split of the full profile. 0.005 matches the canonical full run in
+# AGENTS.md / canonical_full_run(); a silent divergence here would make the
+# "full epoch by default" shorter than the canonical epoch.
+FULL_PROFILE_EVAL_FRAC = 0.005
 
 # The "full" profile is derived from the DATASET, not from a hardcoded tier.
 # The previous tier budgets (600-2000 steps) covered 2.77-9.24 % of the
