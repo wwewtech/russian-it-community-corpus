@@ -116,7 +116,7 @@ st.sidebar.info(
     "- **210 890** участников\n"
     "- **171 520** SFT диалогов\n"
     "- **325 690** RAG чанков\n"
-    "- **57 501** DPO пар\n"
+    "- **63 948** DPO пар\n"
     "- **56** LoRA адаптеров\n"
     "- **11 community nodes** анонимизировано"
 )
@@ -153,11 +153,11 @@ if nav == NAV_MAIN:
             - **`full_clean_messages.parquet`**: 2,816,434 сообщений (`189 MB`)
             - **`sft_dialogues.parquet`**: 171,520 многоходовых диалогов (`132 MB`)
             - **`rag_knowledge_base.parquet`**: 325,690 чанков базы знаний (`159 MB`)
-            - **`sft_openai_messages.jsonl`**: 173,216 записей ChatML
-            - **`sft_alpaca_format.jsonl`**: 660,900 пар инструкций
-            - **`sft_sharegpt_format.jsonl`**: 173,216 записей ShareGPT
-            - **`rag_chunks_kb.jsonl`**: 332,690 документов для Vector DB
-            - **`dpo_preference_pairs.jsonl`**: 57,501 пар предпочтений
+            - **`sft_openai_messages.jsonl`**: 171,520 записей ChatML
+            - **`sft_alpaca_format.jsonl`**: 736,996 пар инструкций
+            - **`sft_sharegpt_format.jsonl`**: 166,469 записей ShareGPT
+            - **`rag_chunks_kb.jsonl`**: 289,130 документов для Vector DB
+            - **`dpo_preference_pairs.jsonl`**: 63,948 пар предпочтений
             """
         )
 
@@ -238,7 +238,7 @@ elif nav == NAV_MESSAGES:
 elif nav == NAV_SFT_DPO:
     st.title("SFT & DPO Диалоговая Студия")
 
-    tab1, tab2 = st.tabs(["Multi-Turn SFT Диалоги (171,520)", "DPO Пары Предпочтений (57,501)"])
+    tab1, tab2 = st.tabs(["Multi-Turn SFT Диалоги (171,520)", "DPO Пары Предпочтений (63,948)"])
 
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)

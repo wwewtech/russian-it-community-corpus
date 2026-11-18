@@ -16,11 +16,11 @@
   - `--keep-checkpoints` and held-out benchmarks after training.
 - Canonical full run (no `--hours`, exactly one epoch; effective batch 8):
   `python -m ricc.lora.batch_train_zoo --only <id> --profile full
-  --samples 200000 --steps 21420 --eval-frac 0.005 --holdout-tail 1000
-  --seed 42 --force --keep-checkpoints --no-upload` where 21420 =
-  `ceil((173216 - 1000 holdout) * (1 - 0.005 eval) / 8)` — one full epoch
+  --samples 200000 --steps 21209 --eval-frac 0.005 --holdout-tail 1000
+  --seed 42 --force --keep-checkpoints --no-upload` where 21209 =
+  `ceil((171520 - 1000 holdout) * (1 - 0.005 eval) / 8)` — one full epoch
   over the trainable set (the 1,000-dialogue held-out tail and the eval
-  split are never trained on) and 173216 is the current corpus size;
+  split are never trained on) and 171520 is the current corpus size;
   recompute when the corpus changes, or take the number from
   `ricc.lora.policy_gate.canonical_full_run(total_dialogues)`, which derives
   it from the dataset. Verify `actual_steps == required_steps_for_full_epoch`

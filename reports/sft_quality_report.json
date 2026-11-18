@@ -1,0 +1,39 @@
+{
+  "overall_verdict": "pass",
+  "n_dialogues": 171520,
+  "total_assistant_turns": 933313,
+  "checks": {
+    "empty_response_ratio": {
+      "value": 0.0,
+      "floor": 0.01,
+      "comparator": "max",
+      "passed": true,
+      "n_dialogues_with_empty_assistant_turn": 0
+    },
+    "median_assistant_turn_chars": {
+      "value": 55.0,
+      "floor": 40,
+      "comparator": "min",
+      "passed": true
+    },
+    "role_balance": {
+      "value": 0.0,
+      "floor": 0.3,
+      "comparator": "max",
+      "passed": true
+    },
+    "russian_ratio": {
+      "value": 0.9853,
+      "floor": 0.9,
+      "comparator": "min",
+      "passed": true
+    },
+    "duplicate_turn_ratio": {
+      "value": 0.0003,
+      "floor": 0.05,
+      "comparator": "max",
+      "passed": true
+    }
+  },
+  "generated_at": "2026-11-18T11:25:10+00:00"
+}

@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **First final LoRA adapter retrained and revalidated.** `smollm2_135m_instruct`
+  completed one full canonical epoch on the current 171,520-dialogue corpus:
+  21,209 steps, 169,667 trainable dialogues, 100 % coverage, seed 42,
+  no wall-clock budget or stale checkpoint resume. Its held-out perplexity fell
+  from 13.9678 (base) to **7.2630** (LoRA) over 100 unseen held-out dialogues.
+  The chat UI exposes this provenance and warns for pilot adapters.
+- **Real JSONL exports rebuilt from the canonical corpus.** ChatML (171,520),
+  ShareGPT (166,469), Alpaca (736,996), RAG (289,130) and DPO (63,948) records
+  replaced the outdated 100-line fixtures; the dataset contract metadata and
+  the manifest were regenerated, and the corpus validator passes strictly.
 - **A capped sample pool can no longer pass as a full run.** `--samples` /
   a profile file silently shrank the training pool, after which coverage
   measured over the shrunk pool read 100 % and the adapter was published as
