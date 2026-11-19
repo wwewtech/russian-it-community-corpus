@@ -85,9 +85,13 @@ class DatasetValidator:
                 continue
 
             try:
-                table = pq.read_table(fpath)
-                row_count = table.num_rows
-                col_count = table.num_columns
+                parquet_file = (
+                    # Footer metadata only: no decoding of millions of cell
+                    # values just to obtain a row count and schema.
+                    pq.ParquetFile(fpath)
+                )
+                row_count = parquet_file.metadata.num_rows
+                col_count = len(parquet_file.schema_arrow)
                 size_mb = round(fpath.stat().st_size / (1024 * 1024), 2)
 
                 contract_problems = verify_against_file(
@@ -95,7 +99,7 @@ class DatasetValidator:
                     artifact,
                     allow_missing_metadata=self.allow_legacy_metadata,
                 )
-                meta = read_metadata(table.schema)
+                meta = read_metadata(parquet_file.schema_arrow)
                 if row_count == 0:
                     status = "EMPTY"
                 elif contract_problems:

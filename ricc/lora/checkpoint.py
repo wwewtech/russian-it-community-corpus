@@ -1,5 +1,7 @@
 """Checkpoint and wall-clock training helpers."""
 
+from __future__ import annotations  # noqa: I001
+
 import shutil
 import time
 from pathlib import Path
@@ -15,12 +17,17 @@ class TimeLimitCallback(TrainerCallback):
         self.budget_sec = budget_sec
         self.started_at: float | None = None
 
-    def on_train_begin(self, args: Any, state: Any, control: Any, **kwargs: Any) -> None:
+    def on_train_begin(self, args: Any, state: Any, control: Any, **kwargs: Any) -> Any:
         self.started_at = time.monotonic()
+        return control
 
-    def on_step_end(self, args: Any, state: Any, control: Any, **kwargs: Any) -> None:
+    def on_step_end(self, args: Any, state: Any, control: Any, **kwargs: Any) -> Any:
         if self.started_at is not None and time.monotonic() - self.started_at >= self.budget_sec:
+            # Stop AND preserve the most recent progress, not merely the last
+            # checkpoint that happened to fall inside a save_steps interval.
             control.should_training_stop = True
+            control.should_save = True
+        return control
 
 
 def latest_checkpoint(out_dir: Path) -> Path | None:

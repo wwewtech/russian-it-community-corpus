@@ -43,8 +43,14 @@ class TestAppStreamlitSmoke(unittest.TestCase):
         # up the Streamlit runtime.
         at = AppTest.from_file(str(Path(__file__).resolve().parent.parent / "app.py"), default_timeout=30)
         at.run()
-        # An unhandled exception in app.py would show up as at.error.
-        self.assertFalse(at.error, msg=f"AppTest reported errors: {[e.value for e in at.error]}")
+        # AppTest.error contains `st.error` widgets too — e.g. the intended
+        # "AUDIT REQUIRED (0 detected)" empty-state privacy card. A runtime
+        # Python exception is captured in `at.exception` instead. Only the
+        # latter marks a broken application mount.
+        self.assertFalse(at.exception, msg=f"Unhandled app exception: {[e.value for e in at.exception]}")
+        self.assertTrue(len(at.warning) > 0 or len(at.error) > 0, "expected empty-data states to be visible")
+        # The LoLoRA navigation and sidebar provenance sections must mount too.
+        self.assertIn("RICC Studio", [t.value for t in at.sidebar.title])
 
 
 if __name__ == "__main__":

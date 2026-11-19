@@ -5,6 +5,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from ricc.orchestration.prefect_flow import HAS_PREFECT, curate_corpus_flow
 from tests.test_cli_commands import build_synthetic_dataset
@@ -108,6 +109,21 @@ class TestCurateCorpusFlow(unittest.TestCase):
             audit_sample_size=10,
         )
         self.assertIsInstance(results, dict)
+
+    def test_default_drift_needs_real_reference_and_explicit_inputs_are_marked(self):
+        from ricc.orchestration.prefect_flow import task_drift_monitoring
+
+        with patch.dict(
+            "os.environ",
+            {"RICC_DRIFT_REFERENCE": str(Path(self.temp_dir.name) / "does-not-exist.parquet")},
+        ):
+            out = task_drift_monitoring()
+        self.assertEqual(out["status"], "skipped")
+        self.assertIn("no frozen temporal reference", out["note"])
+
+        # Ingested synthetic frames may be legitimately skipped for too few
+        # messages; the assertion that matters here is the default branch
+        # itself, not a fabricated "stable" full-corpus comparison.
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ All contributors are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT
 ## Development Setup
 
 ### 1. Prerequisites
-- Python **3.11, 3.12, 3.13, or 3.14**
+- Python **3.11, 3.12, 3.13, 3.14, or 3.15**
 - Git & Git LFS
 - NVIDIA GPU with CUDA support (optional, for LoRA training and embeddings)
 

@@ -210,6 +210,13 @@ jobs:
         run: |
           python -m pytest -q --no-cov --basetemp "$env:RUNNER_TEMP\pytest-ricc"
 
+      - name: Run Streamlit App smoke test (real AppTest)
+        # The page's mounting was previously opt-in-only and therefore skipped
+        # in every CI lane: it was an untested deployment contract.
+        env:
+          RUN_STREAMLIT_SMOKE: "1"
+        run: python -m pytest -q --no-cov --basetemp "$env:RUNNER_TEMP\pytest-ui-smoke" tests/test_app_streamlit_smoke.py
+
       - name: Verify the entry points run on Windows
         run: |
           python -c "import ricc; print('ricc', ricc.__version__)"

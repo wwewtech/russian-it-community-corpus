@@ -104,6 +104,18 @@ class TestProbabilisticPIIAuditor(unittest.TestCase):
         self.assertGreaterEqual(report["results"]["categories"]["emails"]["messages_with_leak"], 1)
         self.assertGreaterEqual(report["results"]["categories"]["emails"]["leak_instances"], 1)
         self.assertTrue(report["results"]["categories"]["emails"]["examples"])
+        # Only immutable source references survive serialization, not PII.
+        first = report["results"]["categories"]["emails"]["examples"][0]
+        self.assertEqual(set(first), {"msg_id", "sample_position"})
+        serialized = json.dumps(report["results"]["categories"]["emails"]["examples"])
+        self.assertNotIn("leaked.person@example.com", serialized)
+        self.assertNotIn("example.com", serialized)
+
+    def test_empty_corpus_is_failed_not_crashed(self):
+        """An empty parquet cannot produce a Wilson-bound verdict."""
+        pd.DataFrame([], columns=["text_clean", "chat_name"]).to_parquet(self.parquet)
+        report = ProbabilisticPIIAuditor(self.parquet).run_audit(sample_size=100)
+        self.assertNotEqual(report["verdict"], "PASSED")
 
     def test_stratified_sampling_covers_all_strata(self):
         rows = []

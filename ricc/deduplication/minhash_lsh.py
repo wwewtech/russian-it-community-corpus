@@ -88,6 +88,11 @@ class MinHashLSH:
         self._perm_a, self._perm_b = _permutations(num_perm)
 
         # Calculate optimal number of bands and rows for high recall at threshold ~0.70-0.80
+        # A zero row band (num_perm < 32) makes an identical empty key for
+        # every item — silently degrading every lookup to a full-index O(n²)
+        # scan. Reject the configuration before allocating anything else.
+        if not isinstance(num_perm, int) or isinstance(num_perm, bool) or num_perm < 32:
+            raise ValueError(f"num_perm must be an integer >= 32, got {num_perm!r}")
         self.b = 32
         self.r = num_perm // self.b
 

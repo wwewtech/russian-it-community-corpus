@@ -286,6 +286,18 @@ class ProbabilisticPIIAuditor:
         total_corpus = len(df)
         sample = self._stratified_sample(df, sample_size)
         sampled = len(sample)
+        corpus_sha256 = hashlib.sha256(self.parquet_path.read_bytes()).hexdigest()
+        if sampled == 0:
+            # wilson_interval explicitly requires positive n; an empty
+            # parquet is a FAILED/SKIPPED audit, not an unhandled ValueError.
+            return {
+                "dataset_path": str(self.parquet_path),
+                "dataset_sha256": corpus_sha256,
+                "corpus_size": total_corpus,
+                "sampled_messages": 0,
+                "verdict": "SKIPPED_EMPTY_CORPUS",
+                "note": "The corpus contains zero messages; there is nothing to sample.",
+            }
 
         # Two distinct quantities, kept apart on purpose:
         #   category_leaks[cat]      -> number of MESSAGES in which the
@@ -297,11 +309,13 @@ class ProbabilisticPIIAuditor:
         #                               passed to wilson_interval)
         category_leaks: dict[str, int] = {name: 0 for name in DETECTORS}
         category_instances: dict[str, int] = {name: 0 for name in DETECTORS}
-        leak_examples: dict[str, list[str]] = {name: [] for name in DETECTORS}
+        leak_examples: dict[str, list[dict[str, object]]] = {name: [] for name in DETECTORS}
         messages_with_leaks = 0
         per_stratum: dict[str, dict[str, int]] = {}
 
-        for row in sample.itertuples(index=False):
+        # Preserve the dataframe's positional row index for a useful but
+        # non-sensitive reference in a deterministic, reproducible report.
+        for row in sample.reset_index(drop=True).itertuples(index=True):
             text = getattr(row, self.text_column, None)
             text = "" if text is None or not isinstance(text, str) else text
             stratum = str(getattr(row, self.strata_column, "unknown"))
@@ -317,7 +331,21 @@ class ProbabilisticPIIAuditor:
                 category_leaks[category] += 1
                 # ... while every raw match is tracked for diagnostics.
                 category_instances[category] += len(matches)
-                leak_examples[category].extend(matches[:3])
+                if len(leak_examples[category]) < 5:
+                    # Reference a real message through immutable msg_id if
+                    # available (and a sampled positional fallback otherwise).
+                    # No matched value from the untrusted text is retained.
+                    raw_id = getattr(row, "msg_id", None)
+                    if raw_id is not None and not pd.isna(raw_id):
+                        evidenced_msg_id: int | None = int(str(raw_id))
+                    else:
+                        evidenced_msg_id = None
+                    leak_examples[category].append(
+                        {
+                            "msg_id": evidenced_msg_id,
+                            "sample_position": int(str(row.Index)),
+                        }
+                    )
 
         # Statistical estimates per category
         category_stats: dict[str, Any] = {}
@@ -344,6 +372,7 @@ class ProbabilisticPIIAuditor:
             "report_title": "PROBABILISTIC PII AUDIT (stratified, confidence-bounded)",
             "generated_at_utc": datetime.now(UTC).isoformat(),
             "dataset_path": str(self.parquet_path),
+            "dataset_sha256": corpus_sha256,
             "corpus_size": total_corpus,
             "sampled_messages": sampled,
             "sampling": {
@@ -371,6 +400,10 @@ class ProbabilisticPIIAuditor:
                 "max_message_leak_rate": max_leak_tolerance,
                 "confidence": confidence,
             },
+            "privacy_evidence": (
+                "Example references identify only source msg_id/sample_position for investigation. "
+                "No leaked values are retained in the audit artifact itself."
+            ),
             "verdict": "PASSED" if passed else "LEAKS_DETECTED",
             "statistical_guarantee": (
                 f"With {confidence:.0%} confidence the true message-level leak rate "

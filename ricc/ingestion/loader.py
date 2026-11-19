@@ -79,7 +79,13 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
             except Exception:
                 continue  # deliberate: try next format in the list
 
-    # Fallback to epoch
+    # Keep the historical [1970-01-01, 0] fallback for chronology parsing so
+    # downstream dataset shapes do not change when one raw message has an
+    # unexpected timestamp. Make the data-quality degradation observable:
+    # no real raw-export message ever happened at zero epoch, whereas an
+    # explicit valid `date_unixtime=0` needs no warning.
+    if "date_unixtime" not in raw_msg:
+        logger.warning(f"Unparseable or missing timestamp in message id={raw_msg.get('id')!r}; assigning zero epoch")
     epoch = datetime(1970, 1, 1)
     return epoch, 0
 
@@ -181,8 +187,20 @@ def load_export_file(file_path: str | Path, node_index: int = 1) -> tuple[dict[s
 
         ts, unixtime = parse_timestamp(raw)
 
+        msg_id = raw.get("id")
+        if msg_id is not None:
+            try:
+                msg_id = int(msg_id)
+            except (ValueError, TypeError):
+                # Match the defensive reply_to_id parsing above: one malformed
+                # id must not discard every other message in this export.
+                logger.warning(f"Invalid message id {msg_id!r} in {file_path}; generating a sequential id instead")
+                msg_id = None
+
+        # Sort/re-index in the export's native order before building the model,
+        # so a repaired id corresponds to a deterministic position.
         norm_msg = NormalizedMessage(
-            msg_id=int(msg_id) if msg_id else len(normalized_msgs) + 1,
+            msg_id=msg_id or len(normalized_msgs) + 1,
             chat_id=anon_chat_id,
             chat_name=anon_chat_name,
             timestamp=ts,

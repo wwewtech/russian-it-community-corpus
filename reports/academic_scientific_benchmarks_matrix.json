@@ -1,50 +1,50 @@
 {
   "humaneval_pass_at_1": {
-    "base": 7.5,
-    "rag": 7.5,
-    "lora": 0.0,
-    "hybrid": 2.5
+    "base": 10.0,
+    "rag": 0.0,
+    "lora": 2.5,
+    "hybrid": 0.0
   },
   "humaneval_pass_at_1_ci95": {
     "base": [
-      2.6,
-      19.9
+      4.0,
+      23.1
     ],
     "rag": [
-      2.6,
-      19.9
-    ],
-    "lora": [
       0.0,
       8.8
     ],
-    "hybrid": [
+    "lora": [
       0.4,
       12.9
+    ],
+    "hybrid": [
+      0.0,
+      8.8
     ]
   },
   "rummlu_accuracy": {
-    "base": 88.0,
-    "rag": 90.0,
-    "lora": 76.0,
-    "hybrid": 70.0
+    "base": 28.0,
+    "rag": 28.0,
+    "lora": 0.0,
+    "hybrid": 0.0
   },
   "rummlu_accuracy_ci95": {
     "base": [
-      76.2,
-      94.4
+      17.5,
+      41.7
     ],
     "rag": [
-      78.6,
-      95.7
+      17.5,
+      41.7
     ],
     "lora": [
-      62.6,
-      85.7
+      0.0,
+      7.1
     ],
     "hybrid": [
-      56.2,
-      80.9
+      0.0,
+      7.1
     ]
   },
   "significance": {
@@ -53,12 +53,12 @@
       "base_vs_lora": {
         "n_pairs": 40,
         "both_pass": 0,
-        "a_only_pass": 3,
-        "b_only_pass": 0,
-        "neither_pass": 37,
-        "discordant": 3,
+        "a_only_pass": 4,
+        "b_only_pass": 1,
+        "neither_pass": 35,
+        "discordant": 5,
         "difference_in_proportion": -0.075,
-        "p_value": 0.25,
+        "p_value": 0.375,
         "confidence": 0.95,
         "significant": false,
         "verdict": "not significant (the variants are not distinguishable)",
@@ -68,12 +68,12 @@
       "base_vs_hybrid": {
         "n_pairs": 40,
         "both_pass": 0,
-        "a_only_pass": 3,
-        "b_only_pass": 1,
+        "a_only_pass": 4,
+        "b_only_pass": 0,
         "neither_pass": 36,
         "discordant": 4,
-        "difference_in_proportion": -0.05,
-        "p_value": 0.625,
+        "difference_in_proportion": -0.1,
+        "p_value": 0.125,
         "confidence": 0.95,
         "significant": false,
         "verdict": "not significant (the variants are not distinguishable)",
@@ -83,11 +83,11 @@
       "lora_vs_hybrid": {
         "n_pairs": 40,
         "both_pass": 0,
-        "a_only_pass": 0,
-        "b_only_pass": 1,
+        "a_only_pass": 1,
+        "b_only_pass": 0,
         "neither_pass": 39,
         "discordant": 1,
-        "difference_in_proportion": 0.025,
+        "difference_in_proportion": -0.025,
         "p_value": 1.0,
         "confidence": 0.95,
         "significant": false,
@@ -99,28 +99,28 @@
     "rummlu": {
       "base_vs_lora": {
         "n_pairs": 50,
-        "both_pass": 37,
-        "a_only_pass": 7,
-        "b_only_pass": 1,
-        "neither_pass": 5,
-        "discordant": 8,
-        "difference_in_proportion": -0.12,
-        "p_value": 0.070312,
+        "both_pass": 0,
+        "a_only_pass": 14,
+        "b_only_pass": 0,
+        "neither_pass": 36,
+        "discordant": 14,
+        "difference_in_proportion": -0.28,
+        "p_value": 0.000122,
         "confidence": 0.95,
-        "significant": false,
-        "verdict": "not significant (the variants are not distinguishable)",
+        "significant": true,
+        "verdict": "significant",
         "variant_a": "base",
         "variant_b": "lora"
       },
       "base_vs_hybrid": {
         "n_pairs": 50,
-        "both_pass": 34,
-        "a_only_pass": 10,
-        "b_only_pass": 1,
-        "neither_pass": 5,
-        "discordant": 11,
-        "difference_in_proportion": -0.18,
-        "p_value": 0.011719,
+        "both_pass": 0,
+        "a_only_pass": 14,
+        "b_only_pass": 0,
+        "neither_pass": 36,
+        "discordant": 14,
+        "difference_in_proportion": -0.28,
+        "p_value": 0.000122,
         "confidence": 0.95,
         "significant": true,
         "verdict": "significant",
@@ -129,13 +129,13 @@
       },
       "lora_vs_hybrid": {
         "n_pairs": 50,
-        "both_pass": 33,
-        "a_only_pass": 5,
-        "b_only_pass": 2,
-        "neither_pass": 10,
-        "discordant": 7,
-        "difference_in_proportion": -0.06,
-        "p_value": 0.453125,
+        "both_pass": 0,
+        "a_only_pass": 0,
+        "b_only_pass": 0,
+        "neither_pass": 50,
+        "discordant": 0,
+        "difference_in_proportion": 0.0,
+        "p_value": 1.0,
         "confidence": 0.95,
         "significant": false,
         "verdict": "not significant (the variants are not distinguishable)",
@@ -150,31 +150,47 @@
     "rummlu_questions": 50
   },
   "perplexity": {
-    "base": 7.01,
-    "lora": 11.89
+    "base": 16.27,
+    "lora": 12.89
   },
+  "perplexity_sample_source": "held-out tail (1000 dialogues of dataset_output\\jsonl\\sft_openai_messages.jsonl)",
   "rouge": {
     "base": {
-      "rouge1": 0.4264705882352941,
-      "rouge2": 0.20952380952380956,
-      "rougeL": 0.3639705882352941,
-      "rougeLsum": 0.3639705882352941
+      "rouge1": 0.31481481481481477,
+      "rouge2": 0.1425,
+      "rougeL": 0.31481481481481477,
+      "rougeLsum": 0.27777777777777773
     },
     "lora": {
-      "rouge1": 0.0,
-      "rouge2": 0.0,
-      "rougeL": 0.0,
-      "rougeLsum": 0.0
+      "rouge1": 0.26666666666666666,
+      "rouge2": 0.15384615384615385,
+      "rougeL": 0.2,
+      "rougeLsum": 0.2
     }
   },
   "not_measured": {
     "hybrid_perplexity": "the RAG context is prepended to the prompt, so a perplexity over the answer is not the same quantity for the hybrid variant; it is not reported rather than copied from the LoRA column",
     "hybrid_rouge": "same reason; not measured and not reported"
   },
-  "raw_outputs_sha256": "46dca3a8db025fbba2230b74c23c7cc7e4335c61487d41ef06ba85dc6946f248",
-  "generated_at_utc": "2026-11-10T16:47:50+00:00",
-  "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
-  "adapter_id": "qwen2.5_1.5b_instruct",
-  "status": "RETRACTED",
+  "raw_outputs_sha256": "fdef7250f7a4a084658c1428b6456f369c2ce279f210ad2cf49b16cfca0d4f28",
+  "generated_at_utc": "2026-11-18T22:00:44+00:00",
+  "rerun_evidence": {
+    "reviewed_at_utc": "2026-11-19",
+    "review_scope": "rerun on the fixed harness by the repository owner agent; full independent external expert review was NOT performed",
+    "isolation_mode": "container via an explicitly opted-in WSL/Ubuntu Docker daemon, --network none, read-only rootfs, non-root uid, --cap-drop ALL; successfully positive/negative controlled at review time",
+    "adapter_training_meta_path": "lora_adapters/smollm2_135m_instruct/training_meta.json",
+    "adapter_training_steps": 21209,
+    "adapter_corpus_coverage_pct": 100.0,
+    "heldout_dialogues": 1000,
+    "raw_task_counts": {
+      "humaneval_per_variant": 40,
+      "rummlu_per_variant": 50
+    },
+    "retraction_note": "RETRACTED applies to the retracted ORIGINAL run, not to this re-run; new values were recomputed from reports/academic_benchmarks_raw_outputs.jsonl by tests. These numbers are descriptive for ONE 135M adapter and must not be quoted as a capability claim for the full zoo.",
+    "limitations": "The sample contains 40 HumanEval and 50 RuMMLU tasks per variant; LoRA and hybrid show no measurable MCQ accuracy improvement at N=50. Do not infer any improvement from a -28pp RuMMLU accuracy difference as a controlled model-quality comparison."
+  },
+  "model_name": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "adapter_id": "smollm2_135m_instruct",
+  "status": "VALID",
   "retraction_reason": "harness defects in the original run: substring MCQ scoring, Cyrillic homoglyph MCQ scoring (Russian prose such as 'в чём дело' scored as answer B), perplexity on blank generations, silent Base->LoRA copy when the adapter failed to load, and a HumanEval sandbox that was escapable and had no real containment"
 }

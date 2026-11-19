@@ -26,10 +26,12 @@ from __future__ import annotations
 
 import contextlib
 import os
+import sys
 import tempfile
 import unittest
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 from ricc.evaluation.official_academic_benchmarks import (
     _docker_available,
@@ -218,6 +220,47 @@ class TestSandboxEscape(unittest.TestCase):
         )
 
 
+class TestWslCommandForm(unittest.TestCase):
+    def test_wsl_configured_harness_quotes_runner_as_one_bash_payload(self) -> None:
+        """WSL argv flattening must keep parentheses/newlines out of bash."""
+        import ricc.evaluation.official_academic_benchmarks as bench
+
+        captured: dict[str, list[str]] = {}
+
+        class _FakePopen:
+            def __init__(self, cmd: list[str], **kwargs: object) -> None:
+                captured["cmd"] = cmd
+                self.returncode = 0
+
+            def communicate(self, input: str | None = None, timeout: float | None = None) -> tuple[str, str]:
+                return ("", "")
+
+        with (
+            patch.object(bench, "_wsl_docker_configured", return_value=True),
+            patch.dict(os.environ, {"RICC_HF_WSL_DOCKER": "Ubuntu"}, clear=False),
+            patch.object(bench.subprocess, "Popen", _FakePopen),
+        ):
+            bench._run_in_container("print(1)", timeout_sec=5.0)
+
+        command = captured["cmd"]
+        self.assertEqual(command[:5], ["wsl", "-d", "Ubuntu", "--", "bash"])
+        self.assertEqual(command[5], "-lc")
+        joined_payload = command[6]
+        self.assertTrue(joined_payload.startswith("docker run "), joined_payload[:120])
+        # A properly quoted multi-line runner cannot be split by bash into
+        # separate commands; the dict-literal expression remains a payload.
+        self.assertIn("safe_builtins = {k: getattr(builtins, k)", joined_payload)
+        self.assertIn("exec(code_to_run", joined_payload)
+        self.assertIn("python:3.11-slim", joined_payload)
+
+    def test_wsl_harness_never_forgets_bash_wrapper_or_docker(self) -> None:
+        from ricc.evaluation.official_academic_benchmarks import _wsl_docker_configured
+
+        with patch("ricc.evaluation.official_academic_benchmarks.os.environ", {"RICC_HF_WSL_DOCKER": "Ubuntu"}):
+            expected = sys.platform == "win32"
+            self.assertEqual(_wsl_docker_configured(), expected)
+
+
 class TestContainerIsolationContract(unittest.TestCase):
     """The container mode must be the default and must be really isolated.
 
@@ -254,10 +297,16 @@ class TestContainerIsolationContract(unittest.TestCase):
 
         original = bench.subprocess.Popen
         bench.subprocess.Popen = _FakePopen  # type: ignore[assignment]
-        try:
+        if bench._wsl_docker_configured():
+            # The ordinary Windows command contract is independent of the
+            # host having no Docker; explicitly test the plain path below.
+            from unittest.mock import patch
+
+            with patch.object(bench, "_wsl_docker_configured", return_value=False):
+                bench._run_in_container("print(1)", timeout_sec=5.0)
+        else:
             bench._run_in_container("print(1)", timeout_sec=5.0)
-        finally:
-            bench.subprocess.Popen = original  # type: ignore[assignment]
+        bench.subprocess.Popen = original  # type: ignore[assignment]
 
         cmd = captured["cmd"]
         self.assertEqual(cmd[0], "docker")

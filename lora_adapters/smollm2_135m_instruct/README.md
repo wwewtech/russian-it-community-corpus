@@ -66,7 +66,9 @@ model = PeftModel.from_pretrained(base_model, "lora_adapters/smollm2_135m_instru
 
 ## Evaluation
 
-Held-out perplexity measured after training (100 dialogues / 22,647 tokens from the 1,000-dialogue tail excluded from training; base perplexity 13.9678 → LoRA perplexity **7.2630**, mean NLL 2.6368 → 1.9828). This is an honest full-sequence language-model metric on unseen dialogue text; no academic HumanEval/RuMMLU scores are claimed for this adapter. Older academic benchmark numbers (HumanEval / RuMMLU) remain **retracted** for the whole zoo (answer-parsing and column-mapping defects; see the retraction notice in the repository `README.md`). Do not cite those numbers.
+Held-out perplexity measured after training (100 dialogues / 22,647 tokens from the 1,000-dialogue tail excluded from training; base perplexity 13.9678 → LoRA perplexity **7.2630**, mean NLL 2.6368 → 1.9828). This is an honest full-sequence language-model metric on unseen dialogue text; it is not a measure of chat quality.
+
+Fresh fixed-harness academic subset on 2026-11-19 (container-isolated execution): base 16.27 → LoRA **12.89 perplexity**; HumanEval base 10.0% / LoRA 2.5% / hybrid 0% of 40 tasks; RuMMLU base 28.0% / LoRA 0.0% / hybrid 0.0% of 50 questions. The adverse RuMMLU gap is significant **p ≈ 0.0001** — do not omit it or present the adapter as better. Older broken academic numbers remain **retracted**; fresh raw outputs alone carry status `VALID` with provenance and caveats. An external expert review was not performed. Older academic benchmark numbers (HumanEval / RuMMLU) remain **retracted** for the whole zoo (answer-parsing and column-mapping defects; see the retraction notice in the repository `README.md`). Do not cite those numbers.
 
 ## Citation
 

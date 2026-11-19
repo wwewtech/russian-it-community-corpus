@@ -184,8 +184,24 @@ def task_drift_monitoring(
         from ricc.monitoring.drift import DatasetDriftMonitor
         from ricc.settings import settings
 
-        ref = Path(reference_path) if reference_path else settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
+        ref = (
+            Path(reference_path)
+            if reference_path
+            else settings.PARQUET_OUTPUT_DIR / "full_clean_messages_reference.parquet"
+        )
         cur = Path(current_path) if current_path else settings.PARQUET_OUTPUT_DIR / "full_clean_messages.parquet"
+        if not reference_path and not ref.exists():
+            # Never silently compare the corpus to an identical copy of itself:
+            # a routine full snapshot pairwise check means "no temporal data",
+            # not "the dataset is verifiably stable". Opt-in via an explicit
+            # reference path if same-snapshot analysis is deliberately wanted.
+            return {
+                "task": "drift-monitoring",
+                "status": "skipped",
+                "note": (f"no frozen temporal reference snapshot: {ref}; set reference_path or RICC_DRIFT_REFERENCE"),
+                "reference_path": str(ref),
+                "current_path": str(cur),
+            }
         if not ref.exists() or not cur.exists():
             return {
                 "task": "drift-monitoring",
@@ -199,6 +215,13 @@ def task_drift_monitoring(
         import json
 
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        if Path(ref).resolve() == Path(cur).resolve():
+            # An explicitly supplied same-file reference remains useful for
+            # regression/self-checks, but may NOT be sold as temporal drift.
+            report["analysis_scope"] = "same_snapshot_regression_only"
+        else:
+            report["analysis_scope"] = "temporal_snapshots"
+            out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         return {
             "task": "drift-monitoring",
             "status": "completed",

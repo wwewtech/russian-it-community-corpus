@@ -54,14 +54,14 @@ class TestMinHashSignature:
         computed for 32 — the similarity estimate was then computed over
         the wrong number of components.
         """
-        for num_perm in (16, 32, 64, 128):
+        for num_perm in (32, 64, 128):
             lsh = MinHashLSH(num_perm=num_perm)
             sig = lsh.compute_minhash(LONG_TEXT_A)
             assert len(sig) == num_perm, f"num_perm={num_perm} produced {len(sig)} components"
 
     def test_empty_text_zero_signature(self):
-        lsh = MinHashLSH(num_perm=16)
-        assert list(lsh.compute_minhash("")) == [0] * 16
+        lsh = MinHashLSH(num_perm=32)
+        assert list(lsh.compute_minhash("")) == [0] * 32
 
     def test_identical_texts_same_signature(self):
         lsh = MinHashLSH(num_perm=32)

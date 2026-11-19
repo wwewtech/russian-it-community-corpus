@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **UI smoke и guards активированы.** Streamlit AppTest now runs in the Windows CI lane (and passes on Streamlit 1.67 / watchdog 7.1.0). Added direct coverage for bootstrap/checkpoint/generate_demo, invalid timestamp/msg_id URLs handling and lightweight Parquet footer validation; MinHash rejects zero-row band setups; TimeLimitCallback requests save when stopping.
+- **Error-handling fixes.** Prefect's default drift no longer compares an identical snapshot to itself (an explicit frozen reference or an unskipped status is required); empty corpus audit fails honestly, per-message ids and corpus SHA256 are retained but no raw PII matches are stored in reports.
+- **HumanEval sandbox and revalidation.** Optionally opt in a real running WSL Docker distribution (`RICC_HF_WSL_DOCKER`) with a shell-safe command wrapper. Verified pass/fail/escape behavior and ran a new GPU benchmark for the full-epoch adapter. New values: base PPL 16.27→LoRA 12.89; the independently sourced run_lora_benchmark report remains 13.9678→7.2630. Marks `VALID` only with evidence and limitations, not blanket zoo capability claims. 40 HumanEval and 50 RuMMLU tasks × 4 variants remain reproducible from raw outputs.
+- **Dependency verification.** setuptools 84.2.1, watchdog 7.1.0 and rich 15.0.0 include local report/UI tests; the runtime lock is refreshed. A Python 3.15-slim image was actually built (its app healthy, 1009 tests passed) and declared supported after pyproject/repro docs; core packaged artifacts are verified. PR #36 (Ruff 0.17.5 CI drift and API-wide upgrade combos) and trl >=1.0 stay unmerged/not approved.
 - **First final LoRA adapter retrained and revalidated.** `smollm2_135m_instruct`
   completed one full canonical epoch on the current 171,520-dialogue corpus:
   21,209 steps, 169,667 trainable dialogues, 100 % coverage, seed 42,
