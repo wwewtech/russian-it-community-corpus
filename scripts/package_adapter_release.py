@@ -11,12 +11,21 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from ricc.lora.policy_gate import assert_publishable
 
 REPO = Path(__file__).resolve().parent.parent
 ADAPTER = REPO / "lora_adapters" / "smollm2_135m_instruct"
+REQUIRED_REPORTS: tuple[str, ...] = (
+    "academic_scientific_benchmarks_matrix.json",
+    "academic_benchmarks_raw_outputs.jsonl",
+    "benchmark_smollm2_135m_instruct.json",
+    "benchmark_smollm2_135m_instruct.md",
+    "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md",
+    "RELEASE_QC_SMOLLM2_135M.md",
+    "adapter_release_digest.json",
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -27,43 +36,38 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def create_release_archive(adapter: Path = ADAPTER, output: Path | None = None) -> dict[str, object]:
+def create_release_archive(
+    adapter: Path = ADAPTER,
+    output: Path | None = None,
+    reports_dir: Path | None = None,
+) -> dict[str, object]:
     """Create a byte-hashed release archive, failing closed for partial adapters."""
     assert_publishable(adapter)
-    output = output or REPO / "dist" / f"ricc-adapter-{adapter.name}-provenance.zip"
-    output.parent.mkdir(parents=True, exist_ok=True)
 
     metadata_path = adapter / "training_meta.json"
     training = json.loads(metadata_path.read_text(encoding="utf-8"))
     source_files = sorted(p for p in adapter.iterdir() if p.is_file())
-    digest_entries = {
-        str(PurePosixPath(adapter.name) / p.name): (sha256_file(p), p.stat().st_size) for p in source_files
-    }
     if "adapter_model.safetensors" not in {p.name for p in source_files}:
         raise RuntimeError("no actual adapter weights: refusing to package a metadata-only placeholder")
 
-    reports = [
-        "academic_scientific_benchmarks_matrix.json",
-        "academic_benchmarks_raw_outputs.jsonl",
-        "benchmark_smollm2_135m_instruct.json",
-        "benchmark_smollm2_135m_instruct.md",
-        "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md",
-        "RELEASE_QC_SMOLLM2_135M.md",
-        "adapter_release_digest.json",
-    ]
+    reports_root = reports_dir if reports_dir is not None else REPO / "reports"
     source_archive_files = [(PurePosixPath("lora_adapters") / adapter.name / p.name, p) for p in source_files]
-    for filename in reports:
-        path = REPO / "reports" / filename
+    for filename in REQUIRED_REPORTS:
+        path = reports_root / filename
         if not path.is_file():
             raise FileNotFoundError(f"missing release evidence file: {path}")
         source_archive_files.append((PurePosixPath("reports") / filename, path))
 
     entries: list[tuple[str, bytes]] = []
+    digest_entries: dict[str, tuple[str, int]] = {}
     for relative, path in source_archive_files:
-        entries.append((str(relative), path.read_bytes()))
-        digest_entries[str(relative)] = (sha256_file(path), path.stat().st_size)
+        payload = path.read_bytes()
+        rel_key = str(relative)
+        entries.append((rel_key, payload))
+        digest_entries[rel_key] = (hashlib.sha256(payload).hexdigest(), len(payload))
 
-    from zipfile import ZipInfo
+    output = output or REPO / "dist" / f"ricc-adapter-{adapter.name}-provenance.zip"
+    output.parent.mkdir(parents=True, exist_ok=True)
 
     # Archive bytes are independent of local mtimes and host/system metadata:
     # fixed ZipInfo date/fields plus sorted entries gives reproducible digests
@@ -96,7 +100,7 @@ def create_release_archive(adapter: Path = ADAPTER, output: Path | None = None) 
             raise RuntimeError(f"archive integrity test failed: {output}")
         packaged_count = len(bundle.namelist())
     try:
-        archive_ref = str(output.relative_to(REPO))
+        archive_ref = output.relative_to(REPO).as_posix()
     except ValueError:
         # Any outputs outside the checkout remain in a platform-neutral
         # absolute representation rather than hiding their destination.

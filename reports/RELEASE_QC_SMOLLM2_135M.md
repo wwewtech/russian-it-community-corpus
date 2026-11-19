@@ -8,7 +8,7 @@ review is claimed. Files to include in a maintained release:
 - benchmarks: [matrix](../reports/academic_scientific_benchmarks_matrix.json)
   and [raw generations](../reports/academic_benchmarks_raw_outputs.jsonl);
 - held-out helper report: [report](../reports/benchmark_smollm2_135m_instruct.json);
-- offline package: [`dist/ricc-adapter-smollm2_135m-provenance.zip`](../dist/ricc-adapter-smollm2_135m-provenance.zip)
+- offline package: [`dist/ricc-adapter-smollm2_135m_instruct-provenance.zip`](../dist/ricc-adapter-smollm2_135m_instruct-provenance.zip)
   (includes the final .safetensors weights, tokenizer, model card,
   benchmark matrix, raw generation logs and handwritten QC notes);
 - artifact hashes: [adapter digest](adapter_release_digest.json) and
@@ -26,7 +26,7 @@ review is claimed. Files to include in a maintained release:
 
 ## Fresh GPU evaluation
 
-`ricc.evaluation.official_benchmark_data` fixed harness ran all four variants of:
+`ricc.evaluation.official_academic_benchmarks` fixed harness ran all four variants of:
 40 HumanEval questions and 50 RuMMLU questions. Raw outputs record 364 records
 (160 HumanEval, 200 RuMMLU, 2 PPL, 2 ROUGE).
 

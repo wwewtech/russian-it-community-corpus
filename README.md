@@ -292,7 +292,7 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 | `python cli.py benchmark` | Export and inspect 100 domain test cases |
 | `python cli.py orchestrate` | Run the Prefect curation orchestration flow |
 | `python demo_walkthrough.py` | Run interactive terminal walkthrough |
-| `python -m pytest -q` | Run the full 1008 tests passed with coverage 89.49% *(5 skipped, revalidated on 2026-11-19)* |
+| `python -m pytest -q` | Run the full 1014 tests passed with coverage 89.47% *(5 skipped, revalidated on 2026-11-19)* |
 | `make test` | Same, through the Makefile |
 | `make coverage` | Test run with the coverage report |
 | `make audit` | Run red-team adversarial penetration test |
@@ -302,7 +302,7 @@ python ricc/lora/generate_demo.py --prompt "Как настроить прием
 | `make docker-up` | Start Web Data Studio in Docker container |
 
 > **Note on the test command.** Use `pytest`, not `python -m unittest discover`:
-> the unittest runner only collects a subset of the suite *(full suite: 1008 passed / 5 skipped on 2026-11-19)*,
+> the unittest runner only collects a subset of the suite *(full suite: 1014 passed / 5 skipped on 2026-11-19)*,
 > because six test modules use pytest-specific features and are silently skipped by it.
 
 ---
