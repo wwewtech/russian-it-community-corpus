@@ -37,10 +37,9 @@ class TestRequirementsLock(unittest.TestCase):
             raise unittest.SkipTest("requirements.lock.txt not generated")
         cls.lock_text = LOCK_PATH.read_text(encoding="utf-8")
 
-    def test_lock_has_platform_header(self):
-        """Header must state capture platform so readers know its scope."""
-        self.assertIn("# Captured on:", self.lock_text)
-        self.assertIn("# REFERENCE SNAPSHOT", self.lock_text)
+    def test_lock_is_portable_and_machine_readable(self):
+        self.assertIn("# Portable lock for Python 3.11+", self.lock_text)
+        self.assertFalse(self.lock_text.startswith("\ufeff"), "UTF-8 BOM breaks pip requirements parsing")
 
     def test_lock_covers_all_root_dependencies(self):
         locked = {
@@ -55,7 +54,28 @@ class TestRequirementsLock(unittest.TestCase):
         pins = [line for line in self.lock_text.splitlines() if line and not line.startswith("#")]
         self.assertGreater(len(pins), 50)
         for line in pins:
-            self.assertRegex(line, r"^[A-Za-z0-9._-]+==\S+$", f"non-exact pin: {line!r}")
+            self.assertRegex(line, r"^[A-Za-z0-9._-]+==[^\s;]+(?:\s*;\s*.+)?$", f"non-exact pin: {line!r}")
+
+    def test_metadata_and_direct_versions_are_consistent(self):
+        from scripts.lock_requirements import validate_metadata
+
+        self.assertEqual(validate_metadata(self.lock_text), [])
+
+    def test_stale_direct_pin_is_rejected(self):
+        from scripts.lock_requirements import validate_metadata
+
+        stale = self.lock_text.replace("torch==2.15.0", "torch==2.5.0")
+        self.assertTrue(any("violates declared" in error for error in validate_metadata(stale)))
+
+    def test_all_runtime_jobs_install_the_lock(self):
+        import yaml
+
+        workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+        for name, job in workflow["jobs"].items():
+            for step in job.get("steps", []):
+                command = step.get("run", "")
+                if "pip install -r requirements.txt" in command:
+                    self.fail(f"{name}/{step.get('name')} bypasses the lock")
 
 
 class TestToolVersionPinsAgree(unittest.TestCase):

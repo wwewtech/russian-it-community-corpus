@@ -53,6 +53,9 @@ def compute_lora_zoo_index(
     """
     results: list[dict[str, Any]] = []
     for d in _local_adapters(Path(adapters_dir)):
+        if not is_publishable(d):
+            logger.warning("Excluding policy-incompliant adapter from the release catalog: %s", d.name)
+            continue
         safetensors = d / "adapter_model.safetensors"
         size_mb = round(safetensors.stat().st_size / (1024 * 1024), 2)
         results.append(
@@ -159,19 +162,21 @@ def upload_dataset(
     # "provenance gate" in the SLO job compares a manifest with the very
     # files it was just created from, so it always passes.
     manifest_path = repo_root / "reports" / "dataset_manifest.json"
-    if manifest_path.exists():
-        try:
-            from ricc.validation.artifact_manifest import verify_manifest
+    if not manifest_path.is_file():
+        raise RuntimeError(f"Refusing to publish without the verified artifact manifest: {manifest_path}")
+    try:
+        from ricc.validation.artifact_manifest import verify_manifest
 
-            verify_manifest(repo_root, manifest_path)
-            logger.info("Artifact manifest verified against the published files")
-        except Exception as exc:
-            raise RuntimeError(
-                f"Refusing to publish: the dataset artefacts do not match {manifest_path} ({exc}). "
-                "Re-create the manifest for the artefacts that are about to be published."
-            ) from exc
-    else:
-        logger.warning("No dataset_manifest.json found — publishing without a provenance check")
+        # Verify every canonical parquet before the first Hub write, including
+        # the dataset card. A missing or stale artifact must not cause a
+        # partially published release.
+        verify_manifest(repo_root, manifest_path)
+        logger.info("Artifact manifest verified against all three published parquet files")
+    except Exception as exc:
+        raise RuntimeError(
+            f"Refusing to publish: the dataset artefacts do not match {manifest_path} ({exc}). "
+            "Re-create the manifest for the artefacts that are about to be published."
+        ) from exc
 
     # 1. Dataset Card (README.md)
     dataset_card_path = repo_root / "reports" / "DATASET_AND_ANALYTICS.md"
@@ -192,20 +197,19 @@ def upload_dataset(
     ]
     for local_path, repo_path in parquet_mappings:
         p = repo_root / local_path
-        if p.exists():
-            logger.info(
-                "Uploading %s (%.2f MB) -> %s...",
-                local_path,
-                p.stat().st_size / (1024 * 1024),
-                repo_path,
-            )
-            api.upload_file(
-                path_or_fileobj=str(p),
-                path_in_repo=repo_path,
-                repo_id=dataset_repo_id,
-                repo_type="dataset",
-            )
-            logger.info("Successfully uploaded %s", repo_path)
+        logger.info(
+            "Uploading %s (%.2f MB) -> %s...",
+            local_path,
+            p.stat().st_size / (1024 * 1024),
+            repo_path,
+        )
+        api.upload_file(
+            path_or_fileobj=str(p),
+            path_in_repo=repo_path,
+            repo_id=dataset_repo_id,
+            repo_type="dataset",
+        )
+        logger.info("Successfully uploaded %s", repo_path)
 
     # 3. Reports and Metadata
     meta_files = [
@@ -271,13 +275,14 @@ def upload_missing_adapters(
     logger.info("Found %d trained LoRA adapters locally in %s", len(local_adapters), adapters_dir)
 
     hf_files = api.list_repo_files(repo_id=model_repo_id, repo_type="model")
-    uploaded_folders = {f.split("/")[0] for f in hf_files if "/" in f}
+    # A metadata-only folder is not a published adapter. In particular, a
+    # previous interrupted upload containing just README.md must be repaired,
+    # not treated as complete forever.
+    uploaded_folders = {f.split("/")[0] for f in hf_files if f.endswith("/adapter_model.safetensors")}
 
     uploaded: list[str] = []
     skipped: list[str] = []
     for d in local_adapters:
-        if d.name in uploaded_folders:
-            continue
         # Policy gate: an adapter that does not satisfy the binding training
         # policy (partial epoch, time-boxed run, or no recorded provenance at
         # all) is never uploaded to the public zoo. It is skipped and logged
@@ -291,7 +296,10 @@ def upload_missing_adapters(
             )
             skipped.append(d.name)
             continue
-        logger.info("Uploading missing adapter %s to Hugging Face Model Hub...", d.name)
+        if d.name in uploaded_folders:
+            logger.info("Verified remote adapter weights already present: %s", d.name)
+            continue
+        logger.info("Uploading missing or incomplete adapter %s to Hugging Face Model Hub...", d.name)
         last_exc: Exception | None = None
         for attempt in range(max_attempts):
             try:
@@ -334,7 +342,13 @@ def main() -> None:
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-    api = huggingface_hub.HfApi(token=HF_TOKEN if HF_TOKEN else None)
+    if not HF_TOKEN:
+        raise RuntimeError("HF_TOKEN is required for a release; refusing anonymous or partial publication")
+    api = huggingface_hub.HfApi(token=HF_TOKEN)
+    api.whoami()
+    for repo_id, repo_type in ((DATASET_REPO_ID, "dataset"), (MODEL_REPO_ID, "model")):
+        # Fail before the first write when the token cannot access a target.
+        api.repo_info(repo_id=repo_id, repo_type=repo_type)
     # Resolve the adapters directory relative to the REPOSITORY ROOT, not the
     # current working directory: the release job runs from the repo root, but
     # a CWD-dependent path silently produced an empty catalogue when the
@@ -357,16 +371,10 @@ def main() -> None:
     # when the Hub sync failed, so the GitHub release is always updated).
     zoo_index = compute_lora_zoo_index(adapters_dir)
     if not zoo_index:
-        # CI checkouts carry no adapter_model.safetensors (gitignored), so
-        # the local walk returns 0 adapters. Regenerating the catalog here
-        # would publish an EMPTY catalog to the Hub and attach it to the
-        # GitHub release (observed in release v12.1.0). Keep the committed
-        # catalog — it is the reviewed artifact.
-        logger.warning(
-            "No local adapters with weights found in %s; keeping committed catalog files",
-            adapters_dir,
+        raise RuntimeError(
+            f"No policy-compliant adapter weights found in {adapters_dir}. "
+            "Materialize the verified adapter artifacts before running the release."
         )
-        return
     settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     with open(settings.REPORTS_DIR / "lora_zoo_index.json", "w", encoding="utf-8") as f:
         json.dump(zoo_index, f, ensure_ascii=False, indent=2)

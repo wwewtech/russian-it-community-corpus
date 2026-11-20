@@ -8,7 +8,8 @@ version = "12.2.0"
 description = "RICC: Russian IT Community Corpus — Data Engineering and Zero-PII Curation Platform"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "wwewtech", email = "research@wwew.tech" }
 ]
@@ -19,7 +20,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -45,14 +45,13 @@ dependencies = [
     "pymorphy3-dicts-ru>=2.4.417150.4580142",
     "tiktoken>=0.7.0",
     "scikit-learn>=1.4.0",
-    "torch>=2.2.0,<3.0.0",
+    "torch==2.15.0",
     "transformers>=4.40.0,<6.0.0",
     "accelerate>=0.28.0,<2.0.0",
     "peft>=0.10.0,<0.22.0",
-    "trl>=0.8.0,<1.0.0",
     "datasets>=2.18.0,<6.0.0",
     "evaluate>=0.4.0,<1.0.0",
-    "bitsandbytes>=0.43.0,<1.0.0",
+    "bitsandbytes>=0.43.0",
     "streamlit>=1.32.0",
     "rich>=13.7.0",
     "prometheus-client>=0.19.0",

@@ -811,6 +811,8 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
             (root / "lora_adapters" / "demo").mkdir(parents=True)
             (root / "lora_adapters" / "demo" / "adapter_model.safetensors").write_bytes(b"\0" * 64)
             with (
+                patch.object(fin, "HF_TOKEN", "test-token"),
+                patch.object(fin.huggingface_hub, "HfApi"),
                 patch.object(fin, "upload_dataset", side_effect=RuntimeError("no net")),
                 patch.object(fin, "upload_missing_adapters", side_effect=RuntimeError("no net")),
                 patch("pathlib.Path.cwd", return_value=root),
@@ -838,6 +840,8 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
             (root / "lora_adapters" / "demo").mkdir(parents=True)
             (root / "lora_adapters" / "demo" / "adapter_model.safetensors").write_bytes(b"\0" * 64)
             with (
+                patch.object(fin, "HF_TOKEN", "test-token"),
+                patch.object(fin.huggingface_hub, "HfApi"),
                 patch.object(fin, "upload_dataset"),
                 patch.object(fin, "upload_model_card"),
                 patch.object(fin, "upload_missing_adapters"),

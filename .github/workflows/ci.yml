@@ -109,6 +109,43 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  package:
+    name: Package Build & Wheel Smoke
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: Smoke-test the installed wheel outside the checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/ricc-wheel-smoke"
+          "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -m pip install dist/*.whl --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -c "import ricc; print(ricc.__version__)"
+
+      - name: Upload verified Python package artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-package
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
   eval-suites:
     name: Evaluation Suites Smoke
     runs-on: ubuntu-24.04
@@ -133,7 +170,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
 
       - name: Every evaluation suite must import and expose its entry point
         run: |
@@ -173,7 +210,7 @@ jobs:
       - name: Install dependencies and pinned mypy
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install mypy==${{ env.MYPY_VERSION }}
 
       - name: Run Strict mypy Typecheck Gate
@@ -200,7 +237,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install pytest pytest-cov
 
       - name: Run Unit Tests
@@ -244,7 +281,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Run Unit Tests with Coverage
@@ -281,7 +318,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Compute coverage of the changed lines
@@ -340,7 +377,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install "dvc>=3.50.0"
 
       - name: Verify the raw-export dependency list is in sync
@@ -414,7 +451,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install "dvc>=3.50.0"
 
       - name: Move the real exports aside and write a small fixture
@@ -485,7 +522,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+
+      - name: Verify the installed dependency set and lock reproducibility
+        run: |
+          python -m pip check
+          python -m pip install uv
+          python scripts/lock_requirements.py --check
 
       - name: Verify lock coverage, registry sync and adapter cards
         run: |
@@ -664,7 +707,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
 
       - name: Download pipeline artifacts
         uses: actions/download-artifact@v8
@@ -713,7 +756,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           pip install huggingface_hub
 
       - name: Download real corpus at pinned HF revision
@@ -775,6 +818,18 @@ jobs:
           path: reports/slo_verdict.json
           retention-days: 30
 
+      - name: Upload the exact dataset validated above for release
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-dataset-verified
+          path: |
+            dataset_output/parquet/full_clean_messages.parquet
+            dataset_output/parquet/sft_dialogues.parquet
+            dataset_output/parquet/rag_knowledge_base.parquet
+            reports/dataset_manifest.json
+          if-no-files-found: error
+          retention-days: 7
+
   security:
     name: Security Supply Chain
     runs-on: ubuntu-24.04
@@ -827,10 +882,10 @@ jobs:
       - name: pip-audit — HARD gate on known CVEs
         # Promoted from report-only (2026-10-13): the report-only baseline
         # showed 0 vulnerable packages, so enforcement cannot red-green an
-        # already-clean tree. Any known CVE in the requirements.txt tree now
+        # already-clean tree. Any known CVE in the locked dependency tree now
         # fails the security job. JSON report is still uploaded for triage.
         run: |
-          python -m pip_audit -r requirements.txt --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          python -m pip_audit -r requirements.lock.txt --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
           python - <<'PY'
           import json
           try:
@@ -859,7 +914,7 @@ jobs:
     name: HF Token & Cache Check
     runs-on: ubuntu-24.04
     needs: [lint]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'release'
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -894,6 +949,8 @@ jobs:
           rev = '81a3495de997b0690f67d175c4ebd9cfdef35b76'
           api = HfApi(token=os.environ['HF_TOKEN'])
           api.whoami()
+          for repo_id, repo_type in ((repo, 'dataset'), ('wwewtech/russian-it-community-lora', 'model')):
+              api.repo_info(repo_id=repo_id, repo_type=repo_type)
           p = hf_hub_download(repo_id=repo, filename='data/full_clean_messages.parquet', revision=rev, repo_type='dataset', token=os.environ['HF_TOKEN'])
           size = Path(p).stat().st_size
           assert size == 198527394, f'unexpected size {size}'
@@ -903,9 +960,9 @@ jobs:
   release:
     name: Release to Hugging Face Hub
     runs-on: ubuntu-24.04
-    needs: [lint, typecheck, test, validate, slo-gate-real]
+    needs: [lint, typecheck, test, validate, slo-gate-real, hf-secrets-check, package]
     if: github.event_name == 'release'
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: write
       id-token: write
@@ -921,15 +978,48 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
-          pip install huggingface_hub[cli]
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install huggingface_hub
+
+      - name: Download the exact dataset and manifest validated by SLO gate
+        uses: actions/download-artifact@v8
+        with:
+          name: release-dataset-verified
+          path: .
+
+      - name: Materialize compliant adapters and verify registry digests
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          from huggingface_hub import hf_hub_download
+          registry = json.loads(Path('lora_adapters/registry.json').read_text(encoding='utf-8'))
+          compliant = [a for a in registry['adapters'] if a.get('policy_compliant')]
+          if not compliant:
+              raise SystemExit('No policy-compliant adapters declared in registry; refusing release')
+          for adapter in compliant:
+              slug = adapter['slug']
+              source = hf_hub_download(
+                  repo_id='wwewtech/russian-it-community-lora',
+                  repo_type='model',
+                  filename=f'{slug}/adapter_model.safetensors',
+                  token=os.environ['HF_TOKEN'],
+              )
+              digest = hashlib.sha256(Path(source).read_bytes()).hexdigest()
+              if digest != adapter['safetensors_sha256']:
+                  raise SystemExit(f'Adapter digest mismatch for {slug}; refusing release')
+              target = Path(adapter['local_path']) / 'adapter_model.safetensors'
+              target.write_bytes(Path(source).read_bytes())
+              print(f'verified compliant adapter: {slug}')
+          PY
 
       - name: Regenerate LoRA zoo catalog
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        # finalize_sync_all: uploads dataset artefacts (no-op without local
-        # parquet, warns), uploads adapters missing on the Hub (no-op when the
-        # zoo is already published) and regenerates reports/LORA_MODEL_ZOO.md.
+        # finalize_sync_all verifies the dataset manifest and publishes all
+        # three parquet files, the model card, and complete compliant adapters.
         run: python -m ricc.exporter.finalize_sync_all
 
       - name: Sync LoRA registry to Hugging Face Hub
@@ -938,10 +1028,22 @@ jobs:
         # Sanctioned upload path per docs/adr/0001-hf-token-handling.md.
         run: python scripts/sync_to_hub.py --apply
 
+      - name: Download the package built and smoke-tested by CI
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package
+          path: dist
+
+      - name: Verify the release tag matches the package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python -c "import os, tomllib; from pathlib import Path; version = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']; assert os.environ['RELEASE_TAG'] == 'v' + version, f\"release tag {os.environ['RELEASE_TAG']} != package v{version}\""
+
       - name: Upload model catalog as release asset
         # gh CLI replaces the archived actions/upload-release-asset@v1
         # (Node 20 + "Resource not accessible by integration" under
         # contents: read). Requires contents: write above.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" reports/LORA_MODEL_ZOO.md --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" reports/LORA_MODEL_ZOO.md dist/*.whl dist/*.tar.gz --clobber

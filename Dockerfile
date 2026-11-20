@@ -23,12 +23,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Dependency layer first for Docker layer caching.
-# requirements.txt is the single source of truth; pyproject mirrors it.
-COPY requirements.txt pyproject.toml ./
+# requirements.lock.txt is the resolved, cross-platform closure of the
+# constraints in requirements.txt/pyproject.toml; installs are reproducible.
+COPY requirements.lock.txt pyproject.toml ./
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install -r requirements.txt \
+    && pip install -r requirements.lock.txt \
         --index-url https://download.pytorch.org/whl/cpu \
-        --extra-index-url https://pypi.org/simple
+        --extra-index-url https://pypi.org/simple \
+        --index-strategy unsafe-best-match
 
 # Non-root runtime user (hardening: no container-as-root).
 # Pre-create writable dirs for read-only rootfs + tmpfs mounts.
