@@ -8,6 +8,7 @@ import sys
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -25,7 +26,7 @@ REPORTS = ROOT / "reports"
 PARQUET = ROOT / "dataset_output" / "parquet"
 
 
-def _atomic_write(path: Path, payload: dict) -> None:
+def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", delete=False, dir=path.parent, encoding="utf-8") as tmp:
         json.dump(payload, tmp, ensure_ascii=False, indent=2)
@@ -34,7 +35,7 @@ def _atomic_write(path: Path, payload: dict) -> None:
     Path(tmp_path).replace(path)
 
 
-def _stamp(report: dict, generator: str) -> dict:
+def _stamp(report: dict[str, Any], generator: str) -> dict[str, Any]:
     report["_source"] = {"synthetic": False, "generator": generator, "generated_at_utc": datetime.now(UTC).isoformat()}
     return report
 

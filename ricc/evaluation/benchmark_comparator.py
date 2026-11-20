@@ -14,6 +14,7 @@ from typing import Any
 import torch
 
 from ricc.rag.rag_pipeline import LocalRAGPipeline
+from ricc.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -66,14 +67,14 @@ class BenchmarkComparator:
     Automated Benchmark Comparator evaluating Base vs Base+RAG vs LoRA on RTX 3060.
     """
 
-    def __init__(self, kb_path: Path = Path("dataset_output/parquet/rag_knowledge_base.parquet")):
-        self.rag = LocalRAGPipeline(kb_path)
+    def __init__(self, kb_path: Path | None = None):
+        resolved_kb = kb_path if kb_path is not None else settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet"
+        self.rag = LocalRAGPipeline(resolved_kb)
 
     def run_simulated_and_live_benchmark(self) -> dict[str, Any]:
         """
         Execute benchmark evaluation across setups.
         """
-        "cuda:0" if torch.cuda.is_available() else "cpu"
         device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
         vram_mb = torch.cuda.get_device_properties(0).total_memory / (1024 * 1024) if torch.cuda.is_available() else 0
 

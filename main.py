@@ -2,30 +2,18 @@
 Master entrypoint to execute the complete pipeline.
 """
 
-import logging
 import sys
 
+from ricc.bootstrap import setup_runtime_env
 from ricc.errors import PipelineError
 from ricc.pipeline import MasterDataPipeline
-
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
-
-# Centralized logging configuration at the entry point (NOT inside pipeline.py),
-# so importing the library never clobbers a caller's existing log handlers.
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler()],
-)
 
 
 def main() -> int:
     """Run the full pipeline; return a process exit code."""
+    # Entry-point-only setup (UTF-8 stdio, logging): importing this module must
+    # never clobber a caller's existing log handlers.
+    setup_runtime_env(json_logs=False)
     print("Starting Russian IT Community Data Engineering & Curation Pipeline...")
     pipeline = MasterDataPipeline()
     try:

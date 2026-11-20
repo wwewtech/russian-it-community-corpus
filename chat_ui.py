@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 ADAPTERS_DIRNAME = "lora_adapters"
 
@@ -131,7 +131,7 @@ def generate_reply(
     if not (root_dir / ADAPTERS_DIRNAME).is_dir():
         # Fallback for a packaged/installed layout: try the working directory.
         root_dir = Path.cwd()
-    tokenizer: Any = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 

@@ -211,10 +211,12 @@ def generate_reconciliation_report(
 
 
 def main() -> int:
+    from ricc.settings import settings
+
     parser = argparse.ArgumentParser(description="Reconcile local dataset artifacts with pinned HF Hub revision")
-    parser.add_argument("--local-manifest", type=Path, default=Path("reports/dataset_manifest.json"))
-    parser.add_argument("--hub-manifest", type=Path, default=Path("reports/pinned_hub_manifest.json"))
-    parser.add_argument("--report", type=Path, default=Path("reports/dataset_reconciliation_report.json"))
+    parser.add_argument("--local-manifest", type=Path, default=settings.REPORTS_DIR / "dataset_manifest.json")
+    parser.add_argument("--hub-manifest", type=Path, default=settings.REPORTS_DIR / "pinned_hub_manifest.json")
+    parser.add_argument("--report", type=Path, default=settings.REPORTS_DIR / "dataset_reconciliation_report.json")
     parser.add_argument("--online", action="store_true", help="Fetch and verify remote metadata via HF API")
     parser.add_argument("--strict", action="store_true", help="Fail if local files do not match Hub byte-for-byte")
     args = parser.parse_args()

@@ -30,6 +30,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from metrics_source import Metrics, get_metrics  # noqa: E402
@@ -150,7 +151,7 @@ def _training_regime(slug: str) -> str:
     )
 
 
-def build_card(entry: dict, metrics: Metrics) -> str:
+def build_card(entry: dict[str, Any], metrics: Metrics) -> str:
     return CARD_TEMPLATE.format(
         slug=entry["slug"],
         base_model=entry["base_model"],

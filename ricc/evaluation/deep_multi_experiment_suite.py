@@ -10,21 +10,18 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
-from ricc.bootstrap import setup_runtime_env
-
-setup_runtime_env()
-
 import numpy as np
 import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from ricc.bootstrap import setup_runtime_env
 from ricc.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
 from ricc.ml_runtime import set_deterministic_seed
 from ricc.observability import record_classified_ml_error
 from ricc.rag.rag_pipeline import LocalRAGPipeline
+from ricc.settings import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("DeepBenchmarkSuite")
 
 # 16 Comprehensive Engineering Benchmark Test Dimensions
@@ -254,7 +251,7 @@ def run_benchmark_experiment_suite(
     set_deterministic_seed(seed)
 
     # 1. Load RAG Knowledge Base
-    rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
+    rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
 
     # 2. Load Base Model & Tokenizer
     tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
@@ -449,8 +446,8 @@ def run_benchmark_experiment_suite(
     }
 
     # Save JSON and Markdown Reports
-    output_json = Path("reports/empirical_benchmark_matrix.json")
-    output_md = Path("reports/DEEP_EMPIRICAL_BENCHMARK_16_SUITES.md")
+    output_json = settings.REPORTS_DIR / "empirical_benchmark_matrix.json"
+    output_md = settings.REPORTS_DIR / "DEEP_EMPIRICAL_BENCHMARK_16_SUITES.md"
 
     with open(output_json, "w", encoding="utf-8") as f:
         results["disclaimer"] = HEURISTIC_DISCLAIMER
@@ -507,6 +504,8 @@ def run_benchmark_experiment_suite(
 
 
 def main() -> None:
+    setup_runtime_env()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")

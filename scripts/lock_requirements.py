@@ -30,13 +30,16 @@ import sys
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
+from typing import Any
 
+Marker: Any
+Requirement: Any
 try:
     from packaging.markers import Marker
     from packaging.requirements import Requirement
 except ImportError:  # pragma: no cover - packaging ships with pip/setuptools
-    Marker = None  # type: ignore[assignment]
-    Requirement = None  # type: ignore[assignment]
+    Marker = None
+    Requirement = None
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REQUIREMENTS_PATH = REPO_ROOT / "requirements.txt"
@@ -91,11 +94,13 @@ def _requirements_of(name: str) -> list[str]:
                 try:
                     if not requirement.marker.evaluate():
                         continue
-                except Exception:
+                except (ValueError, TypeError):
                     pass  # unknown marker: keep conservatively
             out.append(requirement.name)
         else:  # pragma: no cover
-            out.append(_REQ_LINE.match(raw).group(1))  # type: ignore[union-attr]
+            match = _REQ_LINE.match(raw)
+            if match is not None:
+                out.append(match.group(1))
     return out
 
 

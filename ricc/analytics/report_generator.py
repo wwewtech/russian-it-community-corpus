@@ -4,6 +4,7 @@ Analytical Report Generator producing Markdown, JSON, and Rich Terminal Visualiz
 
 import json
 import logging
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ class ReportGenerator:
     Generates rich Markdown, JSON, and visual Terminal reports from analytics data.
     """
 
-    def __init__(self, analytics_data: dict[str, Any]):
+    def __init__(self, analytics_data: Mapping[str, Any]):
         self.data = analytics_data
         self.console = Console(force_terminal=True) if HAS_RICH else None
 
@@ -54,7 +55,6 @@ class ReportGenerator:
         s = self.data.get("domain_slang_analytics", {})
         sent = self.data.get("sentiment_and_syntax", {})
         net = self.data.get("social_network", {})
-        self.data.get("author_signature_phrases", {})
         lda = self.data.get("topic_clusters_lda", [])
         longit = self.data.get("longitudinal_evolution_8_years", {})
         val = self.data.get("quality_and_readiness") or self.data.get("valuation_and_readiness", {})

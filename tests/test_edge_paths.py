@@ -846,16 +846,9 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                     "compute_lora_zoo_index",
                     return_value=[{"id": "demo", "slug": "demo", "size_mb": 0.0}],
                 ),
-                patch("pathlib.Path.cwd", return_value=root),
+                patch("ricc.settings.settings.reports_dir", root / "reports"),
             ):
-                import os
-
-                old = os.getcwd()
-                os.chdir(root)
-                try:
-                    fin.main()
-                finally:
-                    os.chdir(old)
+                fin.main()
             self.assertTrue((root / "reports" / "LORA_MODEL_ZOO.md").exists())
 
 

@@ -11,6 +11,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from metrics_source import get_metrics  # noqa: E402
@@ -22,28 +23,30 @@ API = f"https://huggingface.co/api/{'models'}/{REPO}"
 FLAGSHIPS = {"heavyweight_qwen2.5_coder_7b", "heavyweight_deepseek_r1_7b", "heavyweight_llama3.1_8b"}
 
 
-def fetch_json(url: str, retries: int = 3):
+def fetch_json(url: str, retries: int = 3) -> dict[str, Any]:
     for attempt in range(retries):
         try:
             with urllib.request.urlopen(url, timeout=30) as r:
-                return json.load(r)
+                data = json.load(r)
+                return dict(data) if isinstance(data, dict) else {}
         except Exception:
             if attempt == retries - 1:
                 raise
             time.sleep(2)
+    return {}
 
 
-def main():
+def main() -> None:
     data = fetch_json(API)
     subfolders = sorted(
         {s["rfilename"].split("/")[0] for s in data.get("siblings", []) if "/" in s["rfilename"]} - {"models"}
     )
 
-    def fetch_base(sub: str) -> dict:
+    def fetch_base(sub: str) -> dict[str, str]:
         with urllib.request.urlopen(
             f"https://huggingface.co/{REPO}/resolve/main/{sub}/adapter_config.json", timeout=30
         ) as raw:
-            base = json.load(raw).get("base_model_name_or_path") or "?"
+            base = str(json.load(raw).get("base_model_name_or_path") or "?")
         return {"id": sub, "base": base}
 
     with ThreadPoolExecutor(max_workers=10) as pool:

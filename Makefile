@@ -74,15 +74,9 @@ format:
 typecheck:
 	python -m mypy ricc/ --ignore-missing-imports
 
-# Strict rollout COMPLETE: every listed ricc/ module passes `mypy --strict`.
-# This list is explicit (not `mypy ricc --strict`) on purpose:
-# ricc/orchestration/prefect_flow.py is INCLUDED: its optional-Prefect no-op
-# stubs are fully typed (a _Decorator Protocol keeps the decorators typed,
-# so mypy no longer reports "untyped decorator").
-# When adding a module, add it here AND to the pre-commit mypy-strict hook
-# (.pre-commit-config.yaml); pyproject.toml has no ignore_errors overrides.
+# Strict rollout COMPLETE: every ricc/ module, root entrypoint, and script passes `mypy --strict`.
 typecheck-strict:
-	python -m mypy ricc/errors.py ricc/bootstrap.py ricc/ingestion/schema.py ricc/ingestion/loader.py ricc/analytics/metrics.py ricc/analytics/network.py ricc/analytics/report_generator.py ricc/analytics/engine.py ricc/taxonomy/classifier.py ricc/taxonomy/tagger.py ricc/deduplication/exact_dedup.py ricc/deduplication/minhash_lsh.py ricc/monitoring/drift.py ricc/monitoring/sft_quality.py ricc/monitoring/slo_gate.py ricc/rag/rag_pipeline.py ricc/rag/__init__.py ricc/evaluation/__init__.py ricc/evaluation/statistical_power.py ricc/evaluation/benchmark_comparator.py ricc/evaluation/official_academic_benchmarks.py ricc/evaluation/deep_multi_experiment_suite.py ricc/evaluation/enterprise_production_eval_suite.py ricc/evaluation/sota_expert_benchmark_showcase.py ricc/lora/__init__.py ricc/lora/batch_train_zoo.py ricc/lora/generate_demo.py ricc/graph/__init__.py ricc/orchestration/prefect_flow.py ricc/validation/artifact_manifest.py ricc/validation/hub_reconciliation.py ricc/validation/validator.py ricc/pii/regex_scrubber.py ricc/pii/ner_scrubber.py ricc/pii/deep_anonymizer.py ricc/inference.py ricc/pipeline.py ricc/exporter/finalize_sync_all.py ricc/observability/__init__.py ricc/ml_runtime.py ricc/__init__.py --strict
+	python -m mypy ricc cli.py main.py app_helpers.py chat_ui.py scripts --strict
 
 # Supply-chain security: bandit HIGH gate + secret scan + pip-audit (same as CI `security` job).
 # pip-audit is a HARD gate: any known CVE in the requirements.txt tree fails the build.

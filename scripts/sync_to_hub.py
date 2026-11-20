@@ -34,6 +34,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_JSON = REPO_ROOT / "lora_adapters" / "registry.json"
@@ -53,16 +54,20 @@ def _resolve_token() -> str | None:
         return env_token.strip() or None
     # Fall back to huggingface_hub's own resolver.
     try:
-        from huggingface_hub import HfFolder  # type: ignore[attr-defined]
+        import huggingface_hub
     except ImportError:
         return None
+    hf_folder = getattr(huggingface_hub, "HfFolder", None)
+    if hf_folder is None:
+        return None
     try:
-        return HfFolder.get_token()
+        token = hf_folder.get_token()
+        return str(token) if token else None
     except Exception:  # noqa: BLE001
         return None
 
 
-def _build_plan(registry: dict) -> list[str]:
+def _build_plan(registry: dict[str, Any]) -> list[str]:
     """Return a list of human-readable lines describing what the sync would do."""
     lines: list[str] = []
     lines.append(f"Target repo:    {HF_REPO_ID}  (type={HF_REPO_TYPE})")

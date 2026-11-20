@@ -115,21 +115,20 @@ class TestGenerateDemo(unittest.TestCase):
     def test_real_template_and_only_generated_tokens_are_returned(self):
         from ricc.lora.generate_demo import generate_answer
 
+        class FakeTensor(list):
+            pass
+
         tokenizer = MagicMock(pad_token=None, eos_token_id=99)
         tokenizer.apply_chat_template.return_value = "<fake template>"
         encoded = MagicMock()
         encoded.input_ids.shape = (1, 5)
         encoded.to.return_value = encoded
         tokenizer.return_value = encoded
-        modeled = [[1, 2, 3, 4, 5, 60, 61]]
-        tokenizer.decode.side_effect = lambda values, skip_special_tokens: list(values).__len__() and "decoded"
+        tokenizer.decode.return_value = "decoded"
 
-        fake_output = [MagicMock()]
-        fake_output[0].__getitem__.side_effect = modeled[0].__getitem__
         model = MagicMock()
-        model.generate.return_value = fake_output
+        model.generate.return_value = FakeTensor([FakeTensor([9, 8, 7, 6, 5, 40, 41])])
 
-        kwargs = MagicMock(input_ids=MagicMock())
         with (
             patch("ricc.lora.generate_demo.AutoTokenizer") as auto_token,
             patch("ricc.lora.generate_demo.AutoModelForCausalLM") as auto_model,
@@ -140,22 +139,9 @@ class TestGenerateDemo(unittest.TestCase):
             auto_token.from_pretrained.return_value = tokenizer
             auto_model.from_pretrained.return_value = model
             peft.from_pretrained.return_value = model
-            tokenizer.return_value = kwargs
-            kwargs.to.return_value = kwargs
-            kwargs.input_ids.shape = (1, 5)
-            output = MagicMock()
-            output.__getitem__.side_effect = lambda _: output
-            output.__iter__.side_effect = lambda: iter(output)
-
-            # Use a token-list subclass whose slicing follows tensor slicing.
-            class FakeTensor(list):
-                pass
-
-            fake_generated = FakeTensor([FakeTensor([9, 8, 7, 6, 5, 40, 41])])
-            model.generate.return_value = fake_generated
             answer = generate_answer("q", "Test/Base", "tmp/adapter")
 
-        self.assertIsInstance(answer, str)
+        self.assertEqual(answer, "decoded")
         peft.from_pretrained.assert_called_once_with(model, "tmp/adapter")
         model.generate.assert_called_once()
         decode_args = tokenizer.decode.call_args.args[0]

@@ -223,8 +223,8 @@ class DatasetValidator:
                     leaks["unmasked_api_keys"] += reg_stats.get("api_keys", 0)
                     leaks["unmasked_crypto"] += reg_stats.get("crypto_wallets", 0)
                     leaks["unmasked_community_names"] += reg_stats.get("community_names", 0)
-                except Exception:
-                    pass  # deliberate: scrubber-stats probe is best-effort; leak accounting continues
+                except (json.JSONDecodeError, TypeError, AttributeError) as exc:
+                    logger.debug("Skipping malformed JSONL line during PII leak probe: %s", exc)
 
         total_leaks = sum(leaks.values())
         return {

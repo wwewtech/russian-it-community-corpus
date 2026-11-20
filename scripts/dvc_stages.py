@@ -46,12 +46,6 @@ def _load_params() -> dict[str, Any]:
         return yaml.safe_load(handle) or {}
 
 
-def _dump(obj: Any, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
 def _load(path: Path) -> Any:
     with gzip.open(path, "rb") as handle:
         return pickle.load(handle)
@@ -199,7 +193,7 @@ def stage_export() -> None:
 
 def _messages() -> list[Any]:
     messages, _threads = _load(INTERMEDIATE / "threaded_messages.pkl.gz")
-    return messages
+    return list(messages)
 
 
 # --------------------------------------------------------------------------- #

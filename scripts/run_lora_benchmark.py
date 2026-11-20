@@ -40,15 +40,12 @@ from typing import Any, cast
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from ricc.bootstrap import setup_runtime_env  # noqa: E402
-
-setup_runtime_env()
-
 import torch  # noqa: E402
 from peft import PeftModel  # noqa: E402
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+from ricc.bootstrap import setup_runtime_env  # noqa: E402
+
 logger = logging.getLogger("LoRABenchmark")
 
 DEFAULT_DATASET = "dataset_output/jsonl/sft_openai_messages.jsonl"
@@ -103,7 +100,7 @@ def _prompt_text(tokenizer: Any, prompt: str) -> str:
 
 
 def load_base(model_name: str) -> tuple[Any, Any]:
-    tokenizer: Any = AutoTokenizer.from_pretrained(model_name, use_fast=True, trust_remote_code=True)
+    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -285,6 +282,8 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    setup_runtime_env()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser(description="Held-out LoRA benchmarks: base vs adapter perplexity + generations")
     parser.add_argument("--adapter", action="append", required=True, type=Path, help="Adapter dir (repeatable)")
     parser.add_argument(

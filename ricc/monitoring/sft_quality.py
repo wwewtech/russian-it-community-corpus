@@ -302,10 +302,15 @@ def _load_dialogues(path: Path, messages_col: str = "messages") -> pd.DataFrame:
 def main(argv: list[str] | None = None) -> int:  # pragma: no cover - thin CLI wrapper
     import argparse
 
+    from ricc.settings import settings
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path, help="Parquet or JSONL file with a 'messages' column.")
     parser.add_argument(
-        "--report", type=Path, default=Path("reports/sft_quality_report.json"), help="Where to write the JSON report."
+        "--report",
+        type=Path,
+        default=settings.REPORTS_DIR / "sft_quality_report.json",
+        help="Where to write the JSON report.",
     )
     parser.add_argument("--messages-col", default="messages", help="Column name that holds the dialogue messages.")
     args = parser.parse_args(argv)

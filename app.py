@@ -16,7 +16,14 @@ from app_helpers import (
     DEFAULT_PARQUET_ROWS,
     adversarial_summary,
     derive_pii_verdict,
+    filter_messages,
+    filter_sft,
+    format_metric_int,
+    format_tokens_millions,
     leak_breakdown,
+)
+from app_helpers import (
+    load_dashboard_metrics as _load_dashboard_metrics,
 )
 from app_helpers import (
     load_json_file as _load_json_file,
@@ -77,6 +84,15 @@ def load_dpo_sample(max_rows: int = 200) -> list[dict]:
     return _load_jsonl_sample(JSONL_DIR / "dpo_preference_pairs.jsonl", max_lines=max_rows)
 
 
+@st.cache_data(show_spinner=False)
+def get_dashboard_metrics() -> dict:
+    """Cached dashboard KPI metrics read from reports/ and lora_adapters/."""
+    return _load_dashboard_metrics(REPORTS_DIR, BASE_DIR / "lora_adapters")
+
+
+_DASHBOARD_METRICS = get_dashboard_metrics()
+
+
 # Navigation Constants
 NAV_MAIN = "Главная и метрики"
 NAV_MESSAGES = "Просмотр сообщений"
@@ -112,13 +128,13 @@ nav = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.info(
     "**Метрики RICC:**\n"
-    "- **2 816 434** чистых сообщений\n"
-    "- **210 890** участников\n"
-    "- **171 520** SFT диалогов\n"
-    "- **325 690** RAG чанков\n"
-    "- **63 948** DPO пар\n"
-    "- **56** LoRA адаптеров\n"
-    "- **11 community nodes** анонимизировано"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['cleaned_messages'], sep=' ')}** чистых сообщений\n"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['unique_authors'], sep=' ')}** участников\n"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['sft_dialogues'], sep=' ')}** SFT диалогов\n"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['rag_chunks'], sep=' ')}** RAG чанков\n"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['dpo_pairs'], sep=' ')}** DPO пар\n"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['local_adapters'])}** LoRA адаптеров\n"
+    f"- **{format_metric_int(_DASHBOARD_METRICS['community_nodes'])} community nodes** анонимизировано"
 )
 
 # =============================================================================
@@ -134,30 +150,33 @@ if nav == NAV_MAIN:
 
     # Metric Cards
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Всего сообщений", "2,816,434", "2017–2026")
-    col2.metric("Уникальных участников", "210,890", "Псевдонимизировано")
-    col3.metric("Объём BPE токенов", "49.09M", "Tiktoken / BPE")
-    col4.metric("SFT Диалогов", "171,520", "Multi-turn")
+    col1.metric("Всего сообщений", format_metric_int(_DASHBOARD_METRICS["cleaned_messages"]), "2017–2026")
+    col2.metric("Уникальных участников", format_metric_int(_DASHBOARD_METRICS["unique_authors"]), "Псевдонимизировано")
+    col3.metric("Объём BPE токенов", format_tokens_millions(_DASHBOARD_METRICS["total_tokens"]), "Tiktoken / BPE")
+    col4.metric("SFT Диалогов", format_metric_int(_DASHBOARD_METRICS["sft_dialogues"]), "Multi-turn")
 
     st.markdown("---")
 
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("Экспортированные ML датасеты")
-        # Counts below mirror reports/validation_results.json (valid_lines per
-        # JSONL file, rows per parquet), NOT the README "reported volume"
-        # table. Any change here must keep tests/test_metrics_consistency.py
-        # green — it scans this file for stale figures.
+        pq_details = _DASHBOARD_METRICS["parquet_details"]
+        jl_details = _DASHBOARD_METRICS["jsonl_details"]
+
+        def _jl_lines(name: str) -> str:
+            val = jl_details.get(name, {}).get("valid_lines")
+            return format_metric_int(val if isinstance(val, int) else None)
+
         st.markdown(
-            """
-            - **`full_clean_messages.parquet`**: 2,816,434 сообщений (`189 MB`)
-            - **`sft_dialogues.parquet`**: 171,520 многоходовых диалогов (`132 MB`)
-            - **`rag_knowledge_base.parquet`**: 325,690 чанков базы знаний (`159 MB`)
-            - **`sft_openai_messages.jsonl`**: 171,520 записей ChatML
-            - **`sft_alpaca_format.jsonl`**: 736,996 пар инструкций
-            - **`sft_sharegpt_format.jsonl`**: 166,469 записей ShareGPT
-            - **`rag_chunks_kb.jsonl`**: 289,130 документов для Vector DB
-            - **`dpo_preference_pairs.jsonl`**: 63,948 пар предпочтений
+            f"""
+            - **`full_clean_messages.parquet`**: {format_metric_int(_DASHBOARD_METRICS["cleaned_messages"])} сообщений
+            - **`sft_dialogues.parquet`**: {format_metric_int(_DASHBOARD_METRICS["sft_dialogues"])} многоходовых диалогов
+            - **`rag_knowledge_base.parquet`**: {format_metric_int(_DASHBOARD_METRICS["rag_chunks"])} чанков базы знаний
+            - **`sft_openai_messages.jsonl`**: {_jl_lines("sft_openai_messages.jsonl")} записей ChatML
+            - **`sft_alpaca_format.jsonl`**: {_jl_lines("sft_alpaca_format.jsonl")} пар инструкций
+            - **`sft_sharegpt_format.jsonl`**: {_jl_lines("sft_sharegpt_format.jsonl")} записей ShareGPT
+            - **`rag_chunks_kb.jsonl`**: {_jl_lines("rag_chunks_kb.jsonl")} документов для Vector DB
+            - **`dpo_preference_pairs.jsonl`**: {format_metric_int(_DASHBOARD_METRICS["dpo_pairs"])} пар предпочтений
             """
         )
 
@@ -198,7 +217,7 @@ if nav == NAV_MAIN:
 # 2. ИССЛЕДОВАТЕЛЬ ДАТАСЕТА (EXPLORER)
 # =============================================================================
 elif nav == NAV_MESSAGES:
-    st.title("Исследователь корпуса сообщений (2.81M Messages)")
+    st.title(f"Исследователь корпуса сообщений ({format_metric_int(_DASHBOARD_METRICS['cleaned_messages'])})")
 
     df = load_parquet_sample("full_clean_messages.parquet", max_rows=10000)
 
@@ -212,16 +231,12 @@ elif nav == NAV_MESSAGES:
         selected_domain = col2.selectbox("Фильтр по домену:", domains)
         is_q_only = col3.checkbox("Только вопросы (?)", False)
 
-        filtered_df = df
-        if search_query:
-            # regex=False: the query is a literal substring, not a pattern.
-            filtered_df = filtered_df[
-                filtered_df["text_clean"].str.contains(search_query, case=False, na=False, regex=False)
-            ]
-        if selected_domain != "Все домены":
-            filtered_df = filtered_df[filtered_df["domain"] == selected_domain]
-        if is_q_only:
-            filtered_df = filtered_df[filtered_df["is_question"]]
+        filtered_df = filter_messages(
+            df,
+            search_query=search_query,
+            selected_domain=selected_domain,
+            is_q_only=is_q_only,
+        )
 
         st.caption(f"Найдено записей в выборке: **{len(filtered_df):,}**")
         st.dataframe(
@@ -238,7 +253,12 @@ elif nav == NAV_MESSAGES:
 elif nav == NAV_SFT_DPO:
     st.title("SFT & DPO Диалоговая Студия")
 
-    tab1, tab2 = st.tabs(["Multi-Turn SFT Диалоги (171,520)", "DPO Пары Предпочтений (63,948)"])
+    tab1, tab2 = st.tabs(
+        [
+            f"Multi-Turn SFT Диалоги ({format_metric_int(_DASHBOARD_METRICS['sft_dialogues'])})",
+            f"DPO Пары Предпочтений ({format_metric_int(_DASHBOARD_METRICS['dpo_pairs'])})",
+        ]
+    )
 
     with tab1:
         sft_df = load_parquet_sample("sft_dialogues.parquet", max_rows=2000)
@@ -249,7 +269,7 @@ elif nav == NAV_SFT_DPO:
             min_q = col1.slider("Минимальный скор качества:", 1.0, 5.0, 3.0, 0.5)
             min_turns = col2.slider("Минимум реплик в диалоге:", 2, 10, 2)
 
-            filtered_sft = sft_df[(sft_df["quality_score"] >= min_q) & (sft_df["turn_count"] >= min_turns)]
+            filtered_sft = filter_sft(sft_df, min_quality=min_q, min_turns=min_turns)
             st.caption(f"Отобрано диалогов: **{len(filtered_sft):,}**")
 
             if not filtered_sft.empty:
@@ -384,7 +404,7 @@ elif nav == NAV_CHAT:
 # 4. БАЗА ЗНАНИЙ RAG И СЕМАНТИЧЕСКИЙ ПОИСК
 # =============================================================================
 elif nav == NAV_RAG:
-    st.title("Корпоративная база знаний RAG (325,690 Чанков)")
+    st.title(f"Корпоративная база знаний RAG ({format_metric_int(_DASHBOARD_METRICS['rag_chunks'])} Чанков)")
     st.markdown("Структурированный архив практического опыта IT-сообщества с поддержкой семантического поиска.")
 
     rag_df = load_parquet_sample("rag_knowledge_base.parquet", max_rows=5000)

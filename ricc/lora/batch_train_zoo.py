@@ -30,10 +30,6 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
-from ricc.bootstrap import setup_runtime_env
-
-setup_runtime_env()
-
 import huggingface_hub
 import torch
 from datasets import load_dataset
@@ -47,6 +43,7 @@ from transformers import (
     TrainingArguments,
 )
 
+from ricc.bootstrap import setup_runtime_env
 from ricc.lora.catalog import (
     _DATASET_SHA256_CACHE,  # noqa: F401
     FULL_PROFILE_EVAL_FRAC,
@@ -73,8 +70,8 @@ from ricc.lora.policy_gate import (
 from ricc.lora.reporting import _fmt_metric, update_run_report  # noqa: F401
 from ricc.ml_runtime import set_deterministic_seed, with_retries
 from ricc.observability import record_classified_ml_error, record_lora_result
+from ricc.settings import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("LoRAZoo44")
 
 HF_TOKEN = os.getenv("HF_TOKEN", "")
@@ -126,8 +123,8 @@ def detect_target_modules(model: torch.nn.Module) -> list[str]:
 
 def train_and_upload_single_model(
     meta: dict[str, Any],
-    dataset_path: str = "dataset_output/jsonl/sft_openai_messages.jsonl",
-    base_output_dir: Path = Path("lora_adapters"),
+    dataset_path: str | None = None,
+    base_output_dir: Path | None = None,
     max_steps: int = 20,
     max_samples: int = 400,
     max_seq_length: int = 512,
@@ -140,6 +137,10 @@ def train_and_upload_single_model(
     time_budget_hours: float | None = None,
     save_total_limit: int = 10,
 ) -> dict[str, Any]:
+    if dataset_path is None:
+        dataset_path = str(settings.JSONL_OUTPUT_DIR / "sft_openai_messages.jsonl")
+    if base_output_dir is None:
+        base_output_dir = settings.BASE_DIR / "lora_adapters"
     model_id = meta["id"]
     model_name = meta["model_name"]
     out_dir = base_output_dir / model_id
@@ -557,6 +558,8 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
 
 
 def main() -> None:
+    setup_runtime_env(pytorch_alloc_conf=True)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--profile",
@@ -608,15 +611,15 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("lora_adapters"),
-        help="Adapter output root (default: lora_adapters)",
+        default=settings.BASE_DIR / "lora_adapters",
+        help="Adapter output root (default: <repo>/lora_adapters)",
     )
     parser.add_argument("--no-upload", action="store_true", help="Skip Hugging Face upload")
     parser.add_argument(
         "--report-dir",
         type=Path,
-        default=Path("reports"),
-        help="Directory for the aggregate run report (default: reports)",
+        default=settings.REPORTS_DIR,
+        help="Directory for the aggregate run report (default: <repo>/reports)",
     )
     parser.add_argument(
         "--no-report",

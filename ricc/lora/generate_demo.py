@@ -4,15 +4,16 @@ Run: python ricc/lora/generate_demo.py --prompt "Как настроить пр�
 """
 
 import argparse
+import logging
 from typing import Any, cast
-
-from ricc.bootstrap import setup_runtime_env
-
-setup_runtime_env()
 
 import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from ricc.bootstrap import setup_runtime_env
+
+logger = logging.getLogger(__name__)
 
 
 def generate_answer(
@@ -20,7 +21,7 @@ def generate_answer(
     base_model_name: str = "Qwen/Qwen2.5-0.5B-Instruct",
     adapter_path: str = "lora_adapters/russian_it_lora",
 ) -> str:
-    print(f"\nЗагрузка базовой модели: {base_model_name}")
+    logger.info("Загрузка базовой модели: %s", base_model_name)
     tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(adapter_path, use_fast=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -31,7 +32,7 @@ def generate_answer(
         device_map="auto" if torch.cuda.is_available() else None,
     )
 
-    print(f"Подключение обученного LoRA адаптера из: {adapter_path}")
+    logger.info("Подключение обученного LoRA адаптера из: %s", adapter_path)
     model: Any = cast(Any, PeftModel).from_pretrained(base_model, adapter_path)
     model.eval()
 
@@ -43,8 +44,8 @@ def generate_answer(
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     inputs = tokenizer(text, return_tensors="pt").to(device)
 
-    print(f"\nВопрос: {prompt}")
-    print("⏳ Генерация ответа модели...")
+    logger.info("Вопрос: %s", prompt)
+    logger.info("Генерация ответа модели...")
 
     with torch.no_grad():
         outputs = model.generate(
@@ -57,14 +58,19 @@ def generate_answer(
         )
 
     response: str = cast(str, tokenizer.decode(outputs[0][inputs.input_ids.shape[1] :], skip_special_tokens=True))
-    print("\n" + "=" * 60)
-    print(f"Ответ обученной LoRA модели:\n{response}")
-    print("=" * 60 + "\n")
     return response
 
 
-if __name__ == "__main__":
+def main() -> None:
+    setup_runtime_env(json_logs=False)
     parser = argparse.ArgumentParser()
     parser.add_argument("--prompt", type=str, default="Как настроить прием платежей для SaaS из РФ?")
     args = parser.parse_args()
-    generate_answer(prompt=args.prompt)
+    response = generate_answer(prompt=args.prompt)
+    print("\n" + "=" * 60)
+    print(f"Ответ обученной LoRA модели:\n{response}")
+    print("=" * 60 + "\n")
+
+
+if __name__ == "__main__":
+    main()

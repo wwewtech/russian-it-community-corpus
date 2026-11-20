@@ -28,53 +28,18 @@ repos:
   - repo: local
     hooks:
       - id: mypy-strict
-        name: MyPy Typecheck (strict, 45 modules)
+        name: MyPy Typecheck (strict, full codebase)
         entry: python -m mypy
         language: system
         pass_filenames: false
         args:
           - --strict
-          - ricc/errors.py
-          - ricc/bootstrap.py
-          - ricc/ingestion/schema.py
-          - ricc/ingestion/loader.py
-          - ricc/analytics/metrics.py
-          - ricc/analytics/network.py
-          - ricc/analytics/report_generator.py
-          - ricc/analytics/engine.py
-          - ricc/taxonomy/classifier.py
-          - ricc/taxonomy/tagger.py
-          - ricc/deduplication/exact_dedup.py
-          - ricc/deduplication/minhash_lsh.py
-          - ricc/monitoring/drift.py
-          - ricc/monitoring/sft_quality.py
-          - ricc/monitoring/slo_gate.py
-          - ricc/rag/rag_pipeline.py
-          - ricc/rag/__init__.py
-          - ricc/evaluation/__init__.py
-          - ricc/evaluation/statistical_power.py
-          - ricc/evaluation/benchmark_comparator.py
-          - ricc/evaluation/official_academic_benchmarks.py
-          - ricc/evaluation/deep_multi_experiment_suite.py
-          - ricc/evaluation/enterprise_production_eval_suite.py
-          - ricc/evaluation/sota_expert_benchmark_showcase.py
-          - ricc/lora/__init__.py
-          - ricc/lora/batch_train_zoo.py
-          - ricc/lora/generate_demo.py
-          - ricc/graph/__init__.py
-          - ricc/orchestration/prefect_flow.py
-          - ricc/validation/artifact_manifest.py
-          - ricc/validation/hub_reconciliation.py
-          - ricc/validation/validator.py
-          - ricc/pii/regex_scrubber.py
-          - ricc/pii/ner_scrubber.py
-          - ricc/pii/deep_anonymizer.py
-          - ricc/inference.py
-          - ricc/pipeline.py
-          - ricc/exporter/finalize_sync_all.py
-          - ricc/observability/__init__.py
-          - ricc/ml_runtime.py
-          - ricc/__init__.py
+          - ricc
+          - cli.py
+          - main.py
+          - app_helpers.py
+          - chat_ui.py
+          - scripts
 
   # Check for merge conflicts
   - repo: https://github.com/pre-commit/pre-commit-hooks

@@ -6,6 +6,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ricc.settings import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -14,13 +16,14 @@ def _fmt_metric(result: dict[str, Any], key: str, pattern: str) -> str:
     return pattern.format(value) if isinstance(value, (int, float)) else "—"
 
 
-def update_run_report(results: list[dict[str, Any]], report_dir: Path = Path("reports")) -> None:
+def update_run_report(results: list[dict[str, Any]], report_dir: Path | None = None) -> None:
     """Crash-safe aggregate report for the current zoo run.
 
     Deliberately writes its own files and never touches the canonical catalog
     (``reports/lora_zoo_index.json`` / ``reports/LORA_MODEL_ZOO.md``), which is
     regenerated from the Hub file tree by ``scripts/regenerate_model_catalog.py``.
     """
+    report_dir = report_dir if report_dir is not None else settings.REPORTS_DIR
     report_dir.mkdir(parents=True, exist_ok=True)
     json_path = report_dir / "lora_zoo_training_run.json"
     md_path = report_dir / "LORA_ZOO_TRAINING_REPORT.md"

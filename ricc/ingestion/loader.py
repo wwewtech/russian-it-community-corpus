@@ -57,8 +57,8 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
         try:
             ts = datetime.fromtimestamp(int(unixtime), tz=UTC).replace(tzinfo=None)
             return ts, int(unixtime)
-        except Exception:
-            pass  # deliberate: fall through to date-string parsing variants
+        except (ValueError, TypeError, OverflowError, OSError) as exc:
+            logger.debug("Invalid date_unixtime %r, falling back to string parsing: %s", unixtime, exc)
 
     date_str = raw_msg.get("date") or raw_msg.get("datetime") or raw_msg.get("timestamp")
     if date_str:
@@ -70,14 +70,14 @@ def parse_timestamp(raw_msg: dict[str, Any]) -> tuple[datetime, int]:
             clean_date = str(date_str).replace("Z", "+00:00")
             ts = datetime.fromisoformat(clean_date)
             return ts, _to_unixtime(ts)
-        except Exception:
-            pass  # deliberate: fall through to strptime format list
+        except (ValueError, TypeError, OverflowError) as exc:
+            logger.debug("ISO timestamp parse failed for %r: %s", date_str, exc)
         for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y %H:%M:%S"):
             try:
                 ts = datetime.strptime(str(date_str), fmt)
                 return ts, _to_unixtime(ts)
-            except Exception:
-                continue  # deliberate: try next format in the list
+            except (ValueError, TypeError):
+                continue
 
     # Keep the historical [1970-01-01, 0] fallback for chronology parsing so
     # downstream dataset shapes do not change when one raw message has an

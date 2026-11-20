@@ -3,31 +3,48 @@ Pure helpers extracted from ``app.py`` so they can be unit-tested without
 spinning up a Streamlit runtime. ``app.py`` itself stays the user-facing
 entry point; it imports from here so the logic is exercised by
 ``tests/test_app.py``.
-
-Why this exists:
-
-* The previous version of ``app.py`` had its PII verdict logic, JSON
-  loaders, and parquet sampling inlined at module top level, which made
-  the file impossible to cover in the existing pytest suite — Streamlit
-  import-time side effects broke the test collector.
-* Coverage on ``app.py`` was 0 % for the same reason. The helpers below
-  can be unit-tested on a CPU-only runner, and the Streamlit ``AppTest``
-  smoke test in :mod:`tests.test_app` covers the UI wiring.
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 
-# Limits chosen to match the user-facing experience: 5k rows is the most
-# Streamlit's ``st.dataframe`` renders comfortably on a laptop, and 2k
-# SFT samples is the cap the original ``app.py`` set.
 DEFAULT_PARQUET_ROWS = 5000
 DEFAULT_SFT_ROWS = 2000
 DEFAULT_RAG_ROWS = 5000
+
+
+def _as_optional_int(value: Any) -> int | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    return None
+
+
+def format_metric_int(value: int | None, *, sep: str = ",") -> str:
+    """Format an optional integer count for the dashboard, or ``'—'`` when absent."""
+    if value is None:
+        return "—"
+    return f"{int(value):,}".replace(",", sep)
+
+
+def format_tokens_millions(value: int | None) -> str:
+    """Format a token count in millions (e.g. ``49_090_000 -> '49.09M'``), or ``'—'``."""
+    if value is None:
+        return "—"
+    return f"{int(value) / 1_000_000:.2f}M"
 
 
 def load_parquet_sample(
@@ -35,12 +52,7 @@ def load_parquet_sample(
     file_name: str,
     max_rows: int = DEFAULT_PARQUET_ROWS,
 ) -> pd.DataFrame:
-    """Return up to ``max_rows`` of a parquet dataset, or an empty DataFrame on miss.
-
-    Mirrors the behaviour of the original ``load_parquet_sample`` in
-    ``app.py`` but without the ``@st.cache_data`` decorator — caching is
-    Streamlit's concern and is irrelevant for tests.
-    """
+    """Return up to ``max_rows`` of a parquet dataset, or an empty DataFrame on miss."""
     path = Path(parquet_dir) / file_name
     if not path.exists():
         return pd.DataFrame()
@@ -48,13 +60,14 @@ def load_parquet_sample(
     return df.head(max_rows)
 
 
-def load_json_file(file_path: Path) -> dict:
+def load_json_file(file_path: Path) -> dict[str, Any]:
     """Return the JSON contents of ``file_path`` or ``{}`` if it is missing."""
     p = Path(file_path)
     if not p.exists():
         return {}
     with open(p, encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    return cast(dict[str, Any], data) if isinstance(data, dict) else {}
 
 
 def load_markdown_file(file_path: Path, missing_message: str = "Файл отчёта не найден.") -> str:
@@ -66,17 +79,12 @@ def load_markdown_file(file_path: Path, missing_message: str = "Файл отч�
         return f.read()
 
 
-def load_jsonl_sample(file_path: Path, max_lines: int = 200) -> list[dict]:
-    """Return up to ``max_lines`` parsed JSON objects from a JSONL file.
-
-    Blank/corrupt lines are skipped so one bad record never breaks a UI
-    tab (use ``DatasetValidator`` for integrity auditing). Returns ``[]``
-    when the file is missing.
-    """
+def load_jsonl_sample(file_path: Path, max_lines: int = 200) -> list[dict[str, Any]]:
+    """Return up to ``max_lines`` parsed JSON objects from a JSONL file."""
     p = Path(file_path)
     if not p.exists():
         return []
-    out: list[dict] = []
+    out: list[dict[str, Any]] = []
     with open(p, encoding="utf-8") as f:
         for line in f:
             if len(out) >= max_lines:
@@ -85,25 +93,90 @@ def load_jsonl_sample(file_path: Path, max_lines: int = 200) -> list[dict]:
             if not line:
                 continue
             try:
-                out.append(json.loads(line))
+                parsed = json.loads(line)
+                if isinstance(parsed, dict):
+                    out.append(cast(dict[str, Any], parsed))
             except json.JSONDecodeError:
                 continue
     return out
 
 
+def load_dashboard_metrics(reports_dir: Path, lora_dir: Path) -> dict[str, Any]:
+    """Load dashboard KPI counts from JSON reports and adapter registry without hardcoding.
+
+    Missing files yield ``None`` fields (rendered as ``'—'`` in the UI) so a
+    fresh checkout never displays fabricated figures.
+    """
+    stats = load_json_file(Path(reports_dir) / "pipeline_execution_stats.json")
+    analytics = load_json_file(Path(reports_dir) / "analytics_summary.json")
+    validation = load_json_file(Path(reports_dir) / "validation_results.json")
+    registry = load_json_file(Path(lora_dir) / "registry.json")
+
+    vol_raw = analytics.get("volume_statistics")
+    vol: dict[str, Any] = vol_raw if isinstance(vol_raw, dict) else {}
+
+    parquet_block = validation.get("parquet_files")
+    parquet_details_raw = parquet_block.get("details") if isinstance(parquet_block, dict) else None
+    parquet_details: dict[str, dict[str, Any]] = (
+        {k: v for k, v in parquet_details_raw.items() if isinstance(v, dict)}
+        if isinstance(parquet_details_raw, dict)
+        else {}
+    )
+
+    jsonl_block = validation.get("jsonl_files")
+    jsonl_details_raw = jsonl_block.get("details") if isinstance(jsonl_block, dict) else None
+    jsonl_details: dict[str, dict[str, Any]] = (
+        {k: v for k, v in jsonl_details_raw.items() if isinstance(v, dict)}
+        if isinstance(jsonl_details_raw, dict)
+        else {}
+    )
+
+    pii_stats_raw = stats.get("pii_stats")
+    pii_stats: dict[str, Any] = pii_stats_raw if isinstance(pii_stats_raw, dict) else {}
+
+    cleaned_messages = (
+        _as_optional_int(stats.get("cleaned_messages_count"))
+        or _as_optional_int(parquet_details.get("full_clean_messages.parquet", {}).get("rows"))
+        or _as_optional_int(vol.get("total_messages"))
+    )
+    sft_dialogues = _as_optional_int(stats.get("sft_dialogues_count")) or _as_optional_int(
+        parquet_details.get("sft_dialogues.parquet", {}).get("rows")
+    )
+    rag_chunks = _as_optional_int(stats.get("rag_chunks_count")) or _as_optional_int(
+        parquet_details.get("rag_knowledge_base.parquet", {}).get("rows")
+    )
+    dpo_pairs = _as_optional_int(stats.get("dpo_pairs_count")) or _as_optional_int(
+        jsonl_details.get("dpo_preference_pairs.jsonl", {}).get("valid_lines")
+    )
+    unique_authors = _as_optional_int(vol.get("unique_authors"))
+    total_tokens = _as_optional_int(vol.get("total_tokens_approx"))
+    local_adapters = _as_optional_int(registry.get("adapter_count"))
+    community_nodes = _as_optional_int(pii_stats.get("community_names_anonymized")) or _as_optional_int(
+        vol.get("total_chats")
+    )
+
+    return {
+        "cleaned_messages": cleaned_messages,
+        "unique_authors": unique_authors,
+        "total_tokens": total_tokens,
+        "sft_dialogues": sft_dialogues,
+        "rag_chunks": rag_chunks,
+        "dpo_pairs": dpo_pairs,
+        "local_adapters": local_adapters,
+        "community_nodes": community_nodes,
+        "parquet_details": parquet_details,
+        "jsonl_details": jsonl_details,
+    }
+
+
 def derive_pii_verdict(
-    validation_results: dict,
-    audit_certificate: dict,
+    validation_results: dict[str, Any],
+    audit_certificate: dict[str, Any],
 ) -> tuple[bool, int, int]:
     """Compute the Zero-PII verdict shown on the dashboard.
 
-    Returns a tuple ``(passed, total_leaks, sampled_messages)`` so the
-    Streamlit layer can render it without re-implementing the logic.
-
-    The verdict is **passed** only when BOTH sources confirm zero leaks.
-    Earlier code used a permissive ``or`` short-circuit that allowed the
-    UI to display "PASSED" even when one certificate was stale. That
-    behaviour is explicitly rejected here — see CHANGELOG 12.0.2.
+    Returns ``(passed, total_leaks, sampled_messages)``. The verdict is
+    **passed** only when BOTH sources confirm zero leaks.
     """
     pii_leak = validation_results.get("pii_leakage_audit", {})
     parquet_audit = audit_certificate.get("production_parquet_audit", {})
@@ -115,12 +188,6 @@ def derive_pii_verdict(
         audit_certificate.get("verification_status") == "PASSED" and parquet_audit.get("total_leaks_found", 0) == 0
     )
     val_passed = bool(validation_results.get("validation_passed", False)) and total_leaks == 0
-    # AND, not OR: a PASSED verdict requires BOTH independent audits to
-    # confirm zero leaks. An OR short-circuit is exactly the
-    # "privacy-as-checklist, not threat model" failure mode called out in
-    # NADO.md — one stale certificate is enough to flip the UI banner to
-    # "Zero-PII Verification Status: PASSED" while a second audit is
-    # silently warning. See CHANGELOG 12.0.2.
     is_passed = cert_passed and val_passed
 
     sampled = parquet_audit.get(
@@ -130,34 +197,24 @@ def derive_pii_verdict(
     return is_passed, int(total_leaks), int(sampled)
 
 
-def leak_breakdown(audit_certificate: dict, validation_results: dict) -> dict[str, int]:
-    """Return the per-category leak counts used by the dashboard's PII panel.
-
-    Prefers the structured ``production_parquet_audit.leak_breakdown`` if
-    present (newer certificate format) and falls back to the flat keys in
-    the older ``pii_leakage_audit`` block.
-    """
+def leak_breakdown(
+    audit_certificate: dict[str, Any],
+    validation_results: dict[str, Any],
+) -> dict[str, int]:
+    """Return the per-category leak counts used by the dashboard's PII panel."""
     parquet_audit = audit_certificate.get("production_parquet_audit", {})
     pii_leak = validation_results.get("pii_leakage_audit", {})
     breakdown = parquet_audit.get("leak_breakdown", {}) or {}
     return {
-        "phones": breakdown.get("phones", pii_leak.get("phone_leaks", 0)),
-        "emails": breakdown.get("emails", pii_leak.get("email_leaks", 0)),
-        "api_keys": breakdown.get("api_keys", pii_leak.get("api_key_leaks", 0)),
-        "crypto_wallets": breakdown.get("crypto_wallets", 0),
+        "phones": int(breakdown.get("phones", pii_leak.get("phone_leaks", 0))),
+        "emails": int(breakdown.get("emails", pii_leak.get("email_leaks", 0))),
+        "api_keys": int(breakdown.get("api_keys", pii_leak.get("api_key_leaks", 0))),
+        "crypto_wallets": int(breakdown.get("crypto_wallets", 0)),
     }
 
 
-def adversarial_summary(audit_certificate: dict) -> tuple[int, int, float]:
-    """Return ``(passed, total, success_rate_percentage)`` for the adversarial suite.
-
-    Fail-closed: when the certificate (or its ``adversarial_suite`` block)
-    is missing, return ``(0, 0, 0.0)`` — never a fabricated ``14/14 (100%)``.
-    A green badge on absent evidence is exactly the fail-open failure mode
-    fixed for the main PII verdict in CHANGELOG 12.0.2; the adversarial
-    widget must follow the same rule. Callers should treat ``total == 0``
-    as "report missing" and render a warning, not a success badge.
-    """
+def adversarial_summary(audit_certificate: dict[str, Any]) -> tuple[int, int, float]:
+    """Return ``(passed, total, success_rate_percentage)`` for the adversarial suite."""
     adv_suite = audit_certificate.get("adversarial_suite")
     if not isinstance(adv_suite, dict) or not adv_suite:
         return 0, 0, 0.0
@@ -174,14 +231,9 @@ def filter_messages(
     selected_domain: str | None = None,
     is_q_only: bool = False,
 ) -> pd.DataFrame:
-    """Apply the search / domain / question-only filters used on the Messages tab.
-
-    Pure pandas so it can be exercised without Streamlit.
-    """
+    """Apply the search / domain / question-only filters used on the Messages tab."""
     out = df
     if search_query:
-        # Literal substring search: user input must never be interpreted
-        # as a regex (re.error crashes the tab, crafted input = ReDoS).
         out = out[out["text_clean"].str.contains(search_query, case=False, na=False, regex=False)]
     if selected_domain and selected_domain != "Все домены":
         out = out[out["domain"] == selected_domain]

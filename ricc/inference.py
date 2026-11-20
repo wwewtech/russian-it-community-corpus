@@ -24,12 +24,9 @@ import argparse
 from pathlib import Path
 from typing import Any, cast
 
-from ricc.bootstrap import setup_runtime_env
-
-setup_runtime_env()
-
 import torch
 
+from ricc.bootstrap import setup_runtime_env
 from ricc.errors import AdapterLoadError
 from ricc.observability import record_classified_ml_error
 
@@ -150,7 +147,7 @@ def interactive_chat_session(
     print("Russian IT Community LLM & RAG Interactive Terminal")
     print(f"Base Model: {model_name}")
     print(f"LoRA Adapter: {adapter_id or 'None (Base Model)'}")
-    print(f"RAG Pipeline: {'ON (325.7k knowledge chunks)' if use_rag else 'OFF'}")
+    print(f"RAG Pipeline: {'ON' if use_rag else 'OFF'}")
     print("=" * 70)
     print("Type your technical question (or 'exit' / 'quit' to end session):\n")
 
@@ -241,6 +238,7 @@ def interactive_chat_session(
 
 
 def main() -> None:
+    setup_runtime_env(json_logs=False)
     parser = argparse.ArgumentParser(description="Russian IT Community LLM & RAG Inference CLI")
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID or path")
     parser.add_argument(

@@ -20,7 +20,10 @@ from app_helpers import (
     derive_pii_verdict,
     filter_messages,
     filter_sft,
+    format_metric_int,
+    format_tokens_millions,
     leak_breakdown,
+    load_dashboard_metrics,
     load_json_file,
     load_jsonl_sample,
     load_markdown_file,
@@ -318,6 +321,73 @@ class TestFilterSft(unittest.TestCase):
     def test_no_match(self):
         out = filter_sft(self.df, min_quality=10.0, min_turns=10)
         self.assertEqual(len(out), 0)
+
+
+class TestDashboardMetricsAndFormatting(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.reports = self.root / "reports"
+        self.lora = self.root / "lora_adapters"
+        self.reports.mkdir()
+        self.lora.mkdir()
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_format_helpers_handle_none_and_values(self) -> None:
+        self.assertEqual(format_metric_int(None), "—")
+        self.assertEqual(format_metric_int(2816434), "2,816,434")
+        self.assertEqual(format_metric_int(2816434, sep=" "), "2 816 434")
+        self.assertEqual(format_tokens_millions(None), "—")
+        self.assertEqual(format_tokens_millions(49_090_000), "49.09M")
+
+    def test_load_dashboard_metrics_returns_none_when_reports_absent(self) -> None:
+        metrics = load_dashboard_metrics(self.reports, self.lora)
+        self.assertIsNone(metrics["cleaned_messages"])
+        self.assertIsNone(metrics["sft_dialogues"])
+        self.assertIsNone(metrics["local_adapters"])
+        self.assertEqual(metrics["parquet_details"], {})
+        self.assertEqual(metrics["jsonl_details"], {})
+
+    def test_load_dashboard_metrics_reads_populated_artifacts(self) -> None:
+        (self.reports / "pipeline_execution_stats.json").write_text(
+            json.dumps(
+                {
+                    "cleaned_messages_count": 2816434,
+                    "sft_dialogues_count": 171520,
+                    "rag_chunks_count": 325690,
+                    "dpo_pairs_count": 63948,
+                    "pii_stats": {"community_names_anonymized": 11},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (self.reports / "analytics_summary.json").write_text(
+            json.dumps({"volume_statistics": {"unique_authors": 210890, "total_tokens_approx": 49090000}}),
+            encoding="utf-8",
+        )
+        (self.reports / "validation_results.json").write_text(
+            json.dumps(
+                {
+                    "parquet_files": {"details": {"full_clean_messages.parquet": {"rows": 2816434}}},
+                    "jsonl_files": {"details": {"sft_openai_messages.jsonl": {"valid_lines": 171520}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (self.lora / "registry.json").write_text(json.dumps({"adapter_count": 56}), encoding="utf-8")
+
+        metrics = load_dashboard_metrics(self.reports, self.lora)
+        self.assertEqual(metrics["cleaned_messages"], 2816434)
+        self.assertEqual(metrics["sft_dialogues"], 171520)
+        self.assertEqual(metrics["rag_chunks"], 325690)
+        self.assertEqual(metrics["dpo_pairs"], 63948)
+        self.assertEqual(metrics["unique_authors"], 210890)
+        self.assertEqual(metrics["total_tokens"], 49090000)
+        self.assertEqual(metrics["local_adapters"], 56)
+        self.assertEqual(metrics["community_nodes"], 11)
+        self.assertEqual(metrics["jsonl_details"]["sft_openai_messages.jsonl"]["valid_lines"], 171520)
 
 
 if __name__ == "__main__":

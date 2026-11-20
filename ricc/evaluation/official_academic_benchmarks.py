@@ -11,6 +11,7 @@ GPU re-evaluation due to earlier answer-parsing and column-mapping defects.
 """
 
 import argparse
+import contextlib
 import hashlib
 import json
 import logging
@@ -23,6 +24,13 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
+
+import evaluate
+import numpy as np
+import pandas as pd
+import torch
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ricc.bootstrap import setup_runtime_env
 from ricc.evaluation.academic_benchmark_data import (
@@ -37,22 +45,12 @@ from ricc.evaluation.academic_benchmark_data import (
     HUMANEVAL_TASKS,
     RUMMLU_CS_QUESTIONS,
 )
-
-setup_runtime_env(pytorch_alloc_conf=True)
-
-import evaluate
-import numpy as np
-import pandas as pd
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from ricc.evaluation.statistical_power import mcnemar_test, wilson_interval
 from ricc.ml_runtime import set_deterministic_seed
 from ricc.observability import record_classified_ml_error
 from ricc.rag.rag_pipeline import LocalRAGPipeline
+from ricc.settings import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("AcademicBenchmark")
 
 # ==========================================
@@ -217,18 +215,14 @@ def _run_in_isolated_process(code_str: str, timeout_sec: float = 2.0) -> bool:
         proc.communicate(input=code_str, timeout=timeout_sec)
         return proc.returncode == 0
     except subprocess.TimeoutExpired:
-        try:
+        with contextlib.suppress(OSError, ValueError):
             proc.kill()
             proc.communicate()
-        except Exception:
-            pass  # deliberate: process already terminating, nothing to report
         return False
     except Exception as err:
-        try:
+        with contextlib.suppress(OSError, ValueError):
             proc.kill()
             proc.communicate()
-        except Exception:
-            pass  # deliberate: cleanup-of-cleanup; err is logged below
         logger.debug(f"Execution error in isolated process: {err}")
         return False
 
@@ -387,11 +381,9 @@ def _run_in_container(code_str: str, timeout_sec: float = 2.0, image: str = "pyt
         return proc.returncode == 0
     except subprocess.TimeoutExpired:
         if proc is not None:
-            try:
+            with contextlib.suppress(OSError, ValueError):
                 proc.kill()
                 proc.communicate()
-            except Exception:
-                pass  # deliberate: process already terminating, nothing to report
         return False
     except (OSError, subprocess.SubprocessError):
         # Docker is unavailable or failed to start: the container mode
@@ -535,7 +527,7 @@ def run_official_academic_benchmarks(
         )
 
     rouge = evaluate.load("rouge")
-    rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
+    rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
 
     tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
     if tokenizer.pad_token is None:
@@ -602,7 +594,7 @@ def run_official_academic_benchmarks(
         with lora_model.disable_adapter():
             return generate_fn(lora_model, prompt_str, max_tokens=max_tokens)
 
-    raw_outputs_path = Path("reports/academic_benchmarks_raw_outputs.jsonl")
+    raw_outputs_path = settings.REPORTS_DIR / "academic_benchmarks_raw_outputs.jsonl"
     raw_outputs_path.parent.mkdir(parents=True, exist_ok=True)
     if raw_outputs_path.exists():
         raw_outputs_path.unlink()
@@ -840,7 +832,7 @@ def run_official_academic_benchmarks(
     # flatters the LoRA variant. The JSONL corpus is read from the end so the
     # same tail the trainer reserved is the tail the PPL is computed on.
     holdout_tail = max(0, int(holdout_tail))
-    dataset_jsonl = Path("dataset_output/jsonl/sft_openai_messages.jsonl")
+    dataset_jsonl = settings.JSONL_OUTPUT_DIR / "sft_openai_messages.jsonl"
     tail_rows: list[dict[str, Any]] = []
     if dataset_jsonl.exists() and holdout_tail > 0:
         from collections import deque
@@ -975,7 +967,7 @@ def run_official_academic_benchmarks(
     # -------------------------------------------------------------
     # 5. GENERATE SCIENTIFIC REPORT
     # -------------------------------------------------------------
-    output_md = Path("reports/OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md")
+    output_md = settings.REPORTS_DIR / "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md"
     report_lines = [
         "# Отчет об академической оценке (HumanEval Sample, RuMMLU Sample, PPL)",
         f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **GPU:** `{torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}`",
@@ -1175,7 +1167,7 @@ def run_official_academic_benchmarks(
         "status": BENCHMARK_STATUS,
         "retraction_reason": RETRACTION_REASON if BENCHMARK_STATUS == "RETRACTED" else None,
     }
-    output_json = Path("reports/academic_scientific_benchmarks_matrix.json")
+    output_json = settings.REPORTS_DIR / "academic_scientific_benchmarks_matrix.json"
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(matrix_res, f, ensure_ascii=False, indent=2)
 
@@ -1184,6 +1176,8 @@ def run_official_academic_benchmarks(
 
 
 def main() -> None:
+    setup_runtime_env(pytorch_alloc_conf=True)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")

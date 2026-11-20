@@ -2,6 +2,7 @@
 Statistical and NLP metrics calculations for conversational datasets.
 """
 
+import logging
 import math
 import re
 import statistics
@@ -14,10 +15,13 @@ from tiktoken import Encoding
 
 from ricc.settings import settings
 
+logger = logging.getLogger(__name__)
+
 # Try to initialize tiktoken cl100k_base for precise BPE token metrics
 try:
     TIKTOKEN_ENC: Encoding | None = tiktoken.get_encoding("cl100k_base")
-except Exception:
+except Exception as exc:
+    logger.debug("tiktoken cl100k_base unavailable, using heuristic token count: %s", exc)
     TIKTOKEN_ENC = None
 
 
@@ -28,8 +32,8 @@ def count_tokens(text: str) -> int:
     if TIKTOKEN_ENC is not None:
         try:
             return len(TIKTOKEN_ENC.encode(text))
-        except Exception:
-            pass  # deliberate: token-estimate fallback to chars/4 heuristic
+        except Exception as exc:
+            logger.debug("tiktoken encode failed, falling back to word multiplier: %s", exc)
     return max(1, int(len(text.split()) * 1.35))
 
 

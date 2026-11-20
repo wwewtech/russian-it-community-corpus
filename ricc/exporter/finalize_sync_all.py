@@ -23,13 +23,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-from ricc.bootstrap import setup_runtime_env
-
-setup_runtime_env()
-
 import huggingface_hub
 
+from ricc.bootstrap import setup_runtime_env
 from ricc.lora.policy_gate import evaluate_compliance, is_publishable
+from ricc.settings import settings
 
 logger = logging.getLogger("FinalizeSync")
 
@@ -332,6 +330,7 @@ def upload_missing_adapters(
 
 
 def main() -> None:
+    setup_runtime_env()
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -368,11 +367,11 @@ def main() -> None:
             adapters_dir,
         )
         return
-    Path("reports").mkdir(parents=True, exist_ok=True)
-    with open("reports/lora_zoo_index.json", "w", encoding="utf-8") as f:
+    settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(settings.REPORTS_DIR / "lora_zoo_index.json", "w", encoding="utf-8") as f:
         json.dump(zoo_index, f, ensure_ascii=False, indent=2)
     md = build_lora_zoo_markdown(zoo_index)
-    with open("reports/LORA_MODEL_ZOO.md", "w", encoding="utf-8") as f:
+    with open(settings.REPORTS_DIR / "LORA_MODEL_ZOO.md", "w", encoding="utf-8") as f:
         f.write(md)
     logger.info("Generated LORA_MODEL_ZOO.md with %d adapters!", len(zoo_index))
 

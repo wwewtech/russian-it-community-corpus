@@ -23,6 +23,7 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import random
 import time
@@ -136,14 +137,12 @@ def set_deterministic_seed(seed: int = 42) -> dict[str, Any]:
 
     # cuDNN determinism must be set BEFORE the first convolution, and it
     # has to be requested explicitly: transformers.set_seed does not do it.
-    try:
+    with contextlib.suppress(ImportError, AttributeError):
         import torch
 
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         applied["cudnn_deterministic"] = True
-    except (ImportError, AttributeError):
-        pass
 
     try:
         from transformers import set_seed as hf_set_seed
@@ -156,20 +155,16 @@ def set_deterministic_seed(seed: int = 42) -> dict[str, Any]:
 
     random.seed(seed)
     applied["via"] = "random+numpy+torch fallback"
-    try:
+    with contextlib.suppress(ImportError):
         import numpy as np
 
         np.random.seed(seed)
-    except ImportError:
-        pass
-    try:
+    with contextlib.suppress(ImportError):
         import torch
 
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
-    except ImportError:
-        pass
     return applied
 
 

@@ -13,21 +13,18 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
-from ricc.bootstrap import setup_runtime_env
-
-setup_runtime_env()
-
 import numpy as np
 import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from ricc.bootstrap import setup_runtime_env
 from ricc.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
 from ricc.ml_runtime import set_deterministic_seed
 from ricc.observability import record_classified_ml_error
 from ricc.rag.rag_pipeline import LocalRAGPipeline
+from ricc.settings import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("EnterpriseShowcase")
 
 SYSTEM_PROMPT = """Ты — опытный инженер-разработчик и архитектор распределённых систем.
@@ -221,7 +218,7 @@ def run_sota_showcase(
     set_deterministic_seed(seed)
 
     # 1. Load RAG KB
-    rag_kb = LocalRAGPipeline(Path("dataset_output/parquet/rag_knowledge_base.parquet"))
+    rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
 
     # 2. Load Model & Tokenizer
     tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
@@ -400,11 +397,12 @@ def run_sota_showcase(
             ]
         )
 
-    output_path = Path("reports/SOTA_EXPERT_SHOWCASE_DIFFS.md")
+    output_path = settings.REPORTS_DIR / "SOTA_EXPERT_SHOWCASE_DIFFS.md"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))
 
-    json_path = Path("reports/sota_expert_matrix.json")
+    json_path = settings.REPORTS_DIR / "sota_expert_matrix.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(
             {
@@ -421,6 +419,8 @@ def run_sota_showcase(
 
 
 def main() -> None:
+    setup_runtime_env()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--adapter", type=str, default="qwen2.5_1.5b_instruct")
