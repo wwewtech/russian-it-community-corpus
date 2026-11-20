@@ -22,13 +22,11 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import torch
 
 from ricc.bootstrap import setup_runtime_env
-from ricc.errors import AdapterLoadError
-from ricc.observability import record_classified_ml_error
 
 # Heavy third-party imports are deferred to interactive_chat_session() so
 # that test modules (which only need the pure helpers) do not require
@@ -138,10 +136,11 @@ def interactive_chat_session(
     """
     # Deferred imports keep test collection light and let the pure
     # helpers above be tested in CPU-only environments.
-    from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
+    from transformers import TextStreamer
 
+    from ricc.ml_runtime import attach_lora_adapter, load_tokenizer_and_base_model
     from ricc.rag.rag_pipeline import LocalRAGPipeline
+    from ricc.settings import settings
 
     print("=" * 70)
     print("Russian IT Community LLM & RAG Interactive Terminal")
@@ -151,12 +150,10 @@ def interactive_chat_session(
     print("=" * 70)
     print("Type your technical question (or 'exit' / 'quit' to end session):\n")
 
-    root_dir = Path(__file__).resolve().parent.parent
-
     # 1. Load RAG
     rag_kb = None
     if use_rag:
-        rag_path = root_dir / "dataset_output" / "parquet" / "rag_knowledge_base.parquet"
+        rag_path = settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet"
         if rag_path.exists():
             print("Initializing Local RAG Knowledge Base...")
             rag_kb = LocalRAGPipeline(rag_path)
@@ -166,35 +163,19 @@ def interactive_chat_session(
 
     # 2. Load Model & Tokenizer
     print("Loading model and tokenizer...")
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
+    tokenizer, model = load_tokenizer_and_base_model(model_name)
 
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map="auto" if torch.cuda.is_available() else None,
-        trust_remote_code=True,
-    )
-
-    # 3. Attach LoRA Adapter. Loading a corrupted adapter must NOT be
-    # silently swallowed — that masks weight corruption / base-model
-    # mismatch. Raise AdapterLoadError (P3 taxonomy) so the caller
-    # (Streamlit button, CLI) can show a real error instead of running
-    # the base model and printing a misleading "Attached".
+    # 3. Attach LoRA Adapter (fail fast with AdapterLoadError — never fall back).
     if adapter_id:
-        adapter_path = validate_adapter_path(adapter_id, root_dir / "lora_adapters")
-        try:
-            model = PeftModel.from_pretrained(model, str(adapter_path))
-            print(f"Attached LoRA Adapter from {adapter_path}")
-        except Exception as e:
-            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
-            raise AdapterLoadError(
-                f"Failed to attach LoRA adapter from {adapter_path}: {typed}",
-                adapter_path=str(adapter_path),
-                base_model=model_name,
-            ) from e
+        adapter_path = validate_adapter_path(adapter_id, settings.BASE_DIR / "lora_adapters")
+        model = attach_lora_adapter(
+            model,
+            adapter_path,
+            model_name=model_name,
+            adapter_id=adapter_id,
+            verify_files=False,
+        )
+        print(f"Attached LoRA Adapter from {adapter_path}")
 
     streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 

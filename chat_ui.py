@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 ADAPTERS_DIRNAME = "lora_adapters"
 
@@ -119,52 +119,33 @@ def generate_reply(
     Raises whatever the model stack raises (AdapterLoadError, OOM, ...) —
     the UI shows the error rather than silently answering from the base model.
     """
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
+    from ricc.errors import AdapterLoadError
     from ricc.inference import validate_adapter_path
+    from ricc.ml_runtime import attach_lora_adapter, generate_chat_completion, load_tokenizer_and_base_model
 
-    # This module lives at the repository root, so the adapters tree is
-    # a sibling of the module file (not parent.parent — that would point
-    # outside the checkout when the repo is not one level below the drive).
     root_dir = Path(__file__).resolve().parent
     if not (root_dir / ADAPTERS_DIRNAME).is_dir():
-        # Fallback for a packaged/installed layout: try the working directory.
         root_dir = Path.cwd()
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
 
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map="auto" if torch.cuda.is_available() else None,
-        trust_remote_code=True,
-    )
-
+    tokenizer, model = load_tokenizer_and_base_model(model_name)
     if adapter_id:
-        from peft import PeftModel
-
         adapter_path = validate_adapter_path(adapter_id, root_dir / ADAPTERS_DIRNAME)
-        model = PeftModel.from_pretrained(model, str(adapter_path))
+        try:
+            model = attach_lora_adapter(model, adapter_path, model_name=model_name, adapter_id=adapter_id)
+        except AdapterLoadError as exc:
+            raise RuntimeError(str(exc)) from exc
     model.eval()
 
     full_history = [*history, {"role": "user", "content": query}]
     messages = build_chat_history_messages(full_history)
-
-    prompt_text = str(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True))
-    inputs = tokenizer(prompt_text, return_tensors="pt")
-    if torch.cuda.is_available():
-        inputs = {k: v.to("cuda") for k, v in inputs.items()}
-    with torch.no_grad():
-        output_ids = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
-            pad_token_id=tokenizer.pad_token_id,
-        )
-    reply: str = tokenizer.decode(output_ids[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True)
-    return reply.strip()
+    reply, _elapsed, _tps = generate_chat_completion(
+        model,
+        tokenizer,
+        messages,
+        max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        do_sample=True,
+        top_p=top_p,
+        max_input_length=None,
+    )
+    return reply

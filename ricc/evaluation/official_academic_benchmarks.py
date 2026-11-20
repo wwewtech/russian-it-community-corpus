@@ -21,6 +21,8 @@ import re
 import subprocess  # nosec B404
 import sys
 import time
+from collections import deque
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -29,10 +31,9 @@ import evaluate
 import numpy as np
 import pandas as pd
 import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ricc.bootstrap import setup_runtime_env
+from ricc.errors import AdapterLoadError
 from ricc.evaluation.academic_benchmark_data import (
     _ANSWER_MARKER_PATTERN,  # noqa: F401
     _BRACKETED_LETTER_RE,
@@ -46,8 +47,12 @@ from ricc.evaluation.academic_benchmark_data import (
     RUMMLU_CS_QUESTIONS,
 )
 from ricc.evaluation.statistical_power import mcnemar_test, wilson_interval
-from ricc.ml_runtime import set_deterministic_seed
-from ricc.observability import record_classified_ml_error
+from ricc.ml_runtime import (
+    attach_lora_adapter,
+    generate_chat_completion,
+    load_tokenizer_and_base_model,
+    set_deterministic_seed,
+)
 from ricc.rag.rag_pipeline import LocalRAGPipeline
 from ricc.settings import settings
 
@@ -498,345 +503,11 @@ def _paired_significance(
     return results
 
 
-def run_official_academic_benchmarks(
-    model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
-    adapter_id: str = "qwen2.5_1.5b_instruct",
-    seed: int = 42,
-    isolation_mode: str = "container",
-    holdout_tail: int = 1000,
-) -> dict[str, Any]:
-    """Run the academic benchmark suite.
-
-    ``isolation_mode`` is forwarded to ``execute_humaneval_code`` and
-    defaults to ``"container"`` — the only mode that actually contains
-    the untrusted model-generated code. With ``"process"`` the HumanEval
-    tasks are executed WITHOUT a security boundary (see
-    ``execute_humaneval_code``); that opt-in must be deliberate.
-
-    ``holdout_tail`` must match the ``--holdout-tail`` value the adapter
-    was trained with: the perplexity sample is drawn from exactly that
-    held-out tail of the SFT JSONL, never from the training corpus.
-    """
-    logger.info(f"=== Running Official Academic Scientific Benchmarks for {model_name} ===")
-    set_deterministic_seed(seed)
-    if isolation_mode != "container" and not _docker_available():
-        logger.warning(
-            "HumanEval tasks will run WITHOUT container isolation and WITHOUT Docker "
-            "available: the model-generated code is NOT contained and can reach the "
-            "host filesystem and network."
-        )
-
-    rouge = evaluate.load("rouge")
-    rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
-
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
-
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map="auto" if torch.cuda.is_available() else None,
-        trust_remote_code=True,
-    )
-
-    # Attach LoRA
-    adapter_path = Path(f"lora_adapters/{adapter_id}")
-    lora_model: Any = None
-    if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
-        try:
-            lora_model = cast(Any, PeftModel).from_pretrained(base_model, str(adapter_path))
-            logger.info(f"Attached LoRA Adapter from {adapter_path}")
-        except Exception as e:
-            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
-            logger.warning(f"Could not load LoRA: {typed}")
-
-    if lora_model is None:
-        raise RuntimeError(
-            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
-            "Refusing to run comparative benchmarks: previously this branch silently copied "
-            "base-model results into the LoRA/hybrid columns, producing identical fake metrics."
-        )
-
-    def generate_fn(model: Any, prompt_str: str, max_tokens: int = 256) -> str:
-        messages = [{"role": "user", "content": prompt_str}]
-        try:
-            inp = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        except Exception:
-            inp = prompt_str
-
-        inputs = tokenizer(inp, return_tensors="pt", max_length=512, truncation=True)
-        if torch.cuda.is_available():
-            inputs = {k: v.to("cuda") for k, v in inputs.items()}
-
-        with torch.no_grad():
-            out = model.generate(
-                **inputs,
-                max_new_tokens=max_tokens,
-                temperature=0.2,  # Standard low temperature for academic coding & QA benchmarks
-                do_sample=False,  # Greedy decoding for deterministic benchmark reproduction
-                pad_token_id=tokenizer.pad_token_id,
-            )
-        text: str = cast(str, tokenizer.decode(out[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True))
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        return text.strip()
-
-    def base_generate(prompt_str: str, max_tokens: int = 256) -> str:
-        """Generate with the LoRA adapter DISABLED -> true base-model behaviour.
-
-        Fixes the in-place-injection bug: ``PeftModel.from_pretrained(base, ...)``
-        wraps the *same* model object, so without explicitly disabling the adapter
-        the \"Base\" column silently measured the adapter-active model (identical to
-        LoRA byte-for-byte). See _tmp_probe2.py / _probe2_results.json.
-        """
-        with lora_model.disable_adapter():
-            return generate_fn(lora_model, prompt_str, max_tokens=max_tokens)
-
-    raw_outputs_path = settings.REPORTS_DIR / "academic_benchmarks_raw_outputs.jsonl"
-    raw_outputs_path.parent.mkdir(parents=True, exist_ok=True)
-    if raw_outputs_path.exists():
-        raw_outputs_path.unlink()
-
-    def record_raw_output(item: dict[str, Any]) -> None:
-        with open(raw_outputs_path, "a", encoding="utf-8") as f_raw:
-            f_raw.write(json.dumps(item, ensure_ascii=False) + "\n")
-
-    # -------------------------------------------------------------
-    # 1. EVALUATION ON OPENAI HUMANEVAL (pass@1 Deterministic Code Execution)
-    # -------------------------------------------------------------
-    logger.info("Running Benchmark 1: OpenAI HumanEval Code Execution (pass@1)...")
-    humaneval_results = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0, "total": len(HUMANEVAL_TASKS)}
-    task_exec_records = []
-    # Per-task outcomes, so the variants can be compared with a PAIRED
-    # test (McNemar) instead of two independent proportions. The variants
-    # run on the same tasks, so the pairing is exact.
-    humaneval_outcomes: dict[str, dict[str, bool]] = {"base": {}, "rag": {}, "lora": {}, "hybrid": {}}
-
-    for task in HUMANEVAL_TASKS:
-        # Base (adapter disabled)
-        base_code = base_generate(task["prompt"], max_tokens=150)
-        b_ok = execute_humaneval_code(base_code, task, isolation_mode=isolation_mode)
-        humaneval_outcomes["base"][task["task_id"]] = b_ok
-        if b_ok:
-            humaneval_results["base"] += 1
-        record_raw_output(
-            {
-                "benchmark": "HumanEval",
-                "task_id": task["task_id"],
-                "entry_point": task["entry_point"],
-                "variant": "base",
-                "prompt": task["prompt"],
-                "raw_output": base_code,
-                "passed": b_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        # RAG (adapter disabled, base + context)
-        rag_hits = rag_kb.search(task["prompt"], top_k=1)
-        rag_ctx = rag_hits[0].get("content", "")[:150] if rag_hits else ""
-        rag_code = base_generate(f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
-        r_ok = execute_humaneval_code(rag_code, task, isolation_mode=isolation_mode)
-        humaneval_outcomes["rag"][task["task_id"]] = r_ok
-        if r_ok:
-            humaneval_results["rag"] += 1
-        record_raw_output(
-            {
-                "benchmark": "HumanEval",
-                "task_id": task["task_id"],
-                "entry_point": task["entry_point"],
-                "variant": "rag",
-                "prompt": f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}",
-                "raw_output": rag_code,
-                "passed": r_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        # LoRA & Hybrid (lora_model is guaranteed non-None by the fail-fast check above)
-        lora_code = generate_fn(lora_model, task["prompt"], max_tokens=150)
-        l_ok = execute_humaneval_code(lora_code, task, isolation_mode=isolation_mode)
-        humaneval_outcomes["lora"][task["task_id"]] = l_ok
-        if l_ok:
-            humaneval_results["lora"] += 1
-        record_raw_output(
-            {
-                "benchmark": "HumanEval",
-                "task_id": task["task_id"],
-                "entry_point": task["entry_point"],
-                "variant": "lora",
-                "prompt": task["prompt"],
-                "raw_output": lora_code,
-                "passed": l_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        hyb_code = generate_fn(lora_model, f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}", max_tokens=150)
-        h_ok = execute_humaneval_code(hyb_code, task, isolation_mode=isolation_mode)
-        humaneval_outcomes["hybrid"][task["task_id"]] = h_ok
-        if h_ok:
-            humaneval_results["hybrid"] += 1
-        record_raw_output(
-            {
-                "benchmark": "HumanEval",
-                "task_id": task["task_id"],
-                "entry_point": task["entry_point"],
-                "variant": "hybrid",
-                "prompt": f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}",
-                "raw_output": hyb_code,
-                "passed": h_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        task_exec_records.append(
-            {
-                "task_id": task["task_id"],
-                "entry_point": task["entry_point"],
-                "base_ok": b_ok,
-                "lora_ok": l_ok,
-                "hybrid_ok": h_ok,
-            }
-        )
-
-    pass_at_1 = {k: round((v / len(HUMANEVAL_TASKS)) * 100.0, 1) for k, v in humaneval_results.items() if k != "total"}
-    humaneval_ci = {
-        k: wilson_interval(humaneval_results[k], len(HUMANEVAL_TASKS), 0.95) for k in ("base", "rag", "lora", "hybrid")
-    }
-    # Paired significance (McNemar) — see _paired_significance.
-    humaneval_significance = _paired_significance(humaneval_outcomes)
-
-    # -------------------------------------------------------------
-    # 2. EVALUATION ON RUMMLU CS (Exact Multiple-Choice Accuracy)
-    # -------------------------------------------------------------
-    logger.info("Running Benchmark 2: Sber AI / HSE RuMMLU CS Accuracy...")
-    rummlu_results = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0, "total": len(RUMMLU_CS_QUESTIONS)}
-    # Per-question outcomes, so the variants can be compared with a PAIRED
-    # test (McNemar) instead of two independent proportions. The variants
-    # run on the same questions, so the pairing is exact.
-    rummlu_outcomes: dict[str, dict[str, bool]] = {"base": {}, "rag": {}, "lora": {}, "hybrid": {}}
-
-    for q in RUMMLU_CS_QUESTIONS:
-        prompt_q = (
-            f"Вопрос: {q['question']}\nВарианты ответа:\n"
-            + "\n".join(q["options"])
-            + "\nУкажи только одну букву правильного ответа (A, B, C или D):"
-        )
-
-        # Base (adapter disabled)
-        b_ans = base_generate(prompt_q, max_tokens=10)
-        b_ok = parse_mc_answer(b_ans) == q["answer"]
-        rummlu_outcomes["base"][q["question"]] = b_ok
-        if b_ok:
-            rummlu_results["base"] += 1
-        record_raw_output(
-            {
-                "benchmark": "RuMMLU_CS",
-                "question": q["question"],
-                "variant": "base",
-                "prompt": prompt_q,
-                "raw_output": b_ans,
-                "parsed_answer": parse_mc_answer(b_ans),
-                "expected_answer": q["answer"],
-                "passed": b_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        # RAG (adapter disabled, base + context)
-        rag_hits = rag_kb.search(q["question"], top_k=1)
-        rag_ctx = rag_hits[0].get("content", "")[:200] if rag_hits else ""
-        rag_prompt = f"Контекст:\n{rag_ctx}\n\n{prompt_q}"
-        r_ans = base_generate(rag_prompt, max_tokens=10)
-        r_ok = parse_mc_answer(r_ans) == q["answer"]
-        rummlu_outcomes["rag"][q["question"]] = r_ok
-        if r_ok:
-            rummlu_results["rag"] += 1
-        record_raw_output(
-            {
-                "benchmark": "RuMMLU_CS",
-                "question": q["question"],
-                "variant": "rag",
-                "prompt": rag_prompt,
-                "raw_output": r_ans,
-                "parsed_answer": parse_mc_answer(r_ans),
-                "expected_answer": q["answer"],
-                "passed": r_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        # LoRA & Hybrid
-        l_ans = generate_fn(lora_model, prompt_q, max_tokens=10)
-        l_ok = parse_mc_answer(l_ans) == q["answer"]
-        rummlu_outcomes["lora"][q["question"]] = l_ok
-        if l_ok:
-            rummlu_results["lora"] += 1
-        record_raw_output(
-            {
-                "benchmark": "RuMMLU_CS",
-                "question": q["question"],
-                "variant": "lora",
-                "prompt": prompt_q,
-                "raw_output": l_ans,
-                "parsed_answer": parse_mc_answer(l_ans),
-                "expected_answer": q["answer"],
-                "passed": l_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-        h_ans = generate_fn(lora_model, rag_prompt, max_tokens=10)
-        h_ok = parse_mc_answer(h_ans) == q["answer"]
-        rummlu_outcomes["hybrid"][q["question"]] = h_ok
-        if h_ok:
-            rummlu_results["hybrid"] += 1
-        record_raw_output(
-            {
-                "benchmark": "RuMMLU_CS",
-                "question": q["question"],
-                "variant": "hybrid",
-                "prompt": rag_prompt,
-                "raw_output": h_ans,
-                "parsed_answer": parse_mc_answer(h_ans),
-                "expected_answer": q["answer"],
-                "passed": h_ok,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            }
-        )
-
-    rummlu_acc = {
-        k: round((v / len(RUMMLU_CS_QUESTIONS)) * 100.0, 1) for k, v in rummlu_results.items() if k != "total"
-    }
-    rummlu_ci = {
-        k: wilson_interval(rummlu_results[k], len(RUMMLU_CS_QUESTIONS), 0.95) for k in ("base", "rag", "lora", "hybrid")
-    }
-
-    # Paired significance (McNemar). Every variant runs on the SAME
-    # questions, so the outcomes are paired and McNemar's exact test is
-    # the right tool. The report previously asserted an improvement
-    # whose confidence intervals OVERLAP; the verdicts are derived from
-    # the measured outcomes (see the significance block below).
-    rummlu_significance = _paired_significance(rummlu_outcomes)
-
-    # -------------------------------------------------------------
-    # 3. MATHEMATICAL INFORMATION-THEORETIC PERPLEXITY (PPL)
-    # -------------------------------------------------------------
-    logger.info("Running Benchmark 3: Mathematical Perplexity (PPL) on Held-Out Test Set...")
-    # The sample MUST come from the held-out tail (the last CANONICAL holdout
-    # dialogues, excluded from training by batch_train_zoo --holdout-tail),
-    # not from the SFT corpus the adapter was trained on: PPL over seen text
-    # flatters the LoRA variant. The JSONL corpus is read from the end so the
-    # same tail the trainer reserved is the tail the PPL is computed on.
+def _load_heldout_ppl_texts(dataset_jsonl: Path, holdout_tail: int, max_texts: int = 30) -> tuple[list[str], str]:
+    """Load held-out tail dialogues for PPL, falling back to SFT parquet if unavailable."""
     holdout_tail = max(0, int(holdout_tail))
-    dataset_jsonl = settings.JSONL_OUTPUT_DIR / "sft_openai_messages.jsonl"
     tail_rows: list[dict[str, Any]] = []
     if dataset_jsonl.exists() and holdout_tail > 0:
-        from collections import deque
-
         ring: deque[dict[str, Any]] = deque(maxlen=holdout_tail)
         with dataset_jsonl.open(encoding="utf-8") as fh:
             for line in fh:
@@ -849,23 +520,19 @@ def run_official_academic_benchmarks(
         tail_rows = list(ring)
         logger.info("PPL sample source: held-out tail of %s (last %d dialogues)", dataset_jsonl, len(tail_rows))
     else:
-        # No holdout was reserved (or the JSONL is missing): fall back to the
-        # parquet corpus, but say so — such PPL numbers train-see the adapter.
         logger.warning(
             "Held-out tail unavailable (file=%s, holdout_tail=%d); "
             "falling back to the SFT parquet — perplexity will be measured on TRAINING-seen text",
             dataset_jsonl,
             holdout_tail,
         )
-    # NOTE: the SFT schema stores dialogues in a `messages` column of
-    # role/content dicts. The previous implementation read non-existent
-    # `query`/`response` columns and computed PPL on the constant string
-    # "None None", which made base and LoRA perplexities identical.
-    test_texts: list[str] = []
-    source_rows = tail_rows if tail_rows else []
+
+    source_rows = tail_rows
     if not source_rows:
-        test_df = pd.read_parquet("dataset_output/parquet/sft_dialogues.parquet")
+        test_df = pd.read_parquet(settings.PARQUET_OUTPUT_DIR / "sft_dialogues.parquet")
         source_rows = cast(list[dict[str, Any]], test_df.to_dict("records"))
+
+    test_texts: list[str] = []
     for row in source_rows:
         turns = row.get("messages") if isinstance(row, dict) else None
         if turns is None:
@@ -873,104 +540,169 @@ def run_official_academic_benchmarks(
         text = " ".join(f"{t.get('role', '')}: {t.get('content', '')}" for t in turns if isinstance(t, dict))
         if text.strip():
             test_texts.append(text)
-        if len(test_texts) >= 30:
+        if len(test_texts) >= max_texts:
             break
 
-    def compute_ppl(model_to_eval: Any) -> float:
-        nlls = []
-        for text in test_texts:
-            enc = tokenizer(text, return_tensors="pt", max_length=256, truncation=True)
-            if torch.cuda.is_available():
-                enc = {k: v.to("cuda") for k, v in enc.items()}
-            with torch.no_grad():
-                outputs = model_to_eval(**enc, labels=enc["input_ids"])
-                neg_log_likelihood = outputs.loss
-                if not torch.isnan(neg_log_likelihood):
-                    nlls.append(neg_log_likelihood.item())
-        mean_nll = float(np.mean(nlls)) if nlls else 2.5
-        return round(float(math.exp(mean_nll)), 2)
-
-    def compute_base_ppl() -> float:
-        """PPL on the true base model (adapter disabled, see base_generate)."""
-        with lora_model.disable_adapter():
-            return compute_ppl(lora_model)
-
-    base_ppl = compute_base_ppl()
-    lora_ppl = compute_ppl(lora_model) if lora_model else base_ppl
-    ppl_sample_source = (
+    sample_source = (
         f"held-out tail ({len(tail_rows)} dialogues of {dataset_jsonl})"
         if tail_rows
         else "sft_dialogues.parquet (TRAINING-SEEN fallback — not held-out)"
     )
-    record_raw_output(
-        {
-            "benchmark": "Perplexity",
-            "variant": "base",
-            "ppl": base_ppl,
-            "sample_size": len(test_texts),
-            "sample_source": ppl_sample_source,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-    )
-    record_raw_output(
-        {
-            "benchmark": "Perplexity",
-            "variant": "lora",
-            "ppl": lora_ppl,
-            "sample_size": len(test_texts),
-            "sample_source": ppl_sample_source,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-    )
+    return test_texts, sample_source
 
-    # -------------------------------------------------------------
-    # 4. ROUGE ACADEMIC TEXT SIMILARITY
-    # -------------------------------------------------------------
-    logger.info("Running Benchmark 4: ROUGE-1/2/L Evaluation...")
-    ref_answers = [
-        "Для решения проблемы рассинхронизации iptables в Kubernetes настраивается preStop хук со sleep 15 и readinessProbe для плавного завершения соединений без 502 Bad Gateway.",
-        "Паттерн Transactional Outbox решает проблему распределенной транзакции путем записи события в локальную таблицу outbox в рамках одной ACID транзакции с последующим чтением через Debezium CDC в Kafka.",
-    ]
-    eval_prompts = [
-        "Как устранить 502 Bad Gateway при rolling update в Kubernetes?",
-        "Как устроен Transactional Outbox Pattern в PostgreSQL и Kafka?",
-    ]
 
-    base_preds = [base_generate(p, max_tokens=80) for p in eval_prompts]
-    lora_preds = [generate_fn(lora_model, p, max_tokens=80) for p in eval_prompts]
+def _compute_perplexity(model_to_eval: Any, tokenizer: Any, texts: list[str]) -> float:
+    """Compute mean exponential NLL over ``texts``."""
+    nlls: list[float] = []
+    for text in texts:
+        enc = tokenizer(text, return_tensors="pt", max_length=256, truncation=True)
+        if torch.cuda.is_available():
+            enc = {k: v.to("cuda") for k, v in enc.items()}
+        with torch.no_grad():
+            outputs = model_to_eval(**enc, labels=enc["input_ids"])
+            neg_log_likelihood = outputs.loss
+            if not torch.isnan(neg_log_likelihood):
+                nlls.append(float(neg_log_likelihood.item()))
+    mean_nll = float(np.mean(nlls)) if nlls else 2.5
+    return round(float(math.exp(mean_nll)), 2)
 
-    base_rouge = rouge.compute(predictions=base_preds, references=ref_answers)
-    lora_rouge = rouge.compute(predictions=lora_preds, references=ref_answers)
-    record_raw_output(
-        {
-            "benchmark": "ROUGE",
-            "variant": "base",
-            "scores": base_rouge,
-            "prompts": eval_prompts,
-            "predictions": base_preds,
-            "references": ref_answers,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-    )
-    record_raw_output(
-        {
-            "benchmark": "ROUGE",
-            "variant": "lora",
-            "scores": lora_rouge,
-            "prompts": eval_prompts,
-            "predictions": lora_preds,
-            "references": ref_answers,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-    )
 
-    # -------------------------------------------------------------
-    # 5. GENERATE SCIENTIFIC REPORT
-    # -------------------------------------------------------------
-    output_md = settings.REPORTS_DIR / "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md"
+def _evaluate_humaneval_suite(
+    base_generate: Callable[[str, int], str],
+    lora_generate: Callable[[str, int], str],
+    rag_kb: LocalRAGPipeline,
+    isolation_mode: str,
+    record_raw_output: Callable[[dict[str, Any]], None],
+) -> tuple[dict[str, float], dict[str, tuple[float, float]], dict[str, dict[str, object]], list[dict[str, Any]]]:
+    """Run all 4 HumanEval variants and return pass@1, Wilson CIs, McNemar stats, and per-task records."""
+    logger.info("Running Benchmark 1: OpenAI HumanEval Code Execution (pass@1)...")
+    counts = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0}
+    outcomes: dict[str, dict[str, bool]] = {"base": {}, "rag": {}, "lora": {}, "hybrid": {}}
+    task_records: list[dict[str, Any]] = []
+
+    for task in HUMANEVAL_TASKS:
+        rag_hits = rag_kb.search(task["prompt"], top_k=1)
+        rag_ctx = rag_hits[0].get("content", "")[:150] if rag_hits else ""
+        rag_prompt = f"Reference code:\n{rag_ctx}\n\nTask:\n{task['prompt']}"
+
+        variant_specs: tuple[tuple[str, Callable[[str, int], str], str], ...] = (
+            ("base", base_generate, task["prompt"]),
+            ("rag", base_generate, rag_prompt),
+            ("lora", lora_generate, task["prompt"]),
+            ("hybrid", lora_generate, rag_prompt),
+        )
+        per_variant_ok: dict[str, bool] = {}
+        for variant, gen_fn, prompt in variant_specs:
+            code = gen_fn(prompt, 150)
+            ok = execute_humaneval_code(code, task, isolation_mode=isolation_mode)
+            outcomes[variant][task["task_id"]] = ok
+            per_variant_ok[variant] = ok
+            if ok:
+                counts[variant] += 1
+            record_raw_output(
+                {
+                    "benchmark": "HumanEval",
+                    "task_id": task["task_id"],
+                    "entry_point": task["entry_point"],
+                    "variant": variant,
+                    "prompt": prompt,
+                    "raw_output": code,
+                    "passed": ok,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
+        task_records.append(
+            {
+                "task_id": task["task_id"],
+                "entry_point": task["entry_point"],
+                "base_ok": per_variant_ok["base"],
+                "lora_ok": per_variant_ok["lora"],
+                "hybrid_ok": per_variant_ok["hybrid"],
+            }
+        )
+
+    n = len(HUMANEVAL_TASKS)
+    pass_at_1 = {k: round((v / n) * 100.0, 1) for k, v in counts.items()}
+    ci = {k: wilson_interval(counts[k], n, 0.95) for k in ("base", "rag", "lora", "hybrid")}
+    return pass_at_1, ci, _paired_significance(outcomes), task_records
+
+
+def _evaluate_rummlu_suite(
+    base_generate: Callable[[str, int], str],
+    lora_generate: Callable[[str, int], str],
+    rag_kb: LocalRAGPipeline,
+    record_raw_output: Callable[[dict[str, Any]], None],
+) -> tuple[dict[str, float], dict[str, tuple[float, float]], dict[str, dict[str, object]]]:
+    """Run all 4 RuMMLU CS variants and return accuracy, Wilson CIs, and McNemar stats."""
+    logger.info("Running Benchmark 2: Sber AI / HSE RuMMLU CS Accuracy...")
+    counts = {"base": 0, "rag": 0, "lora": 0, "hybrid": 0}
+    outcomes: dict[str, dict[str, bool]] = {"base": {}, "rag": {}, "lora": {}, "hybrid": {}}
+
+    for q in RUMMLU_CS_QUESTIONS:
+        prompt_q = (
+            f"Вопрос: {q['question']}\nВарианты ответа:\n"
+            + "\n".join(q["options"])
+            + "\nУкажи только одну букву правильного ответа (A, B, C или D):"
+        )
+        rag_hits = rag_kb.search(q["question"], top_k=1)
+        rag_ctx = rag_hits[0].get("content", "")[:200] if rag_hits else ""
+        rag_prompt = f"Контекст:\n{rag_ctx}\n\n{prompt_q}"
+
+        variant_specs: tuple[tuple[str, Callable[[str, int], str], str], ...] = (
+            ("base", base_generate, prompt_q),
+            ("rag", base_generate, rag_prompt),
+            ("lora", lora_generate, prompt_q),
+            ("hybrid", lora_generate, rag_prompt),
+        )
+        for variant, gen_fn, prompt in variant_specs:
+            ans = gen_fn(prompt, 10)
+            parsed = parse_mc_answer(ans)
+            ok = parsed == q["answer"]
+            outcomes[variant][q["question"]] = ok
+            if ok:
+                counts[variant] += 1
+            record_raw_output(
+                {
+                    "benchmark": "RuMMLU_CS",
+                    "question": q["question"],
+                    "variant": variant,
+                    "prompt": prompt,
+                    "raw_output": ans,
+                    "parsed_answer": parsed,
+                    "expected_answer": q["answer"],
+                    "passed": ok,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
+
+    n = len(RUMMLU_CS_QUESTIONS)
+    acc = {k: round((v / n) * 100.0, 1) for k, v in counts.items()}
+    ci = {k: wilson_interval(counts[k], n, 0.95) for k in ("base", "rag", "lora", "hybrid")}
+    return acc, ci, _paired_significance(outcomes)
+
+
+def _render_academic_markdown(
+    *,
+    model_name: str,
+    adapter_id: str,
+    isolation_mode: str,
+    pass_at_1: dict[str, float],
+    humaneval_ci: dict[str, tuple[float, float]],
+    rummlu_acc: dict[str, float],
+    rummlu_ci: dict[str, tuple[float, float]],
+    base_ppl: float,
+    lora_ppl: float,
+    base_rouge: dict[str, Any],
+    lora_rouge: dict[str, Any],
+    humaneval_significance: dict[str, dict[str, object]],
+    rummlu_significance: dict[str, dict[str, object]],
+    task_exec_records: list[dict[str, Any]],
+) -> str:
+    """Render the scientific benchmark Markdown report from measured results."""
+    gpu_label = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
     report_lines = [
         "# Отчет об академической оценке (HumanEval Sample, RuMMLU Sample, PPL)",
-        f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **GPU:** `{torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}`",
+        f"**Оценочная модель:** `{model_name}` | **LoRA Адаптер:** `{adapter_id}` | **GPU:** `{gpu_label}`",
         f"**Дата проведения:** `{time.strftime('%Y-%m-%dT%H:%M:%S')}`",
         "",
         "---",
@@ -997,11 +729,6 @@ def run_official_academic_benchmarks(
         f"| **RuMMLU CS Subset ({len(RUMMLU_CS_QUESTIONS)} вопр.)** | `Accuracy (%)` | **{rummlu_acc['base']}%** | **{rummlu_acc['rag']}%** | **{rummlu_acc['lora']}%** | **{rummlu_acc['hybrid']}%** |",
         f"| **HumanEval pass@1 — 95% Wilson CI** | `интервал` | {humaneval_ci['base'][0] * 100:.1f}–{humaneval_ci['base'][1] * 100:.1f}% | {humaneval_ci['rag'][0] * 100:.1f}–{humaneval_ci['rag'][1] * 100:.1f}% | {humaneval_ci['lora'][0] * 100:.1f}–{humaneval_ci['lora'][1] * 100:.1f}% | {humaneval_ci['hybrid'][0] * 100:.1f}–{humaneval_ci['hybrid'][1] * 100:.1f}% |",
         f"| **RuMMLU accuracy — 95% Wilson CI** | `интервал` | {rummlu_ci['base'][0] * 100:.1f}–{rummlu_ci['base'][1] * 100:.1f}% | {rummlu_ci['rag'][0] * 100:.1f}–{rummlu_ci['rag'][1] * 100:.1f}% | {rummlu_ci['lora'][0] * 100:.1f}–{rummlu_ci['lora'][1] * 100:.1f}% | {rummlu_ci['hybrid'][0] * 100:.1f}–{rummlu_ci['hybrid'][1] * 100:.1f}% |",
-        # The Hybrid column is NOT a copy of the LoRA column: hybrid PPL
-        # and ROUGE were never measured (the RAG context is prepended to
-        # the prompt, which changes what a perplexity over the answer
-        # means). Printing the LoRA value in the Hybrid column made the
-        # table claim a measurement that does not exist.
         f"| **Test Set Perplexity** | `PPL (ниже = лучше)` | `{base_ppl}` | N/A | **`{lora_ppl}`** | `н/д` |",
         f"| **ROUGE-1 F1** | `Overlap (%)` | `{round(base_rouge['rouge1'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rouge1'] * 100, 1)}%`** | `н/д` |",
         f"| **ROUGE-L F1** | `LCS Overlap (%)` | `{round(base_rouge['rougeL'] * 100, 1)}%` | N/A | **`{round(lora_rouge['rougeL'] * 100, 1)}%`** | `н/д` |",
@@ -1016,11 +743,7 @@ def run_official_academic_benchmarks(
         "| Бенчмарк | Сравнение | Δ (п.п.) | p-значение | Вывод |",
         "| :--- | :--- | ---: | ---: | :--- |",
     ]
-
-    for bench_name, significance in (
-        ("HumanEval", humaneval_significance),
-        ("RuMMLU_CS", rummlu_significance),
-    ):
+    for bench_name, significance in (("HumanEval", humaneval_significance), ("RuMMLU_CS", rummlu_significance)):
         for res in significance.values():
             delta = float(cast(float, res["difference_in_proportion"])) * 100.0
             verdict = "значимо" if res["significant"] else "**не значимо**"
@@ -1043,7 +766,6 @@ def run_official_academic_benchmarks(
             "| :--- | :--- | :---: | :---: | :---: |",
         ]
     )
-
     if BENCHMARK_STATUS == "RETRACTED":
         report_lines[1:1] = [
             "",
@@ -1052,8 +774,6 @@ def run_official_academic_benchmarks(
             "> A fresh, reviewed GPU re-run is required before any accuracy claims.",
         ]
     else:
-        # Even a freshly computed matrix must state its isolation boundary and
-        # that this is not an independent expert certification of capabilities.
         report_lines[1:1] = [
             "",
             f"> [!NOTE] Fresh GPU rerun with status `{BENCHMARK_STATUS}`. The ORIGINAL",
@@ -1062,36 +782,25 @@ def run_official_academic_benchmarks(
             f"> Isolation: `{isolation_mode}` with network disallowed/read-only root/non-root/container flags,",
             "> known-good / assertion-failure / escape controls verified on this run.",
         ]
-
     for rec in task_exec_records:
         b_str = "PASSED" if rec["base_ok"] else "FAILED"
         l_str = "PASSED" if rec["lora_ok"] else "FAILED"
         h_str = "PASSED" if rec["hybrid_ok"] else "FAILED"
         report_lines.append(f"| `{rec['task_id']}` | `{rec['entry_point']}` | {b_str} | {l_str} | {h_str} |")
 
-    # The conclusions must follow the data. The verdict per comparison is
-    # derived from the McNemar outcomes above; the prose below adapts to
-    # whichever comparisons reached significance in THIS run.
     significant_comparisons = [
         f"{res['variant_a']} vs {res['variant_b']} ({bench}, p={float(cast(float, res['p_value'])):.3f})"
-        for bench, significance in (
-            ("HumanEval", humaneval_significance),
-            ("RuMMLU_CS", rummlu_significance),
-        )
+        for bench, significance in (("HumanEval", humaneval_significance), ("RuMMLU_CS", rummlu_significance))
         for res in significance.values()
         if res["significant"]
     ]
-    if significant_comparisons:
-        significance_line = (
-            "Значимые различия (парный тест Мак-Немера, p < 0.05): " + ", ".join(significant_comparisons) + "."
-        )
-    else:
-        significance_line = (
-            "**Ни одно сравнение вариантов не является статистически значимым** "
-            "(парный тест Мак-Немера, p >= 0.05): при такой выборке варианты статистически "
-            "неразличимы, поэтому утверждать превосходство одного над другим нельзя."
-        )
-
+    significance_line = (
+        "Значимые различия (парный тест Мак-Немера, p < 0.05): " + ", ".join(significant_comparisons) + "."
+        if significant_comparisons
+        else "**Ни одно сравнение вариантов не является статистически значимым** "
+        "(парный тест Мак-Немера, p >= 0.05): при такой выборке варианты статистически "
+        "неразличимы, поэтому утверждать превосходство одного над другим нельзя."
+    )
     report_lines.extend(
         [
             "",
@@ -1110,35 +819,153 @@ def run_official_academic_benchmarks(
             f"4. **{significance_line}**",
         ]
     )
+    return "\n".join(report_lines)
 
-    with open(output_md, "w", encoding="utf-8") as f:
-        f.write("\n".join(report_lines))
 
-    matrix_res = {
+def run_official_academic_benchmarks(
+    model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
+    adapter_id: str = "qwen2.5_1.5b_instruct",
+    seed: int = 42,
+    isolation_mode: str = "container",
+    holdout_tail: int = 1000,
+) -> dict[str, Any]:
+    """Run the academic benchmark suite.
+
+    ``isolation_mode`` is forwarded to ``execute_humaneval_code`` and
+    defaults to ``"container"`` — the only mode that actually contains
+    the untrusted model-generated code.
+
+    ``holdout_tail`` must match the ``--holdout-tail`` value the adapter
+    was trained with: the perplexity sample is drawn from exactly that
+    held-out tail of the SFT JSONL, never from the training corpus.
+    """
+    logger.info(f"=== Running Official Academic Scientific Benchmarks for {model_name} ===")
+    set_deterministic_seed(seed)
+    if isolation_mode != "container" and not _docker_available():
+        logger.warning(
+            "HumanEval tasks will run WITHOUT container isolation and WITHOUT Docker "
+            "available: the model-generated code is NOT contained and can reach the "
+            "host filesystem and network."
+        )
+
+    rouge = evaluate.load("rouge")
+    rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
+    tokenizer, base_model = load_tokenizer_and_base_model(model_name)
+
+    adapter_path = settings.BASE_DIR / "lora_adapters" / adapter_id
+    try:
+        lora_model = attach_lora_adapter(base_model, adapter_path, model_name=model_name, adapter_id=adapter_id)
+    except AdapterLoadError as exc:
+        raise RuntimeError(str(exc)) from exc
+
+    def _gen(prompt_str: str, max_tokens: int) -> str:
+        text, _elapsed, _tps = generate_chat_completion(
+            lora_model,
+            tokenizer,
+            [{"role": "user", "content": prompt_str}],
+            max_new_tokens=max_tokens,
+            temperature=0.2,
+            do_sample=False,
+        )
+        return text
+
+    def _base_gen(prompt_str: str, max_tokens: int) -> str:
+        with lora_model.disable_adapter():
+            return _gen(prompt_str, max_tokens)
+
+    raw_outputs_path = settings.REPORTS_DIR / "academic_benchmarks_raw_outputs.jsonl"
+    raw_outputs_path.parent.mkdir(parents=True, exist_ok=True)
+    if raw_outputs_path.exists():
+        raw_outputs_path.unlink()
+
+    def record_raw_output(item: dict[str, Any]) -> None:
+        with open(raw_outputs_path, "a", encoding="utf-8") as f_raw:
+            f_raw.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+    pass_at_1, humaneval_ci, humaneval_significance, task_exec_records = _evaluate_humaneval_suite(
+        _base_gen, _gen, rag_kb, isolation_mode, record_raw_output
+    )
+    rummlu_acc, rummlu_ci, rummlu_significance = _evaluate_rummlu_suite(_base_gen, _gen, rag_kb, record_raw_output)
+
+    logger.info("Running Benchmark 3: Mathematical Perplexity (PPL) on Held-Out Test Set...")
+    dataset_jsonl = settings.JSONL_OUTPUT_DIR / "sft_openai_messages.jsonl"
+    test_texts, ppl_sample_source = _load_heldout_ppl_texts(dataset_jsonl, holdout_tail)
+    with lora_model.disable_adapter():
+        base_ppl = _compute_perplexity(lora_model, tokenizer, test_texts)
+    lora_ppl = _compute_perplexity(lora_model, tokenizer, test_texts)
+    for variant, ppl_val in (("base", base_ppl), ("lora", lora_ppl)):
+        record_raw_output(
+            {
+                "benchmark": "Perplexity",
+                "variant": variant,
+                "ppl": ppl_val,
+                "sample_size": len(test_texts),
+                "sample_source": ppl_sample_source,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
+
+    logger.info("Running Benchmark 4: ROUGE-1/2/L Evaluation...")
+    ref_answers = [
+        "Для решения проблемы рассинхронизации iptables в Kubernetes настраивается preStop хук со sleep 15 и readinessProbe для плавного завершения соединений без 502 Bad Gateway.",
+        "Паттерн Transactional Outbox решает проблему распределенной транзакции путем записи события в локальную таблицу outbox в рамках одной ACID транзакции с последующим чтением через Debezium CDC в Kafka.",
+    ]
+    eval_prompts = [
+        "Как устранить 502 Bad Gateway при rolling update в Kubernetes?",
+        "Как устроен Transactional Outbox Pattern в PostgreSQL и Kafka?",
+    ]
+    base_preds = [_base_gen(p, 80) for p in eval_prompts]
+    lora_preds = [_gen(p, 80) for p in eval_prompts]
+    base_rouge: dict[str, Any] = cast(dict[str, Any], rouge.compute(predictions=base_preds, references=ref_answers))
+    lora_rouge: dict[str, Any] = cast(dict[str, Any], rouge.compute(predictions=lora_preds, references=ref_answers))
+    for variant, scores, preds in (("base", base_rouge, base_preds), ("lora", lora_rouge, lora_preds)):
+        record_raw_output(
+            {
+                "benchmark": "ROUGE",
+                "variant": variant,
+                "scores": scores,
+                "prompts": eval_prompts,
+                "predictions": preds,
+                "references": ref_answers,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
+
+    output_md = settings.REPORTS_DIR / "OFFICIAL_ACADEMIC_SCIENTIFIC_BENCHMARKS.md"
+    output_md.write_text(
+        _render_academic_markdown(
+            model_name=model_name,
+            adapter_id=adapter_id,
+            isolation_mode=isolation_mode,
+            pass_at_1=pass_at_1,
+            humaneval_ci=humaneval_ci,
+            rummlu_acc=rummlu_acc,
+            rummlu_ci=rummlu_ci,
+            base_ppl=base_ppl,
+            lora_ppl=lora_ppl,
+            base_rouge=base_rouge,
+            lora_rouge=lora_rouge,
+            humaneval_significance=humaneval_significance,
+            rummlu_significance=rummlu_significance,
+            task_exec_records=task_exec_records,
+        ),
+        encoding="utf-8",
+    )
+
+    matrix_res: dict[str, Any] = {
         "humaneval_pass_at_1": pass_at_1,
         "humaneval_pass_at_1_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in humaneval_ci.items()},
         "rummlu_accuracy": rummlu_acc,
         "rummlu_accuracy_ci95": {k: [round(v[0] * 100, 1), round(v[1] * 100, 1)] for k, v in rummlu_ci.items()},
-        # Paired significance: the variants run on the same tasks, so
-        # McNemar's exact test is the right comparison. any_significant is
-        # DERIVED from the measured outcomes (OR over all comparisons) and
-        # must never be hand-edited to a desired verdict.
         "significance": {
             "method": "McNemar exact test on paired per-task outcomes, two-sided, 95%",
             "humaneval": humaneval_significance,
             "rummlu": rummlu_significance,
-            "any_significant": bool(
-                [r for s in (humaneval_significance, rummlu_significance) for r in s.values() if r["significant"]]
+            "any_significant": any(
+                r["significant"] for s in (humaneval_significance, rummlu_significance) for r in s.values()
             ),
         },
-        "sample_sizes": {
-            "humaneval_tasks": len(HUMANEVAL_TASKS),
-            "rummlu_questions": len(RUMMLU_CS_QUESTIONS),
-        },
-        # Only the variants that were actually measured get a key here:
-        # raw logs record Perplexity/ROUGE for base and lora only, and the
-        # consistency tests compare these dicts against the raw logs with
-        # strict equality. A "hybrid": None key would break that contract.
+        "sample_sizes": {"humaneval_tasks": len(HUMANEVAL_TASKS), "rummlu_questions": len(RUMMLU_CS_QUESTIONS)},
         "perplexity": {"base": base_ppl, "lora": lora_ppl},
         "perplexity_sample_source": ppl_sample_source,
         "rouge": {"base": base_rouge, "lora": lora_rouge},
@@ -1148,9 +975,6 @@ def run_official_academic_benchmarks(
             "rather than copied from the LoRA column",
             "hybrid_rouge": "same reason; not measured and not reported",
         },
-        # Provenance: every number above must be recomputable from the raw
-        # generation logs; the sha256 pins the exact log this matrix was
-        # derived from (verified by tests/test_academic_benchmark_matrix_consistency.py).
         "isolation_mode": isolation_mode,
         "raw_outputs_sha256": hashlib.sha256(raw_outputs_path.read_bytes()).hexdigest(),
         "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -1168,9 +992,7 @@ def run_official_academic_benchmarks(
         "retraction_reason": RETRACTION_REASON if BENCHMARK_STATUS == "RETRACTED" else None,
     }
     output_json = settings.REPORTS_DIR / "academic_scientific_benchmarks_matrix.json"
-    with open(output_json, "w", encoding="utf-8") as f:
-        json.dump(matrix_res, f, ensure_ascii=False, indent=2)
-
+    output_json.write_text(json.dumps(matrix_res, ensure_ascii=False, indent=2), encoding="utf-8")
     logger.info(f"Academic Benchmark evaluation finished! Report written to {output_md}")
     return matrix_res
 

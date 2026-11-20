@@ -393,7 +393,12 @@ class Settings(BaseSettings):
                 logger.warning("Invalid domain_taxonomy in %s; using hardcoded defaults: %s", params_path, exc)
 
         # Hardcoded fallback
-        self.domain_taxonomy = {
+        self.domain_taxonomy = self._default_domain_taxonomy()
+
+    @staticmethod
+    def _default_domain_taxonomy() -> dict[str, DomainTaxonomyItem]:
+        """Return default domain taxonomy when params.yaml does not specify one."""
+        return {
             "ai_ml_nlp": DomainTaxonomyItem(
                 title="AI, Machine Learning & NLP",
                 keywords=[

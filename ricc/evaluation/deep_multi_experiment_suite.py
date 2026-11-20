@@ -7,18 +7,20 @@ import argparse
 import json
 import logging
 import time
-from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ricc.bootstrap import setup_runtime_env
+from ricc.errors import AdapterLoadError
 from ricc.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
-from ricc.ml_runtime import set_deterministic_seed
-from ricc.observability import record_classified_ml_error
+from ricc.ml_runtime import (
+    attach_lora_adapter,
+    generate_chat_completion,
+    load_tokenizer_and_base_model,
+    set_deterministic_seed,
+)
 from ricc.rag.rag_pipeline import LocalRAGPipeline
 from ricc.settings import settings
 
@@ -254,17 +256,7 @@ def run_benchmark_experiment_suite(
     rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
 
     # 2. Load Base Model & Tokenizer
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
-
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map="auto" if torch.cuda.is_available() else None,
-        trust_remote_code=True,
-    )
+    tokenizer, base_model = load_tokenizer_and_base_model(model_name)
 
     results: dict[str, Any] = {
         "metadata": {
@@ -282,41 +274,18 @@ def run_benchmark_experiment_suite(
     }
 
     def generate_response(model_to_use: Any, prompt_text: str) -> tuple[str, float, float, float]:
-        """Generate text with bounded token length and memory cleanup."""
-        messages = [{"role": "user", "content": prompt_text}]
-        try:
-            input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        except Exception:
-            input_text = f"[USER]: {prompt_text}\n[ASSISTANT]:"
-
-        inputs = tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True)
-        if torch.cuda.is_available():
-            inputs = {k: v.to("cuda") for k, v in inputs.items()}
-
-        t0 = time.time()
+        """Generate text with bounded token length and peak VRAM tracking."""
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
-
-        with torch.no_grad():
-            output_ids = model_to_use.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                temperature=0.7,
-                do_sample=True,
-                pad_token_id=tokenizer.pad_token_id,
-            )
-
-        elapsed = time.time() - t0
-        generated_tokens = len(output_ids[0]) - len(inputs["input_ids"][0])
-        tok_per_sec = generated_tokens / max(elapsed, 0.001)
-        vram_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0
-        output_text: str = cast(
-            str, tokenizer.decode(output_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True)
+        output_text, elapsed, tok_per_sec = generate_chat_completion(
+            model_to_use,
+            tokenizer,
+            [{"role": "user", "content": prompt_text}],
+            max_new_tokens=max_new_tokens,
+            temperature=0.7,
+            do_sample=True,
         )
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
+        vram_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0.0
         return output_text, elapsed, tok_per_sec, vram_mb
 
     # Step A: Evaluate Base and RAG
@@ -342,28 +311,12 @@ def run_benchmark_experiment_suite(
         r_score = (r_matches / len(kw)) * 100.0
         rag_evals.append({"score": r_score, "latency": r_lat, "tps": r_tps, "vram": r_vram, "out": r_out})
 
-    # Step B: Attach LoRA Adapter and evaluate LoRA and Hybrid
-    adapter_path = Path(f"lora_adapters/{adapter_id}")
-    lora_model = None
-    if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
-        try:
-            lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
-            logger.info(f"Attached LoRA Adapter from {adapter_path}")
-        except Exception as e:
-            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
-            logger.warning(f"Could not attach LoRA adapter {adapter_path}: {typed}")
-
-    # FAIL FAST: without the adapter there is no LoRA measurement. The
-    # previous code fell back to the BASE model's results and wrote them
-    # into the LoRA column, which made the comparison report identical
-    # numbers for base and LoRA — a fabricated benchmark.
-    if lora_model is None:
-        raise RuntimeError(
-            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
-            "Refusing to run the multi-experiment suite: falling back to the base model "
-            "would put the base results into the LoRA column and report a comparison "
-            "that was never measured."
-        )
+    # Step B: Attach LoRA Adapter and evaluate LoRA and Hybrid (fail fast if missing)
+    adapter_path = settings.BASE_DIR / "lora_adapters" / adapter_id
+    try:
+        lora_model = attach_lora_adapter(base_model, adapter_path, model_name=model_name, adapter_id=adapter_id)
+    except AdapterLoadError as exc:
+        raise RuntimeError(f"LoRA adapter '{adapter_id}' could not be loaded: {exc}") from exc
 
     for idx, suite in enumerate(BENCHMARK_SUITES, 1):
         prompt = suite["prompt"]

@@ -42,9 +42,9 @@ sys.path.insert(0, str(REPO_ROOT))
 
 import torch  # noqa: E402
 from peft import PeftModel  # noqa: E402
-from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
 from ricc.bootstrap import setup_runtime_env  # noqa: E402
+from ricc.ml_runtime import load_tokenizer_and_base_model, render_chat_prompt  # noqa: E402
 
 logger = logging.getLogger("LoRABenchmark")
 
@@ -85,40 +85,16 @@ def dataset_sha256(path: Path) -> str:
 
 
 def _dialogue_text(tokenizer: Any, messages: list[dict[str, Any]]) -> str:
-    try:
-        return cast(str, tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False))
-    except Exception:
-        return "\n".join(f"{m.get('role', 'user')}: {m.get('content', '')}" for m in messages)
+    return render_chat_prompt(tokenizer, messages, add_generation_prompt=False)
 
 
 def _prompt_text(tokenizer: Any, prompt: str) -> str:
-    messages = [{"role": "user", "content": prompt}]
-    try:
-        return cast(str, tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True))
-    except Exception:
-        return prompt
+    return render_chat_prompt(tokenizer, [{"role": "user", "content": prompt}], add_generation_prompt=True)
 
 
 def load_base(model_name: str) -> tuple[Any, Any]:
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map="auto" if torch.cuda.is_available() else None,
-        trust_remote_code=True,
-    )
+    tokenizer, model = load_tokenizer_and_base_model(model_name, disable_kv_cache=True)
     model.eval()
-    # Some remote-code models (Phi-3.5) call the Cache.get_usable_length API
-    # removed in transformers 4.57 whenever a KV cache is requested; without
-    # this, even generate() crashes on them. Benchmarks trade cache speed for
-    # compatibility on every model.
-    if getattr(model, "config", None) is not None:
-        model.config.use_cache = False
-    if getattr(model, "generation_config", None) is not None:
-        model.generation_config.use_cache = False
     return model, tokenizer
 
 

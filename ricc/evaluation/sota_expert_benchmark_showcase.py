@@ -10,18 +10,19 @@ import json
 import logging
 import re
 import time
-from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ricc.bootstrap import setup_runtime_env
+from ricc.errors import AdapterLoadError
 from ricc.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
-from ricc.ml_runtime import set_deterministic_seed
-from ricc.observability import record_classified_ml_error
+from ricc.ml_runtime import (
+    attach_lora_adapter,
+    generate_chat_completion,
+    load_tokenizer_and_base_model,
+    set_deterministic_seed,
+)
 from ricc.rag.rag_pipeline import LocalRAGPipeline
 from ricc.settings import settings
 
@@ -221,51 +222,29 @@ def run_sota_showcase(
     rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
 
     # 2. Load Model & Tokenizer
-    tokenizer: Any = cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token or "<|endoftext|>"
-
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    base_model: Any = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=dtype,
-        device_map="auto" if torch.cuda.is_available() else None,
-        trust_remote_code=True,
-    )
+    tokenizer, base_model = load_tokenizer_and_base_model(model_name)
 
     def generate_expert(model: Any, prompt_text: str, context: str = "") -> str:
-        if context:
-            full_prompt = f"Контекст из корпоративной базы знаний:\n{context}\n\nИнженерная задача:\n{prompt_text}"
-        else:
-            full_prompt = prompt_text
-
+        full_prompt = (
+            f"Контекст из корпоративной базы знаний:\n{context}\n\nИнженерная задача:\n{prompt_text}"
+            if context
+            else prompt_text
+        )
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": full_prompt},
         ]
-        try:
-            inp = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        except Exception:
-            inp = f"[SYSTEM]: {SYSTEM_PROMPT}\n[USER]: {full_prompt}\n[ASSISTANT]:"
-
-        inputs = tokenizer(inp, return_tensors="pt", max_length=512, truncation=True)
-        if torch.cuda.is_available():
-            inputs = {k: v.to("cuda") for k, v in inputs.items()}
-
-        with torch.no_grad():
-            out_ids = model.generate(
-                **inputs,
-                max_new_tokens=320,
-                temperature=0.6,
-                top_p=0.9,
-                repetition_penalty=1.1,
-                pad_token_id=tokenizer.pad_token_id,
-            )
-
-        text: str = cast(str, tokenizer.decode(out_ids[0][len(inputs["input_ids"][0]) :], skip_special_tokens=True))
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        return text.strip()
+        text, _elapsed, _tps = generate_chat_completion(
+            model,
+            tokenizer,
+            messages,
+            max_new_tokens=320,
+            temperature=0.6,
+            do_sample=True,
+            top_p=0.9,
+            repetition_penalty=1.1,
+        )
+        return text
 
     # Step A: Evaluate Base & RAG
     results = []
@@ -289,28 +268,12 @@ def run_sota_showcase(
         r_scores = score_response_quality(r_text, item["eval_criteria"])
         rag_outputs.append((r_text, r_scores))
 
-    # Step B: Attach LoRA
-    adapter_path = Path(f"lora_adapters/{adapter_id}")
-    lora_model = None
-    if adapter_path.exists() and (adapter_path / "adapter_model.safetensors").exists():
-        try:
-            lora_model = PeftModel.from_pretrained(base_model, str(adapter_path))
-            logger.info(f"Attached LoRA Adapter from {adapter_path}")
-        except Exception as e:
-            typed = record_classified_ml_error(e, model_name=model_name, adapter_id=adapter_id)
-            logger.warning(f"Failed to attach LoRA: {typed}")
-
-    # FAIL FAST: without the adapter there is no LoRA measurement. The
-    # previous code fell back to the BASE model's results and wrote them
-    # into the LoRA column, which made the comparison report identical
-    # numbers for base and LoRA — a fabricated benchmark.
-    if lora_model is None:
-        raise RuntimeError(
-            f"LoRA adapter '{adapter_id}' could not be loaded from '{adapter_path}'. "
-            "Refusing to run the SOTA showcase: falling back to the base model would "
-            "put the base results into the LoRA column and report a comparison that "
-            "was never measured."
-        )
+    # Step B: Attach LoRA (fail fast if missing)
+    adapter_path = settings.BASE_DIR / "lora_adapters" / adapter_id
+    try:
+        lora_model = attach_lora_adapter(base_model, adapter_path, model_name=model_name, adapter_id=adapter_id)
+    except AdapterLoadError as exc:
+        raise RuntimeError(f"LoRA adapter '{adapter_id}' could not be loaded: {exc}") from exc
 
     logger.info("Evaluating LoRA & Hybrid...")
     for idx, item in enumerate(FLAGSHIP_CHALLENGES, 1):

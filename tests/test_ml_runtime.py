@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 import random
+import tempfile
 import unittest
-from unittest.mock import patch
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
+from ricc.errors import AdapterLoadError
 from ricc.ml_runtime import (
     _is_retryable,
+    attach_lora_adapter,
+    generate_chat_completion,
+    load_tokenizer_and_base_model,
+    render_chat_prompt,
     seed_choices,
     set_deterministic_seed,
     with_retries,
@@ -217,6 +225,119 @@ class TestSeedChoices(unittest.TestCase):
     def test_negative_seed_rejected(self):
         with self.assertRaises(ValueError):
             seed_choices([-1])
+
+
+class TestLoadTokenizerAndBaseModel(unittest.TestCase):
+    def test_pad_token_fallback_and_disable_kv_cache(self):
+        tok = SimpleNamespace(pad_token=None, eos_token="<|eos|>", bos_token=None)
+        model = SimpleNamespace(
+            config=SimpleNamespace(use_cache=True), generation_config=SimpleNamespace(use_cache=True)
+        )
+        with (
+            patch("torch.cuda.is_available", return_value=False),
+            patch("transformers.AutoTokenizer.from_pretrained", return_value=tok) as tok_fp,
+            patch("transformers.AutoModelForCausalLM.from_pretrained", return_value=model) as mod_fp,
+        ):
+            out_tok, out_mod = load_tokenizer_and_base_model(
+                "org/model",
+                tokenizer_source="org/tok",
+                disable_kv_cache=True,
+                retry=False,
+            )
+        self.assertIs(out_tok, tok)
+        self.assertIs(out_mod, model)
+        self.assertEqual(tok.pad_token, "<|eos|>")
+        self.assertFalse(model.config.use_cache)
+        self.assertFalse(model.generation_config.use_cache)
+        self.assertEqual(tok_fp.call_args.args[0], "org/tok")
+        self.assertEqual(mod_fp.call_args.args[0], "org/model")
+
+    def test_retry_path_uses_with_retries(self):
+        tok = SimpleNamespace(pad_token="<pad>", eos_token="<eos>", bos_token="<bos>")
+        model = SimpleNamespace(config=None, generation_config=None)
+        with (
+            patch("torch.cuda.is_available", return_value=False),
+            patch("ricc.ml_runtime.with_retries", side_effect=[tok, model]) as mock_retries,
+        ):
+            out_tok, out_mod = load_tokenizer_and_base_model("org/model", retry=True)
+        self.assertIs(out_tok, tok)
+        self.assertIs(out_mod, model)
+        self.assertEqual(mock_retries.call_count, 2)
+
+
+class TestAttachLoraAdapter(unittest.TestCase):
+    def test_missing_directory_raises_adapter_load_error(self):
+        with self.assertRaises(AdapterLoadError):
+            attach_lora_adapter(object(), Path("/nonexistent/ricc-adapter-dir"), adapter_id="demo")
+
+    def test_missing_safetensors_raises_adapter_load_error(self):
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(AdapterLoadError):
+            attach_lora_adapter(object(), Path(tmp), adapter_id="demo")
+
+    def test_peft_failure_raises_adapter_load_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "adapter_model.safetensors").write_bytes(b"stub")
+            with (
+                patch("peft.PeftModel.from_pretrained", side_effect=RuntimeError("shape mismatch")),
+                self.assertRaises(AdapterLoadError),
+            ):
+                attach_lora_adapter(object(), Path(tmp), model_name="org/base", adapter_id="demo")
+
+    def test_success_returns_peft_model(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "adapter_model.safetensors").write_bytes(b"stub")
+            sentinel = object()
+            with patch("peft.PeftModel.from_pretrained", return_value=sentinel) as mock_peft:
+                result = attach_lora_adapter("base", Path(tmp), adapter_id="demo")
+            self.assertIs(result, sentinel)
+            mock_peft.assert_called_once_with("base", str(Path(tmp)))
+
+
+class TestRenderChatPrompt(unittest.TestCase):
+    def test_uses_apply_chat_template_when_available(self):
+        tok = MagicMock()
+        tok.apply_chat_template.return_value = "<|im_start|>user\nhi<|im_end|>"
+        out = render_chat_prompt(tok, [{"role": "user", "content": "hi"}], add_generation_prompt=True)
+        self.assertEqual(out, "<|im_start|>user\nhi<|im_end|>")
+        tok.apply_chat_template.assert_called_once()
+
+    def test_fallback_when_template_raises(self):
+        tok = MagicMock()
+        tok.apply_chat_template.side_effect = ValueError("no chat template")
+        out = render_chat_prompt(tok, [{"role": "user", "content": "hi"}], add_generation_prompt=True)
+        self.assertEqual(out, "[USER]: hi\n[ASSISTANT]:")
+
+
+class TestGenerateChatCompletion(unittest.TestCase):
+    def test_generates_and_decodes_completion(self):
+        import torch
+
+        tok = MagicMock()
+        tok.pad_token_id = 0
+        tok.apply_chat_template.return_value = "prompt"
+        tok.return_value = {"input_ids": torch.tensor([[1, 2, 3]])}
+        tok.decode.return_value = "  hello world  "
+
+        model = MagicMock()
+        model.generate.return_value = torch.tensor([[1, 2, 3, 4, 5]])
+
+        with patch("torch.cuda.is_available", return_value=False):
+            text, elapsed, tps = generate_chat_completion(
+                model,
+                tok,
+                [{"role": "user", "content": "hi"}],
+                max_new_tokens=16,
+                top_p=0.9,
+                repetition_penalty=1.1,
+                max_input_length=64,
+            )
+        self.assertEqual(text, "hello world")
+        self.assertGreaterEqual(elapsed, 0.0)
+        self.assertGreater(tps, 0.0)
+        tok.decode.assert_called_once()
+        gen_kwargs = model.generate.call_args.kwargs
+        self.assertEqual(gen_kwargs["top_p"], 0.9)
+        self.assertEqual(gen_kwargs["repetition_penalty"], 1.1)
 
 
 if __name__ == "__main__":

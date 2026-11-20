@@ -7,7 +7,7 @@ monitoring, and error handling across the platform.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 # =============================================================================
 # Base Exception Classes
@@ -48,6 +48,8 @@ class RICCError(Exception):
 class PipelineError(RICCError):
     """Base error for pipeline execution failures."""
 
+    default_stage: ClassVar[str | None] = None
+
     def __init__(
         self,
         message: str,
@@ -55,59 +57,53 @@ class PipelineError(RICCError):
         stage: str | None = None,
         **kwargs: Any,
     ) -> None:
+        resolved_stage = stage if stage is not None else self.default_stage
         super().__init__(message, component="pipeline", **kwargs)
-        self.stage = stage
-        if stage:
-            self.context["stage"] = stage
+        self.stage = resolved_stage
+        if resolved_stage:
+            self.context["stage"] = resolved_stage
 
 
 class IngestionError(PipelineError):
     """Error during data ingestion stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="ingestion", **kwargs)
+    default_stage = "ingestion"
 
 
 class PIIAnonymizationError(PipelineError):
     """Error during PII anonymization stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="pii_anonymization", **kwargs)
+    default_stage = "pii_anonymization"
 
 
 class DeduplicationError(PipelineError):
     """Error during deduplication stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="deduplication", **kwargs)
+    default_stage = "deduplication"
 
 
 class TaxonomyError(PipelineError):
     """Error during taxonomy classification/tagging stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="taxonomy_tagging", **kwargs)
+    default_stage = "taxonomy_tagging"
 
 
 class GraphExtractionError(PipelineError):
     """Error during conversation graph extraction stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="graph_extraction", **kwargs)
+    default_stage = "graph_extraction"
 
 
 class ExportError(PipelineError):
     """Error during dataset export stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="export", **kwargs)
+    default_stage = "export"
 
 
 class AnalyticsError(PipelineError):
     """Error during analytics/validation stage."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, stage="analytics_validation", **kwargs)
+    default_stage = "analytics_validation"
 
 
 # =============================================================================
@@ -118,6 +114,8 @@ class AnalyticsError(PipelineError):
 class ValidationError(RICCError):
     """Base error for validation failures."""
 
+    default_check: ClassVar[str | None] = None
+
     def __init__(
         self,
         message: str,
@@ -125,24 +123,26 @@ class ValidationError(RICCError):
         check: str | None = None,
         **kwargs: Any,
     ) -> None:
+        resolved_check = check if check is not None else self.default_check
         super().__init__(message, component="validation", **kwargs)
-        self.check = check
-        if check:
-            self.context["check"] = check
+        self.check = resolved_check
+        if resolved_check:
+            self.context["check"] = resolved_check
 
 
 class SchemaValidationError(ValidationError):
     """Dataset schema validation failed."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, check="schema", **kwargs)
+    default_check = "schema"
 
 
 class PIIValidationError(ValidationError):
     """PII leakage detected in validated dataset."""
 
+    default_check = "pii_audit"
+
     def __init__(self, message: str, leaks: dict[str, int] | None = None, **kwargs: Any) -> None:
-        super().__init__(message, check="pii_audit", **kwargs)
+        super().__init__(message, **kwargs)
         if leaks:
             self.context["leaks"] = leaks
 
@@ -150,29 +150,28 @@ class PIIValidationError(ValidationError):
 class SFTValidationError(ValidationError):
     """SFT dialogue structure validation failed."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, check="sft_turn_conformance", **kwargs)
+    default_check = "sft_turn_conformance"
 
 
 class JSONLValidationError(ValidationError):
     """JSONL format validation failed."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, check="jsonl", **kwargs)
+    default_check = "jsonl"
 
 
 class ParquetValidationError(ValidationError):
     """Parquet format validation failed."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
-        super().__init__(message, check="parquet", **kwargs)
+    default_check = "parquet"
 
 
 class SLOValidationError(ValidationError):
     """SLO gate check failed."""
 
+    default_check = "slo_gate"
+
     def __init__(self, message: str, failed_checks: list[str] | None = None, **kwargs: Any) -> None:
-        super().__init__(message, check="slo_gate", **kwargs)
+        super().__init__(message, **kwargs)
         if failed_checks:
             self.context["failed_checks"] = failed_checks
 

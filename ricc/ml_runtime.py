@@ -27,8 +27,9 @@ import contextlib
 import logging
 import random
 import time
-from collections.abc import Callable, Iterable
-from typing import Any, TypeVar
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from pathlib import Path
+from typing import Any, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -175,3 +176,150 @@ def seed_choices(values: Iterable[int], default: int = 42) -> int:
             raise ValueError(f"seed must be >= 0, got {value}")
         return value
     return default
+
+
+def load_tokenizer_and_base_model(
+    model_name: str,
+    *,
+    tokenizer_source: str | None = None,
+    disable_kv_cache: bool = False,
+    retry: bool = False,
+) -> tuple[Any, Any]:
+    """Load an HF tokenizer and causal LM base model with consistent defaults.
+
+    Centralises ``pad_token`` normalisation, CUDA dtype selection, optional retry
+    backoff, and Phi-3.5 KV-cache compatibility across inference/eval/training.
+    """
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    tok_src = tokenizer_source or model_name
+
+    def _load_tok() -> Any:
+        return cast(Any, AutoTokenizer).from_pretrained(tok_src, use_fast=True, trust_remote_code=True)
+
+    def _load_model() -> Any:
+        dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        return AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=dtype,
+            device_map="auto" if torch.cuda.is_available() else None,
+            trust_remote_code=True,
+        )
+
+    tokenizer: Any = with_retries(_load_tok, what=f"tokenizer load {tok_src}") if retry else _load_tok()
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
+
+    model: Any = with_retries(_load_model, what=f"model load {model_name}") if retry else _load_model()
+    if disable_kv_cache:
+        if getattr(model, "config", None) is not None:
+            model.config.use_cache = False
+        if getattr(model, "generation_config", None) is not None:
+            model.generation_config.use_cache = False
+    return tokenizer, model
+
+
+def attach_lora_adapter(
+    base_model: Any,
+    adapter_path: Path | str,
+    *,
+    model_name: str = "",
+    adapter_id: str = "",
+    verify_files: bool = True,
+) -> Any:
+    """Attach a local PEFT LoRA adapter or fail fast with ``AdapterLoadError``."""
+    from peft import PeftModel
+
+    from ricc.errors import AdapterLoadError
+    from ricc.observability import record_classified_ml_error
+
+    resolved = Path(adapter_path)
+    if verify_files and (not resolved.exists() or not (resolved / "adapter_model.safetensors").is_file()):
+        raise AdapterLoadError(
+            f"LoRA adapter '{adapter_id or resolved.name}' could not be loaded from '{resolved}' "
+            "(missing directory or adapter_model.safetensors).",
+            adapter_path=str(resolved),
+            base_model=model_name,
+        )
+    try:
+        return cast(Any, PeftModel).from_pretrained(base_model, str(resolved))
+    except Exception as exc:
+        typed = record_classified_ml_error(exc, model_name=model_name, adapter_id=adapter_id or resolved.name)
+        raise AdapterLoadError(
+            f"LoRA adapter '{adapter_id or resolved.name}' could not be loaded from '{resolved}': {typed}",
+            adapter_path=str(resolved),
+            base_model=model_name,
+        ) from exc
+
+
+def render_chat_prompt(
+    tokenizer: Any,
+    messages: Sequence[Mapping[str, str]],
+    *,
+    add_generation_prompt: bool = True,
+) -> str:
+    """Render chat messages via ``apply_chat_template`` with a role-tag fallback."""
+    try:
+        return cast(
+            str,
+            tokenizer.apply_chat_template(
+                list(messages),
+                tokenize=False,
+                add_generation_prompt=add_generation_prompt,
+            ),
+        )
+    except Exception:
+        lines = [f"[{m.get('role', 'user').upper()}]: {m.get('content', '')}" for m in messages]
+        if add_generation_prompt:
+            lines.append("[ASSISTANT]:")
+        return "\n".join(lines)
+
+
+def generate_chat_completion(
+    model: Any,
+    tokenizer: Any,
+    messages: Sequence[Mapping[str, str]],
+    *,
+    max_new_tokens: int = 256,
+    temperature: float = 0.6,
+    do_sample: bool = True,
+    top_p: float | None = None,
+    repetition_penalty: float | None = None,
+    max_input_length: int | None = 512,
+) -> tuple[str, float, float]:
+    """Generate a single completion and return ``(text, elapsed_sec, tokens_per_sec)``."""
+    import torch
+
+    prompt_text = render_chat_prompt(tokenizer, messages, add_generation_prompt=True)
+    tok_kwargs: dict[str, Any] = {"return_tensors": "pt"}
+    if max_input_length is not None:
+        tok_kwargs["max_length"] = max_input_length
+        tok_kwargs["truncation"] = True
+    inputs: dict[str, Any] = tokenizer(prompt_text, **tok_kwargs)
+    if torch.cuda.is_available():
+        inputs = {k: v.to("cuda") for k, v in inputs.items()}
+
+    gen_kwargs: dict[str, Any] = {
+        "max_new_tokens": max_new_tokens,
+        "do_sample": do_sample,
+        "temperature": temperature,
+        "pad_token_id": tokenizer.pad_token_id,
+    }
+    if top_p is not None:
+        gen_kwargs["top_p"] = top_p
+    if repetition_penalty is not None:
+        gen_kwargs["repetition_penalty"] = repetition_penalty
+
+    t0 = time.time()
+    with torch.no_grad():
+        output_ids = model.generate(**inputs, **gen_kwargs)
+    elapsed = time.time() - t0
+
+    prompt_len = len(inputs["input_ids"][0])
+    gen_tokens = len(output_ids[0]) - prompt_len
+    tps = gen_tokens / max(elapsed, 0.001)
+    text = cast(str, tokenizer.decode(output_ids[0][prompt_len:], skip_special_tokens=True)).strip()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    return text, elapsed, tps

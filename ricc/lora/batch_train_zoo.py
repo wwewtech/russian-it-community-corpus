@@ -35,8 +35,6 @@ import torch
 from datasets import load_dataset
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
     DataCollatorForSeq2Seq,
     Trainer,
     TrainerCallback,
@@ -68,7 +66,7 @@ from ricc.lora.policy_gate import (
     trainable_dialogues,
 )
 from ricc.lora.reporting import _fmt_metric, update_run_report  # noqa: F401
-from ricc.ml_runtime import set_deterministic_seed, with_retries
+from ricc.ml_runtime import load_tokenizer_and_base_model, render_chat_prompt, set_deterministic_seed, with_retries
 from ricc.observability import record_classified_ml_error, record_lora_result
 from ricc.settings import settings
 
@@ -121,6 +119,132 @@ def detect_target_modules(model: torch.nn.Module) -> list[str]:
     return sorted(module_names)
 
 
+def _load_training_model_and_tokenizer(meta: dict[str, Any]) -> tuple[Any, Any, list[str]]:
+    """Load tokenizer, base model (optional 4-bit QLoRA), and wrap with LoRA."""
+    model_name = meta["model_name"]
+    load_in_4bit = bool(meta.get("load_in_4bit", False))
+    if load_in_4bit:
+        if not torch.cuda.is_available():
+            raise RuntimeError(
+                f"{model_name} needs 4-bit quantization, which requires a GPU. "
+                "Run it on a CUDA machine, or drop the 'load_in_4bit' flag."
+            )
+        from peft import prepare_model_for_kbit_training
+        from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+        tokenizer: Any = with_retries(
+            lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True),
+            what=f"tokenizer load {model_name}",
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
+        bnb_cfg = cast(Any, BitsAndBytesConfig)(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+        )
+        model: Any = with_retries(
+            lambda: AutoModelForCausalLM.from_pretrained(
+                model_name,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                trust_remote_code=True,
+                quantization_config=bnb_cfg,
+            ),
+            what=f"model load {model_name}",
+        )
+        model = cast(Any, prepare_model_for_kbit_training)(model)
+        if getattr(model, "config", None) is not None:
+            model.config.use_cache = False
+        if getattr(model, "generation_config", None) is not None:
+            model.generation_config.use_cache = False
+    else:
+        tokenizer, model = load_tokenizer_and_base_model(model_name, disable_kv_cache=True, retry=True)
+
+    grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
+    if callable(grad_ckpt):
+        grad_ckpt()
+
+    target_mods = detect_target_modules(model)
+    peft_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM,
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
+        target_modules=target_mods,
+        bias="none",
+    )
+    return tokenizer, get_peft_model(model, peft_config), target_mods
+
+
+def _prepare_tokenized_dataset(
+    dataset_path: str,
+    tokenizer: Any,
+    *,
+    max_seq_length: int,
+    max_samples: int,
+    holdout_tail: int,
+    eval_frac: float,
+    seed: int,
+) -> tuple[Any, Any, int]:
+    """Load, slice holdout tail, tokenize with prompt loss masking, and split eval."""
+    raw_ds = load_dataset("json", data_files=dataset_path, split="train")
+    dataset_total = len(raw_ds)
+    if holdout_tail > 0 and dataset_total > holdout_tail:
+        raw_ds = raw_ds.select(range(dataset_total - holdout_tail))
+    if len(raw_ds) > max_samples:
+        raw_ds = raw_ds.select(range(max_samples))
+
+    def format_dialogue(example: dict[str, Any], _tokenizer: Any = tokenizer) -> dict[str, Any]:
+        msgs = example.get("messages", [])
+        if not msgs:
+            return cast("dict[str, Any]", {"input_ids": [], "labels": []})
+        txt = render_chat_prompt(_tokenizer, msgs, add_generation_prompt=False)
+        tok = _tokenizer(txt, max_length=max_seq_length, truncation=True, padding=False)
+        labels = list(tok["input_ids"])
+        if len(msgs) >= 2 and msgs[-1].get("role") in ("assistant", "gpt"):
+            prompt_text = render_chat_prompt(_tokenizer, msgs[:-1], add_generation_prompt=True)
+            tokenized_prompt = _tokenizer(prompt_text, max_length=max_seq_length, truncation=True, padding=False)
+            prompt_len = min(len(tokenized_prompt["input_ids"]), len(labels))
+            labels[:prompt_len] = [-100] * prompt_len
+        tok["labels"] = labels
+        return cast("dict[str, Any]", tok)
+
+    tokenized_ds = raw_ds.map(format_dialogue, remove_columns=raw_ds.column_names)
+    eval_ds: Any = None
+    if eval_frac > 0:
+        split = tokenized_ds.train_test_split(test_size=eval_frac, seed=seed)
+        tokenized_ds = split["train"]
+        eval_ds = split["test"]
+        if len(eval_ds) > 256:
+            eval_ds = eval_ds.select(range(256))
+    return tokenized_ds, eval_ds, dataset_total
+
+
+def _upload_adapter_if_eligible(out_dir: Path, model_id: str, *, upload: bool, partial: bool) -> None:
+    if upload and partial:
+        logger.warning(f"HF upload skipped for {model_id}: adapter does not satisfy the training policy")
+    elif upload:
+        try:
+            api = huggingface_hub.HfApi(token=HF_TOKEN)
+            with_retries(
+                lambda: api.upload_folder(
+                    folder_path=str(out_dir),
+                    path_in_repo=model_id,
+                    repo_id=MODEL_REPO_ID,
+                    repo_type="model",
+                    ignore_patterns=["checkpoint-*"],
+                ),
+                what=f"HF upload {model_id}",
+            )
+            logger.info(f"Uploaded {model_id} directly to HF Hub: {MODEL_REPO_ID}")
+        except Exception as upload_err:
+            logger.warning(f"HF upload skipped for {model_id}: {upload_err}")
+    else:
+        logger.info(f"HF upload disabled for {model_id} (--no-upload)")
+
+
 def train_and_upload_single_model(
     meta: dict[str, Any],
     dataset_path: str | None = None,
@@ -160,9 +284,6 @@ def train_and_upload_single_model(
             "adapter_dir": str(out_dir),
         }
 
-    # Interrupted long runs leave checkpoint-* folders without a final adapter:
-    # resume from the latest one instead of restarting from scratch.
-    resume_from: Path | None = None
     resume_from = latest_checkpoint(out_dir)
     if resume_from is not None and not force:
         logger.info(f"↻ Resuming {model_id} from {resume_from.name}")
@@ -172,90 +293,8 @@ def train_and_upload_single_model(
     set_deterministic_seed(seed)
 
     try:
-        tokenizer: Any = cast(
-            Any,
-            with_retries(
-                lambda: cast(Any, AutoTokenizer).from_pretrained(model_name, use_fast=True, trust_remote_code=True),
-                what=f"tokenizer load {model_name}",
-            ),
-        )
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token or tokenizer.bos_token or "<|endoftext|>"
+        tokenizer, peft_model, target_mods = _load_training_model_and_tokenizer(meta)
 
-        dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-        # 4-bit (QLoRA) models: quantize base weights so a 7-8B model fits
-        # on a 12 GB consumer card. This capability used to live in copies
-        # of the training loop; it now lives in the single trainer.
-        load_in_4bit = bool(meta.get("load_in_4bit", False))
-        model_kwargs: dict[str, Any] = {
-            "torch_dtype": dtype,
-            "device_map": "auto" if torch.cuda.is_available() else None,
-            "trust_remote_code": True,
-        }
-        if load_in_4bit:
-            if not torch.cuda.is_available():
-                raise RuntimeError(
-                    f"{model_name} needs 4-bit quantization, which requires a GPU. "
-                    "Run it on a CUDA machine, or drop the 'load_in_4bit' flag."
-                )
-            from transformers import BitsAndBytesConfig
-
-            model_kwargs["quantization_config"] = cast(Any, BitsAndBytesConfig)(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_use_double_quant=True,
-            )
-
-        model: Any = with_retries(
-            lambda: AutoModelForCausalLM.from_pretrained(
-                model_name,
-                **model_kwargs,
-            ),
-            what=f"model load {model_name}",
-        )
-
-        if load_in_4bit:
-            from peft import prepare_model_for_kbit_training
-
-            model = cast(Any, prepare_model_for_kbit_training)(model)
-
-        grad_ckpt: Any = getattr(model, "gradient_checkpointing_enable", None)
-        if callable(grad_ckpt):
-            grad_ckpt()
-
-        # Remote-code models (Phi-3.5's hub modeling_phi3.py) still call the
-        # Cache.get_usable_length API that transformers 4.57 removed whenever
-        # use_cache is on — including the eval forward, which crashed a
-        # 1.5-hour run just before its first checkpoint. Disable the KV cache
-        # for training/eval entirely (no cache is used by the Trainer anyway).
-        if getattr(model, "config", None) is not None:
-            model.config.use_cache = False
-        if getattr(model, "generation_config", None) is not None:
-            model.generation_config.use_cache = False
-
-        target_mods = detect_target_modules(model)
-        peft_config = LoraConfig(
-            task_type=TaskType.CAUSAL_LM,
-            r=16,
-            lora_alpha=32,
-            lora_dropout=0.05,
-            target_modules=target_mods,
-            bias="none",
-        )
-        peft_model = get_peft_model(model, peft_config)
-
-        # --force cleanup is deferred until the base model loaded and the LoRA
-        # wrapper was constructed successfully: a run that fails earlier (bad
-        # download, unsupported target modules, ...) must NOT destroy the
-        # previously trained adapter. Phi-3.5's SiLUActivation crash did
-        # exactly that before target detection was fixed.
-        # --force deletes the FINISHED adapter, but the checkpoints are
-        # kept: they are the only way to continue a long run instead of
-        # starting it again. The canonical full run is 21 420 steps
-        # (~25 h on a 3B model); discarding the checkpoints would throw
-        # away hours of work every time the command is re-issued.
         if force and out_dir.exists() and any(out_dir.iterdir()):
             checkpoints = [p for p in out_dir.glob("checkpoint-*") if p.is_dir()]
             clear_non_checkpoint_files(out_dir)
@@ -269,63 +308,19 @@ def train_and_upload_single_model(
                 logger.info("--force: cleared existing adapter at %s for retraining", out_dir)
             out_dir.mkdir(parents=True, exist_ok=True)
 
-        raw_ds = load_dataset("json", data_files=dataset_path, split="train")
-        dataset_total = len(raw_ds)
-        if holdout_tail > 0 and dataset_total > holdout_tail:
-            raw_ds = raw_ds.select(range(dataset_total - holdout_tail))
-        if len(raw_ds) > max_samples:
-            raw_ds = raw_ds.select(range(max_samples))
-
-        def format_dialogue(example: dict[str, Any], _tokenizer: Any = tokenizer) -> dict[str, Any]:
-            msgs = example.get("messages", [])
-            if not msgs:
-                return cast("dict[str, Any]", {"input_ids": [], "labels": []})
-            # Standard SFT: mask the user prompt with -100 so the loss is
-            # computed only over the assistant's response tokens. Training
-            # on prompt tokens (the old `labels = input_ids.copy()`
-            # behaviour) teaches the model to parrot the user instead of
-            # answering — see the v12.0.4 prompt-loss-masking fix in
-            # the training loop that used to live in ricc/lora/train_lora.py.
-            try:
-                txt = _tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
-            except Exception:
-                parts = []
-                for m in msgs:
-                    role = m.get("role", "user")
-                    content = m.get("content", "")
-                    parts.append(f"[{role.upper()}]: {content}")
-                txt = "\n".join(parts)
-            tok = _tokenizer(txt, max_length=max_seq_length, truncation=True, padding=False)
-            labels = list(tok["input_ids"])
-            if len(msgs) >= 2 and msgs[-1].get("role") in ("assistant", "gpt"):
-                try:
-                    prompt_text = _tokenizer.apply_chat_template(msgs[:-1], tokenize=False, add_generation_prompt=True)
-                except Exception:
-                    prompt_parts = [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in msgs[:-1]]
-                    prompt_text = "\n".join(prompt_parts) + "\nassistant:"
-                tokenized_prompt = _tokenizer(prompt_text, max_length=max_seq_length, truncation=True, padding=False)
-                prompt_len = min(len(tokenized_prompt["input_ids"]), len(labels))
-                labels[:prompt_len] = [-100] * prompt_len
-            tok["labels"] = labels
-            return cast("dict[str, Any]", tok)
-
-        tokenized_ds = raw_ds.map(format_dialogue, remove_columns=raw_ds.column_names)
-
-        eval_ds: Any = None
-        if eval_frac > 0:
-            split = tokenized_ds.train_test_split(test_size=eval_frac, seed=seed)
-            tokenized_ds = split["train"]
-            eval_ds = split["test"]
-            if len(eval_ds) > 256:
-                eval_ds = eval_ds.select(range(256))
+        tokenized_ds, eval_ds, dataset_total = _prepare_tokenized_dataset(
+            dataset_path,
+            tokenizer,
+            max_seq_length=max_seq_length,
+            max_samples=max_samples,
+            holdout_tail=holdout_tail,
+            eval_frac=eval_frac,
+            seed=seed,
+        )
 
         total_tokens = int(sum(len(ids) for ids in tokenized_ds["input_ids"]))
         avg_len = total_tokens / max(1, len(tokenized_ds))
-
         if max_steps >= 5000:
-            # Save more often than we evaluate: a crash in the eval forward
-            # used to lose every step since the last checkpoint (save runs
-            # after eval), and hours of training with it.
             log_every, eval_every, save_every, enable_saves = 25, 1000, 500, True
         else:
             log_every = max(1, max_steps // 20)
@@ -343,21 +338,15 @@ def train_and_upload_single_model(
             logging_steps=log_every,
             save_strategy="steps" if enable_saves else "no",
             save_steps=save_every,
-            # The checkpoints are the resume points of a multi-hour run, so
-            # more than two are kept: with the canonical 21 420 steps and
-            # a checkpoint every 500 steps, a limit of 2 would delete every
-            # resume point within a thousand steps.
             save_total_limit=save_total_limit,
             eval_strategy="steps" if eval_ds is not None else "no",
             eval_steps=eval_every,
             report_to="none",
             seed=seed,
         )
-
-        callbacks: list[TrainerCallback] | None = None
-        if time_budget_hours is not None:
-            callbacks = [TimeLimitCallback(time_budget_hours * 3600.0)]
-
+        callbacks: list[TrainerCallback] | None = (
+            [TimeLimitCallback(time_budget_hours * 3600.0)] if time_budget_hours is not None else None
+        )
         trainer = Trainer(
             model=peft_model,
             args=train_args,
@@ -373,20 +362,15 @@ def train_and_upload_single_model(
         train_loss = float(train_res.training_loss)
         actual_steps = int(trainer.state.global_step)
         tokens_seen = int(actual_steps * 8 * avg_len)
-        # Coverage is measured against the dialogues the trainer ACTUALLY saw.
-        # The previous denominator (dataset_total) included the held-out tail,
-        # so a run covering 101% of the real training set reported "100%"
-        # while a run covering exactly one real epoch reported "98.93%".
         train_dialogues = len(tokenized_ds)
         coverage_pct = compute_coverage(actual_steps, train_dialogues)
         required_steps = required_steps_for_epoch(train_dialogues)
         peak_vram = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else None
 
-        eval_loss: float | None = None
-        for entry in reversed(trainer.state.log_history):
-            if "eval_loss" in entry:
-                eval_loss = float(entry["eval_loss"])
-                break
+        eval_loss = next(
+            (float(entry["eval_loss"]) for entry in reversed(trainer.state.log_history) if "eval_loss" in entry),
+            None,
+        )
         eval_perplexity = math.exp(eval_loss) if eval_loss is not None and eval_loss < 50 else None
 
         with (out_dir / "training_log.jsonl").open("w", encoding="utf-8") as log_file:
@@ -395,17 +379,13 @@ def train_and_upload_single_model(
 
         peft_model.save_pretrained(out_dir)
         tokenizer.save_pretrained(out_dir)
-
         if not keep_checkpoints:
             remove_checkpoints(out_dir)
 
-        readme_path = out_dir / "README.md"
-        readme_path.write_text(
-            f"""# Russian IT Community Corpus — LoRA Adapter
-## Base Model: `{model_name}` ({meta["family"]} · {meta["params"]})
-
-Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
-""",
+        (out_dir / "README.md").write_text(
+            f"# Russian IT Community Corpus — LoRA Adapter\n"
+            f"## Base Model: `{model_name}` ({meta['family']} · {meta['params']})\n\n"
+            "Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).\n",
             encoding="utf-8",
         )
 
@@ -417,9 +397,6 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             + f" | ~{tokens_per_sec:.0f} tok/s"
         )
 
-        # Provenance manifest: its presence marks an adapter retrained with the
-        # prompt-masking objective. Legacy adapters (no training_meta.json)
-        # predate the masking fix and need --force retraining to acquire it.
         (out_dir / "training_meta.json").write_text(
             json.dumps(
                 {
@@ -433,7 +410,7 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
                     "time_budget_hours": time_budget_hours,
                     "max_seq_length": max_seq_length,
                     "max_samples": max_samples,
-                    "samples_used": len(tokenized_ds),
+                    "samples_used": train_dialogues,
                     "train_dialogues": train_dialogues,
                     "dataset_total_dialogues": dataset_total,
                     "holdout_tail_dialogues": holdout_tail,
@@ -462,9 +439,6 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             encoding="utf-8",
         )
 
-        # --- Policy gate -----------------------------------------------------
-        # A time-boxed or partial run is NOT a final adapter. It must be
-        # labelled PARTIAL and must not be uploaded to the public zoo.
         compliance = evaluate_compliance(out_dir)
         partial = time_budget_hours is not None or not compliance.compliant
         run_status = "PARTIAL" if partial else "SUCCESS"
@@ -483,34 +457,9 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             steps=actual_steps,
             vram_bytes=peak_vram,
         )
+        _upload_adapter_if_eligible(out_dir, model_id, upload=upload, partial=partial)
 
-        # Auto-upload to Hugging Face Model Zoo (opt-out with --no-upload).
-        # The policy gate runs first: a partial adapter is never published.
-        if upload and partial:
-            logger.warning(f"HF upload skipped for {model_id}: adapter does not satisfy the training policy")
-        elif upload:
-            try:
-                api = huggingface_hub.HfApi(token=HF_TOKEN)
-                with_retries(
-                    lambda: api.upload_folder(
-                        folder_path=str(out_dir),
-                        path_in_repo=model_id,
-                        repo_id=MODEL_REPO_ID,
-                        repo_type="model",
-                        ignore_patterns=["checkpoint-*"],
-                    ),
-                    what=f"HF upload {model_id}",
-                )
-                logger.info(f"Uploaded {model_id} directly to HF Hub: {MODEL_REPO_ID}")
-            except Exception as upload_err:
-                logger.warning(f"HF upload skipped for {model_id}: {upload_err}")
-        else:
-            logger.info(f"HF upload disabled for {model_id} (--no-upload)")
-
-        del peft_model
-        del model
-        del trainer
-        del tokenizer
+        del peft_model, trainer, tokenizer
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
@@ -531,7 +480,7 @@ Fine-tuned on the **RICC** corpus (2.82M messages, 171.5k SFT dialogues).
             "steps": actual_steps,
             "planned_steps": max_steps,
             "corpus_coverage_pct": coverage_pct,
-            "samples_used": len(tokenized_ds),
+            "samples_used": train_dialogues,
             "tokens_seen_approx": tokens_seen,
             "tokens_per_sec": tokens_per_sec,
             "peak_vram_bytes": peak_vram,
