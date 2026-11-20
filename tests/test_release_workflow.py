@@ -35,6 +35,7 @@ class TestReleaseWorkflow(unittest.TestCase):
         self.assertNotIn("--index-strategy", commands)
         self.assertNotIn("requirements.txt", package_commands)
         self.assertNotIn("requirements.lock.txt", package_commands)
+        self.assertNotIn("pytest", package_commands)
         self.assertIn("python-package", str(self.workflow["jobs"]["package"]["steps"]))
 
     def test_dataset_gate_publishes_the_same_files_it_verified(self):
