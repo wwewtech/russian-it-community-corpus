@@ -170,6 +170,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
       - name: Every evaluation suite must import and expose its entry point
@@ -211,7 +212,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
-          pip install mypy==${{ env.MYPY_VERSION }}
+          pip install uv mypy==${{ env.MYPY_VERSION }}
 
       - name: Run Strict mypy Typecheck Gate
         run: make typecheck-strict
@@ -237,6 +238,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install pytest pytest-cov
 
@@ -281,6 +283,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install pytest pytest-cov diff-cover==11.0.0
 
@@ -318,6 +321,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install pytest pytest-cov diff-cover==11.0.0
 
@@ -377,6 +381,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install "dvc>=3.50.0"
 
@@ -451,6 +456,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install "dvc>=3.50.0"
 
@@ -522,11 +528,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
       - name: Verify the installed dependency set and lock reproducibility
         run: |
           python -m pip check
+          python -m pip install uv
           python scripts/lock_requirements.py --check
 
       - name: Verify lock coverage, registry sync and adapter cards
@@ -706,6 +714,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
       - name: Download pipeline artifacts
@@ -755,6 +764,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install huggingface_hub
 
@@ -977,6 +987,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install huggingface_hub
 

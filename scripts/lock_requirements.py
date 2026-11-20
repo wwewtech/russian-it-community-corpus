@@ -98,7 +98,13 @@ def validate_metadata(lock_text: str) -> list[str]:
 
 
 def _resolve() -> subprocess.CompletedProcess[str]:
-    """Resolve the closure with uv, falling back to plain pip when uv is absent."""
+    """Resolve the closure with uv.
+
+    uv is required to regenerate the lock; CI installs it alongside the
+    other tools. The check still validates the committed file's metadata
+    even if uv is missing, but a missing uv is reported loudly instead of
+    being silently swallowed.
+    """
     result = subprocess.run(
         ["uv", *COMPILE_ARGS],
         cwd=REPO_ROOT,
@@ -107,10 +113,15 @@ def _resolve() -> subprocess.CompletedProcess[str]:
         text=True,
         encoding="utf-8",
     )
-    if result.returncode != 0 and "uv: command not found" in (result.stderr or ""):
-        # uv is not installed in this environment; the lock can still be
-        # validated against the committed file by the metadata checks.
-        return result
+    if result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        if "uv: command not found" in stderr or "No such file or directory: 'uv'" in stderr:
+            raise RuntimeError(
+                "uv is required to verify requirements.lock.txt; install it "
+                "(e.g. `pip install uv`) before running the lock check."
+            )
+        sys.stderr.write(stderr)
+        result.check = False  # type: ignore[attr-defined]
     return result
 
 
