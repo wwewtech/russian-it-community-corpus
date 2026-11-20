@@ -172,6 +172,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
           pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -e ".[dev]" --index-url https://pypi.org/simple
 
       - name: Every evaluation suite must import and expose its entry point
         run: |
