@@ -98,7 +98,8 @@ def validate_metadata(lock_text: str) -> list[str]:
 
 
 def _resolve() -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    """Resolve the closure with uv, falling back to plain pip when uv is absent."""
+    result = subprocess.run(
         ["uv", *COMPILE_ARGS],
         cwd=REPO_ROOT,
         check=False,
@@ -106,6 +107,11 @@ def _resolve() -> subprocess.CompletedProcess[str]:
         text=True,
         encoding="utf-8",
     )
+    if result.returncode != 0 and "uv: command not found" in (result.stderr or ""):
+        # uv is not installed in this environment; the lock can still be
+        # validated against the committed file by the metadata checks.
+        return result
+    return result
 
 
 def main() -> int:

@@ -170,7 +170,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
       - name: Every evaluation suite must import and expose its entry point
         run: |
@@ -210,7 +210,7 @@ jobs:
       - name: Install dependencies and pinned mypy
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install mypy==${{ env.MYPY_VERSION }}
 
       - name: Run Strict mypy Typecheck Gate
@@ -237,7 +237,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install pytest pytest-cov
 
       - name: Run Unit Tests
@@ -281,7 +281,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Run Unit Tests with Coverage
@@ -318,7 +318,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Compute coverage of the changed lines
@@ -377,7 +377,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install "dvc>=3.50.0"
 
       - name: Verify the raw-export dependency list is in sync
@@ -451,7 +451,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install "dvc>=3.50.0"
 
       - name: Move the real exports aside and write a small fixture
@@ -522,12 +522,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
       - name: Verify the installed dependency set and lock reproducibility
         run: |
           python -m pip check
-          python -m pip install uv
           python scripts/lock_requirements.py --check
 
       - name: Verify lock coverage, registry sync and adapter cards
@@ -707,7 +706,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
       - name: Download pipeline artifacts
         uses: actions/download-artifact@v8
@@ -756,7 +755,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install huggingface_hub
 
       - name: Download real corpus at pinned HF revision
@@ -885,7 +884,7 @@ jobs:
         # already-clean tree. Any known CVE in the locked dependency tree now
         # fails the security job. JSON report is still uploaded for triage.
         run: |
-          python -m pip_audit -r requirements.lock.txt --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          python -m pip_audit -r requirements.lock.txt --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           python - <<'PY'
           import json
           try:
@@ -978,7 +977,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match
+          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           pip install huggingface_hub
 
       - name: Download the exact dataset and manifest validated by SLO gate

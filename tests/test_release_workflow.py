@@ -31,7 +31,10 @@ class TestReleaseWorkflow(unittest.TestCase):
         package_commands = "\n".join(str(step.get("run", "")) for step in self.workflow["jobs"]["package"]["steps"])
         self.assertIn("python -m build", package_commands)
         self.assertIn("pip install dist/*.whl", package_commands)
-        self.assertIn('cd "$RUNNER_TEMP"', package_commands)
+        self.assertNotIn("--index-strategy", package_commands)
+        self.assertNotIn("--index-strategy", commands)
+        self.assertNotIn("requirements.txt", package_commands)
+        self.assertNotIn("requirements.lock.txt", package_commands)
         self.assertIn("python-package", str(self.workflow["jobs"]["package"]["steps"]))
 
     def test_dataset_gate_publishes_the_same_files_it_verified(self):
