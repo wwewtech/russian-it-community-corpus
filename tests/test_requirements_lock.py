@@ -71,6 +71,28 @@ class TestRequirementsLock(unittest.TestCase):
         self.assertEqual(COMPILE_ARGS[COMPILE_ARGS.index("--exclude-newer") + 1], EXCLUDE_NEWER)
         self.assertRegex(EXCLUDE_NEWER, r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
+    def test_dockerfile_install_uses_pip_compatible_index_flags(self):
+        dockerfile = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
+        self.assertNotIn("--index-strategy", dockerfile, "--index-strategy is a uv flag, not a pip flag")
+        self.assertIn("--index-url https://pypi.org/simple", dockerfile)
+        self.assertIn("--extra-index-url https://download.pytorch.org/whl/cpu", dockerfile)
+
+    def test_release_gate_docker_commands_use_pypi_as_primary_index(self):
+        import yaml
+
+        workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+        for job_name, job in workflow["jobs"].items():
+            if job_name not in {"package", "release", "eval-suites"}:
+                continue
+            for step in job.get("steps", []):
+                for line in step.get("run", "").splitlines():
+                    if "pip install" in line and "requirements.lock" in line:
+                        self.assertNotIn(
+                            "--index-url https://download.pytorch.org/whl/cpu",
+                            line,
+                            f"{job_name} must select pinned public packages from PyPI first",
+                        )
+
     def test_all_runtime_jobs_install_the_lock(self):
         import yaml
 
