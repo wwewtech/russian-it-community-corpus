@@ -1,7 +1,7 @@
 # Portable lock for Python 3.11+ on Linux, Windows and macOS.
 # This file, not the unconstrained ranges, is installed by CI and Docker.
 # Regenerate after reviewing dependency changes:
-# uv pip compile requirements.txt --universal --python-version 3.11 --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match --no-annotate --no-header --output-file requirements.lock.txt
+# python scripts/lock_requirements.py
 # Verify without modifying the lock: python scripts/lock_requirements.py --check
 
 accelerate==1.16.0

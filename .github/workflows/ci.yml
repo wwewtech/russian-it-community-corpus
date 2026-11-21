@@ -535,12 +535,10 @@ jobs:
       - name: Verify the installed dependency set and lock reproducibility
         run: |
           python -m pip check
-          python -m pip install uv
           python scripts/lock_requirements.py --check
 
-      - name: Verify lock coverage, registry sync and adapter cards
+      - name: Verify registry sync and adapter cards
         run: |
-          python scripts/lock_requirements.py --check
           # The registry must match the on-disk adapters. The generator
           # implements --check but CI never called it, so the promise in
           # lora_adapters/SUMMARY.md ("CI will fail if registry.json is

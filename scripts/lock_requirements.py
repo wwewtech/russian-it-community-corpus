@@ -35,11 +35,15 @@ LOCK_PATH = REPO_ROOT / "requirements.lock.txt"
 HEADER = """# Portable lock for Python 3.11+ on Linux, Windows and macOS.
 # This file, not the unconstrained ranges, is installed by CI and Docker.
 # Regenerate after reviewing dependency changes:
-# uv pip compile requirements.txt --universal --python-version 3.11 --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple --index-strategy unsafe-best-match --no-annotate --no-header --output-file requirements.lock.txt
+# python scripts/lock_requirements.py
 # Verify without modifying the lock: python scripts/lock_requirements.py --check
 
 """
 
+# New transitive releases must not make an unchanged, previously green commit
+# fail the reproducibility gate. All indexes are therefore cut off here; bump
+# this timestamp deliberately together with a reviewed lock refresh.
+EXCLUDE_NEWER = "2026-11-20T00:00:00Z"
 COMPILE_ARGS = [
     "pip",
     "compile",
@@ -53,6 +57,8 @@ COMPILE_ARGS = [
     "https://pypi.org/simple",
     "--index-strategy",
     "unsafe-best-match",
+    "--exclude-newer",
+    EXCLUDE_NEWER,
     "--no-annotate",
     "--no-header",
     "--quiet",

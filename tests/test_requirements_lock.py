@@ -9,11 +9,9 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-LOCK_PATH = REPO_ROOT / "requirements.lock.txt"
-REQ_PATH = REPO_ROOT / "requirements.txt"
+from scripts.lock_requirements import LOCK_PATH, REPO_ROOT
+from scripts.lock_requirements import REQUIREMENTS_PATH as REQ_PATH
 
 
 def _canonical(name: str) -> str:
@@ -66,6 +64,12 @@ class TestRequirementsLock(unittest.TestCase):
 
         stale = self.lock_text.replace("torch==2.15.0", "torch==2.5.0")
         self.assertTrue(any("violates declared" in error for error in validate_metadata(stale)))
+
+    def test_resolution_is_cut_off_from_future_releases(self):
+        from scripts.lock_requirements import COMPILE_ARGS, EXCLUDE_NEWER
+
+        self.assertEqual(COMPILE_ARGS[COMPILE_ARGS.index("--exclude-newer") + 1], EXCLUDE_NEWER)
+        self.assertRegex(EXCLUDE_NEWER, r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
     def test_all_runtime_jobs_install_the_lock(self):
         import yaml
