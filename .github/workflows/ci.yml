@@ -132,7 +132,7 @@ jobs:
         run: |
           python -m venv "$RUNNER_TEMP/ricc-wheel-smoke"
           "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -m pip install --upgrade pip
-          "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -m pip install dist/*.whl --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -m pip install dist/*.whl --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/ricc-wheel-smoke/bin/python" -c "import ricc; print(ricc.__version__)"
 
@@ -171,7 +171,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install -e ".[dev]" --index-url https://pypi.org/simple
 
       - name: Every evaluation suite must import and expose its entry point
@@ -212,7 +212,7 @@ jobs:
       - name: Install dependencies and pinned mypy
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install uv mypy==${{ env.MYPY_VERSION }}
 
       - name: Run Strict mypy Typecheck Gate
@@ -240,7 +240,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install pytest pytest-cov
 
       - name: Run Unit Tests
@@ -285,7 +285,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Run Unit Tests with Coverage
@@ -323,7 +323,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Compute coverage of the changed lines
@@ -383,7 +383,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install "dvc>=3.50.0"
 
       - name: Verify the raw-export dependency list is in sync
@@ -458,7 +458,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install "dvc>=3.50.0"
 
       - name: Move the real exports aside and write a small fixture
@@ -530,7 +530,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Verify the installed dependency set and lock reproducibility
         run: |
@@ -656,7 +656,7 @@ jobs:
     name: Docker Build & Push
     runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, validate]
-    if: github.event_name == 'push' || github.event_name == 'release'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'release'
     timeout-minutes: 30
     permissions:
       contents: read
@@ -714,7 +714,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Download pipeline artifacts
         uses: actions/download-artifact@v8
@@ -764,7 +764,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install huggingface_hub
 
       - name: Download real corpus at pinned HF revision
@@ -987,7 +987,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          pip install -r requirements.lock.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install huggingface_hub
 
       - name: Download the exact dataset and manifest validated by SLO gate

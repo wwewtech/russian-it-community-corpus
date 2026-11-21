@@ -28,9 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.lock.txt pyproject.toml ./
 RUN pip install --upgrade pip setuptools wheel \
     && pip install -r requirements.lock.txt \
-        --index-url https://download.pytorch.org/whl/cpu \
-        --extra-index-url https://pypi.org/simple \
-        --index-strategy unsafe-best-match
+        --index-url https://pypi.org/simple \
+        --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Non-root runtime user (hardening: no container-as-root).
 # Pre-create writable dirs for read-only rootfs + tmpfs mounts.
