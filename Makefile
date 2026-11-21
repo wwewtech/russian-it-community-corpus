@@ -79,11 +79,11 @@ typecheck-strict:
 	python -m mypy ricc cli.py main.py app_helpers.py chat_ui.py scripts --strict
 
 # Supply-chain security: bandit HIGH gate + secret scan + pip-audit (same as CI `security` job).
-# pip-audit is a HARD gate: any known CVE in the requirements.txt tree fails the build.
+# pip-audit is a HARD gate: any known CVE in the locked dependency tree fails the build.
 security:
 	python -m bandit -r ricc/ -q --severity-level high
 	python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
-	python -m pip_audit -r requirements.txt --desc off --progress-spinner off
+	python -m pip_audit -r requirements.lock.txt --desc off --progress-spinner off
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:

@@ -76,8 +76,7 @@ def _build_plan(registry: dict[str, Any]) -> list[str]:
     lines.append("")
     lines.append("Plan:")
     lines.append("  1. Upload lora_adapters/registry.json to the repo root.")
-    lines.append("  2. Append a YAML 'adapters:' block to the model card metadata")
-    lines.append("     summarising slug -> base_model for every adapter.")
+    lines.append("  2. The model card is uploaded separately by finalize_sync_all.")
     return lines
 
 

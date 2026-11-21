@@ -106,6 +106,11 @@ class TestComputeLoraZooIndex(unittest.TestCase):
         self.assertEqual(ids, ["alpha", "beta"])
         self.assertEqual(len(idx), 2)
 
+    def test_policy_incompliant_adapter_is_not_catalogued(self):
+        _make_noncompliant_adapter(self.root, "partial")
+        idx = compute_lora_zoo_index(self.root)
+        self.assertNotIn("partial", {record["id"] for record in idx})
+
     def test_size_mb_is_rounded_to_two_decimals(self):
         idx = compute_lora_zoo_index(self.root)
         size_by_id = {r["id"]: r["size_mb"] for r in idx}
@@ -185,7 +190,7 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
 
 
 class TestUploadDataset(unittest.TestCase):
-    def test_uploads_only_existing_artifacts(self):
+    def test_uploads_verified_artifacts(self):
         api = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -194,33 +199,51 @@ class TestUploadDataset(unittest.TestCase):
             # directory, which previously made it publish whatever happened
             # to sit in the CWD).
             (root / "reports").mkdir()
+            (root / "reports/dataset_manifest.json").write_text("{}", encoding="utf-8")
             (root / "reports/DATASET_AND_ANALYTICS.md").write_text("# dataset", encoding="utf-8")
             (root / "dataset_output/parquet").mkdir(parents=True)
             (root / "dataset_output/parquet/full_clean_messages.parquet").touch()
             (root / "dataset_output/parquet/sft_dialogues.parquet").touch()
-            # rag_knowledge_base.parquet intentionally absent
+            (root / "dataset_output/parquet/rag_knowledge_base.parquet").touch()
             (root / "reports/domain_benchmark_100.json").write_text("{}", encoding="utf-8")
             # LORA_MODEL_ZOO.md intentionally absent
 
-            upload_dataset(api, repo_root=root)
+            with unittest.mock.patch("ricc.validation.artifact_manifest.verify_manifest") as verify:
+                upload_dataset(api, repo_root=root)
+            verify.assert_called_once_with(root, root / "reports/dataset_manifest.json")
 
             uploaded = [c.kwargs["path_in_repo"] for c in api.upload_file.call_args_list]
 
         self.assertIn("README.md", uploaded)  # dataset card
         self.assertIn("data/full_clean_messages.parquet", uploaded)
         self.assertIn("data/sft_dialogues.parquet", uploaded)
-        self.assertNotIn("data/rag_knowledge_base.parquet", uploaded)  # missing on disk
+        self.assertIn("data/rag_knowledge_base.parquet", uploaded)
         self.assertIn("domain_benchmark_100.json", uploaded)
         self.assertNotIn("LORA_MODEL_ZOO.md", uploaded)  # missing on disk
 
     def test_uses_default_dataset_repo_id(self):
         api = MagicMock()
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory() as tmpdir, self.assertRaisesRegex(RuntimeError, "manifest"):
             upload_dataset(api, repo_root=Path(tmpdir))
-        # No dataset card, no parquet -> zero upload_file calls,
-        # but the function must still log the repo id it intends to
-        # use; assert the default value matches the module constant.
+        api.upload_file.assert_not_called()
         self.assertEqual(DATASET_REPO_ID, "wwewtech/russian-it-community-corpus")
+
+    def test_refuses_partial_dataset_before_any_upload(self):
+        api = MagicMock()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "reports").mkdir()
+            (root / "reports/dataset_manifest.json").write_text("{}", encoding="utf-8")
+            (root / "reports/DATASET_AND_ANALYTICS.md").write_text("# dataset", encoding="utf-8")
+            with (
+                unittest.mock.patch(
+                    "ricc.validation.artifact_manifest.verify_manifest",
+                    side_effect=ValueError("missing canonical parquet"),
+                ),
+                self.assertRaisesRegex(RuntimeError, "Refusing to publish"),
+            ):
+                upload_dataset(api, repo_root=root)
+        api.upload_file.assert_not_called()
 
     def test_refuses_to_publish_when_manifest_mismatch(self):
         """A dataset that does not match the manifest must not be published."""
@@ -275,7 +298,10 @@ class TestUploadMissingAdapters(unittest.TestCase):
 
     def test_skips_already_uploaded(self):
         api = MagicMock()
-        api.list_repo_files.return_value = ["alpha/weights.safetensors", "beta/weights.safetensors"]
+        api.list_repo_files.return_value = [
+            "alpha/adapter_model.safetensors",
+            "beta/adapter_model.safetensors",
+        ]
         uploaded = upload_missing_adapters(
             api,
             self.root,
@@ -289,6 +315,17 @@ class TestUploadMissingAdapters(unittest.TestCase):
         self.assertEqual(kwargs["repo_id"], MODEL_REPO_ID)
         self.assertEqual(kwargs["repo_type"], "model")
         self.assertEqual(kwargs["ignore_patterns"], ["checkpoint-*"])
+
+    def test_repairs_remote_metadata_only_adapter(self):
+        api = MagicMock()
+        api.list_repo_files.return_value = [
+            "alpha/README.md",
+            "beta/adapter_model.safetensors",
+            "gamma/adapter_model.safetensors",
+        ]
+        uploaded = upload_missing_adapters(api, self.root, max_attempts=1, retry_sleep_seconds=0)
+        self.assertEqual(uploaded, ["alpha"])
+        self.assertEqual(api.upload_folder.call_args.kwargs["path_in_repo"], "alpha")
 
     def test_raises_after_max_attempts(self):
         api = MagicMock()

@@ -8,8 +8,8 @@ published. Runners: pinned `ubuntu-24.04`.
 
 | Job | What it does | Notes |
 |---|---|---|
-| Lint & Format | `ruff check` + `ruff format --check` | pinned `ruff==0.16.2` |
-| Typecheck (Strict) | `make typecheck-strict` | 43 modules, `mypy==2.3.1` |
+| Lint & Format | `ruff check` + `ruff format --check` | pinned `ruff==0.17.5` |
+| Typecheck (Strict) | `make typecheck-strict` | full codebase, `mypy==2.4.1` |
 | Unit Tests | pytest + coverage, matrix 3.11/3.12/3.13/3.14 | `--cov-fail-under=85`, coverage.xml artifact |
 | Data Validation & Audits | lock check, adapter cards, synthetic fixtures, validator, real-corpus PII audit (100k sample) | synthetic run is stamped, never SHIP |
 | SLO Release Gate (Real Corpus) | regenerates reports from real artifacts, runs the gate | artifact `slo_verdict.json` |
@@ -20,13 +20,17 @@ published. Runners: pinned `ubuntu-24.04`.
 | Release to Hugging Face Hub | finalize/sync/catalog on release | `contents: write` |
 | LoRA zoo publish | `gh release upload` of the catalog | `--clobber` |
 
-Typical full run: **15–18 minutes**. All 11 jobs green is the merge bar.
+Every required job must be green before merge or release.
 
 ## Pinning Policy
 
-- Action versions are pinned by major (`actions/checkout@v5`,
-  `setup-python@v6`, `upload-artifact@v7`) and bumped by dedicated
+- Action versions are pinned by major (`actions/checkout@v7`,
+  `setup-python@v7`, `upload-artifact@v7`) and bumped by dedicated
   dependency PRs.
+- Runtime jobs install the portable `requirements.lock.txt`, not the loose
+  ranges in `requirements.txt`. Refresh it with
+  `python scripts/lock_requirements.py`; CI verifies the resolution and runs
+  `pip check`. Unused packages are removed rather than upgraded blindly.
 - Tool versions are pinned exactly in `pyproject.toml [dev]` +
   `MYPY_VERSION`/`RUFF_VERSION` env so local == hook == CI.
 
@@ -47,7 +51,12 @@ resolve and the build must be warning-free.
 
 ## Release Flow
 
-`release: published` → SLO gate on real corpus → Docker push → Hub sync
-(`scripts/sync_to_hub.py --apply`, sanctioned token path per
-`docs/adr/0001-hf-token-handling.md`) → `gh release upload` the model
-zoo catalog.
+`release: published` → SLO gate on real corpus + HF token/write-access
+preflight → Docker push → Hub sync. The release downloads the same three
+parquet files and manifest that the real-corpus gate validated, verifies the
+manifest before any write, materializes registry-compliant adapters and
+verifies their SHA-256 digests, and refuses missing or policy-incompliant
+weights. It then builds and smoke-tests the wheel and attaches the wheel,
+sdist, and model-zoo catalog to the existing GitHub Release.
+
+`workflow_dispatch` is a non-release check and never uploads release assets.
