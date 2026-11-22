@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.lock.txt pyproject.toml ./
 RUN pip install --upgrade pip setuptools wheel \
     && pip install -r requirements.lock.txt \
+        --require-hashes \
         --index-url https://pypi.org/simple \
         --extra-index-url https://download.pytorch.org/whl/cpu
 

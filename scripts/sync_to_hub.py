@@ -76,7 +76,8 @@ def _build_plan(registry: dict[str, Any]) -> list[str]:
     lines.append("")
     lines.append("Plan:")
     lines.append("  1. Upload lora_adapters/registry.json to the repo root.")
-    lines.append("  2. The model card is uploaded separately by finalize_sync_all.")
+    lines.append("  2. Upload the preflight-generated reports/hf_hub_audit.json.")
+    lines.append("  3. The model card is uploaded separately by finalize_sync_all.")
     return lines
 
 
@@ -135,6 +136,16 @@ def main(argv: list[str] | None = None) -> int:
         repo_id=HF_REPO_ID,
         repo_type=HF_REPO_TYPE,
         commit_message="chore: sync LoRA registry from local",
+    )
+    audit_path = REPO_ROOT / "reports" / "hf_hub_audit.json"
+    if not audit_path.is_file():
+        raise RuntimeError("Missing preflight-generated reports/hf_hub_audit.json")
+    api.upload_file(
+        path_or_fileobj=str(audit_path),
+        path_in_repo="hf_hub_audit.json",
+        repo_id=HF_REPO_ID,
+        repo_type=HF_REPO_TYPE,
+        commit_message="docs: publish verified historical LoRA audit",
     )
     print("Done. Verify at https://huggingface.co/" + HF_REPO_ID)
     return 0

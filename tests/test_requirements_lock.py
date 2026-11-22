@@ -49,7 +49,11 @@ class TestRequirementsLock(unittest.TestCase):
         self.assertEqual(missing, [], f"root deps missing from requirements.lock.txt: {missing}")
 
     def test_lock_pins_are_exact(self):
-        pins = [line for line in self.lock_text.splitlines() if line and not line.startswith("#")]
+        from scripts.lock_requirements import _logical_requirement_lines
+
+        pins = _logical_requirement_lines(self.lock_text)
+        self.assertGreater(len(pins), 50)
+
         self.assertGreater(len(pins), 50)
         for line in pins:
             self.assertRegex(line, r"^[A-Za-z0-9._-]+==[^\s;]+(?:\s*;\s*.+)?$", f"non-exact pin: {line!r}")
@@ -64,6 +68,13 @@ class TestRequirementsLock(unittest.TestCase):
 
         stale = self.lock_text.replace("torch==2.15.0", "torch==2.5.0")
         self.assertTrue(any("violates declared" in error for error in validate_metadata(stale)))
+
+    def test_pins_have_hashes_and_hash_required_installs(self):
+        self.assertIn("--hash=sha256:", self.lock_text)
+        for path in (REPO_ROOT / "Dockerfile", REPO_ROOT / ".github/workflows/ci.yml"):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if line.strip().startswith("pip install -r requirements.lock.txt"):
+                    self.assertIn("--require-hashes", line)
 
     def test_resolution_is_cut_off_from_future_releases(self):
         from scripts.lock_requirements import COMPILE_ARGS, EXCLUDE_NEWER

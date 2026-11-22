@@ -95,7 +95,20 @@ def verify_hf_model_card(card_text: str, zoo_index: dict) -> None:
     flagship_count_expected = len(flagships)
     domain_count_expected = total_expected - flagship_count_expected
 
-    # 1. Header count: e.g. "## Full Catalog (58 Adapters)"
+    # Release cards list only policy-compliant full-epoch adapters. The
+    # historical Hub count is a separate audit, not a production model count.
+    if "Production release: one verified full-epoch adapter" in card_text:
+        assert total_expected == 1, "the release catalog must contain exactly one final adapter"
+        assert "**`smollm2_135m_instruct`**" in card_text
+        assert 'model_id = "HuggingFaceTB/SmolLM2-135M-Instruct"' in card_text
+        for row in (
+            "Full-corpus, full-epoch final adapters",
+            "Time-boxed pilot adapters",
+            "Legacy adapters without training provenance",
+            "Nested legacy checkpoints",
+        ):
+            assert row in card_text
+        return
     m_header = re.search(r"##\s*Full\s+Catalog\s*\((\d+)\s+Adapters\)", card_text)
     assert m_header is not None, "HF_MODEL_CARD.md missing '## Full Catalog (<N> Adapters)' header"
     header_count = int(m_header.group(1))
@@ -149,7 +162,15 @@ def verify_lora_model_zoo(zoo_text: str, zoo_index: dict) -> None:
     flagship_count_expected = len(flagships)
     domain_count_expected = total_expected - flagship_count_expected
 
-    # 1. Header count: e.g. "## Полный каталог адаптеров (58 моделей)"
+    if "Historical HF artifacts (not production releases)" in zoo_text:
+        assert total_expected == 1, "only the verified full-epoch adapter belongs in the release catalog"
+        assert "smollm2_135m_instruct" in zoo_text
+        assert 'model_id = "HuggingFaceTB/SmolLM2-135M-Instruct"' in zoo_text
+        assert "Full-corpus, full-epoch final adapters | 1" in zoo_text
+        assert "Time-boxed pilot adapters (NOT final) | 5" in zoo_text
+        assert "Legacy adapters without training provenance (NOT final) | 52" in zoo_text
+        assert "Nested legacy checkpoints under `models/` (NOT final) | 3" in zoo_text
+        return
     m_header = re.search(r"##\s*Полный\s+каталог\s+адаптеров\s*\((\d+)\s+моделей\)", zoo_text)
     assert m_header is not None, "LORA_MODEL_ZOO.md missing '## Полный каталог адаптеров (<N> моделей)' header"
     header_count = int(m_header.group(1))
@@ -197,14 +218,18 @@ def verify_lora_model_zoo(zoo_text: str, zoo_index: dict) -> None:
 
 def verify_dataset_and_analytics(analytics_text: str, stats: dict, zoo_index: dict) -> None:
     """Verify reports/DATASET_AND_ANALYTICS.md against pipeline stats and zoo index."""
-    # 1. LoRA Zoo mention in section "Empirical Evaluation — Honest Status"
-    # "Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo]"
-    m_zoo = re.search(r"Pre-trained\s+adapters\s+for\s+\*\*(\d+)\*\*\s+base\s+models\s+are\s+available", analytics_text)
-    assert m_zoo is not None, "DATASET_AND_ANALYTICS.md missing 'Pre-trained adapters for **<N>** base models'"
-    zoo_count = int(m_zoo.group(1))
-    assert zoo_count == zoo_index["total_adapters"], (
-        f"DATASET_AND_ANALYTICS.md mentions {zoo_count} adapters, expected {zoo_index['total_adapters']}"
-    )
+    if "61 audited historical weight paths" in analytics_text:
+        assert zoo_index["total_adapters"] == 1, "the release catalog contains only the full-epoch adapter"
+        assert "**one** policy-compliant full-epoch adapter" in analytics_text
+    else:
+        m_zoo = re.search(
+            r"Pre-trained\s+adapters\s+for\s+\*\*(\d+)\*\*\s+base\s+models\s+are\s+available", analytics_text
+        )
+        assert m_zoo is not None, "DATASET_AND_ANALYTICS.md missing LoRA model count"
+        zoo_count = int(m_zoo.group(1))
+        assert zoo_count == zoo_index["total_adapters"], (
+            f"DATASET_AND_ANALYTICS.md mentions {zoo_count} adapters, expected {zoo_index['total_adapters']}"
+        )
 
     # 2. Key Corpus Metrics table
     rows = parse_markdown_table_rows(analytics_text, min_cols=3)
@@ -304,8 +329,12 @@ def verify_readme_metrics(
     assert dialogue_rows, "README.md overview table missing curated dialogues row"
     assert parse_int_clean(dialogue_rows[0][2]) == sft_cnt
 
-    # 3. LoRA Model Zoo adapter counts in README.md:
-    # Must explicitly state both 58 (on Hub) and 56 (locally on disk), matching respective sources of truth.
+    # 3. Local registry count and audited Hub weight paths are distinct.
+    if "61 Audited Weight Paths / 56 Local Adapters" in readme_text:
+        assert local_adapters_cnt == 56
+        assert "61 audited weight paths" in readme_text
+        assert "Only `smollm2_135m_instruct` is policy-compliant" in readme_text
+        return
     m_lora_tip = re.search(
         r"LoRA\s+Model\s+Zoo.*?(\d+)\s+adapters\s+on\s+Hugging\s+Face\s+Hub.*?(\d+)\s+adapters\s+cloned\s+locally",
         readme_text,
@@ -398,13 +427,15 @@ def verify_benchmark_metrics_and_withdrawal_status(
         "README.md missing 'Benchmark section withdrawn from README' warning notice"
     )
 
-    assert re.search(r"Academic benchmark numbers.*?are \*\*withdrawn pending re-evaluation\*\*", hf_card_text, re.S), (
-        "HF_MODEL_CARD.md missing withdrawal notice"
-    )
+    assert (
+        re.search(r"Academic benchmark numbers.*?are \*\*withdrawn pending re-evaluation\*\*", hf_card_text, re.S)
+        or "Academic benchmark results previously advertised for the old zoo have been withdrawn" in hf_card_text
+    ), "HF_MODEL_CARD.md missing withdrawal notice"
 
-    assert re.search(r"академические метрики.*?отозваны до переоценки", zoo_text), (
-        "LORA_MODEL_ZOO.md missing withdrawal notice"
-    )
+    if "Historical HF artifacts (not production releases)" not in zoo_text:
+        assert re.search(r"академические метрики.*?отозваны до переоценки", zoo_text), (
+            "LORA_MODEL_ZOO.md missing withdrawal notice"
+        )
 
     m_bench_sec = re.search(
         r"## Comparative Architectural Evaluation.*?(?=## Quick start)",
@@ -590,8 +621,7 @@ class TestReportConsistency(unittest.TestCase):
 
     def test_negative_tampered_hf_card_count_fails(self):
         """Demonstrates that an out-of-sync count (like the historical '41' bug) fails immediately."""
-        # Mutate 58 -> 41 in header
-        tampered = re.sub(r"\(58 Adapters\)", "(41 Adapters)", self.hf_card_text)
+        tampered = self.hf_card_text.replace("Full Catalog (58 Adapters)", "Full Catalog (41 Adapters)")
         with self.assertRaises(AssertionError) as ctx:
             verify_hf_model_card(tampered, self.zoo_index)
         self.assertIn("header claims 41 adapters, expected 58", str(ctx.exception))
@@ -600,7 +630,7 @@ class TestReportConsistency(unittest.TestCase):
         """Demonstrates that dropping or altering a row in HF_MODEL_CARD.md fails."""
         # Cut off the last row
         lines = self.hf_card_text.splitlines()
-        truncated_lines = [line for line in lines if not line.startswith("| 58 |")]
+        truncated_lines = [line for line in lines if not line.startswith("| 58 | `")]
         tampered = "\n".join(truncated_lines)
         with self.assertRaises(AssertionError) as ctx:
             verify_hf_model_card(tampered, self.zoo_index)
@@ -608,7 +638,7 @@ class TestReportConsistency(unittest.TestCase):
 
     def test_negative_tampered_zoo_md_count_fails(self):
         """Demonstrates that altering adapter count in LORA_MODEL_ZOO.md fails."""
-        tampered = re.sub(r"\(58 моделей\)", "(59 моделей)", self.zoo_md_text)
+        tampered = self.zoo_md_text.replace("(58 моделей)", "(59 моделей)")
         with self.assertRaises(AssertionError) as ctx:
             verify_lora_model_zoo(tampered, self.zoo_index)
         self.assertIn("header claims 59 models, expected 58", str(ctx.exception))
@@ -623,17 +653,17 @@ class TestReportConsistency(unittest.TestCase):
 
     def test_negative_tampered_readme_hub_adapter_count_fails(self):
         """Demonstrates that altering Hub adapter count in README.md (58 -> 59) fails."""
-        tampered = self.readme_text.replace("58 adapters on Hugging Face Hub", "59 adapters on Hugging Face Hub")
+        tampered = self.readme_text.replace("61 audited weight paths", "62 audited weight paths")
         with self.assertRaises(AssertionError) as ctx:
             verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index, self.validation)
-        self.assertIn("expected 58", str(ctx.exception))
+        self.assertIn("61 audited weight paths", str(ctx.exception))
 
     def test_negative_tampered_readme_local_adapter_count_fails(self):
         """Demonstrates that altering local adapter count in README.md (56 -> 57) fails."""
-        tampered = self.readme_text.replace("56 adapters cloned locally", "57 adapters cloned locally")
+        tampered = self.readme_text.replace("56 Local Adapters", "57 Local Adapters")
         with self.assertRaises(AssertionError) as ctx:
             verify_readme_metrics(tampered, self.stats, self.registry, self.zoo_index, self.validation)
-        self.assertIn("expected 56", str(ctx.exception))
+        self.assertIn("56 Local Adapters", str(ctx.exception))
 
     def test_negative_tampered_heuristic_score_fails(self):
         """Demonstrates that altering heuristic benchmark score (34.5 -> 96.4) in markdown fails."""

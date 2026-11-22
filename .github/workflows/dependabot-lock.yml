@@ -1,0 +1,82 @@
+name: Refresh Dependabot dependency lock
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main, master]
+    paths:
+      - requirements.txt
+      - pyproject.toml
+
+permissions:
+  contents: read
+
+jobs:
+  refresh-lock:
+    # Only Dependabot's same-repository Python update PRs. Never execute any
+    # code or workflow from the PR with this write-capable token.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'dependabot/pip/')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out trusted base scripts and registry credentials
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Check out the Dependabot branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          path: update
+          persist-credentials: true
+
+      - name: Allow only Python dependency manifests to differ
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        working-directory: update
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF"...HEAD > changed-files.txt
+          if grep -Ev '^(requirements\.txt|pyproject\.toml|requirements\.lock\.txt|scripts/lock_requirements\.py)$' changed-files.txt; then
+            echo "Refusing to run trusted automation on unrelated PR changes" >&2
+            exit 1
+          fi
+          # The lock and its cutoff are regenerated from trusted base code;
+          # neither is accepted as executable input from the PR.
+          cp ../trusted/scripts/lock_requirements.py scripts/lock_requirements.py
+
+      - name: Install pinned resolver and validator
+        working-directory: trusted
+        run: python -m pip install uv==0.13.9 packaging
+
+      - name: Regenerate universal lock with SHA-256 artifact hashes
+        working-directory: update
+        # The copied file is trusted base-branch code, but resolves the
+        # dependency manifests in this PR checkout.
+        run: python scripts/lock_requirements.py --refresh
+
+      - name: Commit and push reviewed generated outputs
+        working-directory: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          if git diff --quiet -- requirements.lock.txt scripts/lock_requirements.py; then
+            echo "Lock is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add requirements.lock.txt scripts/lock_requirements.py
+          git commit -m "chore(deps): refresh hashed dependency lock"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          gh pr comment "$PR_URL" --body "Regenerated the universal lock with the trusted base-branch resolver. The lock cutoff and all artifact SHA-256 hashes were refreshed; ordinary CI will verify the result without repository secrets."

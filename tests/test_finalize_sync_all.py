@@ -38,6 +38,16 @@ def _make_adapter(root: Path, name: str, weight_bytes: int = 1024) -> Path:
     d = root / name
     d.mkdir(parents=True, exist_ok=True)
     (d / "adapter_model.safetensors").write_bytes(b"\0" * weight_bytes)
+    (d / "adapter_config.json").write_text(
+        json.dumps(
+            {
+                "base_model_name_or_path": "acme/base",
+                "revision": "1" * 40,
+                "hf_model_revision": "2" * 40,
+            }
+        ),
+        encoding="utf-8",
+    )
     (d / "training_meta.json").write_text(
         json.dumps(
             {
@@ -180,6 +190,27 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
         md = build_lora_zoo_markdown([])
         self.assertIn("Быстрый старт", md)
         self.assertIn("PeftModel", md)
+
+    def test_quickstart_base_comes_from_compliant_adapter(self):
+        idx = [
+            {
+                "id": "alpha",
+                "base_model": "acme/actual-base",
+                "base_model_revision": "1" * 40,
+                "hf_model_revision": "2" * 40,
+                "adapter_dir": "lora_adapters/alpha",
+                "size_mb": 1.0,
+                "status": "SUCCESS",
+                "hf_model_repo": "owner/repo",
+                "safetensors_sha256": "0" * 64,
+            }
+        ]
+        md = build_lora_zoo_markdown(idx)
+        self.assertIn('model_id = "acme/actual-base"', md)
+        self.assertIn('subfolder = "alpha"', md)
+        self.assertIn(f'base_revision = "{"1" * 40}"', md)
+        self.assertIn(f'adapter_revision = "{"2" * 40}"', md)
+        self.assertNotIn("Qwen/Qwen2.5-1.5B-Instruct", md)
 
     def test_empty_index_still_renders_quickstart(self):
         # An empty index must keep the boilerplate (the release job's gate

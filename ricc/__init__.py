@@ -24,7 +24,7 @@ from __future__ import annotations
 import importlib
 from typing import Any, cast
 
-__version__ = "12.2.0"
+__version__ = "12.3.0"
 
 from ricc.errors import (
     AdapterLoadError,

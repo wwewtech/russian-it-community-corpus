@@ -79,8 +79,8 @@ Statuses: `EXACT_MATCH`, `DOCUMENTED_DIVERGENCE` (acceptable, documented),
 or mismatch (fails the gate).
 
 The real-corpus release gate validates the downloaded Parquet files with
-`scripts/validate_real_corpus.py`. The pinned historical revision predates
-the schema-metadata contract, so the gate explicitly accepts absent metadata
-for that snapshot; column names, order and types remain strict. Remove the
-`--allow-legacy-metadata` flag after the corpus is republished with the
-current exporter.
+`scripts/validate_real_corpus.py`. The pinned revision
+`63fb17666b9d7fd9cd34a7fea9b0d119b49cef07` contains the current schema
+metadata; CI enforces names, order, types, version and fingerprint without
+`--allow-legacy-metadata`. The flag remains only for explicitly auditing an
+older local snapshot and is never used by the release gate.

@@ -1,0 +1,48 @@
+name: Publish verified release container
+
+on:
+  workflow_run:
+    workflows: ["Data Platform CI & Validation"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  docker-release:
+    # This separate workflow is the only release container publication path.
+    # Its read-only preflight and the GitHub package/catalog publication must
+    # both have completed successfully first.
+    if: >-
+      github.event.workflow_run.event == 'release' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ github.event.workflow_run.head_branch }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.workflow_run.head_branch }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -2,17 +2,20 @@ name: Data Platform CI & Validation
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, 'dependabot/**' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      dry_run_tag:
+        description: "Read-only release preflight tag (no HF, GitHub or Docker mutations)"
+        required: true
+        type: string
   release:
     types: [published]
 
 permissions:
   contents: read
-  packages: write
-  id-token: write
 
 # One run per ref: a new push to main cancels the superseded run instead of
 # racing it through 12 jobs (and two concurrent Docker pushes fighting over
@@ -23,6 +26,7 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.12"
+  UV_VERSION: "0.13.9"
   # These MUST match the pins in pyproject.toml [project.optional-dependencies].dev
   # and the pre-commit hook revs. tests/test_requirements_lock.py asserts this.
   RUFF_VERSION: "0.17.5"
@@ -170,8 +174,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install -e ".[dev]" --index-url https://pypi.org/simple
 
       - name: Every evaluation suite must import and expose its entry point
@@ -212,8 +216,8 @@ jobs:
       - name: Install dependencies and pinned mypy
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
-          pip install uv mypy==${{ env.MYPY_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }} mypy==${{ env.MYPY_VERSION }}
 
       - name: Run Strict mypy Typecheck Gate
         run: make typecheck-strict
@@ -239,8 +243,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install pytest pytest-cov
 
       - name: Run Unit Tests
@@ -284,8 +288,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Run Unit Tests with Coverage
@@ -322,8 +326,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install pytest pytest-cov diff-cover==11.0.0
 
       - name: Compute coverage of the changed lines
@@ -382,8 +386,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install "dvc>=3.50.0"
 
       - name: Verify the raw-export dependency list is in sync
@@ -457,8 +461,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install "dvc>=3.50.0"
 
       - name: Move the real exports aside and write a small fixture
@@ -529,8 +533,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Verify the installed dependency set and lock reproducibility
         run: |
@@ -656,7 +660,7 @@ jobs:
     name: Docker Build & Push
     runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, validate]
-    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'release'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     timeout-minutes: 30
     permissions:
       contents: read
@@ -713,8 +717,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Download pipeline artifacts
         uses: actions/download-artifact@v8
@@ -749,7 +753,7 @@ jobs:
     # validation job. It previously only depended on lint+typecheck, so it
     # could pass (and unblock the release) while the test suite was red.
     needs: [lint, typecheck, test, validate]
-    if: github.event_name == 'push' || github.event_name == 'release'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'release'
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -763,8 +767,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install huggingface_hub
 
       - name: Download real corpus at pinned HF revision
@@ -776,7 +780,7 @@ jobs:
           from pathlib import Path
           from huggingface_hub import hf_hub_download
           repo = 'wwewtech/russian-it-community-corpus'
-          rev = '81a3495de997b0690f67d175c4ebd9cfdef35b76'
+          rev = '63fb17666b9d7fd9cd34a7fea9b0d119b49cef07'
           out_dir = Path('dataset_output/parquet')
           out_dir.mkdir(parents=True, exist_ok=True)
           for name in ('full_clean_messages', 'sft_dialogues', 'rag_knowledge_base'):
@@ -787,10 +791,8 @@ jobs:
           "
 
       - name: Validate the real corpus
-        # The pinned 81a3495 release predates the schema-metadata contract.
-        # This flag accepts absent metadata only; columns and types are still
-        # checked strictly. Remove it after the corpus is republished.
-        run: python scripts/validate_real_corpus.py --allow-legacy-metadata
+        # The dataset release contains current contract metadata; strict schema checks apply.
+        run: python scripts/validate_real_corpus.py
 
       - name: Run real probabilistic PII audit
         # Sample size 100000 matches the committed audit methodology: with zero
@@ -893,7 +895,7 @@ jobs:
         # already-clean tree. Any known CVE in the locked dependency tree now
         # fails the security job. JSON report is still uploaded for triage.
         run: |
-          python -m pip_audit -r requirements.lock.txt --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+          python -m pip_audit -r requirements.lock.txt --require-hashes --desc off -f json -o pip_audit_report.json --progress-spinner off --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
           python - <<'PY'
           import json
           try:
@@ -942,38 +944,60 @@ jobs:
           fi
           echo "HF_TOKEN secret present (value hidden)"
 
-      - name: Verify HF_TOKEN is valid and cache is readable
+      - name: Verify HF token and immutable dataset access
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_HOME: ${{ runner.temp }}/hf-cache-check
         run: |
           python -m pip install --upgrade pip
-          pip install huggingface_hub
-          python -c "
-          import os
-          from pathlib import Path
-          from huggingface_hub import HfApi, hf_hub_download
-          repo = 'wwewtech/russian-it-community-corpus'
-          rev = '81a3495de997b0690f67d175c4ebd9cfdef35b76'
-          api = HfApi(token=os.environ['HF_TOKEN'])
-          api.whoami()
-          for repo_id, repo_type in ((repo, 'dataset'), ('wwewtech/russian-it-community-lora', 'model')):
-              api.repo_info(repo_id=repo_id, repo_type=repo_type)
-          p = hf_hub_download(repo_id=repo, filename='data/full_clean_messages.parquet', revision=rev, repo_type='dataset', token=os.environ['HF_TOKEN'])
-          size = Path(p).stat().st_size
-          assert size == 198527394, f'unexpected size {size}'
-          print(f'HF auth OK, cache readable, pinned parquet {size} bytes')
-          "
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          python scripts/fetch_pinned_dataset.py
+
+  release-preflight:
+    name: Release Dry Run (read-only)
+    runs-on: ubuntu-24.04
+    needs: [lint, typecheck, test, test-windows, coverage-regression, validate, security, eval-suites, dvc-consistency, dvc-repro, docs, slo-gate-real, hf-secrets-check, package]
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv==${{ env.UV_VERSION }} build
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: All release checks without any Hub/GitHub mutation
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python scripts/release_preflight.py --tag "${{ inputs.dry_run_tag || github.event.release.tag_name }}"
+      - name: Save dry-run report
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-dry-run
+          path: |
+            reports/release_dry_run.json
+            reports/LORA_MODEL_ZOO.md
+            reports/HF_MODEL_CARD.md
+            reports/hf_hub_audit.json
+            dist/*.whl
+            dist/*.tar.gz
+          retention-days: 30
 
   release:
     name: Release to Hugging Face Hub
     runs-on: ubuntu-24.04
-    needs: [lint, typecheck, test, validate, slo-gate-real, hf-secrets-check, package]
+    needs: [release-preflight]
     if: github.event_name == 'release'
     timeout-minutes: 60
     permissions:
       contents: write
-      id-token: write
     steps:
       - uses: actions/checkout@v7
 
@@ -986,8 +1010,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uv
-          pip install -r requirements.lock.txt --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install uv==${{ env.UV_VERSION }}
+          pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
           pip install huggingface_hub
 
       - name: Download the exact dataset and manifest validated by SLO gate
@@ -995,6 +1019,7 @@ jobs:
         with:
           name: release-dataset-verified
           path: .
+          run-id: ${{ github.run_id }}
 
       - name: Materialize compliant adapters and verify registry digests
         env:
@@ -1014,6 +1039,7 @@ jobs:
                   repo_id='wwewtech/russian-it-community-lora',
                   repo_type='model',
                   filename=f'{slug}/adapter_model.safetensors',
+                  revision=adapter['hf_model_revision'],
                   token=os.environ['HF_TOKEN'],
               )
               digest = hashlib.sha256(Path(source).read_bytes()).hexdigest()
@@ -1024,7 +1050,20 @@ jobs:
               print(f'verified compliant adapter: {slug}')
           PY
 
-      - name: Regenerate LoRA zoo catalog
+      - name: Verify the release tag matches the package version before any remote write
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python -c "import os, tomllib; from pathlib import Path; version = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']; assert os.environ['RELEASE_TAG'] == 'v' + version, f\"release tag {os.environ['RELEASE_TAG']} != package v{version}\""
+
+      - name: Use the catalog and proof from the successful preflight
+        uses: actions/download-artifact@v8
+        with:
+          name: release-dry-run
+          path: .
+          run-id: ${{ github.run_id }}
+
+      - name: Publish verified dataset and model card
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         # finalize_sync_all verifies the dataset manifest and publishes all
@@ -1037,22 +1076,26 @@ jobs:
         # Sanctioned upload path per docs/adr/0001-hf-token-handling.md.
         run: python scripts/sync_to_hub.py --apply
 
-      - name: Download the package built and smoke-tested by CI
-        uses: actions/download-artifact@v8
-        with:
-          name: python-package
-          path: dist
 
-      - name: Verify the release tag matches the package version
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+      - name: Verify the exact preflight package and catalog bytes
         run: |
-          python -c "import os, tomllib; from pathlib import Path; version = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']; assert os.environ['RELEASE_TAG'] == 'v' + version, f\"release tag {os.environ['RELEASE_TAG']} != package v{version}\""
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          proof = json.loads(Path('reports/release_dry_run.json').read_text(encoding='utf-8'))
+          assets = [
+              *(Path('dist') / item['file'] for item in proof['release_artifacts']),
+              *(Path('reports') / item['file'] for item in proof['catalog_assets']),
+          ]
+          expected = {item['file']: item for item in proof['release_artifacts'] + proof['catalog_assets']}
+          for path in assets:
+              data = path.read_bytes()
+              assert len(data) == expected[path.name]['bytes'], f'size mismatch: {path.name}'
+              assert hashlib.sha256(data).hexdigest() == expected[path.name]['sha256'], f'digest mismatch: {path.name}'
+              print(f'verified {path.name}: {len(data)} bytes')
+          PY
 
-      - name: Upload model catalog as release asset
-        # gh CLI replaces the archived actions/upload-release-asset@v1
-        # (Node 20 + "Resource not accessible by integration" under
-        # contents: read). Requires contents: write above.
+      - name: Upload model catalog and packages as release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" reports/LORA_MODEL_ZOO.md dist/*.whl dist/*.tar.gz --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" reports/LORA_MODEL_ZOO.md reports/HF_MODEL_CARD.md reports/hf_hub_audit.json dist/*.whl dist/*.tar.gz --clobber

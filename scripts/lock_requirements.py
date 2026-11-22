@@ -9,6 +9,14 @@ Regenerate (requires uv)::
 
     python scripts/lock_requirements.py
 
+For a reviewed dependency update, advance the UTC resolution cutoff and lock
+together (Dependabot's lock-refresh workflow runs the same command)::
+
+    python scripts/lock_requirements.py --refresh
+
+The resolver uses that new cutoff directly. All supported Python/OS artifacts
+are resolved universally with SHA-256 hashes for wheels and sdists.
+
 Check without changing the file::
 
     python scripts/lock_requirements.py --check
@@ -21,9 +29,11 @@ and that every direct locked pin satisfies its declared version specifier.
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 import tomllib
+from datetime import UTC, datetime
 from pathlib import Path
 
 from packaging.requirements import Requirement
@@ -31,6 +41,8 @@ from packaging.requirements import Requirement
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REQUIREMENTS_PATH = REPO_ROOT / "requirements.txt"
 LOCK_PATH = REPO_ROOT / "requirements.lock.txt"
+PIN_PATTERN = re.compile(r"^[A-Za-z0-9._-]+==[^\s;]+(?:\s*;\s*.+)?$")
+HASH_PATTERN = re.compile(r"^\s+--hash=sha256:[0-9a-f]{64}(?:\s+\\)?$")
 
 HEADER = """# Portable lock for Python 3.11+ on Linux, Windows and macOS.
 # This file, not the unconstrained ranges, is installed by CI and Docker.
@@ -72,9 +84,34 @@ def _declared_requirements() -> list[Requirement]:
     return [Requirement(line) for line in lines if line]
 
 
+def _logical_requirement_lines(lock_text: str) -> list[str]:
+    """Validate hash continuations and return direct requirement lines."""
+    blocks: list[list[str]] = []
+    for raw in lock_text.splitlines():
+        if not raw.strip() or raw.startswith("#"):
+            continue
+        if not raw[:1].isspace():
+            blocks.append([raw])
+        elif not blocks:
+            raise ValueError("Hash without a preceding requirement")
+        else:
+            blocks[-1].append(raw)
+    pins: list[str] = []
+    for block in blocks:
+        pin = block[0].rstrip("\\ ").strip()
+        if not PIN_PATTERN.fullmatch(pin):
+            raise ValueError("Invalid lock pin or continuation")
+        if block[-1].rstrip().endswith("\\"):
+            raise ValueError(f"Unterminated lock continuation: {pin}")
+        hashes = [line for line in block[1:] if HASH_PATTERN.fullmatch(line)]
+        if len(hashes) != len(block) - 1 or not hashes:
+            raise ValueError(f"Missing artifact SHA256 hashes for {pin}")
+        pins.append(pin)
+    return pins
+
+
 def _locked_requirements(text: str) -> list[Requirement]:
-    lines = [line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")]
-    return [Requirement(line) for line in lines]
+    return [Requirement(line) for line in _logical_requirement_lines(text)]
 
 
 def validate_metadata(lock_text: str) -> list[str]:
@@ -103,7 +140,7 @@ def validate_metadata(lock_text: str) -> list[str]:
     return errors
 
 
-def _resolve() -> subprocess.CompletedProcess[str]:
+def _resolve(cutoff: str = EXCLUDE_NEWER) -> subprocess.CompletedProcess[str]:
     """Resolve the closure with uv.
 
     uv is required to regenerate the lock; CI installs it alongside the
@@ -111,8 +148,10 @@ def _resolve() -> subprocess.CompletedProcess[str]:
     even if uv is missing, but a missing uv is reported loudly instead of
     being silently swallowed.
     """
+    compile_args = [*COMPILE_ARGS]
+    compile_args[compile_args.index("--exclude-newer") + 1] = cutoff
     result = subprocess.run(
-        ["uv", *COMPILE_ARGS],
+        ["uv", "--no-config", *compile_args, "--generate-hashes"],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -134,9 +173,22 @@ def _resolve() -> subprocess.CompletedProcess[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="resolve and compare without changing the lock")
+    parser.add_argument("--refresh", action="store_true", help="advance the reviewed cutoff before resolving hashes")
+    parser.add_argument("--cutoff", help="explicit UTC timestamp for a reviewed dependency refresh")
     args = parser.parse_args()
+    cutoff = args.cutoff or EXCLUDE_NEWER
+    if args.refresh or args.cutoff:
+        if not args.cutoff:
+            cutoff = datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+        if "." in cutoff or not cutoff.endswith("Z"):
+            raise RuntimeError("Cutoff must be UTC RFC3339 with whole seconds, e.g. 2026-11-20T00:00:00Z")
+        source = Path(__file__).read_text(encoding="utf-8")
+        updated = re.sub(r'EXCLUDE_NEWER = "[^"]+"', f'EXCLUDE_NEWER = "{cutoff}"', source, count=1)
+        if updated == source:
+            raise RuntimeError("Cannot update lock cutoff")
+        Path(__file__).write_text(updated, encoding="utf-8", newline="\n")
     resolved_path = REPO_ROOT / "requirements.lock.resolved.txt"
-    result = _resolve()
+    result = _resolve(cutoff)
     if result.returncode:
         sys.stderr.write(result.stderr)
         return result.returncode
