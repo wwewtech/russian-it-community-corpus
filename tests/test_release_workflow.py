@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -58,6 +59,24 @@ class ReleaseWorkflowTest(unittest.TestCase):
         self.assertIn("47f5d37f9e08d921f23df2af8fbdaa614cc81bf3", catalog)
         self.assertNotIn("Qwen", catalog)
         self.assertIn("Full-corpus, full-epoch final adapters | 1", catalog)
+
+    def test_clean_staging_root_supports_manifest_and_verification(self):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        from ricc.validation.artifact_manifest import create_manifest, verify_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            parquet = root / "dataset_output/parquet"
+            parquet.mkdir(parents=True)
+            # The preflight creates this sibling before invoking the manifest.
+            (root / "reports").mkdir()
+            for name in ("full_clean_messages", "sft_dialogues", "rag_knowledge_base"):
+                pq.write_table(pa.table({"text": ["example"]}), parquet / f"{name}.parquet")
+            path = Path("reports/dataset_manifest.json")
+            create_manifest(root, path)
+            self.assertEqual(len(verify_manifest(root, path)["artifacts"]), 3)
 
     def test_hf_fetch_is_read_only_and_digest_checked(self):
         source = (ROOT / "scripts/fetch_pinned_dataset.py").read_text(encoding="utf-8")
