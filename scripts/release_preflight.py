@@ -123,6 +123,7 @@ def preflight(root: Path, tag: str, output: Path, token: str) -> dict[str, Any]:
         temp = Path(tmp)
         parquet_dir = temp / "dataset_output" / "parquet"
         parquet_dir.mkdir(parents=True)
+        (temp / "reports").mkdir()
         cards: list[str] = []
         for adapter in adapters:
             slug = adapter["slug"]
