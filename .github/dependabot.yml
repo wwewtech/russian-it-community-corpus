@@ -13,6 +13,12 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # The hash lock is generated, not edited by Dependabot. Manifest bumps
+    # must run scripts/lock_requirements.py --refresh before merge.
+    exclude-paths:
+      - requirements.lock.txt
+    cooldown:
+      default-days: 7
     # Group patch+minor bumps so CI runs once per wave instead of per package.
     groups:
       python-minor-and-patch:

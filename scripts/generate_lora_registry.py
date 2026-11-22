@@ -31,6 +31,7 @@ import sys
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 # --------------------------------------------------------------------------- #
 # Paths
@@ -70,6 +71,8 @@ class AdapterEntry:
     r: int | None
     lora_alpha: int | None
     lora_dropout: float | None
+    base_model_revision: str | None
+    hf_model_revision: str | None
     target_modules: list[str] = field(default_factory=list)
     bias: str | None = None
     safetensors_bytes: int | None = None
@@ -111,6 +114,9 @@ def _sha256_of_file(path: Path, chunk: int = 1 << 20) -> str:
 
 def _scan_adapter_dir(adapter_dir: Path) -> AdapterEntry | None:
     """Build an ``AdapterEntry`` from one adapter directory, or ``None`` if invalid."""
+    saved: dict[str, Any] = {}
+    if REGISTRY_JSON.is_file():
+        saved = json.loads(REGISTRY_JSON.read_text(encoding="utf-8"))
     if not adapter_dir.is_dir():
         return None
     if adapter_dir.name in SKIP_DIR_NAMES:
@@ -161,7 +167,15 @@ def _scan_adapter_dir(adapter_dir: Path) -> AdapterEntry | None:
         if required_steps is None:
             required_steps = compliance.required_steps
 
-    return AdapterEntry(
+    if sf_bytes is None and has_meta:
+        # Weights are gitignored: retain verified identity only for the still
+        # compliant run; preflight independently downloads and hashes the Hub file.
+        previous = next((a for a in saved.get("adapters", []) if a.get("slug") == slug), None)
+        if previous and policy_compliant:
+            sf_bytes = previous.get("safetensors_bytes")
+            sf_sha = previous.get("safetensors_sha256")
+
+    entry = AdapterEntry(
         slug=slug,
         base_model=cfg.get("base_model_name_or_path") or "unknown",
         peft_type=cfg.get("peft_type", "LORA"),
@@ -170,6 +184,8 @@ def _scan_adapter_dir(adapter_dir: Path) -> AdapterEntry | None:
         r=cfg.get("r"),
         lora_alpha=cfg.get("lora_alpha"),
         lora_dropout=cfg.get("lora_dropout"),
+        base_model_revision=cfg.get("revision"),
+        hf_model_revision=cfg.get("hf_model_revision"),
         target_modules=list(cfg.get("target_modules") or []),
         bias=cfg.get("bias"),
         adapter_path=f"lora_adapters/{slug}/",
@@ -188,6 +204,10 @@ def _scan_adapter_dir(adapter_dir: Path) -> AdapterEntry | None:
         policy_compliant=policy_compliant,
         policy_reasons=policy_reasons,
     )
+    published = next((a for a in saved.get("adapters", []) if a.get("slug") == slug), None)
+    if published and published.get("hf_model_revision"):
+        entry.hf_model_revision = published["hf_model_revision"]
+    return entry
 
 
 def build_registry(lora_root: Path = LORA_ROOT) -> list[AdapterEntry]:
@@ -267,7 +287,6 @@ def write_summary(entries: list[AdapterEntry], out: Path = SUMMARY_MD) -> None:
     lines.append("2. Make sure `<new_slug>/adapter_config.json` exists (PEFT writes it on save).")
     lines.append("3. Run `python scripts/generate_lora_registry.py` to refresh `registry.json` and `SUMMARY.md`.")
     lines.append("4. Commit. CI will fail if `registry.json` is out of sync with the on-disk configs.")
-    lines.append("")
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -298,6 +317,8 @@ def _check_drift(entries: list[AdapterEntry], registry_path: Path) -> int:
             k: current[k]
             for k in (
                 "base_model",
+                "base_model_revision",
+                "hf_model_revision",
                 "r",
                 "lora_alpha",
                 "lora_dropout",

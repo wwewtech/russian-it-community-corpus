@@ -3,7 +3,7 @@ message: "If you use this dataset, data curation pipeline, or benchmarks in your
 authors:
   - name: "Russian IT Community Open Research Group"
 title: "RICC (Russian IT Community Corpus): A Curated Multi-Domain Conversational Dataset for LLM SFT, DPO, and RAG"
-version: 12.2.0
+version: 12.3.0
 date-released: 2026-10-14
 url: "https://github.com/wwewtech/russian-it-community-corpus"
 repository-code: "https://github.com/wwewtech/russian-it-community-corpus"

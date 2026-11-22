@@ -252,7 +252,7 @@ What remains interpretable today — **rubric-based heuristic scores** on 50 eng
 
 *(AST rates recomputed as means over all 50 per-scenario `ast_score` values in [`reports/heuristic_benchmark_eval.json`](heuristic_benchmark_eval.json); an earlier version of this card quoted different numbers that did not match the machine-readable data.)*
 
-Pre-trained adapters for **58** base models are available in the [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora) (published as pilot domain-adaptation checkpoints on sampled domain subsets).
+The [LoRA Model Zoo](https://huggingface.co/wwewtech/russian-it-community-lora) retains 61 audited historical weight paths: **one** policy-compliant full-epoch adapter (`smollm2_135m_instruct`), five time-boxed pilots, 52 legacy adapters without training provenance and three nested legacy checkpoints. Only the verified full-epoch adapter is presented as a production release; historical files are not deleted.
 
 ---
 

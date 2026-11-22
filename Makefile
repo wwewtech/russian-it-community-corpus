@@ -25,7 +25,11 @@ help:
 	@echo "  make docker-up  - Launch via Docker Compose"
 
 install:
-	python -m pip install -e ".[dev]"
+	python -m pip install -r requirements.lock.txt --require-hashes --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu
+	python -m pip install -e ".[dev]" --no-deps
+
+lock:
+	python scripts/lock_requirements.py --refresh
 
 run:
 	python main.py
@@ -83,7 +87,7 @@ typecheck-strict:
 security:
 	python -m bandit -r ricc/ -q --severity-level high
 	python -m detect_secrets.pre_commit_hook --baseline .secrets.baseline
-	python -m pip_audit -r requirements.lock.txt --desc off --progress-spinner off
+	python -m pip_audit -r requirements.lock.txt --require-hashes --desc off --progress-spinner off
 
 # Markdown model zoo catalog is generated from local & hub models.
 reports:

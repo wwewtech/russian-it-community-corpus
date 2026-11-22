@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -57,10 +58,20 @@ def compute_lora_zoo_index(
             logger.warning("Excluding policy-incompliant adapter from the release catalog: %s", d.name)
             continue
         safetensors = d / "adapter_model.safetensors"
+        config = json.loads((d / "adapter_config.json").read_text(encoding="utf-8"))
+        base_model_revision = str(config.get("revision") or "")
+        hf_model_revision = str(config.get("hf_model_revision") or "")
+        if not re.fullmatch(r"[0-9a-f]{40}", base_model_revision):
+            raise RuntimeError(f"Missing immutable base-model revision for {d.name}")
+        if not re.fullmatch(r"[0-9a-f]{40}", hf_model_revision):
+            raise RuntimeError(f"Missing immutable adapter revision for {d.name}")
         size_mb = round(safetensors.stat().st_size / (1024 * 1024), 2)
         results.append(
             {
                 "id": d.name,
+                "base_model": str(config.get("base_model_name_or_path") or "unknown"),
+                "base_model_revision": base_model_revision,
+                "hf_model_revision": hf_model_revision,
                 "size_mb": size_mb,
                 "status": "SUCCESS",
                 "adapter_dir": f"lora_adapters/{d.name}",
@@ -103,30 +114,44 @@ def build_lora_zoo_markdown(
             f"| [`lora_adapters/{r['id']}/`](lora_adapters/{r['id']}/) "
             f"| [`{model_repo_id}`](https://huggingface.co/{model_repo_id}) |"
         )
+    if zoo_index and all(
+        r.get("base_model")
+        and re.fullmatch(r"[0-9a-f]{40}", str(r.get("base_model_revision", "")))
+        and re.fullmatch(r"[0-9a-f]{40}", str(r.get("hf_model_revision", "")))
+        for r in zoo_index
+    ):
+        selected = zoo_index[0]
+        quickstart_lines = [
+            f'subfolder = "{selected["id"]}"',
+            f'model_id = "{selected["base_model"]}"',
+            f'model_hub_path = "{selected.get("hf_model_repo", model_repo_id)}"',
+            f'base_revision = "{selected["base_model_revision"]}"',
+            f'adapter_revision = "{selected["hf_model_revision"]}"',
+        ]
+    else:
+        # Incomplete records must not be turned into runnable release examples.
+        quickstart_lines = [
+            "# Missing verified adapter or immutable revisions; resolve the registry first.",
+            'raise RuntimeError("No verified full-epoch adapter with immutable revisions is available")',
+        ]
     lines.extend(
         [
             "",
             "---",
             "",
-            "## Быстрый старт: Запуск любого адаптера в 3 строки кода",
+            "## Быстрый старт: запуск проверенного full-epoch адаптера",
             "",
             "```python",
             "from peft import PeftModel",
             "from transformers import AutoModelForCausalLM, AutoTokenizer",
             "",
-            "# 1. Выберите любой адаптер из каталога выше",
-            'adapter_id = "qwen2.5_1.5b_instruct"',
-            'model_hub_path = f"wwewtech/russian-it-community-lora"',
+            *quickstart_lines,
+            "tokenizer = AutoTokenizer.from_pretrained(model_hub_path, subfolder=subfolder, revision=adapter_revision)",
+            'base = AutoModelForCausalLM.from_pretrained(model_id, revision=base_revision, device_map="auto", torch_dtype="auto")',
+            "model = PeftModel.from_pretrained(base, model_hub_path, subfolder=subfolder, revision=adapter_revision)",
             "",
-            "# 2. Загрузка весов напрямую с Hugging Face Hub",
-            "tokenizer = AutoTokenizer.from_pretrained(model_hub_path, subfolder=adapter_id)",
-            'base_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", device_map="auto", torch_dtype="auto")',
-            "model = PeftModel.from_pretrained(base_model, model_hub_path, subfolder=adapter_id)",
-            "",
-            "# 3. Инференс",
-            'prompt = "Как настроить Nginx reverse proxy с поддержкой WebSocket в Docker?"',
-            'messages = [{"role": "user", "content": prompt}]',
-            'inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to("cuda")',
+            'messages = [{"role": "user", "content": "Как настроить Nginx reverse proxy в Docker?"}]',
+            'inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to(model.device)',
             "outputs = model.generate(**inputs, max_new_tokens=256)",
             "print(tokenizer.decode(outputs[0], skip_special_tokens=True))",
             "```",
@@ -237,7 +262,7 @@ def upload_model_card(
     """Upload ``reports/HF_MODEL_CARD.md`` as the model repo README.
 
     Returns ``True`` when an upload happened. The card is generated by
-    ``scripts/regenerate_model_catalog.py``; the Hub write lives here so
+    ``scripts/release_catalog.py``; the Hub write lives here so
     ADR 0001 keeps a single sanctioned upload path.
     """
     if repo_root is None:
@@ -355,33 +380,33 @@ def main() -> None:
     # script was invoked from elsewhere.
     adapters_dir = Path(__file__).resolve().parents[2] / "lora_adapters"
 
-    # 1. Dataset artefacts — fail closed.
-    # Previously the upload error was swallowed with a warning, so a release
-    # could publish a broken or partial dataset without failing the job.
+    # Verify the preflight catalog before the first remote write. This avoids
+    # a partial HF publication when the release assets are not the ones tested.
+    zoo_index = compute_lora_zoo_index(adapters_dir)
+    if not zoo_index:
+        raise RuntimeError(f"No verified adapter weights found in {adapters_dir}")
+    settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    catalog_path = settings.REPORTS_DIR / "LORA_MODEL_ZOO.md"
+    if not catalog_path.is_file():
+        raise RuntimeError("Missing preflight-generated LORA_MODEL_ZOO.md; refusing release")
+    catalog_text = catalog_path.read_text(encoding="utf-8")
+    for record in zoo_index:
+        for field in ("id", "base_model", "base_model_revision", "hf_model_revision"):
+            if str(record[field]) not in catalog_text:
+                raise RuntimeError(f"Release catalog omitted verified {field}: {record['id']}")
+
+    # 1. Dataset artefacts — fail closed on any upload or integrity error.
     upload_dataset(api)
 
     # 2. Model repository card (README.md) — fail closed.
     upload_model_card(api)
 
-    # 3. Missing LoRA adapters on the Model Hub.
-    # Policy-incompliant adapters are skipped inside the function.
+    # 3. Missing LoRA adapters on the Model Hub. Policy-incompliant adapters
+    # are skipped inside the function; historical Hub files are not deleted.
     upload_missing_adapters(api, adapters_dir)
 
-    # 4. Render and persist the local LoRA-Zoo catalogue (works even
-    # when the Hub sync failed, so the GitHub release is always updated).
-    zoo_index = compute_lora_zoo_index(adapters_dir)
-    if not zoo_index:
-        raise RuntimeError(
-            f"No policy-compliant adapter weights found in {adapters_dir}. "
-            "Materialize the verified adapter artifacts before running the release."
-        )
-    settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     with open(settings.REPORTS_DIR / "lora_zoo_index.json", "w", encoding="utf-8") as f:
         json.dump(zoo_index, f, ensure_ascii=False, indent=2)
-    md = build_lora_zoo_markdown(zoo_index)
-    with open(settings.REPORTS_DIR / "LORA_MODEL_ZOO.md", "w", encoding="utf-8") as f:
-        f.write(md)
-    logger.info("Generated LORA_MODEL_ZOO.md with %d adapters!", len(zoo_index))
 
 
 if __name__ == "__main__":

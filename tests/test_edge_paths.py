@@ -832,13 +832,65 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                     os.chdir(old)
 
     def test_finalize_main_continues_when_uploads_succeed(self) -> None:
-        """The local catalogue is regenerated even when the Hub sync is fine."""
+        """Live release verifies, but never replaces, the preflight catalog."""
         import ricc.exporter.finalize_sync_all as fin
 
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             (root / "lora_adapters" / "demo").mkdir(parents=True)
             (root / "lora_adapters" / "demo" / "adapter_model.safetensors").write_bytes(b"\0" * 64)
+            (root / "reports").mkdir()
+            index = [
+                {
+                    "id": "demo",
+                    "slug": "demo",
+                    "size_mb": 0.0,
+                    "base_model": "acme/base",
+                    "base_model_revision": "1" * 40,
+                    "hf_model_revision": "2" * 40,
+                }
+            ]
+            (root / "reports" / "LORA_MODEL_ZOO.md").write_text(
+                fin.build_lora_zoo_markdown(index) + "\n\nHistorical audit\n", encoding="utf-8"
+            )
+            with (
+                patch.object(fin, "HF_TOKEN", "test-token"),
+                patch.object(fin.huggingface_hub, "HfApi"),
+                patch.object(fin, "upload_dataset"),
+                patch.object(fin, "upload_model_card"),
+                patch.object(fin, "upload_missing_adapters"),
+                patch.object(fin, "compute_lora_zoo_index", return_value=index),
+                patch("ricc.settings.settings.reports_dir", root / "reports"),
+            ):
+                fin.main()
+            self.assertIn("Historical audit", (root / "reports" / "LORA_MODEL_ZOO.md").read_text(encoding="utf-8"))
+
+    def test_finalize_main_rejects_missing_preflight_catalog(self) -> None:
+        import ricc.exporter.finalize_sync_all as fin
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "lora_adapters").mkdir()
+            (root / "reports").mkdir()
+            with (
+                patch.object(fin, "HF_TOKEN", "test-token"),
+                patch.object(fin.huggingface_hub, "HfApi"),
+                patch.object(fin, "upload_dataset"),
+                patch.object(fin, "compute_lora_zoo_index", return_value=[{"id": "demo"}]),
+                patch("ricc.settings.settings.reports_dir", root / "reports"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Missing preflight-generated"):
+                    fin.main()
+                fin.upload_dataset.assert_not_called()
+
+    def test_finalize_main_rejects_a_changed_preflight_catalog(self) -> None:
+        import ricc.exporter.finalize_sync_all as fin
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "lora_adapters").mkdir()
+            (root / "reports").mkdir()
+            (root / "reports" / "LORA_MODEL_ZOO.md").write_text("unverified catalog", encoding="utf-8")
             with (
                 patch.object(fin, "HF_TOKEN", "test-token"),
                 patch.object(fin.huggingface_hub, "HfApi"),
@@ -848,12 +900,23 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                 patch.object(
                     fin,
                     "compute_lora_zoo_index",
-                    return_value=[{"id": "demo", "slug": "demo", "size_mb": 0.0}],
+                    return_value=[
+                        {
+                            "id": "demo",
+                            "size_mb": 0.0,
+                            "base_model": "acme/base",
+                            "base_model_revision": "1" * 40,
+                            "hf_model_revision": "2" * 40,
+                        }
+                    ],
                 ),
                 patch("ricc.settings.settings.reports_dir", root / "reports"),
             ):
-                fin.main()
-            self.assertTrue((root / "reports" / "LORA_MODEL_ZOO.md").exists())
+                with self.assertRaisesRegex(RuntimeError, "omitted verified id"):
+                    fin.main()
+                fin.upload_dataset.assert_not_called()
+                fin.upload_model_card.assert_not_called()
+                fin.upload_missing_adapters.assert_not_called()
 
 
 if __name__ == "__main__":

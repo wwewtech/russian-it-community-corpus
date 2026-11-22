@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.3.0] - 2026-11-22
+
+### Fixed
+- Release preflight now verifies every canonical dataset artifact by immutable Git/LFS revision, byte size and SHA256, every compliant adapter by registry digest and policy-compliant remote training provenance, and every wheel/sdist before the first possible release mutation. The same checks are runnable read-only with `workflow_dispatch` and `scripts/release_preflight.py` — no GitHub publication, Docker push or HF writes.
+- **Hub classification evidence.** A read-only audit of 61 weight paths identifies exactly one full-corpus full-epoch adapter, five time-boxed runs, 52 legacy artifacts without training provenance and three nested legacy checkpoints. Old files remain untouched but are not labeled final. Model card, machine-readable audit and registry from the immutable revision are part of the release flow.
+- **Dataset schema contract republished.** Three parquet artifacts now have the current contract metadata and retain all 2,816,434 messages / 171,520 dialogues / 325,690 RAG chunks. CI uses the immutable revision `63fb17666b9d7fd9cd34a7fea9b0d119b49cef07`, without `--allow-legacy-metadata`.
+- **Full-Corpus training policy remains enforced:** no new training was shortened or any incomplete adapter promoted beyond experimental status.
+- **Reproducible dependency updates.** The universal lock contains exact pins and SHA-256 hashes for wheels and sdists. Dependabot updates use a same-repository, trusted-base refresh workflow; the resolver advances its cutoff explicitly rather than editing a timestamp without using it.
+- **Honest release catalog and quickstart.** Only the verified `smollm2_135m_instruct` full-epoch adapter is presented as final, with its actual SmolLM2 base model and immutable base/adapter commit revisions. Historical Hub adapters are classified, not deleted.
+
 ## [Unreleased]
 
 ### Changed
