@@ -136,6 +136,15 @@ class TestComputeLoraZooIndex(unittest.TestCase):
             self.assertEqual(r["hf_model_repo"], "acme/my-loras")
             self.assertTrue(r["adapter_dir"].startswith("lora_adapters/"))
 
+    def test_compliant_adapter_requires_immutable_revisions(self):
+        for field in ("revision", "hf_model_revision"):
+            adapter = _make_adapter(Path(self.tmp.name), f"missing_{field}")
+            config = json.loads((adapter / "adapter_config.json").read_text(encoding="utf-8"))
+            config[field] = None
+            (adapter / "adapter_config.json").write_text(json.dumps(config), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "Missing immutable"):
+                compute_lora_zoo_index(Path(self.tmp.name))
+
     def test_empty_directory_returns_empty_list(self):
         empty = Path(self.tmp.name) / "empty"
         empty.mkdir()

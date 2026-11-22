@@ -1,47 +1,62 @@
 name: Refresh Dependabot dependency lock
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    branches: [main, master]
-    paths:
-      - requirements.txt
-      - pyproject.toml
+  workflow_run:
+    workflows: ["Data Platform CI & Validation"]
+    types: [completed]
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   refresh-lock:
-    # Only Dependabot's same-repository Python update PRs. Never execute any
-    # code or workflow from the PR with this write-capable token.
+    # A green unprivileged CI run is required first. Never execute any code
+    # or workflow from the PR with this write-capable token.
     if: >-
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'dependabot/pip/')
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Check out trusted base scripts and registry credentials
+      - name: Resolve the exact same-repository Dependabot pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr_json="$(gh pr list --repo '${{ github.repository }}' --state open --search 'author:app/dependabot' --json number,headRefName,headRefOid,baseRefName,isCrossRepository,url --limit 100)"
+          echo "$pr_json" | jq -e --arg sha "$HEAD_SHA" '[.[] | select(.headRefOid == $sha and (.headRefName | startswith("dependabot/pip/")) and (.isCrossRepository | not))] | length == 1'
+          echo "$pr_json" | jq --arg sha "$HEAD_SHA" '.[] | select(.headRefOid == $sha)' > pr.json
+          {
+            echo "number=$(jq -r .number pr.json)"
+            echo "ref=$(jq -r .headRefName pr.json)"
+            echo "base=$(jq -r .baseRefName pr.json)"
+            echo "url=$(jq -r .url pr.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out trusted default-branch resolver
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
           path: trusted
           persist-credentials: false
 
-      - name: Check out the Dependabot branch
+      - name: Check out the exact CI-tested Dependabot commit
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
           path: update
           persist-credentials: true
 
       - name: Allow only Python dependency manifests to differ
         env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_REF: ${{ steps.pr.outputs.base }}
         working-directory: update
         run: |
           git fetch --no-tags origin "$BASE_REF"
@@ -68,7 +83,7 @@ jobs:
         working-directory: update
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ steps.pr.outputs.url }}
         run: |
           if git diff --quiet -- requirements.lock.txt scripts/lock_requirements.py; then
             echo "Lock is already current"
@@ -78,5 +93,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add requirements.lock.txt scripts/lock_requirements.py
           git commit -m "chore(deps): refresh hashed dependency lock"
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          git push origin "HEAD:${{ steps.pr.outputs.ref }}"
           gh pr comment "$PR_URL" --body "Regenerated the universal lock with the trusted base-branch resolver. The lock cutoff and all artifact SHA-256 hashes were refreshed; ordinary CI will verify the result without repository secrets."

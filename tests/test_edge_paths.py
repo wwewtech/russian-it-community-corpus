@@ -865,6 +865,24 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                 fin.main()
             self.assertIn("Historical audit", (root / "reports" / "LORA_MODEL_ZOO.md").read_text(encoding="utf-8"))
 
+    def test_finalize_main_rejects_missing_preflight_catalog(self) -> None:
+        import ricc.exporter.finalize_sync_all as fin
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "lora_adapters").mkdir()
+            (root / "reports").mkdir()
+            with (
+                patch.object(fin, "HF_TOKEN", "test-token"),
+                patch.object(fin.huggingface_hub, "HfApi"),
+                patch.object(fin, "upload_dataset"),
+                patch.object(fin, "compute_lora_zoo_index", return_value=[{"id": "demo"}]),
+                patch("ricc.settings.settings.reports_dir", root / "reports"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Missing preflight-generated"):
+                    fin.main()
+                fin.upload_dataset.assert_not_called()
+
     def test_finalize_main_rejects_a_changed_preflight_catalog(self) -> None:
         import ricc.exporter.finalize_sync_all as fin
 

@@ -336,20 +336,17 @@ jobs:
           python -m pytest -q --cov=ricc --cov-report=xml
           cp coverage.xml coverage-current.xml
 
-      - name: Compute base-branch coverage into a separate file
+      - name: Compute base-branch coverage in an isolated worktree
         continue-on-error: true
         run: |
           BASE_REF="${{ github.event.pull_request.base.sha || github.event.before }}"
           git fetch --no-tags --depth=1 origin "$BASE_REF"
-          # Stash the CURRENT coverage before the worktree is switched to the
-          # base code: the old job overwrote coverage.xml with the base run
-          # and then compared the base against itself.
-          mv coverage-current.xml coverage-current.keep
-          git checkout "$BASE_REF" -- ricc tests pyproject.toml 2>/dev/null || true
-          python -m pytest -q --cov=ricc --cov-report=xml || true
-          cp coverage.xml coverage-base.xml 2>/dev/null || true
-          mv coverage-current.keep coverage-current.xml
-          git checkout "${{ github.sha }}" -- ricc tests pyproject.toml || true
+          # Never combine new tests with old source in the main checkout.
+          # The base suite and its manifest belong to the exact base commit.
+          git worktree add --detach "$RUNNER_TEMP/coverage-base" "$BASE_REF"
+          if (cd "$RUNNER_TEMP/coverage-base" && python -m pytest -q --cov=ricc --cov-report=xml); then
+            cp "$RUNNER_TEMP/coverage-base/coverage.xml" coverage-base.xml
+          fi
 
       - name: Enforce the diff coverage floor
         # --fail-under=90: at least 90% of the CHANGED lines must be
