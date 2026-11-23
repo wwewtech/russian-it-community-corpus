@@ -848,6 +848,8 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                     "base_model": "acme/base",
                     "base_model_revision": "1" * 40,
                     "hf_model_revision": "2" * 40,
+                    "safetensors_sha256": "0" * 64,
+                    "safetensors_bytes": 64,
                 }
             ]
             (root / "reports" / "LORA_MODEL_ZOO.md").write_text(
@@ -883,6 +885,44 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                     fin.main()
                 fin.upload_dataset.assert_not_called()
 
+    def test_finalize_main_rejects_catalog_that_differs_from_audit(self) -> None:
+        import ricc.exporter.finalize_sync_all as fin
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "lora_adapters").mkdir()
+            (root / "reports").mkdir()
+            record = {
+                "id": "demo",
+                "size_mb": 0.0,
+                "base_model": "acme/base",
+                "base_model_revision": "1" * 40,
+                "hf_model_revision": "2" * 40,
+                "adapter_dir": "lora_adapters/demo",
+                "safetensors_sha256": "0" * 64,
+                "safetensors_bytes": 64,
+            }
+            (root / "reports" / "LORA_MODEL_ZOO.md").write_text(
+                f"demo acme/base {'1' * 40} {'2' * 40}", encoding="utf-8"
+            )
+            (root / "reports" / "hf_hub_audit.json").write_text(
+                json.dumps({"revision": "2" * 40, "adapters": []}), encoding="utf-8"
+            )
+            with (
+                patch.object(fin, "HF_TOKEN", "test-token"),
+                patch.object(fin.huggingface_hub, "HfApi"),
+                patch.object(fin, "upload_dataset"),
+                patch.object(fin, "upload_model_card"),
+                patch.object(fin, "upload_missing_adapters"),
+                patch.object(fin, "compute_lora_zoo_index", return_value=[record]),
+                patch("ricc.settings.settings.reports_dir", root / "reports"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "differs from the verified registry/audit"):
+                    fin.main()
+                fin.upload_dataset.assert_not_called()
+                fin.upload_model_card.assert_not_called()
+                fin.upload_missing_adapters.assert_not_called()
+
     def test_finalize_main_rejects_a_changed_preflight_catalog(self) -> None:
         import ricc.exporter.finalize_sync_all as fin
 
@@ -907,6 +947,7 @@ class TestMetricsAndFinalizeExtra(unittest.TestCase):
                             "base_model": "acme/base",
                             "base_model_revision": "1" * 40,
                             "hf_model_revision": "2" * 40,
+                            "safetensors_bytes": 64,
                         }
                     ],
                 ),

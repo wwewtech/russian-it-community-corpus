@@ -1,10 +1,10 @@
 """
 Interactive CLI Chat & Unified Inference Engine.
 
-Supports Base Models, the 56 LoRA Adapters cloned locally under
-``lora_adapters/`` (58 published on the Hugging Face Hub, see
-``reports/lora_zoo_index.json``), Flagship 7B-8B QLoRA, and Local
-RAG Pipeline.
+Supports base models and registry-resolved LoRA adapters. The default is the
+verified full-epoch adapter from ``lora_adapters/registry.json``; local
+weights or an immutable Hub subfolder/revision are used as appropriate.
+Historical local adapters remain explicitly experimental.
 
 The module exposes three layers:
 
@@ -123,9 +123,19 @@ def format_rag_context(hits: list[dict[str, Any]]) -> str:
     return "\n---\n".join(f"[{h.get('domain', 'Tech')}]: {h.get('content', '')}" for h in hits)
 
 
+def _resolve_inference_adapter(adapter_id: str, root: Path) -> Any:
+    """Resolve registry metadata, preserving the explicit legacy path contract."""
+    from ricc.lora.production import resolve_adapter
+
+    local_dir = root / "lora_adapters" / adapter_id
+    if not (local_dir / "adapter_model.safetensors").is_file():
+        return validate_adapter_path(adapter_id, root / "lora_adapters")
+    return resolve_adapter(adapter_id, root=root)
+
+
 def interactive_chat_session(
-    model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
-    adapter_id: str | None = "heavyweight_qwen2.5_coder_7b",
+    model_name: str = "HuggingFaceTB/SmolLM2-135M-Instruct",
+    adapter_id: str | None = "smollm2_135m_instruct",
     use_rag: bool = True,
     max_tokens: int = 512,
 ) -> None:
@@ -138,7 +148,7 @@ def interactive_chat_session(
     # helpers above be tested in CPU-only environments.
     from transformers import TextStreamer
 
-    from ricc.ml_runtime import attach_lora_adapter, load_tokenizer_and_base_model
+    from ricc.ml_runtime import load_adapter_runtime, move_inputs_to_model
     from ricc.rag.rag_pipeline import LocalRAGPipeline
     from ricc.settings import settings
 
@@ -161,21 +171,28 @@ def interactive_chat_session(
         else:
             print("RAG Parquet knowledge base not found. Running without RAG.")
 
-    # 2. Load Model & Tokenizer
+    # 2. Resolve and load the exact adapter and its compatible base. An
+    # explicitly different --model is a research choice, not a silent fallback.
     print("Loading model and tokenizer...")
-    tokenizer, model = load_tokenizer_and_base_model(model_name)
-
-    # 3. Attach LoRA Adapter (fail fast with AdapterLoadError — never fall back).
     if adapter_id:
-        adapter_path = validate_adapter_path(adapter_id, settings.BASE_DIR / "lora_adapters")
-        model = attach_lora_adapter(
-            model,
-            adapter_path,
-            model_name=model_name,
-            adapter_id=adapter_id,
-            verify_files=False,
-        )
-        print(f"Attached LoRA Adapter from {adapter_path}")
+        spec = _resolve_inference_adapter(adapter_id, settings.BASE_DIR)
+        from ricc.lora.production import AdapterSpec
+
+        if isinstance(spec, AdapterSpec) and spec.base_model != model_name:
+            print(f"Using adapter-compatible base {spec.base_model} instead of requested {model_name}")
+        from ricc.ml_runtime import attach_lora_adapter, load_tokenizer_and_base_model
+
+        if isinstance(spec, AdapterSpec):
+            tokenizer, model = load_adapter_runtime(spec)
+            print(f"Attached adapter {spec.hub_reference} ({spec.source})")
+        else:
+            tokenizer, model = load_tokenizer_and_base_model(model_name)
+            model = attach_lora_adapter(model, spec, model_name=model_name, adapter_id=adapter_id, verify_files=False)
+            print(f"Attached legacy local adapter {spec}")
+    else:
+        from ricc.ml_runtime import load_tokenizer_and_base_model
+
+        tokenizer, model = load_tokenizer_and_base_model(model_name)
 
     streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
@@ -201,8 +218,7 @@ def interactive_chat_session(
         prompt_text = build_prompt(messages, tokenizer.apply_chat_template)
 
         inputs = tokenizer(prompt_text, return_tensors="pt")
-        if torch.cuda.is_available():
-            inputs = {k: v.to("cuda") for k, v in inputs.items()}
+        inputs = move_inputs_to_model(inputs, model)
 
         print("\nAssistant >> ", end="", flush=True)
         with torch.no_grad():
@@ -221,9 +237,17 @@ def interactive_chat_session(
 def main() -> None:
     setup_runtime_env(json_logs=False)
     parser = argparse.ArgumentParser(description="Russian IT Community LLM & RAG Inference CLI")
-    parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID or path")
     parser.add_argument(
-        "--adapter", type=str, default="heavyweight_qwen2.5_coder_7b", help="LoRA Adapter ID in lora_adapters/"
+        "--model",
+        type=str,
+        default="HuggingFaceTB/SmolLM2-135M-Instruct",
+        help="Base model for base-only inference; a registry adapter selects its own compatible base",
+    )
+    parser.add_argument(
+        "--adapter",
+        type=str,
+        default="smollm2_135m_instruct",
+        help="Registry adapter ID (default: verified full-epoch production adapter)",
     )
     parser.add_argument("--no-rag", action="store_true", help="Disable RAG knowledge augmentation")
     parser.add_argument("--max-tokens", type=int, default=512, help="Maximum generated response tokens")

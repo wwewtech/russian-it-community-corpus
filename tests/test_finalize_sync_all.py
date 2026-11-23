@@ -178,7 +178,7 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
         md = build_lora_zoo_markdown(idx)
         self.assertIn("# Russian IT Community LoRA Model Zoo", md)
         self.assertIn("**Официальный каталог 1", md)
-        self.assertIn("| # | Идентификатор модели |", md)
+        self.assertIn("| Adapter | Size (MiB) |", md)
         self.assertIn("alpha", md)
 
     def test_includes_model_repo_in_links(self):
@@ -198,7 +198,8 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
     def test_quickstart_block_is_always_present(self):
         md = build_lora_zoo_markdown([])
         self.assertIn("Быстрый старт", md)
-        self.assertIn("PeftModel", md)
+        self.assertIn('raise RuntimeError("No verified full-epoch adapter', md)
+        self.assertIn("Missing immutable revisions", md)
 
     def test_quickstart_base_comes_from_compliant_adapter(self):
         idx = [
@@ -212,6 +213,7 @@ class TestBuildLoraZooMarkdown(unittest.TestCase):
                 "status": "SUCCESS",
                 "hf_model_repo": "owner/repo",
                 "safetensors_sha256": "0" * 64,
+                "safetensors_bytes": 1024,
             }
         ]
         md = build_lora_zoo_markdown(idx)

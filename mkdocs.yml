@@ -87,6 +87,7 @@ nav:
       - ADR 0006 — Dataset Contract Versioning: adr/0006-dataset-contract-versioning.md
       - ADR 0007 — Streaming Export and DVC: adr/0007-streaming-export-and-dvc.md
       - ADR 0008 — One Live Configuration: adr/0008-single-source-of-configuration.md
+      - ADR 0009 — Registry-driven Inference: adr/0009-registry-driven-inference.md
   - Changelog: changelog.md
 
 plugins:

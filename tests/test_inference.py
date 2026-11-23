@@ -156,6 +156,36 @@ class TestValidateAdapterPath(unittest.TestCase):
         self.assertEqual(out, good.resolve())
 
 
+class TestInteractiveRegistryLoading(unittest.TestCase):
+    def test_local_weights_use_registry_resolution(self):
+        from ricc.inference import _resolve_inference_adapter
+        from ricc.lora.production import AdapterSpec
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "lora_adapters").mkdir()
+            (root / "lora_adapters/registry.json").write_text(
+                Path("lora_adapters/registry.json").read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            adapter = root / "lora_adapters" / "smollm2_135m_instruct"
+            adapter.mkdir()
+            (adapter / "adapter_model.safetensors").write_bytes(b"weights")
+            self.assertIsInstance(_resolve_inference_adapter(adapter.name, root), AdapterSpec)
+
+    def test_registry_adapter_prints_compatible_base(self):
+        from ricc.inference import interactive_chat_session
+        from ricc.lora.production import resolve_adapter
+
+        spec = resolve_adapter("smollm2_135m_instruct", source="hub")
+        with (
+            patch("ricc.inference._resolve_inference_adapter", return_value=spec),
+            patch("ricc.ml_runtime.load_adapter_runtime", return_value=(MagicMock(), MagicMock())),
+            patch("transformers.TextStreamer"),
+            patch("builtins.input", side_effect=["exit"]),
+        ):
+            interactive_chat_session(model_name="other/base", use_rag=False)
+
+
 class TestMainCLI(unittest.TestCase):
     """Cover the argparse wrapper in :func:`ricc.inference.main`."""
 
@@ -172,9 +202,9 @@ class TestMainCLI(unittest.TestCase):
         self._run_main([], fake_chat)
         fake_chat.assert_called_once()
         kwargs = fake_chat.call_args.kwargs
-        # Defaults: model name, default adapter id, RAG on, 512 max tokens.
-        self.assertEqual(kwargs["model_name"], "Qwen/Qwen2.5-1.5B-Instruct")
-        self.assertEqual(kwargs["adapter_id"], "heavyweight_qwen2.5_coder_7b")
+        # Defaults: the verified production adapter, RAG on, 512 max tokens.
+        self.assertEqual(kwargs["model_name"], "HuggingFaceTB/SmolLM2-135M-Instruct")
+        self.assertEqual(kwargs["adapter_id"], "smollm2_135m_instruct")
         self.assertTrue(kwargs["use_rag"])
         self.assertEqual(kwargs["max_tokens"], 512)
 
