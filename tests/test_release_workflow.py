@@ -121,6 +121,14 @@ class ReleaseWorkflowTest(unittest.TestCase):
         self.assertIn("pull_request.head.ref, 'dependabot/pip/'", pregreen["if"])
         self.assertIn("pull_request.head.repo.full_name == github.repository", pregreen["if"])
         pregreen_commands = "\n".join(step.get("run", "") for step in pregreen["steps"])
+        pregreen_update = next(
+            step
+            for step in pregreen["steps"]
+            if step.get("path") is None
+            and step.get("uses", "").startswith("actions/checkout")
+            and step["with"].get("ref") == "${{ github.event.pull_request.head.sha }}"
+        )
+        self.assertEqual(pregreen_update["with"]["fetch-depth"], 0)
         self.assertIn("github.event.pull_request.head.sha", yaml.safe_dump(pregreen))
         self.assertNotIn('.user.login == "dependabot[bot]"', pregreen_commands)
         self.assertIn("python scripts/lock_requirements.py --refresh", pregreen_commands)
