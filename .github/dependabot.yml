@@ -13,7 +13,7 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
-    # The hash lock is generated, not edited by Dependabot. After green CI,
+    # The hash lock is generated, not edited by Dependabot. Before full CI,
     # dependabot-lock.yml refreshes the lock and cutoff with trusted base code.
     exclude-paths:
       - requirements.lock.txt

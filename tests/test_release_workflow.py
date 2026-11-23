@@ -115,12 +115,20 @@ class ReleaseWorkflowTest(unittest.TestCase):
     def test_dependabot_refresh_uses_trusted_resolver_and_pr_manifests(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/dependabot-lock.yml").read_text(encoding="utf-8"))
         job = workflow["jobs"]["refresh-lock"]
+        pregreen = workflow["jobs"]["pregreen-lock"]
+        self.assertIn("pull_request_target", workflow[True])
+        self.assertIn("workflow_run", workflow[True])
+        self.assertIn("pull_request.user.login == 'dependabot[bot]'", pregreen["if"])
+        self.assertIn("pull_request.head.repo.full_name == github.repository", pregreen["if"])
+        pregreen_commands = "\n".join(step.get("run", "") for step in pregreen["steps"])
+        self.assertIn("github.event.pull_request.head.sha", yaml.safe_dump(pregreen))
+        self.assertIn("python scripts/lock_requirements.py --refresh", pregreen_commands)
         self.assertIn("workflow_run.event == 'pull_request'", job["if"])
         self.assertIn("workflow_run.actor.login == 'dependabot[bot]'", job["if"])
         self.assertIn("workflow_run.conclusion == 'success'", job["if"])
         self.assertEqual(job["permissions"], {"contents": "write", "pull-requests": "write", "actions": "write"})
         commands = "\n".join(step.get("run", "") for step in job["steps"])
-        self.assertIn("python scripts/lock_requirements.py --refresh", commands)
+        self.assertIn("python scripts/lock_requirements.py --check", commands)
         self.assertIn("cp ../trusted/scripts/lock_requirements.py", commands)
         self.assertIn("isCrossRepository", commands)
         self.assertIn("github.event.workflow_run.head_sha", yaml.safe_dump(job))
