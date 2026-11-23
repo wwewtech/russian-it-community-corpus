@@ -776,40 +776,15 @@ class TestAdapterCards(unittest.TestCase):
 
 
 class TestDocumentedTestCount(unittest.TestCase):
-    """The README's test count must match the suite it documents.
-
-    A stale number in the README is worse than no number: it tells a
-    reader how much verification the project has, and it is wrong.
-
-    The README states the number of COLLECTED tests, which is slightly
-    higher than the number of test functions (some are parametrized), so
-    the check is a range rather than an equality.
-    """
+    """README must point to current CI evidence, not a stale manual total."""
 
     def test_readme_test_count_matches_the_suite(self):
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        claims = re.findall(r"the full (\d+) tests", readme)
-        self.assertTrue(claims, "the README no longer states the test count")
-        claimed = int(claims[0])
-
-        functions = 0
-        for path in sorted((REPO_ROOT / "tests").glob("test_*.py")):
-            source = path.read_text(encoding="utf-8")
-            functions += len(re.findall(r"^\s*def test_\w+", source, re.MULTILINE))
-        self.assertGreater(functions, 0, "no tests were found")
-
-        # The claim may exceed the function count (parametrized tests) but
-        # must not exceed it by much, and must not fall far below it.
-        self.assertLessEqual(
-            claimed,
-            functions * 1.15,
-            f"the README claims {claimed} tests but the suite only defines {functions}",
-        )
-        self.assertGreaterEqual(
-            claimed,
-            functions * 0.95,
-            f"the README claims {claimed} tests but the suite defines {functions} — the number is stale",
-        )
+        self.assertNotRegex(readme, r"the full \d+ tests", "a hand-maintained test total becomes stale")
+        self.assertIn("current CI run", readme)
+        self.assertIn("actions/workflows/ci.yml", readme)
+        self.assertIn("coverage gate", readme)
+        self.assertNotIn("1027 passed", readme)
 
     def test_the_suite_has_not_lost_its_tests(self):
         """A mass deletion of the test suite must fail the build."""

@@ -315,7 +315,7 @@ available only as explicitly selected local experiments, with a warning.
 | `python cli.py benchmark` | Export and inspect 100 domain test cases |
 | `python cli.py orchestrate` | Run the Prefect curation orchestration flow |
 | `python demo_walkthrough.py` | Run interactive terminal walkthrough |
-| `python -m pytest -q` | Run the full 1027 tests passed with coverage 90.62% *(5 skipped, revalidated on 2026-11-20)* |
+| `python -m pytest -q` | Run the complete unit suite with the coverage gate; current counts are shown by [CI](https://github.com/wwewtech/russian-it-community-corpus/actions/workflows/ci.yml) |
 | `make test` | Same, through the Makefile |
 | `make coverage` | Test run with the coverage report |
 | `make audit` | Run red-team adversarial penetration test |
@@ -325,8 +325,10 @@ available only as explicitly selected local experiments, with a warning.
 | `make docker-up` | Start Web Data Studio in Docker container |
 
 > **Note on the test command.** Use `pytest`, not `python -m unittest discover`:
-> the unittest runner only collects a subset of the suite *(full suite: 1027 passed / 5 skipped on 2026-11-20)*,
-> because six test modules use pytest-specific features and are silently skipped by it.
+> the unittest runner only collects a subset of the suite because six test
+> modules use pytest-specific features and are silently skipped by it.
+> Test totals and coverage percentages are evidence in the [current CI run](https://github.com/wwewtech/russian-it-community-corpus/actions/workflows/ci.yml),
+> not manually maintained numbers in this document.
 
 ---
 
