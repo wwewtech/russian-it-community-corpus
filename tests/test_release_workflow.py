@@ -125,11 +125,16 @@ class ReleaseWorkflowTest(unittest.TestCase):
         self.assertIn("isCrossRepository", commands)
         self.assertIn("github.event.workflow_run.head_sha", yaml.safe_dump(job))
         # GITHUB_TOKEN pushes deliberately do not emit a new push event.
-        # Explicitly dispatch the trusted default-branch workflow instead.
-        self.assertIn('gh workflow run ci.yml --ref "$REFRESH_SHA"', commands)
+        # Dispatch the live PR branch and pin the discovered run by head SHA;
+        # GitHub's dispatch API rejects an arbitrary commit as its ref.
+        self.assertIn('gh workflow run ci.yml --ref "$PR_REF"', commands)
+        self.assertIn("PR_REF: ${{ steps.pr.outputs.ref }}", yaml.safe_dump(job))
         self.assertIn("--raw-field dependency_recheck=true", commands)
         self.assertIn("git rev-parse HEAD", commands)
         self.assertIn('event=workflow_dispatch&head_sha=\'"$REFRESH_SHA"', commands)
+        self.assertIn(".head_branch == env.PR_REF and .head_sha == env.REFRESH_SHA", commands)
+        self.assertIn("][0].id // empty", commands)
+        self.assertNotIn("][0].databaseId // empty", commands)
         self.assertIn('gh run watch "$RUN_ID" --exit-status', commands)
         ci_dispatch = self.workflow[True]["workflow_dispatch"]["inputs"]
         self.assertIn("dependency_recheck", ci_dispatch)
