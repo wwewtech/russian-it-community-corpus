@@ -105,14 +105,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REFRESH_SHA: ${{ steps.push.outputs.refresh_sha }}
+          PR_REF: ${{ steps.pr.outputs.ref }}
         # A push authenticated by GITHUB_TOKEN does not emit a new push
-        # workflow event. Explicit dispatch runs the exact refreshed SHA;
-        # only the dependency manifests and generated lock changed there.
+        # workflow event. Dispatch accepts a branch/tag, not an arbitrary
+        # commit; resolve the run by its immutable refreshed head SHA.
         run: |
-          gh workflow run ci.yml --ref "$REFRESH_SHA" --raw-field dependency_recheck=true
+          gh workflow run ci.yml --ref "$PR_REF" --raw-field dependency_recheck=true
           RUN_ID=""
           for attempt in $(seq 1 30); do
-            RUN_ID="$(gh api 'repos/${{ github.repository }}/actions/runs?event=workflow_dispatch&head_sha='"$REFRESH_SHA"'&per_page=10' --jq '[.workflow_runs[] | select(.name == "Data Platform CI & Validation")][0].databaseId // empty')"
+            RUN_ID="$(gh api 'repos/${{ github.repository }}/actions/runs?event=workflow_dispatch&head_sha='"$REFRESH_SHA"'&per_page=10' --jq '[.workflow_runs[] | select(.name == "Data Platform CI & Validation" and .head_branch == env.PR_REF and .head_sha == env.REFRESH_SHA)][0].databaseId // empty')"
             if [ -n "$RUN_ID" ]; then break; fi
             sleep 5
           done
