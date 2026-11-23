@@ -33,6 +33,13 @@ Every required job must be green before merge or release.
   `pip check`. Unused packages are removed rather than upgraded blindly.
 - Tool versions are pinned exactly in `pyproject.toml [dev]` +
   `MYPY_VERSION`/`RUFF_VERSION` env so local == hook == CI.
+- After a green unprivileged CI run on a same-repository Dependabot pip PR,
+  `dependabot-lock.yml` regenerates the lock and cutoff with the trusted
+  default-branch resolver. It then explicitly dispatches CI for the new SHA:
+  a `GITHUB_TOKEN` push does not itself create another workflow run. The
+  internal recheck performs the ordinary unprivileged dependency checks
+  without HF secrets; the real-corpus SLO gate and read-only release
+  preflight remain mandatory on pushes to `main` and manual dispatches.
 
 ## Security Gates
 

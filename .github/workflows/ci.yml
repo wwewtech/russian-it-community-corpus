@@ -9,8 +9,14 @@ on:
     inputs:
       dry_run_tag:
         description: "Read-only release preflight tag (no HF, GitHub or Docker mutations)"
-        required: true
+        required: false
         type: string
+        default: ""
+      dependency_recheck:
+        description: "Trusted Dependabot lock-refresh recheck (internal automation only)"
+        required: false
+        type: boolean
+        default: false
   release:
     types: [published]
 
@@ -750,7 +756,12 @@ jobs:
     # validation job. It previously only depended on lint+typecheck, so it
     # could pass (and unblock the release) while the test suite was red.
     needs: [lint, typecheck, test, validate]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'release'
+    # An internal dependency recheck needs no corpus/HF token and cannot
+    # publish: the next push to main runs the complete real-corpus gate.
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && !inputs.dependency_recheck)
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -921,7 +932,10 @@ jobs:
     name: HF Token & Cache Check
     runs-on: ubuntu-24.04
     needs: [lint]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'release'
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && !inputs.dependency_recheck)
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -955,7 +969,9 @@ jobs:
     name: Release Dry Run (read-only)
     runs-on: ubuntu-24.04
     needs: [lint, typecheck, test, test-windows, coverage-regression, validate, security, eval-suites, dvc-consistency, dvc-repro, docs, slo-gate-real, hf-secrets-check, package]
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
+    if: >-
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && !inputs.dependency_recheck)
     timeout-minutes: 30
     permissions:
       contents: read
