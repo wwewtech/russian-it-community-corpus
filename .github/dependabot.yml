@@ -10,7 +10,8 @@ updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
     open-pull-requests-limit: 5
     # The hash lock is generated, not edited by Dependabot. Before full CI,
     # dependabot-lock.yml refreshes the lock and cutoff with trusted base code.
@@ -18,8 +19,6 @@ updates:
       - requirements.lock.txt
     cooldown:
       default-days: 7
-      exclude:
-        - pydantic
     # Group patch+minor bumps so CI runs once per wave instead of per package.
     groups:
       python-minor-and-patch:
