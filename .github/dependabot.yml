@@ -10,8 +10,7 @@ updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
+      interval: daily
     open-pull-requests-limit: 5
     # The hash lock is generated, not edited by Dependabot. After green CI,
     # dependabot-lock.yml refreshes the lock and cutoff with trusted base code.
