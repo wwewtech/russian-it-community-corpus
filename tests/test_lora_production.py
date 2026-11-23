@@ -34,7 +34,7 @@ class TestProductionAdapterResolution(unittest.TestCase):
             (adapter / "adapter_config.json").write_text("{}", encoding="utf-8")
             spec = default_adapter(root)
             self.assertEqual(spec.source, "local")
-            self.assertEqual(local_adapter_path(spec, root), adapter)
+            self.assertEqual(local_adapter_path(spec, root), adapter.resolve())
 
     def test_experimental_adapter_is_explicitly_not_production(self):
         with tempfile.TemporaryDirectory() as directory:
