@@ -133,6 +133,8 @@ class ReleaseWorkflowTest(unittest.TestCase):
         self.assertIn("git rev-parse HEAD", commands)
         self.assertIn('event=workflow_dispatch&head_sha=\'"$REFRESH_SHA"', commands)
         self.assertIn(".head_branch == env.PR_REF and .head_sha == env.REFRESH_SHA", commands)
+        self.assertIn("][0].id // empty", commands)
+        self.assertNotIn("][0].databaseId // empty", commands)
         self.assertIn('gh run watch "$RUN_ID" --exit-status', commands)
         ci_dispatch = self.workflow[True]["workflow_dispatch"]["inputs"]
         self.assertIn("dependency_recheck", ci_dispatch)
