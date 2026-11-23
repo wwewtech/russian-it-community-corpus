@@ -4,6 +4,11 @@ on:
   workflow_run:
     workflows: ["Data Platform CI & Validation"]
     types: [completed]
+  # The generated lock must be refreshed before ordinary CI can verify it.
+  # Waiting for a green CI on a manifest-only Dependabot commit deadlocks:
+  # the lock reproducibility job correctly rejects that stale commit.
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -11,13 +16,22 @@ permissions:
 
 jobs:
   refresh-lock:
-    # A green unprivileged CI run is required first. Never execute any code
-    # or workflow from the PR with this write-capable token.
+    # First refresh a same-repository Dependabot pip PR before full CI, then
+    # verify that refresh again after ordinary CI succeeds. Never execute
+    # code or a workflow from the PR with this write-capable token.
     if: >-
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
-      startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/')
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.user.login == 'dependabot[bot]' &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        startsWith(github.event.pull_request.head.ref, 'dependabot/pip/')
+      ) || (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+        startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/')
+      )
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -52,6 +66,129 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           repository: ${{ github.event.workflow_run.head_repository.full_name }}
+          path: update
+          persist-credentials: true
+
+      - name: Allow only Python dependency manifests to differ
+        env:
+          BASE_REF: ${{ steps.pr.outputs.base }}
+        working-directory: update
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF"...HEAD > changed-files.txt
+          if grep -Ev '^(requirements\.txt|pyproject\.toml|requirements\.lock\.txt|scripts/lock_requirements\.py)$' changed-files.txt; then
+            echo "Refusing to run trusted automation on unrelated PR changes" >&2
+            exit 1
+          fi
+          # The lock and its cutoff are regenerated from trusted base code;
+          # neither is accepted as executable input from the PR.
+          cp ../trusted/scripts/lock_requirements.py scripts/lock_requirements.py
+
+      - name: Install pinned resolver and validator
+        working-directory: trusted
+        run: python -m pip install uv==0.13.9 packaging
+
+      - name: Regenerate universal lock with SHA-256 artifact hashes
+        working-directory: update
+        # The copied file is trusted base-branch code, but resolves the
+        # dependency manifests in this PR checkout. On the post-green path,
+        # preserve a cutoff already advanced by the pre-green refresh.
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            python scripts/lock_requirements.py --check
+          else
+            python scripts/lock_requirements.py --refresh
+          fi
+
+      - name: Commit and push reviewed generated outputs
+        working-directory: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: |
+          if git diff --quiet -- requirements.lock.txt scripts/lock_requirements.py; then
+            echo "Lock is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add requirements.lock.txt scripts/lock_requirements.py
+          git commit -m "chore(deps): refresh hashed dependency lock"
+          git push origin "HEAD:${{ steps.pr.outputs.ref }}"
+          REFRESH_SHA="$(git rev-parse HEAD)"
+          echo "refresh_sha=$REFRESH_SHA" >> "$GITHUB_OUTPUT"
+          gh pr comment "$PR_URL" --body "Regenerated the universal lock with the trusted base-branch resolver. The lock cutoff and all artifact SHA-256 hashes were refreshed; CI will now recheck the exact new commit without repository secrets."
+        id: push
+
+      - name: Recheck the exact refreshed commit with trusted CI
+        if: steps.push.outputs.refresh_sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REFRESH_SHA: ${{ steps.push.outputs.refresh_sha }}
+          PR_REF: ${{ steps.pr.outputs.ref }}
+        # A push authenticated by GITHUB_TOKEN does not emit a new push
+        # workflow event. Dispatch accepts a branch/tag, not an arbitrary
+        # commit; resolve the run by its immutable refreshed head SHA.
+        run: |
+          gh workflow run ci.yml --ref "$PR_REF" --raw-field dependency_recheck=true
+          RUN_ID=""
+          for attempt in $(seq 1 30); do
+            RUN_ID="$(gh api 'repos/${{ github.repository }}/actions/runs?event=workflow_dispatch&head_sha='"$REFRESH_SHA"'&per_page=10' --jq '[.workflow_runs[] | select(.name == "Data Platform CI & Validation" and .head_branch == env.PR_REF and .head_sha == env.REFRESH_SHA)][0].id // empty')"
+            if [ -n "$RUN_ID" ]; then break; fi
+            sleep 5
+          done
+          if [ -z "$RUN_ID" ]; then
+            echo "CI did not start for refreshed commit $REFRESH_SHA" >&2
+            exit 1
+          fi
+          echo "Rechecking refreshed lock in CI run $RUN_ID"
+          gh run watch "$RUN_ID" --exit-status
+
+  pregreen-lock:
+    # Never execute code or a workflow from the PR with this write token.
+    # The actor and repository restrictions also exclude fork pull requests.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'dependabot/pip/')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Validate the immutable event and resolve its open PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" > pr.json
+          jq -e --arg sha "$HEAD_SHA" '
+            .state == "open" and .user.login == "dependabot[bot]" and
+            .head.sha == $sha and .head.repo.full_name == "${{ github.repository }}" and
+            (.head.ref | startswith("dependabot/pip/"))
+          ' pr.json
+          {
+            echo "number=$(jq -r .number pr.json)"
+            echo "ref=$(jq -r .head.ref pr.json)"
+            echo "base=$(jq -r .base.ref pr.json)"
+            echo "url=$(jq -r .html_url pr.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out trusted default-branch resolver
+        uses: actions/checkout@v7
+        with:
+          path: trusted
+          persist-credentials: false
+
+      - name: Check out the exact Dependabot commit as data
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           path: update
           persist-credentials: true
 
