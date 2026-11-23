@@ -83,6 +83,11 @@ class ReleaseWorkflowTest(unittest.TestCase):
         job = workflow["jobs"]["docker-release"]
         self.assertIn("workflow_run.event == 'release'", job["if"])
         self.assertIn("workflow_run.conclusion == 'success'", job["if"])
+        self.assertIn("workflow_dispatch", workflow[True])
+        commands = "\n".join(step.get("run", "") for step in job["steps"])
+        self.assertIn('.event == "release" and .conclusion == "success"', commands)
+        self.assertIn(".head_sha == $sha", commands)
+        self.assertIn(".head_branch == $tag", commands)
         build = next(step for step in job["steps"] if step.get("uses", "").startswith("docker/build-push-action"))
         self.assertEqual(build["with"]["cache-to"], "type=inline")
         self.assertEqual(build["with"]["push"], True)
