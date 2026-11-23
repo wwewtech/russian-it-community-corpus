@@ -146,9 +146,9 @@ jobs:
 
   pregreen-lock:
     # Never execute code or a workflow from the PR with this write token.
-    # The actor and repository restrictions also exclude fork pull requests.
+    # The branch prefix selects Dependabot's update mechanism; the API check
+    # below validates immutable PR identity, same-repository head and paths.
     if: >-
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       startsWith(github.event.pull_request.head.ref, 'dependabot/pip/')
     runs-on: ubuntu-24.04

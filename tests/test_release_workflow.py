@@ -118,7 +118,7 @@ class ReleaseWorkflowTest(unittest.TestCase):
         pregreen = workflow["jobs"]["pregreen-lock"]
         self.assertIn("pull_request_target", workflow[True])
         self.assertIn("workflow_run", workflow[True])
-        self.assertIn("pull_request.user.login == 'dependabot[bot]'", pregreen["if"])
+        self.assertIn("pull_request.head.ref, 'dependabot/pip/'", pregreen["if"])
         self.assertIn("pull_request.head.repo.full_name == github.repository", pregreen["if"])
         pregreen_commands = "\n".join(step.get("run", "") for step in pregreen["steps"])
         self.assertIn("github.event.pull_request.head.sha", yaml.safe_dump(pregreen))
