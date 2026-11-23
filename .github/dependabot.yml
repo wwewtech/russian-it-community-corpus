@@ -25,6 +25,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      python-runtime:
+        patterns:
+          - "*"
     labels:
       - dependencies
       - python
