@@ -45,4 +45,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # workflow_run does not grant the Actions cache write scope used by
+          # buildx. The release job's package write permission is separate;
+          # do not fail a verified container publication on a cache export.
+          cache-to: type=inline
