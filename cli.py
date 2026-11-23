@@ -101,8 +101,18 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     parser_chat = subparsers.add_parser("chat", help="Start interactive LLM + RAG terminal chat session")
-    parser_chat.add_argument("--model", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Hugging Face model ID")
-    parser_chat.add_argument("--adapter", type=str, default="heavyweight_qwen2.5_coder_7b", help="LoRA Adapter ID")
+    parser_chat.add_argument(
+        "--model",
+        type=str,
+        default="HuggingFaceTB/SmolLM2-135M-Instruct",
+        help="Base-only model ID; a registry adapter selects its compatible base",
+    )
+    parser_chat.add_argument(
+        "--adapter",
+        type=str,
+        default="smollm2_135m_instruct",
+        help="Registry adapter ID (default: verified full-epoch production adapter)",
+    )
     parser_chat.add_argument("--no-rag", action="store_true", help="Disable RAG knowledge retrieval")
 
     parser_rag = subparsers.add_parser("rag", help="Search the 325k RAG knowledge base from the CLI")

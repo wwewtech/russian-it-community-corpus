@@ -182,6 +182,9 @@ def load_tokenizer_and_base_model(
     model_name: str,
     *,
     tokenizer_source: str | None = None,
+    revision: str | None = None,
+    tokenizer_revision: str | None = None,
+    tokenizer_subfolder: str | None = None,
     disable_kv_cache: bool = False,
     retry: bool = False,
 ) -> tuple[Any, Any]:
@@ -196,12 +199,19 @@ def load_tokenizer_and_base_model(
     tok_src = tokenizer_source or model_name
 
     def _load_tok() -> Any:
-        return cast(Any, AutoTokenizer).from_pretrained(tok_src, use_fast=True, trust_remote_code=True)
+        return cast(Any, AutoTokenizer).from_pretrained(
+            tok_src,
+            revision=tokenizer_revision or revision,
+            subfolder=tokenizer_subfolder,
+            use_fast=True,
+            trust_remote_code=True,
+        )
 
     def _load_model() -> Any:
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
         return AutoModelForCausalLM.from_pretrained(
             model_name,
+            revision=revision,
             torch_dtype=dtype,
             device_map="auto" if torch.cuda.is_available() else None,
             trust_remote_code=True,
@@ -220,6 +230,126 @@ def load_tokenizer_and_base_model(
     return tokenizer, model
 
 
+def load_adapter_runtime(spec: Any, *, retry: bool = False) -> tuple[Any, Any]:
+    """Load a base and its exact adapter from a resolved production spec."""
+    from ricc.lora.production import local_adapter_path
+
+    hub = spec.source == "hub"
+    tokenizer, base = load_tokenizer_and_base_model(
+        spec.base_model,
+        revision=spec.base_revision,
+        tokenizer_source=spec.adapter_repo if hub else spec.base_model,
+        tokenizer_revision=spec.adapter_revision if hub else spec.base_revision,
+        tokenizer_subfolder=spec.subfolder if hub else None,
+        retry=retry,
+    )
+    adapter_source = spec.adapter_repo if hub else local_adapter_path(spec)
+    model = attach_lora_adapter(
+        base,
+        adapter_source,
+        model_name=spec.base_model,
+        adapter_id=spec.slug,
+        verify_files=not hub,
+        revision=spec.adapter_revision if hub else None,
+        subfolder=spec.subfolder if hub else None,
+        expected_base_model=spec.base_model,
+        expected_base_revision=spec.base_revision,
+    )
+    return tokenizer, model
+
+
+def model_input_device(model: Any) -> Any:
+    """Infer where input tensors belong for single or sharded model layouts."""
+    import torch
+
+    if hasattr(model, "hf_device_map"):
+        device_map = getattr(model, "hf_device_map", {})
+        if isinstance(device_map, dict):
+            candidates = [device for device in device_map.values() if isinstance(device, (str, int))]
+            non_cpu = next((device for device in candidates if device != "cpu" and device != "disk"), None)
+            if non_cpu is not None:
+                return non_cpu
+            if candidates:
+                return "cpu"
+    device = getattr(model, "device", None)
+    if device is not None:
+        return device
+    try:
+        return next(model.parameters()).device
+    except (AttributeError, StopIteration):
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def move_inputs_to_model(inputs: Any, model: Any) -> Any:
+    """Move tensor batches to the actual model device, not merely any visible CUDA."""
+    import torch
+
+    if hasattr(inputs, "to"):
+        return inputs.to(model_input_device(model))
+    return {
+        key: value.to(model_input_device(model)) if torch.is_tensor(value) else value for key, value in inputs.items()
+    }
+
+
+def load_evaluation_models(
+    model_name: str,
+    adapter_id: str,
+    *,
+    root: Path | None = None,
+) -> tuple[Any, Any, Any, Any]:
+    """Return ``(tokenizer, base, lora, provenance)`` for evaluation suites.
+
+    The default registry pair is immutable. An explicit legacy pair remains a
+    research option with its own base/path, never an accidental Hub fallback.
+    """
+    from ricc.lora.production import resolve_adapter
+
+    try:
+        spec = resolve_adapter(adapter_id, root=root)
+    except Exception as exc:
+        raise RuntimeError(f"LoRA adapter '{adapter_id}' could not be loaded: {exc}") from exc
+    if spec.base_model == model_name:
+        tokenizer, lora = load_adapter_runtime(spec)
+        provenance = {
+            "mode": "registry_pinned",
+            "base_model": spec.base_model,
+            "base_revision": spec.base_revision,
+            "adapter_revision": spec.adapter_revision,
+            "adapter_source": spec.source,
+            "policy_compliant": spec.policy_compliant,
+        }
+        return tokenizer, lora, lora, provenance
+
+    tokenizer, base = load_tokenizer_and_base_model(model_name)
+    adapter_source: Path | str = (
+        spec.adapter_repo
+        if spec.source == "hub"
+        else root / "lora_adapters" / adapter_id
+        if root
+        else Path("lora_adapters") / adapter_id
+    )
+    try:
+        lora = attach_lora_adapter(
+            base,
+            adapter_source,
+            model_name=model_name,
+            adapter_id=adapter_id,
+            revision=spec.adapter_revision if spec.source == "hub" else None,
+            subfolder=spec.subfolder if spec.source == "hub" else None,
+            expected_base_model=spec.base_model if spec.policy_compliant else None,
+        )
+    except Exception as exc:
+        raise RuntimeError(f"LoRA adapter '{adapter_id}' could not be loaded: {exc}") from exc
+    provenance = {
+        "mode": "explicit_experimental_pair",
+        "base_model": model_name,
+        "adapter_id": adapter_id,
+        "adapter_source": spec.source,
+        "policy_compliant": False,
+    }
+    return tokenizer, base, lora, provenance
+
+
 def attach_lora_adapter(
     base_model: Any,
     adapter_path: Path | str,
@@ -227,15 +357,40 @@ def attach_lora_adapter(
     model_name: str = "",
     adapter_id: str = "",
     verify_files: bool = True,
+    revision: str | None = None,
+    subfolder: str | None = None,
+    expected_base_model: str | None = None,
+    expected_base_revision: str | None = None,
 ) -> Any:
-    """Attach a local PEFT LoRA adapter or fail fast with ``AdapterLoadError``."""
+    """Attach a local or immutable Hub PEFT adapter and verify base identity."""
     from peft import PeftModel
 
     from ricc.errors import AdapterLoadError
     from ricc.observability import record_classified_ml_error
 
+    actual_base = getattr(getattr(base_model, "config", None), "_name_or_path", None)
+    if expected_base_model and actual_base and actual_base != expected_base_model:
+        raise AdapterLoadError(
+            f"Adapter '{adapter_id}' expects base '{expected_base_model}', got '{actual_base}'",
+            adapter_path=str(adapter_path),
+            base_model=actual_base,
+        )
+    if expected_base_revision:
+        actual_revision = getattr(getattr(base_model, "config", None), "_commit_hash", None)
+        if actual_revision and actual_revision != expected_base_revision:
+            raise AdapterLoadError(
+                f"Adapter '{adapter_id}' expects base revision '{expected_base_revision}', got '{actual_revision}'",
+                adapter_path=str(adapter_path),
+                base_model=expected_base_model or model_name,
+            )
+
+    is_remote = revision is not None or subfolder is not None
     resolved = Path(adapter_path)
-    if verify_files and (not resolved.exists() or not (resolved / "adapter_model.safetensors").is_file()):
+    if (
+        not is_remote
+        and verify_files
+        and (not resolved.exists() or not (resolved / "adapter_model.safetensors").is_file())
+    ):
         raise AdapterLoadError(
             f"LoRA adapter '{adapter_id or resolved.name}' could not be loaded from '{resolved}' "
             "(missing directory or adapter_model.safetensors).",
@@ -243,6 +398,13 @@ def attach_lora_adapter(
             base_model=model_name,
         )
     try:
+        if is_remote:
+            return cast(Any, PeftModel).from_pretrained(
+                base_model,
+                str(adapter_path),
+                revision=revision,
+                subfolder=subfolder,
+            )
         return cast(Any, PeftModel).from_pretrained(base_model, str(resolved))
     except Exception as exc:
         typed = record_classified_ml_error(exc, model_name=model_name, adapter_id=adapter_id or resolved.name)
@@ -297,8 +459,7 @@ def generate_chat_completion(
         tok_kwargs["max_length"] = max_input_length
         tok_kwargs["truncation"] = True
     inputs: dict[str, Any] = tokenizer(prompt_text, **tok_kwargs)
-    if torch.cuda.is_available():
-        inputs = {k: v.to("cuda") for k, v in inputs.items()}
+    inputs = move_inputs_to_model(inputs, model)
 
     gen_kwargs: dict[str, Any] = {
         "max_new_tokens": max_new_tokens,

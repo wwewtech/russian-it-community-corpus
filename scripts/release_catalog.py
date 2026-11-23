@@ -162,22 +162,14 @@ def build_model_card(
     return "\n".join(lines)
 
 
-def write_release_catalog(root: Path, audit_report: dict[str, Any], registry_path: Path) -> list[Path]:
-    """Write both catalog views from the same verified registry and Hub audit."""
-    repo_id = str(audit_report["repo_id"])
-    revision = str(audit_report["revision"])
-    entries = audit_report["adapters"]
-    _, adapters = validate_registry(registry_path)
-    remote_final = {a["id"] for a in entries if a.get("final")}
-    if remote_final != {a["slug"] for a in adapters}:
-        raise RuntimeError("Remote final adapters and compliant registry diverge")
-    card = build_model_card(
-        entries,
-        repo_id=repo_id,
-        revision=revision,
-        remote_url="https://huggingface.co/" + repo_id,
-        registry_path=registry_path,
-    )
+def render_release_catalog(
+    adapters: list[dict[str, Any]],
+    entries: list[dict[str, Any]],
+    *,
+    repo_id: str,
+    revision: str,
+) -> str:
+    """Render the only production catalog/quickstart representation."""
     index = [
         {
             "id": adapter["slug"],
@@ -204,6 +196,26 @@ def write_release_catalog(root: Path, audit_report: dict[str, Any], registry_pat
     catalog += "\n\n" + "\n".join(historical_summary(entries)) + f"\n\nHub audit revision: `{revision}`.\n"
     if "Qwen" in catalog:
         raise RuntimeError("Catalog contains an unrelated hard-coded Qwen quickstart")
+    return catalog
+
+
+def write_release_catalog(root: Path, audit_report: dict[str, Any], registry_path: Path) -> list[Path]:
+    """Write both catalog views from the same verified registry and Hub audit."""
+    repo_id = str(audit_report["repo_id"])
+    revision = str(audit_report["revision"])
+    entries = audit_report["adapters"]
+    _, adapters = validate_registry(registry_path)
+    remote_final = {a["id"] for a in entries if a.get("final")}
+    if remote_final != {a["slug"] for a in adapters}:
+        raise RuntimeError("Remote final adapters and compliant registry diverge")
+    card = build_model_card(
+        entries,
+        repo_id=repo_id,
+        revision=revision,
+        remote_url="https://huggingface.co/" + repo_id,
+        registry_path=registry_path,
+    )
+    catalog = render_release_catalog(adapters, entries, repo_id=repo_id, revision=revision)
     reports = root / "reports"
     reports.mkdir(parents=True, exist_ok=True)
     paths = [reports / "HF_MODEL_CARD.md", reports / "LORA_MODEL_ZOO.md"]

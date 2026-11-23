@@ -120,20 +120,21 @@ def generate_reply(
     the UI shows the error rather than silently answering from the base model.
     """
     from ricc.errors import AdapterLoadError
-    from ricc.inference import validate_adapter_path
-    from ricc.ml_runtime import attach_lora_adapter, generate_chat_completion, load_tokenizer_and_base_model
+    from ricc.lora.production import resolve_adapter
+    from ricc.ml_runtime import generate_chat_completion, load_adapter_runtime, load_tokenizer_and_base_model
 
     root_dir = Path(__file__).resolve().parent
     if not (root_dir / ADAPTERS_DIRNAME).is_dir():
         root_dir = Path.cwd()
 
-    tokenizer, model = load_tokenizer_and_base_model(model_name)
     if adapter_id:
-        adapter_path = validate_adapter_path(adapter_id, root_dir / ADAPTERS_DIRNAME)
         try:
-            model = attach_lora_adapter(model, adapter_path, model_name=model_name, adapter_id=adapter_id)
+            spec = resolve_adapter(adapter_id, root=root_dir)
+            tokenizer, model = load_adapter_runtime(spec)
         except AdapterLoadError as exc:
             raise RuntimeError(str(exc)) from exc
+    else:
+        tokenizer, model = load_tokenizer_and_base_model(model_name)
     model.eval()
 
     full_history = [*history, {"role": "user", "content": query}]

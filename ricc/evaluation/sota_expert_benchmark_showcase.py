@@ -15,12 +15,10 @@ from typing import Any
 import numpy as np
 
 from ricc.bootstrap import setup_runtime_env
-from ricc.errors import AdapterLoadError
 from ricc.evaluation import HEURISTIC_DISCLAIMER, HEURISTIC_DISCLAIMER_MD
 from ricc.ml_runtime import (
-    attach_lora_adapter,
     generate_chat_completion,
-    load_tokenizer_and_base_model,
+    load_evaluation_models,
     set_deterministic_seed,
 )
 from ricc.rag.rag_pipeline import LocalRAGPipeline
@@ -221,8 +219,13 @@ def run_sota_showcase(
     # 1. Load RAG KB
     rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
 
-    # 2. Load Model & Tokenizer
-    tokenizer, base_model = load_tokenizer_and_base_model(model_name)
+    # 2. Load the explicit evaluation pair and its immutable registry sources.
+    try:
+        tokenizer, base_model, lora_model, adapter_provenance = load_evaluation_models(
+            model_name, adapter_id, root=settings.BASE_DIR
+        )
+    except Exception as exc:
+        raise RuntimeError(f"LoRA adapter '{adapter_id}' could not be loaded: {exc}") from exc
 
     def generate_expert(model: Any, prompt_text: str, context: str = "") -> str:
         full_prompt = (
@@ -268,13 +271,8 @@ def run_sota_showcase(
         r_scores = score_response_quality(r_text, item["eval_criteria"])
         rag_outputs.append((r_text, r_scores))
 
-    # Step B: Attach LoRA (fail fast if missing)
-    adapter_path = settings.BASE_DIR / "lora_adapters" / adapter_id
-    try:
-        lora_model = attach_lora_adapter(base_model, adapter_path, model_name=model_name, adapter_id=adapter_id)
-    except AdapterLoadError as exc:
-        raise RuntimeError(f"LoRA adapter '{adapter_id}' could not be loaded: {exc}") from exc
-
+    # Step B: the adapter is loaded above from the exact same evaluation spec.
+    logger.info("Adapter evaluation provenance: %s", adapter_provenance)
     logger.info("Evaluating LoRA & Hybrid...")
     for idx, item in enumerate(FLAGSHIP_CHALLENGES, 1):
         prompt = item["prompt"]

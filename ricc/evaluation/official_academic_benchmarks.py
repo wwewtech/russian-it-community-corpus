@@ -29,11 +29,9 @@ from typing import Any, cast
 
 import evaluate
 import numpy as np
-import pandas as pd
 import torch
 
 from ricc.bootstrap import setup_runtime_env
-from ricc.errors import AdapterLoadError
 from ricc.evaluation.academic_benchmark_data import (
     _ANSWER_MARKER_PATTERN,  # noqa: F401
     _BRACKETED_LETTER_RE,
@@ -48,9 +46,9 @@ from ricc.evaluation.academic_benchmark_data import (
 )
 from ricc.evaluation.statistical_power import mcnemar_test, wilson_interval
 from ricc.ml_runtime import (
-    attach_lora_adapter,
     generate_chat_completion,
-    load_tokenizer_and_base_model,
+    load_evaluation_models,
+    move_inputs_to_model,
     set_deterministic_seed,
 )
 from ricc.rag.rag_pipeline import LocalRAGPipeline
@@ -504,7 +502,7 @@ def _paired_significance(
 
 
 def _load_heldout_ppl_texts(dataset_jsonl: Path, holdout_tail: int, max_texts: int = 30) -> tuple[list[str], str]:
-    """Load held-out tail dialogues for PPL, falling back to SFT parquet if unavailable."""
+    """Load only a complete held-out tail; never relabel training data as held-out."""
     holdout_tail = max(0, int(holdout_tail))
     tail_rows: list[dict[str, Any]] = []
     if dataset_jsonl.exists() and holdout_tail > 0:
@@ -519,18 +517,19 @@ def _load_heldout_ppl_texts(dataset_jsonl: Path, holdout_tail: int, max_texts: i
                     continue
         tail_rows = list(ring)
         logger.info("PPL sample source: held-out tail of %s (last %d dialogues)", dataset_jsonl, len(tail_rows))
-    else:
-        logger.warning(
-            "Held-out tail unavailable (file=%s, holdout_tail=%d); "
-            "falling back to the SFT parquet — perplexity will be measured on TRAINING-seen text",
-            dataset_jsonl,
-            holdout_tail,
+    if holdout_tail <= 0:
+        raise RuntimeError("A positive holdout_tail is required for perplexity evaluation")
+    if not dataset_jsonl.is_file():
+        raise RuntimeError(
+            f"Cannot compute held-out perplexity: {dataset_jsonl} is missing; refusing to sample training-seen text"
+        )
+    if len(tail_rows) < holdout_tail:
+        raise RuntimeError(
+            f"Cannot compute held-out perplexity: requested {holdout_tail} dialogues, "
+            f"but only {len(tail_rows)} valid JSONL rows are available; refusing to sample training-seen text"
         )
 
     source_rows = tail_rows
-    if not source_rows:
-        test_df = pd.read_parquet(settings.PARQUET_OUTPUT_DIR / "sft_dialogues.parquet")
-        source_rows = cast(list[dict[str, Any]], test_df.to_dict("records"))
 
     test_texts: list[str] = []
     for row in source_rows:
@@ -543,11 +542,7 @@ def _load_heldout_ppl_texts(dataset_jsonl: Path, holdout_tail: int, max_texts: i
         if len(test_texts) >= max_texts:
             break
 
-    sample_source = (
-        f"held-out tail ({len(tail_rows)} dialogues of {dataset_jsonl})"
-        if tail_rows
-        else "sft_dialogues.parquet (TRAINING-SEEN fallback — not held-out)"
-    )
+    sample_source = f"held-out tail ({len(tail_rows)} dialogues of {dataset_jsonl})"
     return test_texts, sample_source
 
 
@@ -556,8 +551,7 @@ def _compute_perplexity(model_to_eval: Any, tokenizer: Any, texts: list[str]) ->
     nlls: list[float] = []
     for text in texts:
         enc = tokenizer(text, return_tensors="pt", max_length=256, truncation=True)
-        if torch.cuda.is_available():
-            enc = {k: v.to("cuda") for k, v in enc.items()}
+        enc = move_inputs_to_model(enc, model_to_eval)
         with torch.no_grad():
             outputs = model_to_eval(**enc, labels=enc["input_ids"])
             neg_log_likelihood = outputs.loss
@@ -850,13 +844,9 @@ def run_official_academic_benchmarks(
 
     rouge = evaluate.load("rouge")
     rag_kb = LocalRAGPipeline(settings.PARQUET_OUTPUT_DIR / "rag_knowledge_base.parquet")
-    tokenizer, base_model = load_tokenizer_and_base_model(model_name)
-
-    adapter_path = settings.BASE_DIR / "lora_adapters" / adapter_id
-    try:
-        lora_model = attach_lora_adapter(base_model, adapter_path, model_name=model_name, adapter_id=adapter_id)
-    except AdapterLoadError as exc:
-        raise RuntimeError(str(exc)) from exc
+    tokenizer, base_model, lora_model, adapter_provenance = load_evaluation_models(
+        model_name, adapter_id, root=settings.BASE_DIR
+    )
 
     def _gen(prompt_str: str, max_tokens: int) -> str:
         text, _elapsed, _tps = generate_chat_completion(
@@ -874,6 +864,7 @@ def run_official_academic_benchmarks(
             return _gen(prompt_str, max_tokens)
 
     raw_outputs_path = settings.REPORTS_DIR / "academic_benchmarks_raw_outputs.jsonl"
+    logger.info("Adapter evaluation provenance: %s", adapter_provenance)
     raw_outputs_path.parent.mkdir(parents=True, exist_ok=True)
     if raw_outputs_path.exists():
         raw_outputs_path.unlink()
@@ -985,6 +976,7 @@ def run_official_academic_benchmarks(
             "model_name": model_name,
             "seed": seed,
             "heldout_tail": holdout_tail,
+            "adapter_provenance": adapter_provenance,
         },
         "model_name": model_name,
         "adapter_id": adapter_id,

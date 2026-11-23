@@ -16,6 +16,7 @@ The module exposes three layers:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -58,6 +59,7 @@ def compute_lora_zoo_index(
             logger.warning("Excluding policy-incompliant adapter from the release catalog: %s", d.name)
             continue
         safetensors = d / "adapter_model.safetensors"
+        digest = hashlib.sha256(safetensors.read_bytes()).hexdigest()
         config = json.loads((d / "adapter_config.json").read_text(encoding="utf-8"))
         base_model_revision = str(config.get("revision") or "")
         hf_model_revision = str(config.get("hf_model_revision") or "")
@@ -72,6 +74,8 @@ def compute_lora_zoo_index(
                 "base_model": str(config.get("base_model_name_or_path") or "unknown"),
                 "base_model_revision": base_model_revision,
                 "hf_model_revision": hf_model_revision,
+                "safetensors_bytes": safetensors.stat().st_size,
+                "safetensors_sha256": digest,
                 "size_mb": size_mb,
                 "status": "SUCCESS",
                 "adapter_dir": f"lora_adapters/{d.name}",
@@ -87,77 +91,48 @@ def build_lora_zoo_markdown(
     model_repo_id: str = MODEL_REPO_ID,
     corpus_size_label: str = "2.82M сообщений, 171.5k диалогов",
 ) -> str:
-    """Render the LoRA-Zoo catalogue as a Markdown string.
+    """Render the shared release catalog, with a safe example for partial test data.
 
-    Pure function: no I/O, no datetime.now(). All values are either
-    arguments or derived from the ``zoo_index`` list.
+    Production records go through exactly the same renderer as the preflight.
+    An incomplete caller receives a fail-closed example, never a made-up model.
     """
-    lines: list[str] = [
-        "# Russian IT Community LoRA Model Zoo",
-        "",
-        f"**Официальный каталог {len(zoo_index)} предварительно обученных LoRA-адаптеров**, "
-        f"дообученных на корпусе **RICC ({corpus_size_label})** для русскоязычного IT-дискурса, "
-        "бэкенда, DevOps, AI/ML и инфраструктуры.",
-        "",
-        f"Все адаптеры доступны на Hugging Face Hub: [`{model_repo_id}`](https://huggingface.co/{model_repo_id}).",
-        "",
-        "---",
-        "",
-        "## Доступные LoRA-адаптеры",
-        "",
-        "| # | Идентификатор модели | Размер весов | Каталог адаптера | Hugging Face Hub |",
-        "| :---: | :--- | :---: | :--- | :--- |",
-    ]
-    for idx, r in enumerate(zoo_index, 1):
-        lines.append(
-            f"| {idx} | **`{r['id']}`** | **{r['size_mb']} MB** "
-            f"| [`lora_adapters/{r['id']}/`](lora_adapters/{r['id']}/) "
-            f"| [`{model_repo_id}`](https://huggingface.co/{model_repo_id}) |"
-        )
     if zoo_index and all(
         r.get("base_model")
         and re.fullmatch(r"[0-9a-f]{40}", str(r.get("base_model_revision", "")))
         and re.fullmatch(r"[0-9a-f]{40}", str(r.get("hf_model_revision", "")))
+        and r.get("safetensors_sha256")
+        and r.get("safetensors_bytes") is not None
         for r in zoo_index
     ):
-        selected = zoo_index[0]
-        quickstart_lines = [
-            f'subfolder = "{selected["id"]}"',
-            f'model_id = "{selected["base_model"]}"',
-            f'model_hub_path = "{selected.get("hf_model_repo", model_repo_id)}"',
-            f'base_revision = "{selected["base_model_revision"]}"',
-            f'adapter_revision = "{selected["hf_model_revision"]}"',
+        from scripts.release_catalog import render_release_catalog
+
+        adapters = [
+            {
+                "slug": record["id"],
+                "base_model": record["base_model"],
+                "base_model_revision": record["base_model_revision"],
+                "hf_model_revision": record["hf_model_revision"],
+                "hf_model_repo": record.get("hf_model_repo", model_repo_id),
+                "safetensors_sha256": record["safetensors_sha256"],
+                "safetensors_bytes": record["safetensors_bytes"],
+                "local_path": record.get("adapter_dir", record["id"]),
+            }
+            for record in zoo_index
         ]
-    else:
-        # Incomplete records must not be turned into runnable release examples.
-        quickstart_lines = [
-            "# Missing verified adapter or immutable revisions; resolve the registry first.",
-            'raise RuntimeError("No verified full-epoch adapter with immutable revisions is available")',
-        ]
-    lines.extend(
-        [
-            "",
-            "---",
-            "",
-            "## Быстрый старт: запуск проверенного full-epoch адаптера",
-            "",
-            "```python",
-            "from peft import PeftModel",
-            "from transformers import AutoModelForCausalLM, AutoTokenizer",
-            "",
-            *quickstart_lines,
-            "tokenizer = AutoTokenizer.from_pretrained(model_hub_path, subfolder=subfolder, revision=adapter_revision)",
-            'base = AutoModelForCausalLM.from_pretrained(model_id, revision=base_revision, device_map="auto", torch_dtype="auto")',
-            "model = PeftModel.from_pretrained(base, model_hub_path, subfolder=subfolder, revision=adapter_revision)",
-            "",
-            'messages = [{"role": "user", "content": "Как настроить Nginx reverse proxy в Docker?"}]',
-            'inputs = tokenizer(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True), return_tensors="pt").to(model.device)',
-            "outputs = model.generate(**inputs, max_new_tokens=256)",
-            "print(tokenizer.decode(outputs[0], skip_special_tokens=True))",
-            "```",
-        ]
+        revision = str(zoo_index[0]["hf_model_revision"])
+        return render_release_catalog(adapters, [], repo_id=model_repo_id, revision=revision)
+    return (
+        "# Russian IT Community LoRA Model Zoo\n\n"
+        f"**Официальный каталог {len(zoo_index)} проверенных full-epoch адаптеров.**\n\n"
+        f"Hub: [`{model_repo_id}`](https://huggingface.co/{model_repo_id})\n\n"
+        "## Быстрый старт\n\n"
+        "| Adapter | Size (MiB) |\n| --- | ---: |\n"
+        + "\n".join(f"| `{r['id']}` | {r['size_mb']} |" for r in zoo_index)
+        + "\n\n```python\n"
+        + "# Missing immutable revisions or verified weight identity.\n"
+        + 'raise RuntimeError("No verified full-epoch adapter with immutable revisions is available")\n'
+        + "```"
     )
-    return "\n".join(lines)
 
 
 def upload_dataset(
@@ -394,6 +369,28 @@ def main() -> None:
         for field in ("id", "base_model", "base_model_revision", "hf_model_revision"):
             if str(record[field]) not in catalog_text:
                 raise RuntimeError(f"Release catalog omitted verified {field}: {record['id']}")
+    audit_path = settings.REPORTS_DIR / "hf_hub_audit.json"
+    if audit_path.is_file():
+        from scripts.release_catalog import render_release_catalog
+
+        audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        adapters = [
+            {
+                **record,
+                "slug": record["id"],
+                "local_path": record["adapter_dir"],
+                "safetensors_bytes": record["safetensors_bytes"],
+            }
+            for record in zoo_index
+        ]
+        expected_catalog = render_release_catalog(
+            adapters,
+            audit["adapters"],
+            repo_id=MODEL_REPO_ID,
+            revision=str(audit["revision"]),
+        )
+        if catalog_text.strip() != expected_catalog.strip():
+            raise RuntimeError("Release catalog differs from the verified registry/audit; refusing release")
 
     # 1. Dataset artefacts — fail closed on any upload or integrity error.
     upload_dataset(api)

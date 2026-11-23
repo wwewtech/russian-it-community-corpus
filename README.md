@@ -291,8 +291,17 @@ python -m ricc.lora.batch_train_zoo --only qwen2.5_1.5b_instruct --profile full
 ### 5. Run LoRA Inference
 
 ```bash
+# Verified full-epoch production adapter (SmolLM2-135M), selected from the registry.
 python ricc/lora/generate_demo.py --prompt "Как настроить прием платежей для SaaS из РФ?"
+
+# Interactive terminal with the same registry-driven adapter selection.
+python cli.py chat
 ```
+
+The default loads the sole `policy_compliant` adapter with its compatible
+base model and immutable revisions. Local weights are preferred when present;
+otherwise the pinned Hub subfolder/revision is used. Historical adapters remain
+available only as explicitly selected local experiments, with a warning.
 
 ### Command Reference
 

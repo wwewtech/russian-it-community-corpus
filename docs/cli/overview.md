@@ -28,7 +28,12 @@ python cli.py --help
 python cli.py run --skip-ner
 python cli.py audit-prob --sample-size 50000 --confidence 0.99
 python cli.py drift --reference old.parquet --current new.parquet
-python cli.py chat --model Qwen/Qwen2.5-1.5B-Instruct --adapter heavyweight_qwen2.5_coder_7b
+# Verified full-epoch production adapter and its compatible base are selected
+# from lora_adapters/registry.json (local weights when present, pinned Hub otherwise).
+python cli.py chat
+
+# Explicit research option: a different base-only model, without a LoRA adapter.
+python cli.py chat --model Qwen/Qwen2.5-1.5B-Instruct --adapter none
 python cli.py rag "как настроить ingress в kubernetes" --top-k 5
 ```
 

@@ -14,7 +14,11 @@ from ricc.ml_runtime import (
     _is_retryable,
     attach_lora_adapter,
     generate_chat_completion,
+    load_adapter_runtime,
+    load_evaluation_models,
     load_tokenizer_and_base_model,
+    model_input_device,
+    move_inputs_to_model,
     render_chat_prompt,
     seed_choices,
     set_deterministic_seed,
@@ -265,6 +269,143 @@ class TestLoadTokenizerAndBaseModel(unittest.TestCase):
         self.assertEqual(mock_retries.call_count, 2)
 
 
+class TestLoadAdapterRuntime(unittest.TestCase):
+    def test_hub_sources_use_one_immutable_adapter_revision(self):
+        from ricc.lora.production import resolve_adapter
+
+        spec = resolve_adapter("smollm2_135m_instruct", source="hub")
+        tokenizer = SimpleNamespace(pad_token="<pad>")
+        base = SimpleNamespace(config=SimpleNamespace(_name_or_path=spec.base_model, _commit_hash=spec.base_revision))
+        with (
+            patch("ricc.ml_runtime.load_tokenizer_and_base_model", return_value=(tokenizer, base)) as load,
+            patch("peft.PeftModel.from_pretrained", return_value=base) as peft,
+        ):
+            loaded_tok, loaded_model = load_adapter_runtime(spec)
+        self.assertIs(loaded_tok, tokenizer)
+        self.assertIs(loaded_model, base)
+        kwargs = load.call_args.kwargs
+        self.assertEqual(kwargs["tokenizer_source"], spec.adapter_repo)
+        self.assertEqual(kwargs["tokenizer_revision"], spec.adapter_revision)
+        self.assertEqual(kwargs["tokenizer_subfolder"], spec.slug)
+        peft_kwargs = peft.call_args.kwargs
+        self.assertEqual(peft_kwargs["revision"], spec.adapter_revision)
+        self.assertEqual(peft_kwargs["subfolder"], spec.slug)
+
+    def test_adapter_rejects_a_different_base_revision(self):
+        base = SimpleNamespace(config=SimpleNamespace(_name_or_path="org/base", _commit_hash="0" * 40))
+        with self.assertRaisesRegex(AdapterLoadError, "expects base revision"):
+            attach_lora_adapter(
+                base,
+                "org/adapters",
+                adapter_id="demo",
+                expected_base_model="org/base",
+                expected_base_revision="1" * 40,
+            )
+
+    def test_adapter_rejects_a_different_base_model(self):
+        base = SimpleNamespace(config=SimpleNamespace(_name_or_path="wrong/model"))
+        with self.assertRaisesRegex(AdapterLoadError, "expects base"):
+            attach_lora_adapter(base, "org/adapters", adapter_id="demo", expected_base_model="org/expected")
+
+
+class TestEvaluationModelLoading(unittest.TestCase):
+    def test_unknown_adapter_fails_with_context(self):
+        with self.assertRaisesRegex(RuntimeError, "could not be loaded"):
+            load_evaluation_models("org/base", "missing-adapter")
+
+    def test_explicit_experimental_pair_records_nonproduction_provenance(self):
+        from ricc.lora.production import resolve_adapter
+
+        spec = resolve_adapter("smollm2_135m_instruct", source="hub")
+        base = SimpleNamespace(config=SimpleNamespace(_name_or_path="other/base", _commit_hash="other"))
+        lora = SimpleNamespace()
+        with (
+            patch("ricc.ml_runtime.load_tokenizer_and_base_model", return_value=(SimpleNamespace(), base)),
+            patch("ricc.ml_runtime.attach_lora_adapter", return_value=lora),
+            tempfile.TemporaryDirectory() as directory,
+        ):
+            root = Path(directory)
+            (root / "lora_adapters").mkdir()
+            (root / "lora_adapters/registry.json").write_text(
+                Path("lora_adapters/registry.json").read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            _tok, loaded_base, loaded_lora, provenance = load_evaluation_models(
+                "other/base", spec.slug, root=Path(directory)
+            )
+        self.assertIs(loaded_base, base)
+        self.assertIs(loaded_lora, lora)
+        self.assertEqual(provenance["mode"], "explicit_experimental_pair")
+        self.assertFalse(provenance["policy_compliant"])
+        self.assertEqual(provenance["adapter_source"], "hub")
+
+    def test_explicit_experimental_pair_uses_rootless_default_path(self):
+        from ricc.lora.production import resolve_adapter
+
+        spec = resolve_adapter("smollm2_135m_instruct", source="hub")
+        with (
+            patch("ricc.ml_runtime.load_tokenizer_and_base_model", return_value=(SimpleNamespace(), SimpleNamespace())),
+            patch("ricc.ml_runtime.attach_lora_adapter", return_value=SimpleNamespace()) as attach,
+        ):
+            _tok, _base, _lora, provenance = load_evaluation_models("other/base", spec.slug)
+        self.assertEqual(attach.call_args.args[1], spec.adapter_repo)
+        self.assertEqual(attach.call_args.kwargs["revision"], spec.adapter_revision)
+        self.assertEqual(attach.call_args.kwargs["subfolder"], spec.subfolder)
+        self.assertEqual(provenance["mode"], "explicit_experimental_pair")
+
+    def test_experimental_pair_failure_has_adapter_context(self):
+        from ricc.lora.production import resolve_adapter
+
+        spec = resolve_adapter("smollm2_135m_instruct", source="hub")
+        with (
+            patch("ricc.ml_runtime.load_tokenizer_and_base_model", return_value=(SimpleNamespace(), SimpleNamespace())),
+            patch("ricc.ml_runtime.attach_lora_adapter", side_effect=RuntimeError("bad weights")),
+            self.assertRaisesRegex(RuntimeError, "could not be loaded"),
+        ):
+            load_evaluation_models("other/base", spec.slug)
+
+    def test_matching_registry_pair_uses_pinned_sources(self):
+        from ricc.lora.production import resolve_adapter
+
+        spec = resolve_adapter("smollm2_135m_instruct", source="hub")
+        sentinel = SimpleNamespace()
+        with patch("ricc.ml_runtime.load_adapter_runtime", return_value=(sentinel, sentinel)) as load:
+            tokenizer, base, lora, provenance = load_evaluation_models(spec.base_model, spec.slug)
+        self.assertIs(base, lora)
+        self.assertEqual(provenance["mode"], "registry_pinned")
+        self.assertEqual(provenance["adapter_revision"], spec.adapter_revision)
+        load.assert_called_once_with(spec)
+
+
+class TestModelDevicePlacement(unittest.TestCase):
+    def test_device_fallback_uses_parameters_and_batch_encoding(self):
+        import torch
+
+        model = SimpleNamespace(parameters=lambda: iter([SimpleNamespace(device=torch.device("cpu"))]))
+        self.assertEqual(model_input_device(model).type, "cpu")
+        batch = MagicMock()
+        batch.to.return_value = "moved"
+        self.assertEqual(move_inputs_to_model(batch, model), "moved")
+
+    def test_empty_model_device_falls_back_to_available_device(self):
+        model = SimpleNamespace(parameters=lambda: iter(()))
+        with patch("torch.cuda.is_available", return_value=False):
+            self.assertEqual(model_input_device(model).type, "cpu")
+
+    def test_sharded_model_uses_its_first_accelerator(self):
+        model = SimpleNamespace(hf_device_map={"embed": "cpu", "layers": "cuda:1", "head": "cpu"})
+        self.assertEqual(model_input_device(model), "cuda:1")
+
+    def test_cpu_sharded_model_does_not_use_visible_cuda(self):
+        import torch
+
+        model = SimpleNamespace(hf_device_map={"embed": "cpu", "layers": "cpu"})
+        inputs = {"input_ids": torch.tensor([1]), "metadata": "keep"}
+        with patch("torch.cuda.is_available", return_value=True):
+            moved = move_inputs_to_model(inputs, model)
+        self.assertEqual(moved["input_ids"].device.type, "cpu")
+        self.assertEqual(moved["metadata"], "keep")
+
+
 class TestAttachLoraAdapter(unittest.TestCase):
     def test_missing_directory_raises_adapter_load_error(self):
         with self.assertRaises(AdapterLoadError):
@@ -319,6 +460,7 @@ class TestGenerateChatCompletion(unittest.TestCase):
         tok.decode.return_value = "  hello world  "
 
         model = MagicMock()
+        model.device = torch.device("cpu")
         model.generate.return_value = torch.tensor([[1, 2, 3, 4, 5]])
 
         with patch("torch.cuda.is_available", return_value=False):
