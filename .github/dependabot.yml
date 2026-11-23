@@ -13,8 +13,8 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
-    # The hash lock is generated, not edited by Dependabot. Manifest bumps
-    # must run scripts/lock_requirements.py --refresh before merge.
+    # The hash lock is generated, not edited by Dependabot. After green CI,
+    # dependabot-lock.yml refreshes the lock and cutoff with trusted base code.
     exclude-paths:
       - requirements.lock.txt
     cooldown:
