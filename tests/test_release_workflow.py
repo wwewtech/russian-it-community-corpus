@@ -118,12 +118,25 @@ class ReleaseWorkflowTest(unittest.TestCase):
         self.assertIn("workflow_run.event == 'pull_request'", job["if"])
         self.assertIn("workflow_run.actor.login == 'dependabot[bot]'", job["if"])
         self.assertIn("workflow_run.conclusion == 'success'", job["if"])
-        self.assertEqual(job["permissions"], {"contents": "write", "pull-requests": "write"})
+        self.assertEqual(job["permissions"], {"contents": "write", "pull-requests": "write", "actions": "write"})
         commands = "\n".join(step.get("run", "") for step in job["steps"])
         self.assertIn("python scripts/lock_requirements.py --refresh", commands)
         self.assertIn("cp ../trusted/scripts/lock_requirements.py", commands)
         self.assertIn("isCrossRepository", commands)
         self.assertIn("github.event.workflow_run.head_sha", yaml.safe_dump(job))
+        # GITHUB_TOKEN pushes deliberately do not emit a new push event.
+        # Explicitly dispatch the trusted default-branch workflow instead.
+        self.assertIn('gh workflow run ci.yml --ref "$REFRESH_SHA"', commands)
+        self.assertIn("--raw-field dependency_recheck=true", commands)
+        self.assertIn("git rev-parse HEAD", commands)
+        self.assertIn('event=workflow_dispatch&head_sha=\'"$REFRESH_SHA"', commands)
+        self.assertIn('gh run watch "$RUN_ID" --exit-status', commands)
+        ci_dispatch = self.workflow[True]["workflow_dispatch"]["inputs"]
+        self.assertIn("dependency_recheck", ci_dispatch)
+        real_gate = self.workflow["jobs"]["slo-gate-real"]["if"]
+        self.assertIn("!inputs.dependency_recheck", real_gate)
+        self.assertIn("!inputs.dependency_recheck", self.workflow["jobs"]["hf-secrets-check"]["if"])
+        self.assertIn("!inputs.dependency_recheck", self.workflow["jobs"]["release-preflight"]["if"])
         dependabot = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text(encoding="utf-8"))
         pip_update = next(update for update in dependabot["updates"] if update["package-ecosystem"] == "pip")
         self.assertEqual(pip_update["exclude-paths"], ["requirements.lock.txt"])

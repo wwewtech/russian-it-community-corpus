@@ -19,10 +19,11 @@ jobs:
       github.event.workflow_run.actor.login == 'dependabot[bot]' &&
       startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/')
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
       contents: write
       pull-requests: write
+      actions: write
     steps:
       - name: Resolve the exact same-repository Dependabot pull request
         id: pr
@@ -94,4 +95,30 @@ jobs:
           git add requirements.lock.txt scripts/lock_requirements.py
           git commit -m "chore(deps): refresh hashed dependency lock"
           git push origin "HEAD:${{ steps.pr.outputs.ref }}"
-          gh pr comment "$PR_URL" --body "Regenerated the universal lock with the trusted base-branch resolver. The lock cutoff and all artifact SHA-256 hashes were refreshed; ordinary CI will verify the result without repository secrets."
+          REFRESH_SHA="$(git rev-parse HEAD)"
+          echo "refresh_sha=$REFRESH_SHA" >> "$GITHUB_OUTPUT"
+          gh pr comment "$PR_URL" --body "Regenerated the universal lock with the trusted base-branch resolver. The lock cutoff and all artifact SHA-256 hashes were refreshed; CI will now recheck the exact new commit without repository secrets."
+        id: push
+
+      - name: Recheck the exact refreshed commit with trusted CI
+        if: steps.push.outputs.refresh_sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REFRESH_SHA: ${{ steps.push.outputs.refresh_sha }}
+        # A push authenticated by GITHUB_TOKEN does not emit a new push
+        # workflow event. Explicit dispatch runs the exact refreshed SHA;
+        # only the dependency manifests and generated lock changed there.
+        run: |
+          gh workflow run ci.yml --ref "$REFRESH_SHA" --raw-field dependency_recheck=true
+          RUN_ID=""
+          for attempt in $(seq 1 30); do
+            RUN_ID="$(gh api 'repos/${{ github.repository }}/actions/runs?event=workflow_dispatch&head_sha='"$REFRESH_SHA"'&per_page=10' --jq '[.workflow_runs[] | select(.name == "Data Platform CI & Validation")][0].databaseId // empty')"
+            if [ -n "$RUN_ID" ]; then break; fi
+            sleep 5
+          done
+          if [ -z "$RUN_ID" ]; then
+            echo "CI did not start for refreshed commit $REFRESH_SHA" >&2
+            exit 1
+          fi
+          echo "Rechecking refreshed lock in CI run $RUN_ID"
+          gh run watch "$RUN_ID" --exit-status
