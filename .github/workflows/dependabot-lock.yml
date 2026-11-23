@@ -167,7 +167,7 @@ jobs:
         run: |
           gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" > pr.json
           jq -e --arg sha "$HEAD_SHA" '
-            .state == "open" and .user.login == "dependabot[bot]" and
+            .state == "open" and
             .head.sha == $sha and .head.repo.full_name == "${{ github.repository }}" and
             (.head.ref | startswith("dependabot/pip/"))
           ' pr.json
