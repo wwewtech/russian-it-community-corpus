@@ -78,6 +78,15 @@ class ReleaseWorkflowTest(unittest.TestCase):
             create_manifest(root, path)
             self.assertEqual(len(verify_manifest(root, path)["artifacts"]), 3)
 
+    def test_release_container_uses_writable_inline_cache_only(self):
+        workflow = yaml.safe_load((ROOT / ".github/workflows/release-container.yml").read_text(encoding="utf-8"))
+        job = workflow["jobs"]["docker-release"]
+        self.assertIn("workflow_run.event == 'release'", job["if"])
+        self.assertIn("workflow_run.conclusion == 'success'", job["if"])
+        build = next(step for step in job["steps"] if step.get("uses", "").startswith("docker/build-push-action"))
+        self.assertEqual(build["with"]["cache-to"], "type=inline")
+        self.assertEqual(build["with"]["push"], True)
+
     def test_hf_fetch_is_read_only_and_digest_checked(self):
         source = (ROOT / "scripts/fetch_pinned_dataset.py").read_text(encoding="utf-8")
         self.assertIn("hashlib.sha256(data).hexdigest()", source)
