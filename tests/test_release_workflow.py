@@ -153,6 +153,16 @@ class ReleaseWorkflowTest(unittest.TestCase):
         self.assertIn("][0].id // empty", commands)
         self.assertNotIn("][0].databaseId // empty", commands)
         self.assertIn('gh run watch "$RUN_ID" --exit-status', commands)
+        recheck = next(
+            step for step in job["steps"] if step.get("name") == "Recheck the exact refreshed commit with trusted CI"
+        )
+        self.assertEqual(recheck["working-directory"], "update")
+        pregreen_recheck = next(
+            step
+            for step in pregreen["steps"]
+            if step.get("name") == "Recheck the exact refreshed commit with trusted CI"
+        )
+        self.assertEqual(pregreen_recheck["working-directory"], "update")
         ci_dispatch = self.workflow[True]["workflow_dispatch"]["inputs"]
         self.assertIn("dependency_recheck", ci_dispatch)
         real_gate = self.workflow["jobs"]["slo-gate-real"]["if"]

@@ -125,6 +125,7 @@ jobs:
 
       - name: Recheck the exact refreshed commit with trusted CI
         if: steps.push.outputs.refresh_sha != ''
+        working-directory: update
         env:
           GH_TOKEN: ${{ github.token }}
           REFRESH_SHA: ${{ steps.push.outputs.refresh_sha }}
@@ -245,6 +246,7 @@ jobs:
 
       - name: Recheck the exact refreshed commit with trusted CI
         if: steps.push.outputs.refresh_sha != ''
+        working-directory: update
         env:
           GH_TOKEN: ${{ github.token }}
           REFRESH_SHA: ${{ steps.push.outputs.refresh_sha }}
