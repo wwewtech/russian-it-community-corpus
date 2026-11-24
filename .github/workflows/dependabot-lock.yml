@@ -68,6 +68,9 @@ jobs:
           repository: ${{ github.event.workflow_run.head_repository.full_name }}
           path: update
           persist-credentials: true
+          # A single-SHA checkout has no parent history. The allowlist uses
+          # a three-dot diff and therefore needs the complete merge base.
+          fetch-depth: 0
 
       - name: Allow only Python dependency manifests to differ
         env:
@@ -191,6 +194,9 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           path: update
           persist-credentials: true
+          # A single-SHA checkout has no parent history. The allowlist uses
+          # a three-dot diff and therefore needs the complete merge base.
+          fetch-depth: 0
 
       - name: Allow only Python dependency manifests to differ
         env:
