@@ -55,7 +55,7 @@ HEADER = """# Portable lock for Python 3.11+ on Linux, Windows and macOS.
 # New transitive releases must not make an unchanged, previously green commit
 # fail the reproducibility gate. All indexes are therefore cut off here; bump
 # this timestamp deliberately together with a reviewed lock refresh.
-EXCLUDE_NEWER = "2026-11-20T00:00:00Z"
+EXCLUDE_NEWER = "2026-11-23T22:33:05Z"
 COMPILE_ARGS = [
     "pip",
     "compile",
